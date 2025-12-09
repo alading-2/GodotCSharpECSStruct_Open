@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://unit_test_pool"]
+
+[ext_resource type="Script" path="res://scenes/test/object_pool/object_pool_unit_test.gd" id="1"]
+
+[node name="ObjectPoolUnitTest" type="Node"]
+script = ExtResource("1")
