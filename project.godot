@@ -15,18 +15,13 @@ run/main_scene="uid://bhgq8nbkx887j"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
-[autoload]
-
-Bootstrap="*res://scenes/autoload/bootstrap.gd"
-EventLoopSingleton="*res://addons/gype/event_loop.gd"
-
 [dotnet]
 
 project/assembly_name="Brotato_my"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gype/plugin.cfg")
+enabled=PackedStringArray()
 
 [input]
 

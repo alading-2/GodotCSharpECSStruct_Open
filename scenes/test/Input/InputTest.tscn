@@ -1,9 +1,9 @@
 [gd_scene load_steps=2 format=3 uid="uid://cc54vrkw10iy0"]
 
-[ext_resource type="Script" path="res://scenes/test/input_test/input_test.gd" id="1_test"]
+[ext_resource type="Script" uid="uid://dpv5ksg4ophhc" path="res://scenes/Test/Input/InputTest.cs" id="1_wcmj6"]
 
 [node name="InputTest" type="Node2D"]
-script = ExtResource("1_test")
+script = ExtResource("1_wcmj6")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -46,10 +46,10 @@ offset_bottom = 680.0
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/line_spacing = 8
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 theme_override_constants/outline_size = 4
-theme_override_constants/line_spacing = 8
 theme_override_font_sizes/font_size = 18
 text = "=== 震动测试指南 ===
 [A] 键：轻震动 (确认操作)
