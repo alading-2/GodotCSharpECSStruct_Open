@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Brotato_my"
 run/main_scene="uid://bhgq8nbkx887j"
-config/features=PackedStringArray("4.5", "Forward Plus")
+config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]

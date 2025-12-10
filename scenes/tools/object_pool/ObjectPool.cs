@@ -7,27 +7,15 @@ namespace BrotatoMy.Tools;
 #region 接口定义
 
 /// <summary>
-/// 可池化对象接口 - 实现此接口的对象可以被对象池管理
+/// 可池化对象接口 - 实现此接口的对象可获得生命周期回调
 /// </summary>
 public interface IPoolable
 {
-    /// <summary>对象被从池中取出时调用</summary>
+    /// <summary>对象从池中取出时调用，用于初始化状态</summary>
     void OnPoolAcquire();
-    
-    /// <summary>对象被归还到池中时调用</summary>
-    void OnPoolRelease();
-}
 
-/// <summary>
-/// 可池化 Node 接口 - 为 Node 类型提供的扩展接口
-/// </summary>
-public interface IPoolableNode : IPoolable
-{
-    /// <summary>获取关联的对象池</summary>
-    ObjectPool<Node>? Pool { get; set; }
-    
-    /// <summary>是否在池中</summary>
-    bool IsInPool { get; set; }
+    /// <summary>对象归还到池中时调用，用于清理状态</summary>
+    void OnPoolRelease();
 }
 
 #endregion
@@ -41,14 +29,14 @@ public class ObjectPoolConfig
 {
     /// <summary>池的最大容量，-1 表示无限制</summary>
     public int MaxSize { get; set; } = 50;
-    
-    /// <summary>初始预热数量</summary>
+
+    /// <summary>初始预热数量，池创建时自动生成的对象数</summary>
     public int InitialSize { get; set; } = 0;
-    
-    /// <summary>是否启用统计</summary>
+
+    /// <summary>是否启用统计信息收集</summary>
     public bool EnableStats { get; set; } = true;
-    
-    /// <summary>池名称（用于调试）</summary>
+
+    /// <summary>池名称，用于调试和日志输出</summary>
     public string Name { get; set; } = "ObjectPool";
 }
 
@@ -57,17 +45,36 @@ public class ObjectPoolConfig
 /// </summary>
 public readonly struct PoolStats
 {
+    /// <summary>池名称</summary>
     public string Name { get; init; }
+
+    /// <summary>池中空闲对象数量</summary>
     public int PoolSize { get; init; }
+
+    /// <summary>当前活跃对象数量（已借出未归还）</summary>
     public int ActiveCount { get; init; }
+
+    /// <summary>对象总数（活跃 + 空闲）</summary>
     public int TotalCount { get; init; }
+
+    /// <summary>历史峰值活跃数量</summary>
     public int PeakActive { get; init; }
+
+    /// <summary>累计创建对象总数</summary>
     public int TotalCreated { get; init; }
+
+    /// <summary>累计获取次数</summary>
     public int TotalAcquired { get; init; }
+
+    /// <summary>累计归还次数</summary>
     public int TotalReleased { get; init; }
+
+    /// <summary>累计丢弃次数（因池满而销毁）</summary>
     public int TotalDiscarded { get; init; }
+
+    /// <summary>对象复用率（0.0 - 1.0）</summary>
     public float ReuseRate { get; init; }
-    
+
     public override string ToString() =>
         $"[{Name}] 总:{TotalCount}(活:{ActiveCount}/闲:{PoolSize}) | 峰:{PeakActive} | " +
         $"创:{TotalCreated} | 获:{TotalAcquired} | 还:{TotalReleased} | 弃:{TotalDiscarded} | 复用:{ReuseRate:P1}";
@@ -76,9 +83,9 @@ public readonly struct PoolStats
 #endregion
 
 /// <summary>
-/// 通用对象池 - 用于管理对象的复用，减少 GC 压力
+/// 通用对象池 - 管理对象复用，减少 GC 压力和 instantiate() 开销
 /// </summary>
-/// <typeparam name="T">池化对象类型</typeparam>
+/// <typeparam name="T">池化对象类型，必须是引用类型</typeparam>
 /// <example>
 /// <code>
 /// // 创建 Node 对象池
@@ -99,356 +106,291 @@ public readonly struct PoolStats
 /// </example>
 public partial class ObjectPool<T> : RefCounted where T : class
 {
-    #region 信号
-    
-    [Signal] public delegate void InstanceAcquiredEventHandler(T instance);
-    [Signal] public delegate void InstanceReleasedEventHandler(T instance);
-    [Signal] public delegate void PoolExhaustedEventHandler();
-    [Signal] public delegate void PoolClearedEventHandler();
-    
-    #endregion
-
     #region 私有字段
-    
+
+    /// <summary>对象池存储，使用栈结构实现 LIFO（后进先出）</summary>
     private readonly Stack<T> _pool = new();
+
+    /// <summary>对象创建工厂函数</summary>
     private readonly Func<T> _factory;
-    private readonly PackedScene? _scene;
+
+    /// <summary>对象池配置</summary>
     private readonly ObjectPoolConfig _config;
-    
-    // 统计信息
+
+    /// <summary>当前活跃对象数量（已借出未归还）</summary>
     private int _activeCount;
+
+    /// <summary>预热阶段创建的对象数量，用于计算复用率</summary>
     private int _initialCreated;
+
+    /// <summary>历史峰值活跃数量</summary>
     private int _peakActive;
+
+    /// <summary>累计创建对象总数</summary>
     private int _totalCreated;
+
+    /// <summary>累计获取次数</summary>
     private int _totalAcquired;
+
+    /// <summary>累计归还次数</summary>
     private int _totalReleased;
+
+    /// <summary>累计丢弃次数（因池满而销毁）</summary>
     private int _totalDiscarded;
-    
+
     #endregion
 
     #region 公开属性
-    
+
     /// <summary>池名称</summary>
     public string PoolName => _config.Name;
-    
-    /// <summary>池中可用实例数量（空闲）</summary>
+
+    /// <summary>池中可用对象数量（空闲）</summary>
     public int AvailableCount => _pool.Count;
-    
-    /// <summary>当前活跃实例数量（已借出）</summary>
+
+    /// <summary>当前活跃对象数量（已借出）</summary>
     public int ActiveCount => _activeCount;
-    
+
     /// <summary>对象总数（活跃 + 空闲）</summary>
     public int TotalCount => _activeCount + _pool.Count;
-    
+
     /// <summary>池是否为空</summary>
     public bool IsEmpty => _pool.Count == 0;
-    
+
     /// <summary>池是否已满</summary>
     public bool IsFull => _config.MaxSize > 0 && _pool.Count >= _config.MaxSize;
-    
+
     #endregion
 
     #region 构造函数
-    
+
     /// <summary>
     /// 使用工厂函数创建对象池（适用于非 Node 对象）
     /// </summary>
     /// <param name="factory">对象创建工厂函数</param>
-    /// <param name="config">池配置</param>
-    public ObjectPool(Func<T> factory, ObjectPoolConfig? config = null)
+    /// <param name="config">池配置，为 null 则使用默认配置</param>
+    public ObjectPool(Func<T> factory, ObjectPoolConfig config = null)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _config = config ?? new ObjectPoolConfig();
-        
+
         if (_config.InitialSize > 0)
-        {
             Warmup(_config.InitialSize);
-        }
-        
+
         ObjectPoolManager.RegisterPool(this);
     }
-    
+
     /// <summary>
     /// 使用 PackedScene 创建对象池（适用于 Node 对象）
     /// </summary>
-    /// <param name="scene">要池化的场景</param>
-    /// <param name="config">池配置</param>
-    public ObjectPool(PackedScene scene, ObjectPoolConfig? config = null)
+    /// <param name="scene">要池化的场景资源</param>
+    /// <param name="config">池配置，为 null 则使用默认配置</param>
+    public ObjectPool(PackedScene scene, ObjectPoolConfig config = null)
     {
-        _scene = scene ?? throw new ArgumentNullException(nameof(scene));
+        if (scene == null) throw new ArgumentNullException(nameof(scene));
         _factory = () => (T)(object)scene.Instantiate();
         _config = config ?? new ObjectPoolConfig();
-        
+
         if (_config.InitialSize > 0)
-        {
             Warmup(_config.InitialSize);
-        }
-        
+
         ObjectPoolManager.RegisterPool(this);
     }
-    
+
     #endregion
 
     #region 核心方法
-    
+
     /// <summary>
     /// 预热池：提前创建指定数量的对象
     /// </summary>
-    /// <param name="count">要创建的数量</param>
+    /// <param name="count">要创建的对象数量</param>
     public void Warmup(int count)
     {
         for (int i = 0; i < count; i++)
         {
             var instance = CreateInstance();
             _initialCreated++;
-            
             PrepareForPool(instance);
             _pool.Push(instance);
         }
     }
-    
+
     /// <summary>
-    /// 从池中获取一个实例（非 Node 版本）
+    /// 从池中获取对象（非 Node 版本）
     /// </summary>
     /// <returns>对象实例</returns>
     public T Acquire()
     {
-        T instance;
-        
-        if (_pool.Count > 0)
-        {
-            instance = _pool.Pop();
-        }
-        else
-        {
-            instance = CreateInstance();
-            EmitSignal(SignalName.PoolExhausted);
-        }
-        
+        T instance = _pool.Count > 0 ? _pool.Pop() : CreateInstance();
+
         MarkAsActive(instance);
-        
-        // 调用生命周期回调
-        if (instance is IPoolable poolable)
-        {
-            poolable.OnPoolAcquire();
-        }
-        
-        if (_config.EnableStats)
-        {
-            _totalAcquired++;
-            _activeCount++;
-            if (_activeCount > _peakActive) _peakActive = _activeCount;
-        }
-        
-        EmitSignal(SignalName.InstanceAcquired, instance);
+        InvokeAcquireCallback(instance);
+        UpdateAcquireStats();
+
         return instance;
     }
-    
+
     /// <summary>
-    /// 从池中获取一个 Node 实例并添加到父节点
+    /// 从池中获取 Node 并添加到父节点
     /// </summary>
-    /// <param name="parent">父节点</param>
+    /// <param name="parent">父节点，Node 将被添加为其子节点</param>
     /// <returns>Node 实例</returns>
     public T Acquire(Node parent)
     {
         if (parent == null)
-            throw new ArgumentNullException(nameof(parent), $"ObjectPool[{_config.Name}].Acquire: parent 不能为 null");
-        
-        T instance;
-        
+            throw new ArgumentNullException(nameof(parent));
+
+        T instance = null;
+
         // 尝试从池中获取有效实例
         while (_pool.Count > 0)
         {
             var pooled = _pool.Pop();
-            if (pooled is Node node && GodotObject.IsInstanceValid(node))
+            if (pooled is Node node && !GodotObject.IsInstanceValid(node))
             {
-                instance = pooled;
-                goto Found;
+                GD.PushWarning($"ObjectPool[{_config.Name}]: 发现无效实例，已跳过");
+                continue;
             }
-            else if (pooled is not Node)
-            {
-                instance = pooled;
-                goto Found;
-            }
-            // 无效实例，继续查找
-            GD.PushWarning($"ObjectPool[{_config.Name}]: 发现无效实例，已跳过");
+            instance = pooled;
+            break;
         }
-        
-        // 池空，创建新实例
-        instance = CreateInstance();
-        EmitSignal(SignalName.PoolExhausted);
-        
-        Found:
+
+        // 池空则创建新实例
+        if (instance == null)
+        {
+            instance = CreateInstance();
+        }
+
         MarkAsActive(instance);
-        
-        // Node 特殊处理
+
+        // Node 特殊处理：管理场景树、可见性、处理状态
         if (instance is Node nodeInstance)
         {
-            // 如果已有父节点，先移除
-            nodeInstance.GetParent()?.RemoveChild(nodeInstance);
-            
-            // 添加到指定父节点
+            var currentParent = nodeInstance.GetParent();
+            if (currentParent != null)
+                currentParent.RemoveChild(nodeInstance);
+
             parent.AddChild(nodeInstance);
-            
-            // 显示
+
             if (nodeInstance is CanvasItem canvasItem)
-            {
                 canvasItem.Visible = true;
-            }
-            
-            // 启用处理
+
             nodeInstance.SetProcess(true);
             nodeInstance.SetPhysicsProcess(true);
         }
-        
-        // 调用生命周期回调
-        if (instance is IPoolable poolable)
-        {
-            poolable.OnPoolAcquire();
-        }
-        else if (instance is Node n && n.HasMethod("OnPoolAcquire"))
-        {
-            n.Call("OnPoolAcquire");
-        }
-        
-        if (_config.EnableStats)
-        {
-            _totalAcquired++;
-            _activeCount++;
-            if (_activeCount > _peakActive) _peakActive = _activeCount;
-        }
-        
-        EmitSignal(SignalName.InstanceAcquired, instance);
+
+        InvokeAcquireCallback(instance);
+        UpdateAcquireStats();
+
         return instance;
     }
-    
+
     /// <summary>
     /// 归还实例到池中
     /// </summary>
     /// <param name="instance">要归还的实例</param>
     /// <returns>是否成功归还</returns>
-    public bool Release(T? instance)
+    public bool Release(T instance)
     {
         if (instance == null)
         {
-            GD.PushWarning($"ObjectPool[{_config.Name}].Release: 尝试归还 null 实例");
+            GD.PushWarning($"ObjectPool[{_config.Name}].Release: null 实例");
             return false;
         }
-        
-        // Node 有效性检查
+
         if (instance is Node node && !GodotObject.IsInstanceValid(node))
         {
-            GD.PushWarning($"ObjectPool[{_config.Name}].Release: 尝试归还无效实例");
+            GD.PushWarning($"ObjectPool[{_config.Name}].Release: 无效实例");
             return false;
         }
-        
-        // 防止重复归还
+
         if (IsInPool(instance))
         {
             GD.PushWarning($"ObjectPool[{_config.Name}].Release: 实例已在池中");
             return true;
         }
-        
-        // Node 特殊处理
+
+        // Node 特殊处理：禁用处理、移除场景树、隐藏
         if (instance is Node nodeInstance)
         {
-            // 禁用处理
             nodeInstance.SetProcess(false);
             nodeInstance.SetPhysicsProcess(false);
-            
-            // 从场景树移除
-            nodeInstance.GetParent()?.RemoveChild(nodeInstance);
-            
-            // 隐藏
+
+            var currentParent = nodeInstance.GetParent();
+            if (currentParent != null)
+                currentParent.RemoveChild(nodeInstance);
+
             if (nodeInstance is CanvasItem canvasItem)
-            {
                 canvasItem.Visible = false;
-            }
         }
-        
-        // 调用生命周期回调
-        if (instance is IPoolable poolable)
-        {
-            poolable.OnPoolRelease();
-        }
-        else if (instance is Node n && n.HasMethod("OnPoolRelease"))
-        {
-            n.Call("OnPoolRelease");
-        }
-        
+
+        InvokeReleaseCallback(instance);
+
         if (_config.EnableStats)
         {
             _totalReleased++;
             _activeCount = Math.Max(0, _activeCount - 1);
         }
-        
-        // 检查池容量
+
+        // 池满则销毁，否则归还
         if (_config.MaxSize > 0 && _pool.Count >= _config.MaxSize)
         {
-            // 池满，销毁多余对象
             if (_config.EnableStats) _totalDiscarded++;
-            
             if (instance is Node n)
-            {
                 n.QueueFree();
-            }
         }
         else
         {
-            // 归还到池
             PrepareForPool(instance);
             _pool.Push(instance);
         }
-        
-        EmitSignal(SignalName.InstanceReleased, instance);
+
         return true;
     }
-    
+
     /// <summary>
     /// 批量获取实例
     /// </summary>
+    /// <param name="parent">父节点</param>
+    /// <param name="count">获取数量</param>
+    /// <returns>实例列表</returns>
     public List<T> AcquireBatch(Node parent, int count)
     {
         var result = new List<T>(count);
         for (int i = 0; i < count; i++)
-        {
             result.Add(Acquire(parent));
-        }
         return result;
     }
-    
+
     /// <summary>
     /// 批量归还实例
     /// </summary>
+    /// <param name="instances">要归还的实例集合</param>
     public void ReleaseBatch(IEnumerable<T> instances)
     {
         foreach (var instance in instances)
-        {
             Release(instance);
-        }
     }
-    
+
     /// <summary>
     /// 清理池中多余的对象，保留指定数量
     /// </summary>
-    /// <param name="retainCount">要保留的数量</param>
+    /// <param name="retainCount">要保留的对象数量</param>
     public void Cleanup(int retainCount)
     {
         retainCount = Math.Max(0, retainCount);
-        
         while (_pool.Count > retainCount)
         {
             var instance = _pool.Pop();
             if (instance is Node node && GodotObject.IsInstanceValid(node))
-            {
                 node.QueueFree();
-            }
             if (_config.EnableStats) _totalDiscarded++;
         }
     }
-    
+
     /// <summary>
-    /// 清空池，销毁所有缓存的实例
+    /// 清空池，销毁所有缓存的实例（不影响已借出的对象）
     /// </summary>
     public void Clear()
     {
@@ -456,34 +398,33 @@ public partial class ObjectPool<T> : RefCounted where T : class
         {
             var instance = _pool.Pop();
             if (instance is Node node && GodotObject.IsInstanceValid(node))
-            {
                 node.QueueFree();
-            }
         }
-        EmitSignal(SignalName.PoolCleared);
     }
-    
+
     /// <summary>
-    /// 销毁对象池
+    /// 销毁对象池，清空所有对象并从全局管理器注销
     /// </summary>
     public void Destroy()
     {
         Clear();
         ObjectPoolManager.UnregisterPool(this);
     }
-    
+
     /// <summary>
-    /// 获取统计信息
+    /// 获取池的统计信息
     /// </summary>
+    /// <returns>统计信息结构体</returns>
     public PoolStats GetStats()
     {
         float reuseRate = 0f;
         if (_totalAcquired > 0)
         {
+            // 复用次数 = 总获取 - 运行时新创建数
             var reused = _totalAcquired - (_totalCreated - _initialCreated);
             reuseRate = Math.Clamp((float)reused / _totalAcquired, 0f, 1f);
         }
-        
+
         return new PoolStats
         {
             Name = _config.Name,
@@ -498,56 +439,93 @@ public partial class ObjectPool<T> : RefCounted where T : class
             ReuseRate = reuseRate
         };
     }
-    
+
     #endregion
 
     #region 私有方法
-    
+
+    /// <summary>
+    /// 创建新对象实例
+    /// </summary>
     private T CreateInstance()
     {
         var instance = _factory();
-        
-        // 为 Node 设置元数据
+
+        // 为 Node 设置元数据标记
         if (instance is Node node)
         {
-            node.SetMeta("_object_pool", this);
-            node.SetMeta("_in_pool", false);
+            node.SetMeta("_object_pool", this);  // 记录所属池，用于静态归还
+            node.SetMeta("_in_pool", false);     // 标记不在池中
         }
-        
+
         if (_config.EnableStats) _totalCreated++;
-        
         return instance;
     }
-    
+
+    /// <summary>
+    /// 准备对象进入池中（隐藏、标记等）
+    /// </summary>
     private void PrepareForPool(T instance)
     {
         if (instance is Node node)
         {
             node.SetMeta("_in_pool", true);
-            
             if (node is CanvasItem canvasItem)
-            {
                 canvasItem.Visible = false;
-            }
         }
     }
-    
+
+    /// <summary>
+    /// 标记对象为活跃状态
+    /// </summary>
     private void MarkAsActive(T instance)
     {
         if (instance is Node node)
-        {
             node.SetMeta("_in_pool", false);
-        }
     }
-    
+
+    /// <summary>
+    /// 检查对象是否在池中
+    /// </summary>
     private bool IsInPool(T instance)
     {
         if (instance is Node node)
-        {
             return node.GetMeta("_in_pool", false).AsBool();
-        }
         return false;
     }
-    
+
+    /// <summary>
+    /// 调用对象的获取回调（支持 IPoolable 接口和约定方法）
+    /// </summary>
+    private void InvokeAcquireCallback(T instance)
+    {
+        if (instance is IPoolable poolable)
+            poolable.OnPoolAcquire();
+        else if (instance is Node n && n.HasMethod("OnPoolAcquire"))
+            n.Call("OnPoolAcquire");
+    }
+
+    /// <summary>
+    /// 调用对象的归还回调（支持 IPoolable 接口和约定方法）
+    /// </summary>
+    private void InvokeReleaseCallback(T instance)
+    {
+        if (instance is IPoolable poolable)
+            poolable.OnPoolRelease();
+        else if (instance is Node n && n.HasMethod("OnPoolRelease"))
+            n.Call("OnPoolRelease");
+    }
+
+    /// <summary>
+    /// 更新获取相关的统计数据
+    /// </summary>
+    private void UpdateAcquireStats()
+    {
+        if (!_config.EnableStats) return;
+        _totalAcquired++;
+        _activeCount++;
+        if (_activeCount > _peakActive) _peakActive = _activeCount;
+    }
+
     #endregion
 }
