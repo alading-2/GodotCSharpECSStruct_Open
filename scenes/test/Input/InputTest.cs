@@ -1,296 +1,217 @@
 using Godot;
-using System;
 using System.Collections.Generic;
+using System.Linq;
+
+namespace BrotatoMy.Test;
 
 /// <summary>
-/// 输入映射测试脚本
-/// 用于测试所有手柄和键盘输入是否正常工作
-/// 支持功能：
-/// - 移动输入测试（左摇杆/方向键）
-/// - 右摇杆输入测试
-/// - UI导航测试（方向键）
-/// - 面部按钮测试（ABXY）
-/// - 肩键测试（LB/RB）
-/// - 扳机键测试（LT/RT）
-/// - 系统按钮测试（Start/Select）
-/// - 手柄震动测试
-/// - 手柄连接状态检测
+/// 输入系统测试 - 深度重构版
+/// <para>本类展示了在 Godot 4.x 中使用 C# 处理输入的高级模式：</para>
+/// <list type="bullet">
+/// <item>PascalCase 映射: 与 project.godot 中的输入动作名称一致。</item>
+/// <item>记录类型 (record): 轻量级震动配置数据结构。</item>
+/// <item>模拟量反馈: 实时显示左右摇杆的坐标值。</item>
+/// <item>事件驱动: 响应手柄热插拔事件。</item>
+/// </list>
 /// </summary>
 public partial class InputTest : Node2D
 {
-	// UI元素引用
-	private Label _label; // 主日志显示标签
-	private Label _vibrationLabel; // 震动状态显示标签
+	// --- UI 节点引用 ---
+	[Export] private Label _logLabel = null!;
+	[Export] private Label _vibrationLabel = null!;
+	[Export] private Label _stickLabel = null!;
 
-	// 日志相关变量
-	private List<string> _testLog = new List<string>(); // 存储测试日志的列表
-	private const int MaxLogLines = 20; // 最大显示日志行数
+	// --- 数据存储 ---
+	private readonly List<string> _logs = [];
+	private const int MaxLogLines = 20;
 
-	// 震动相关变量
-	private float _vibrationTimer = 0.0f; // 震动持续时间计时器
+	// --- 震动状态变量 ---
+	private float _vibrationTimer;
+	private VibrationProfile? _currentVibration;
 
 	/// <summary>
-	/// 节点就绪时调用
-	/// 初始化测试环境和显示信息
+	/// 定义震动配置记录 (C# record)
 	/// </summary>
+	private record VibrationProfile(float Weak, float Strong, float Duration, string Description);
+
+	/// <summary>
+	/// 动作映射表：驱动化设计的核心
+	/// 直接使用字符串，保持简单直观
+	/// </summary>
+	private static readonly Dictionary<string, (string Desc, VibrationProfile? Vib)> ActionMap = new()
+	{
+		["BtnA"] = ("A键 (确认/跳跃)", new(0.5f, 0.0f, 0.15f, "轻触反馈")),
+		["BtnB"] = ("B键 (取消/后退)", new(0.0f, 1.0f, 0.30f, "重击反馈")),
+		["BtnX"] = ("X键 (攻击)", new(0.5f, 0.5f, 0.20f, "混合震动")),
+		["BtnY"] = ("Y键 (特殊)", null),
+
+		["BtnLB"] = ("LB (左肩键)", new(0.8f, 0.0f, 0.10f, "左侧点震")),
+		["BtnRB"] = ("RB (右肩键)", new(0.0f, 1.0f, 0.10f, "右侧点震")),
+
+		["BtnStart"] = ("Start (暂停)", null),
+		["BtnSelect"] = ("Select (地图)", null),
+
+		["UiUp"] = ("UI 上", null),
+		["UiDown"] = ("UI 下", null),
+		["UiLeft"] = ("UI 左", null),
+		["UiRight"] = ("UI 右", null),
+	};
+
 	public override void _Ready()
 	{
-		// 获取UI元素引用
-		_label = GetNode<Label>("CanvasLayer/Label");
-		_vibrationLabel = GetNode<Label>("CanvasLayer/VibrationLabel");
+		_logLabel ??= GetNode<Label>("CanvasLayer/Label");
+		_vibrationLabel ??= GetNode<Label>("CanvasLayer/VibrationLabel");
+		_stickLabel ??= GetNode<Label>("CanvasLayer/StickLabel");
 
-		// 添加测试标题和说明信息
-		AddLog("=== 输入映射测试 ===");
-		AddLog("开始测试所有输入...");
-		AddLog("请按任意按钮测试");
-		AddLog("");
-		
-		// 初始化震动状态显示
-		UpdateVibrationStatus(0, 0, 0);
+		Log("=== 输入系统测试 (C# PascalCase) ===");
+		Log("等待输入...");
+
+		CheckConnectedControllers();
+		Input.JoyConnectionChanged += OnJoyConnectionChanged;
 	}
 
-	/// <summary>
-	/// 每帧调用的处理函数
-	/// 处理震动计时器和模拟输入测试
-	/// </summary>
-	/// <param name="delta">帧间隔时间（秒）</param>
+	public override void _ExitTree()
+	{
+		Input.JoyConnectionChanged -= OnJoyConnectionChanged;
+		StopVibration();
+	}
+
 	public override void _Process(double delta)
 	{
-		// 处理震动计时器
-		if (_vibrationTimer > 0)
-		{
-			_vibrationTimer -= (float)delta;
-			// 震动结束后重置状态
-			if (_vibrationTimer <= 0)
-			{
-				UpdateVibrationStatus(0, 0, 0);
-			}
-		}
-
-		// 测试移动输入（左摇杆/方向键）
-		// 使用 GetVector 获取模拟输入，支持平滑过渡
-		Vector2 moveDir = Input.GetVector("move_left", "move_right", "move_up", "move_down");
-		if (moveDir.Length() > 0.1f) // 阈值过滤，避免微小输入触发
-		{
-			AddLog($"移动: {moveDir.X:F2}, {moveDir.Y:F2}");
-		}
-
-		// 测试右摇杆输入
-		Vector2 stickRight = Input.GetVector("stick_right_left", "stick_right_right", "stick_right_up", "stick_right_down");
-		if (stickRight.Length() > 0.1f) // 阈值过滤
-		{
-			AddLog($"右摇杆: {stickRight.X:F2}, {stickRight.Y:F2}");
-		}
+		ProcessVibration((float)delta);
+		ProcessAnalogs();
 	}
 
-	/// <summary>
-	/// 处理输入事件
-	/// 检测并记录所有按键和按钮的按下事件
-	/// </summary>
-	/// <param name="event">输入事件对象</param>
 	public override void _Input(InputEvent @event)
 	{
-		// 测试 UI 导航键
-		if (@event.IsActionPressed("ui_up"))
-		{
-			AddLog("✓ UI 上");
-		}
-		if (@event.IsActionPressed("ui_down"))
-		{
-			AddLog("✓ UI 下");
-		}
-		if (@event.IsActionPressed("ui_left"))
-		{
-			AddLog("✓ UI 左");
-		}
-		if (@event.IsActionPressed("ui_right"))
-		{
-			AddLog("✓ UI 右");
-		}
+		if (@event.IsEcho()) return;
 
-		// 测试面部按钮 (ABXY)
-		if (@event.IsActionPressed("btn_a"))
+		foreach (var (action, (desc, vib)) in ActionMap)
 		{
-			AddLog("✓ A 键：确认/跳跃 (轻震动)");
-			// 轻微震动：低频 0.5，持续 0.2秒
-			StartVibration(0.5f, 0.0f, 0.2f, "A键: 轻震动");
-		}
-
-		if (@event.IsActionPressed("btn_b"))
-		{
-			AddLog("✓ B 键：取消/后退 (重震动)");
-			// 强烈震动：高频 1.0，持续 0.5秒
-			StartVibration(0.0f, 1.0f, 0.5f, "B键: 重震动");
-		}
-
-		if (@event.IsActionPressed("btn_x"))
-		{
-			AddLog("✓ X 键：攻击/菜单 (混合震动)");
-			// 混合震动：低频 0.5 + 高频 0.5，持续 0.3秒
-			StartVibration(0.5f, 0.5f, 0.3f, "X键: 混合震动");
-		}
-
-		if (@event.IsActionPressed("btn_y"))
-		{
-			AddLog("✓ Y 键：特殊动作/物品栏");
-		}
-
-		// 测试肩键 (LB/RB)
-		if (@event.IsActionPressed("btn_lb"))
-		{
-			AddLog("✓ LB：左肩键 (心跳震动)");
-			// 心跳震动模拟：低频 0.8，持续 0.1秒
-			StartVibration(0.8f, 0.0f, 0.1f, "LB: 心跳(砰)");
-		}
-
-		if (@event.IsActionPressed("btn_rb"))
-		{
-			AddLog("✓ RB：右肩键 (高频震动)");
-			// 高频点震：高频 1.0，持续 0.1秒
-			StartVibration(0.0f, 1.0f, 0.1f, "RB: 高频点震");
-		}
-
-		// 测试扳机键 (LT/RT)
-		if (@event.IsActionPressed("btn_lt"))
-		{
-			// 获取扳机键的按压强度 (0.0-1.0)
-			float strength = Input.GetActionStrength("btn_lt");
-			AddLog($"✓ LT：左扳机 (力度: {strength:F2})");
-		}
-
-		if (@event.IsActionPressed("btn_rt"))
-		{
-			// 获取扳机键的按压强度 (0.0-1.0)
-			float strength = Input.GetActionStrength("btn_rt");
-			AddLog($"✓ RT：右扳机 (力度: {strength:F2})");
-
-			// 根据扳机力度产生震动反馈
-			if (strength > 0.1f) // 阈值过滤
+			if (@event.IsActionPressed(action))
 			{
-				// 震动强度与扳机力度成正比
-				StartVibration(strength * 0.5f, strength, 0.1f, "RT: 扳机反馈");
+				Log($"[按钮] {desc}");
+				if (vib != null) TriggerVibration(vib);
 			}
 		}
 
-		// 测试系统按钮
-		if (@event.IsActionPressed("btn_start"))
-		{
-			AddLog("✓ Start：暂停/菜单");
-		}
-		if (@event.IsActionPressed("btn_select"))
-		{
-			AddLog("✓ Select：地图/信息");
-		}
+		HandleTrigger("BtnLT", "LT");
+		HandleTrigger("BtnRT", "RT", useVibration: true);
 	}
 
-	/// <summary>
-	/// 添加日志信息到显示
-	/// </summary>
-	/// <param name="message">要添加的日志消息</param>
-	private void AddLog(string message)
+	private void HandleTrigger(string action, string name, bool useVibration = false)
 	{
-		// 添加新消息到列表开头（最新消息在顶部）
-		_testLog.Insert(0, message);
-
-		// 限制日志行数，超过最大行数则删除最旧的消息
-		if (_testLog.Count > MaxLogLines)
+		if (Input.IsActionJustPressed(action))
 		{
-			_testLog.RemoveAt(_testLog.Count - 1);
-		}
+			float strength = Input.GetActionStrength(action);
+			Log($"[扳机] {name} 按下 (力度: {strength:P0})");
 
-		// 更新UI显示
-		UpdateLabel();
-	}
-
-	/// <summary>
-	/// 更新日志标签显示
-	/// 将日志列表内容转换为文本并显示在标签上
-	/// </summary>
-	private void UpdateLabel()
-	{
-		if (_label != null) // 确保标签存在
-		{
-			_label.Text = string.Join("\n", _testLog); // 将日志列表用换行符连接为字符串
-		}
-	}
-
-	/// <summary>
-	/// 处理节点通知
-	/// </summary>
-	/// <param name="what">通知类型常量</param>
-	public override void _Notification(int what)
-	{
-		// 当窗口获得焦点时检测手柄连接状态
-		if (what == NotificationWMWindowFocusIn)
-		{
-			CheckJoypadConnection();
-		}
-	}
-
-	/// <summary>
-	/// 检测并记录连接的手柄信息
-	/// </summary>
-	private void CheckJoypadConnection()
-	{
-		// 获取所有连接的手柄ID列表
-		Godot.Collections.Array<int> joypads = Input.GetConnectedJoypads();
-		if (joypads.Count > 0)
-		{
-			// 遍历所有连接的手柄，记录其名称和ID
-			foreach (int joypadId in joypads)
+			if (useVibration)
 			{
-				string joypadName = Input.GetJoyName(joypadId);
-				AddLog($"手柄已连接: {joypadName} (ID: {joypadId})");
+				TriggerVibration(new(strength * 0.5f, strength, 0.2f, "扳机动态反馈"));
 			}
+		}
+	}
+
+	private void ProcessAnalogs()
+	{
+		// 获取左摇杆/WASD
+		var move = Input.GetVector("MoveLeft", "MoveRight", "MoveUp", "MoveDown");
+
+		// 获取右摇杆
+		var aim = Input.GetVector("StickRightLeft", "StickRightRight", "StickRightUp", "StickRightDown");
+
+		// 实时更新 UI 显示摇杆数值，解决“没反应”的问题
+		UpdateStickUI(move, aim);
+	}
+
+	private void UpdateStickUI(Vector2 move, Vector2 aim)
+	{
+		_stickLabel.Text = "=== 摇杆数值 (实时) ===\n" +
+						   $"左摇杆 (Move): ({move.X,5:F2}, {move.Y,5:F2})\n" +
+						   $"右摇杆 (Aim) : ({aim.X,5:F2}, {aim.Y,5:F2})";
+
+		// 如果有明显输入，改变颜色提示
+		if (move.LengthSquared() > 0.01f || aim.LengthSquared() > 0.01f)
+			_stickLabel.AddThemeColorOverride("font_color", Colors.Cyan);
+		else
+			_stickLabel.RemoveThemeColorOverride("font_color");
+	}
+
+	private void ProcessVibration(float delta)
+	{
+		if (_vibrationTimer > 0)
+		{
+			_vibrationTimer -= delta;
+			if (_vibrationTimer <= 0)
+			{
+				StopVibration();
+			}
+			else if (_currentVibration != null)
+			{
+				UpdateVibrationUI(_currentVibration, _vibrationTimer);
+			}
+		}
+	}
+
+	private void TriggerVibration(VibrationProfile profile)
+	{
+		_currentVibration = profile;
+		_vibrationTimer = profile.Duration;
+		Input.StartJoyVibration(0, profile.Weak, profile.Strong, profile.Duration);
+		UpdateVibrationUI(profile, profile.Duration);
+	}
+
+	private void StopVibration()
+	{
+		Input.StopJoyVibration(0);
+		_vibrationTimer = 0;
+		_currentVibration = null;
+		_vibrationLabel.Text = "震动状态: 空闲";
+		_vibrationLabel.RemoveThemeColorOverride("font_color");
+	}
+
+	private void UpdateVibrationUI(VibrationProfile profile, float remaining)
+	{
+		_vibrationLabel.Text = $"震动中: {profile.Description}\n" +
+							   $"强度: L:{profile.Weak:F1} / H:{profile.Strong:F1}\n" +
+							   $"剩余: {remaining:F2}s";
+		_vibrationLabel.AddThemeColorOverride("font_color", Colors.Salmon);
+	}
+
+	private void OnJoyConnectionChanged(long device, bool connected)
+	{
+		string status = connected ? "已连接" : "已断开";
+		Log($"[系统] 手柄 {device} {status}");
+		if (connected)
+		{
+			Log($"      型号: {Input.GetJoyName((int)device)}");
+		}
+	}
+
+	private void CheckConnectedControllers()
+	{
+		var joys = Input.GetConnectedJoypads();
+		if (joys.Count == 0)
+		{
+			Log("[系统] 未检测到手柄");
 		}
 		else
 		{
-			AddLog("未检测到手柄");
+			foreach (var id in joys)
+			{
+				Log($"[系统] 检测到手柄 ID: {id}, {Input.GetJoyName(id)}");
+			}
 		}
 	}
 
-	/// <summary>
-	/// 启动手柄震动
-	/// </summary>
-	/// <param name="weak">低频马达强度 (0.0-1.0)</param>
-	/// <param name="strong">高频马达强度 (0.0-1.0)</param>
-	/// <param name="duration">震动持续时间 (秒)</param>
-	/// <param name="desc">震动描述信息</param>
-	private void StartVibration(float weak, float strong, float duration, string desc = "")
+	private void Log(string message)
 	{
-		// 启动手柄震动（使用第一个手柄ID 0）
-		Input.StartJoyVibration(0, weak, strong, duration);
-		// 设置震动计时器
-		_vibrationTimer = duration;
-		// 更新震动状态显示
-		UpdateVibrationStatus(weak, strong, duration, desc);
-	}
-
-	/// <summary>
-	/// 更新震动状态显示
-	/// </summary>
-	/// <param name="weak">低频马达强度 (0.0-1.0)</param>
-	/// <param name="strong">高频马达强度 (0.0-1.0)</param>
-	/// <param name="duration">震动剩余时间 (秒)</param>
-	/// <param name="desc">震动描述信息</param>
-	private void UpdateVibrationStatus(float weak, float strong, float duration, string desc = "")
-	{
-		if (_vibrationLabel != null) // 确保震动标签存在
+		_logs.Insert(0, message);
+		if (_logs.Count > MaxLogLines)
 		{
-			if (duration > 0) // 正在震动中
-			{
-				// 更新震动状态文本
-				_vibrationLabel.Text = $"震动状态: {desc}\n低频强度: {weak:F2}\n高频强度: {strong:F2}\n剩余时间: {duration:F2} s";
-				// 设置震动中颜色为红色
-				_vibrationLabel.AddThemeColorOverride("font_color", new Color(1, 0.2f, 0.2f));
-			}
-			else // 震动已停止
-			{
-				// 更新为待机状态文本
-				_vibrationLabel.Text = "震动状态: 无\n低频强度: 0.00\n高频强度: 0.00\n等待触发...";
-				// 设置待机颜色为橙色
-				_vibrationLabel.AddThemeColorOverride("font_color", new Color(1, 0.5f, 0));
-			}
+			_logs.RemoveAt(_logs.Count - 1);
 		}
+		_logLabel.Text = string.Join('\n', _logs);
 	}
 }
