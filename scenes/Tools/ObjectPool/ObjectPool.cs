@@ -128,7 +128,7 @@ public class ObjectPool<T> : IObjectPool where T : class
     public event Action<T>? OnInstanceRelease;
 
     /// <summary> 获取池的名称 </summary>
-    public string PoolName => _config.Name;
+    public string PoolName => _config.Name ?? "UnnamedPool";
     /// <summary> 获取池内对象的具体 Type </summary>
     public Type ItemType => typeof(T);
     /// <summary> 当前池内闲置对象的数量 </summary>
@@ -193,6 +193,11 @@ public class ObjectPool<T> : IObjectPool where T : class
     private T CreateNew()
     {
         var obj = _createFunc();
+        if (obj is Node node)
+        {
+            node.GetData().Set("ObjectPool", this);
+            node.GetData().Set("InPool", false); // 初始状态不在池中
+        }
         _stats.TotalCreated++;
         return obj;
     }
@@ -202,6 +207,7 @@ public class ObjectPool<T> : IObjectPool where T : class
     {
         if (obj is Node node)
         {
+            node.GetData().Set("InPool", true);
             // 关键：停止节点的所有处理逻辑（PhysicsProcess, Process, Input 等）
             node.ProcessMode = Node.ProcessModeEnum.Disabled;
             // 隐藏节点，避免渲染开销
@@ -238,6 +244,9 @@ public class ObjectPool<T> : IObjectPool where T : class
         // 执行 Godot 激活逻辑
         if (obj is Node node)
         {
+            // 标记对象已出池
+            node.GetData().Set("InPool", false);
+
             // 恢复节点的处理能力
             node.ProcessMode = Node.ProcessModeEnum.Inherit;
             // 显示节点
@@ -322,25 +331,30 @@ public class ObjectPool<T> : IObjectPool where T : class
     {
         if (obj == null) return;
 
-        // 核心：解除映射关系
-        // 如果解除失败，说明对象已经被归还过，或者根本没有注册
-        // 这可以有效防止 Double-Free (重复归还) 导致的逻辑错误
+        // 1. 检查是否已经在池中 (对标 GDScript 的 meta 检查)
+        if (obj is Node node && node.GetData().Get<bool>("InPool"))
+        {
+            GD.PushWarning($"[ObjectPool] {PoolName}: 实例 {obj} 已在池中。已忽略。");
+            return;
+        }
+
+        // 2. 解除映射关系 (Manager 侧的安全检查)
         if (!ObjectPoolManager.UnregisterInstance(obj))
         {
-            GD.PushWarning($"[ObjectPool] 试图归还一个未注册或已归还的对象: {obj}。已忽略。");
+            GD.PushWarning($"[ObjectPool] {PoolName}: 试图归还一个未注册或已归还的对象: {obj}。已忽略。");
             return;
         }
 
         _stats.ActiveCount--;
         _stats.TotalReleased++;
 
-        // 1. 生命周期回调: 清理
+        // 3. 生命周期回调: 清理
         if (obj is IPoolable poolable) poolable.OnPoolRelease();
 
-        // 2. 外部重置回调
+        // 4. 外部重置回调
         _resetMethod?.Invoke(obj);
 
-        // 3. 生命周期回调: 重置数据
+        // 5. 生命周期回调: 重置数据
         if (obj is IPoolable poolableReset) poolableReset.OnPoolReset();
 
         OnInstanceRelease?.Invoke(obj);
@@ -492,6 +506,7 @@ public static class ObjectPoolManager
 
     /// <summary>
     /// 静态归还方法（核心功能）
+    /// 非常有必要，且是对象池系统的核心便利功能。
     /// 自动查找对象所属的对象池并执行归还操作。
     /// 建议对象在销毁前直接调用此方法，无需关心自己属于哪个池。
     /// </summary>
@@ -501,9 +516,24 @@ public static class ObjectPoolManager
         if (instance == null) return;
 
         IObjectPool? pool = null;
-        lock (_lock)
+
+        // 1. 优先从 Node Data 中获取关联的池 (对标 GDScript 的 static return_to_pool 逻辑)
+        if (instance is Node node && node.HasData())
         {
-            _instanceMap.TryGetValue(instance, out pool);
+            var data = node.GetData();
+            if (data.TryGetValue<IObjectPool>("ObjectPool", out var p))
+            {
+                pool = p;
+            }
+        }
+
+        // 2. 如果没找到，从全局映射字典中查找 (兼容非 Node 对象或 Data 丢失的情况)
+        if (pool == null)
+        {
+            lock (_lock)
+            {
+                _instanceMap.TryGetValue(instance, out pool);
+            }
         }
 
         if (pool != null)
@@ -514,7 +544,7 @@ public static class ObjectPoolManager
         {
             // 如果对象不属于任何池，则按 Godot 标准流程销毁，确保不会出现内存泄漏
             GD.PushWarning($"[ObjectPoolManager] 实例 {instance} 未在任何对象池中注册。将退回到 QueueFree/Dispose。");
-            if (instance is Node node) node.QueueFree();
+            if (instance is Node fallbackNode) fallbackNode.QueueFree();
             else if (instance is IDisposable disposable) disposable.Dispose();
         }
     }

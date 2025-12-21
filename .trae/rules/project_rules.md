@@ -1,218 +1,164 @@
-# 项目规则
+# 项目规则 - Godot 4.5 C# (.NET 8.0)
 
-## 1. 项目基本信息
+## 1. 核心工具类（默认使用）
 
-- **项目名称**: 复刻土豆兄弟 (Brotato-like)
-- **项目类型**: 2D Rogue-like 独立游戏
-- **游戏引擎**: Godot Engine 4.5
-- **开发语言**: C# (.NET 8.0)
-- **项目版本**: 1.0.0
+### 1.1 日志系统 (Log)
 
-## 2. 项目结构规范
+```csharp
+// 推荐用法：每个类声明一个静态实例
+private static readonly Log _log = new Log("ClassName");
 
-### 2.1 目录结构
+_log.Trace("细粒度追踪");  // [Conditional("DEBUG")]，Release 零开销
+_log.Debug("调试信息");    // [Conditional("DEBUG")]
+_log.Info("普通信息");
+_log.Success("成功提示");
+_log.Warn("警告");         // 自动推送到 Debugger 面板
+_log.Error("错误");        // 自动推送到 Debugger 面板
 
-```
-brotato-my/
-├── assets/              # 游戏资源目录
-│   ├── character/       # 角色资源
-│   ├── environment/     # 环境资源
-│   ├── items/           # 物品资源
-│   ├── enemies/         # 敌人资源
-│   ├── ui/              # UI资源
-│   ├── audio/           # 音频资源
-│   └── fonts/           # 字体资源
-├── scenes/              # 场景文件目录
-│   ├── entity/          # 实体场景
-│   │   ├── unit/        # 单位（玩家、敌人）
-│   │   ├── items/       # 物品实体
-│   │   └── effects/     # 特效
-│   ├── ui/              # UI场景
-│   ├── levels/          # 关卡场景
-│   └── test/            # 测试场景
-├── scripts/             # C#脚本文件目录
-│   ├── core/            # 核心系统脚本 (如 EventBus, GameState)
-│   ├── entity/          # 实体脚本 (Player, Enemy)
-│   ├── components/      # 组件脚本 (HealthComponent, HitboxComponent)
-│   ├── resources/       # 自定义资源定义 (WeaponData, EnemyData)
-│   ├── ui/              # UI脚本
-│   └── utils/           # 工具脚本
-├── data/                # 游戏数据目录
-│   ├── config/          # 配置文件
-│   ├── balance/         # 平衡数据 (Resource资源文件)
-│   └── localization/    # 本地化数据
-└── project.godot        # Godot项目文件
+// 全局配置
+Log.GlobalLevel = LogLevel.Info;  // 发布版本建议 Info 或更高
+Log.SetLevel("ClassName", LogLevel.Debug);  // 针对特定类调试
 ```
 
-### 2.2 文件命名规范
+### 1.2 动态数据容器 (Data)
 
-- **场景文件 (.tscn)**: 使用 PascalCase，如 `Player.tscn`, `MainMenu.tscn`
-- **C#脚本文件 (.cs)**: 使用 PascalCase，如 `PlayerController.cs`, `EnemySpawner.cs`
-- **资源文件**: 使用 snake_case，如 `hero_guangfa.png`, `weapon_data_pistol.tres`
-- **目录名称**: 使用 snake_case，如 `character_assets`, `ui_scenes`
+```csharp
+// Node 扩展方法，自动管理生命周期
+var data = node.GetData();
+data.Set("HP", 100);
+int hp = data.Get<int>("HP", 0);
+data.Add("Score", 10);  // 累加
+data.Multiply("Damage", 1.5f);  // 乘法
 
-## 3. Godot C# 引擎特定规则
+// 监听变化
+data.On("HP", (oldVal, newVal) => { /* 处理 */ });
+```
 
-### 3.1 C# 脚本编写规范
+### 1.3 对象池 (ObjectPool)
 
-- **类定义**: 必须使用 `public partial class`，类名必须与文件名一致。
-- **命名空间**: 采用 **混合策略 (Hybrid Strategy)**：
-  - **全局命名空间 (Global Namespace)**: 适用于高频使用的核心类，如工具 (`Log`, `ObjectPool`)、组件 (`HealthComponent`)、核心实体 (`Player`)。避免繁琐的 `using`。
-  - **特定命名空间**:
-    - **测试代码**: 必须使用 `namespace BrotatoMy.Tests`，防止测试类污染全局智能提示。
-    - **第三方库**: 必须封装在独立命名空间中。
-    - **模块化子系统**: 仅当确实存在命名冲突风险时使用。
-- **静态导入**: 推荐使用 `using static Godot.GD;` 以简化 `GD.Print` 等调用。
-- **属性导出**: 使用 `[Export]` 特性导出属性，方便在编辑器调整。
-- **类型安全**: 优先使用 `GetNode<T>("Path")` 泛型方法，避免显式类型转换。
+**强制使用场景**: 子弹、伤害数字、特效、敌人（高频生成）
 
-**标准脚本模板**:
+```csharp
+// 初始化（在 _Ready 中）
+private ObjectPool<Bullet> _bulletPool;
+
+public override void _Ready()
+{
+    _bulletPool = new ObjectPool<Bullet>(
+        () => BulletScene.Instantiate<Bullet>(),
+        new ObjectPoolConfig { Name = "BulletPool", InitialSize = 50, MaxSize = 200 }
+    );
+}
+
+// 获取
+var bullet = _bulletPool.Spawn(this);
+
+// 归还（推荐静态方法，对象无需持有池引用）
+ObjectPoolManager.ReturnToPool(bullet);
+
+// 实现 IPoolable 接口（可选）
+public partial class Bullet : Area2D, IPoolable
+{
+    public void OnPoolAcquire() { /* 取出时重置状态 */ }
+    public void OnPoolReset() { /* 归还时重置数据 */ }
+}
+```
+
+## 2. C# 脚本规范
+
+### 2.1 标准模板
 
 ```csharp
 using Godot;
 using System;
-using static Godot.GD;
 
-public partial class MyPlayer : CharacterBody2D
+public partial class MyClass : Node
 {
+    private static readonly Log _log = new Log("MyClass");
     [Export] public float Speed { get; set; } = 400.0f;
-    // ...
 }
 ```
 
-### 3.2 信号与事件 (Signal vs Event)
+### 2.2 关键规则
 
-**核心原则**: 默认优先使用 **C# 原生事件 (`event Action`)**，仅在特定场景使用 Godot 信号。
+- **类定义**: `public partial class`，类名 = 文件名
+- **命名空间**: 默认不使用（全局命名空间）
+  - 测试代码必须用 `namespace BrotatoMy.Test`
+  - 第三方库必须独立命名空间
+- **事件**: 优先使用 C# 原生事件 `event Action<T>`，务必在 `_ExitTree` 解绑
 
-- **C# 原生事件 (推荐)**:
+## 3. 架构模式
 
-  - **适用场景**: 纯代码逻辑交互、架构解耦、高性能需求。
-  - **优点**: 编译期类型检查、性能极高、无字符串依赖。
-  - **写法**: `public event Action<int> OnHealthChanged;`
-  - **触发**: `OnHealthChanged?.Invoke(currentHp);`
-  - **订阅**: `obj.OnHealthChanged += HandleChange;` (务必在 `_ExitTree` 或适当时机 `+=` 解绑，防止内存泄漏)。
+### 3.1 组件化
 
-- **Godot 信号 (`[Signal]`)**:
-  - **适用场景**:
-    1. 需要在编辑器 Inspector 面板进行连线。
-    2. 与 GDScript 代码交互。
-    3. 连接引擎内置信号 (如 `Button.Pressed`, `Area2D.BodyEntered`)。
-  - **注意**: 避免使用字符串连接信号，使用 C# 事件风格语法 `button.Pressed += OnPressed;`。
+- 优先组合而非继承
+- 功能封装为独立 Node 组件（`HealthComponent`, `VelocityComponent`）
 
-### 3.3 数据驱动与存档
+### 3.2 有限状态机 (FSM)
 
-- **静态配置数据 (Resource)**:
+- 复杂逻辑必须使用状态机
+- 推荐：纯 C# 类实现 `IState` 接口，不继承 Node
 
-  - 使用继承自 `Resource` 的类存储游戏配置（如武器属性、敌人数值）。
-  - 必须添加 `[GlobalClass]` 特性以便在编辑器中创建。
-  - 文件扩展名为 `.tres`。
-  - 示例: `WeaponData.cs` 定义结构，编辑器中创建 `pistol.tres` 配置数值。
+### 3.3 事件总线
 
-- **动态存档数据 (JSON)**:
-  - 使用纯 C# 类 (POCO) 定义存档结构。
-  - 使用 `System.Text.Json` 进行序列化/反序列化。
-  - 不要尝试序列化 Godot 节点或 Resource 为存档，仅保存数据状态。
+```csharp
+public static class EventBus
+{
+    public static event Action OnPlayerDied;
+}
+// 注意：静态事件必须在 _ExitTree 手动解绑
+```
 
-### 3.4 常用数据结构选择
+## 4. 性能与安全
 
-- **List<T>**: 通用列表，但查找慢。
-- **Dictionary<TKey, TValue>**: 需要按 ID 快速查找物品/技能时使用 (O(1) 复杂度)。
-- **HashSet<T>**: 需要快速判断“是否存在”或去重时使用 (如已解锁成就列表)。
-- **Queue<T>**: 先进先出 (对话系统、输入缓冲)。
-- **Stack<T>**: 后进先出 (UI 窗口层级管理)。
+### 4.1 Static 变量禁忌（重要）
 
-## 4. 资源使用规则
+- **严禁** `static` 变量存储 `Node`、`Resource` 或任何 `GodotObject`
+- **安全**: 纯 C# 数据（string, int, struct, POCO）
+- **后果**: 场景切换后 `ObjectDisposedException` 或内存泄漏
 
-### 4.1 解包游戏资源使用
+### 4.2 GC 优化（热路径）
 
-- **解包游戏路径**: `E:\Godot\Games\steam解包游戏\土豆兄弟`
-- **资源引用方式**:
-  1. 仅允许引用解包资源作为参考和学习
-  2. 禁止直接复制解包资源到项目中
-  3. 所有最终使用的资源必须进行修改或重新创建，确保不侵犯原游戏版权
-  4. 解包资源仅用于：
-     - 了解游戏机制和设计思路
-     - 参考美术风格和动画效果
-     - 分析游戏平衡数据
+**`_Process` / `_PhysicsProcess` 禁止**:
 
-### 4.2 资源创建规范
+- `new` 引用类型（Class, List, Array, Delegate）
+- 字符串拼接（`"Score: " + score`）
+- LINQ（`Where`, `Select`）
 
-- 美术资源：优先使用原创或开源资源
-- 音频资源：使用免费或购买的版权音乐和音效
-- UI 资源：保持与游戏风格一致的设计
+**推荐**:
 
-## 5. 代码规范与架构
+- 使用 `Vector2`, `Rect2`, `Color`（结构体，零 GC）
+- 成员变量缓存集合，用 `Clear()` 复用
 
-### 5.1 架构模式
+### 4.3 数据结构选择
 
-- **组件化 (Component-based)**:
+- `List<T>`: 通用列表
+- `Dictionary<K,V>`: 快速查找（O(1)）
+- `HashSet<T>`: 去重/存在性判断
+- `Queue<T>`: FIFO（对话系统）
+- `Stack<T>`: LIFO（UI 层级）
 
-  - 优先使用组合而非继承。
-  - 功能封装为独立 Node 组件 (如 `HealthComponent`, `VelocityComponent`)。
-  - 实体 (Player/Enemy) 仅作为容器组装组件。
+## 5. 数据驱动
 
-- **有限状态机 (FSM)**:
+### 5.1 静态配置 (Resource)
 
-  - 复杂逻辑 (如玩家/Boss 行为) 必须使用状态机。
-  - **推荐实现**: 使用纯 C# 类实现 `IState` 接口，而非为每个状态创建一个 Node。
-  - 状态类不继承 Node，由宿主对象在 `_Process` 中驱动 `CurrentState.Update()`。
+```csharp
+[GlobalClass]
+public partial class WeaponData : Resource
+{
+    [Export] public int Damage { get; set; }
+}
+// 编辑器创建 .tres 文件
+```
 
-- **事件总线 (Event Bus)**:
+### 5.2 动态存档 (JSON)
 
-  - 使用 **静态类 + 静态 C# 事件** 实现全局解耦。
-  - 示例: `public static class EventBus { public static event Action OnPlayerDied; }`
-  - 注意: 静态事件必须在接收者销毁时 (`_ExitTree`) 手动解绑，否则会导致严重内存泄漏。
+- 使用 POCO 类 + `System.Text.Json`
+- 不序列化 Node 或 Resource
 
-- **对象池 (Object Pooling)**:
-  - 高频生成的对象 (子弹、伤害数字、特效) **必须** 使用对象池。
-  - 禁止在战斗中频繁 `Instantiate` 和 `QueueFree`。
-  - 使用 `Hide()`/`Show()` 和重置状态代替销毁/创建。
-  - **重要**: 严禁使用 `static` 变量持有包含 Godot 节点 (Node) 的对象池，必须随场景管理器生灭。
+## 6. 文件命名规范 (统一 PascalCase)
 
-### 5.2 Static 变量与生命周期安全 (重要)
-
-在 Godot C# 中，`static` 变量的生命周期长于场景树。
-
-- **核心原则**: **严禁**在 `static` 变量中存储任何直接或间接继承自 `GodotObject` 的对象（尤其是 `Node`）。
-- **判定标准**:
-  - **安全**: 纯 C# 数据 (string, int, struct, POCO 数据类)。
-  - **危险**: 所有 `Node` 及其子类、`Resource` (可能导致无法卸载内存)。
-- **后果**: 违反此规则会导致场景切换后出现 `ObjectDisposedException` 或隐蔽的内存泄漏。
-
-### 5.3 性能优化 (GC 意识)
-
-C# 是托管语言，垃圾回收 (GC) 会导致游戏卡顿。
-
-- **热路径禁忌 (`_Process` / `_PhysicsProcess`)**:
-  - **禁止** `new` 引用类型对象 (Class, List, Array, Delegate)。
-  - **禁止** 字符串拼接 (`"Score: " + score`)，使用 `StringBuilder` 或仅在变化时更新。
-  - **禁止** 滥用 LINQ (`Where`, `Select`)，这会产生大量临时垃圾。
-- **结构体 (Struct)**:
-  - Godot 的 `Vector2`, `Rect2`, `Color` 是结构体，在栈上分配，零 GC，可放心使用。
-- **集合复用**:
-  - 尽量作为成员变量缓存 List，使用 `Clear()` 复用，而不是每帧 `new List()`。
-
-## 6. 版本控制规则
-
-### 6.1 Git 提交规范
-
-- 提交信息使用中文，格式：`[类型] 描述`
-- 类型包括：`feat`（新功能）、`fix`（修复）、`refactor`（重构）、`docs`（文档）、`style`（格式）、`test`（测试）
-- C# 项目必须确保无编译错误和警告
-
-### 6.2 忽略文件
-
-- 忽略 Godot 临时文件 (`.godot/`)
-- 忽略 C# 编译产物 (`bin/`, `obj/`)
-- 忽略 IDE 配置 (`.vs/`, `.idea/`)
-
-## 7. 调试与日志
-
-- 使用 `GD.Print()` 进行普通日志。
-- 使用 `GD.PushWarning()` 和 `GD.PushError()` 突出重要问题。
-- 异常处理: 关键逻辑使用 `try-catch`，避免游戏直接崩溃。
-
-## 8. 学习资源
-
-- **Docs/C Sharp**: 项目内含的 Godot C# 本地知识库 (强烈推荐阅读)。
-- **Godot 官方文档**: https://docs.godotengine.org/zh-cn/4.5/tutorials/scripting/c_sharp/index.html
+- 场景 (.tscn): `PascalCase`
+- 脚本 (.cs): `PascalCase`
+- 资源: `PascalCase`
+- 目录: `PascalCase`
