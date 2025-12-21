@@ -56,7 +56,12 @@ brotato-my/
 ### 3.1 C# 脚本编写规范
 
 - **类定义**: 必须使用 `public partial class`，类名必须与文件名一致。
-- **命名空间**: 使用 `BrotatoMy` 或相关子命名空间。
+- **命名空间**: 采用 **混合策略 (Hybrid Strategy)**：
+  - **全局命名空间 (Global Namespace)**: 适用于高频使用的核心类，如工具 (`Log`, `ObjectPool`)、组件 (`HealthComponent`)、核心实体 (`Player`)。避免繁琐的 `using`。
+  - **特定命名空间**:
+    - **测试代码**: 必须使用 `namespace BrotatoMy.Tests`，防止测试类污染全局智能提示。
+    - **第三方库**: 必须封装在独立命名空间中。
+    - **模块化子系统**: 仅当确实存在命名冲突风险时使用。
 - **静态导入**: 推荐使用 `using static Godot.GD;` 以简化 `GD.Print` 等调用。
 - **属性导出**: 使用 `[Export]` 特性导出属性，方便在编辑器调整。
 - **类型安全**: 优先使用 `GetNode<T>("Path")` 泛型方法，避免显式类型转换。
@@ -68,34 +73,10 @@ using Godot;
 using System;
 using static Godot.GD;
 
-namespace BrotatoMy
+public partial class MyPlayer : CharacterBody2D
 {
-    public partial class MyPlayer : CharacterBody2D
-    {
-        [Export] public float Speed { get; set; } = 400.0f;
-
-        // 使用属性封装逻辑
-        public int Hp
-        {
-            get => _hp;
-            set
-            {
-                _hp = value;
-                if (_hp <= 0) Die();
-            }
-        }
-        private int _hp;
-
-        public override void _Ready()
-        {
-            // 初始化逻辑
-        }
-
-        public override void _PhysicsProcess(double delta)
-        {
-            // 物理逻辑
-        }
-    }
+    [Export] public float Speed { get; set; } = 400.0f;
+    // ...
 }
 ```
 
@@ -186,8 +167,19 @@ namespace BrotatoMy
   - 高频生成的对象 (子弹、伤害数字、特效) **必须** 使用对象池。
   - 禁止在战斗中频繁 `Instantiate` 和 `QueueFree`。
   - 使用 `Hide()`/`Show()` 和重置状态代替销毁/创建。
+  - **重要**: 严禁使用 `static` 变量持有包含 Godot 节点 (Node) 的对象池，必须随场景管理器生灭。
 
-### 5.2 性能优化 (GC 意识)
+### 5.2 Static 变量与生命周期安全 (重要)
+
+在 Godot C# 中，`static` 变量的生命周期长于场景树。
+
+- **核心原则**: **严禁**在 `static` 变量中存储任何直接或间接继承自 `GodotObject` 的对象（尤其是 `Node`）。
+- **判定标准**:
+  - **安全**: 纯 C# 数据 (string, int, struct, POCO 数据类)。
+  - **危险**: 所有 `Node` 及其子类、`Resource` (可能导致无法卸载内存)。
+- **后果**: 违反此规则会导致场景切换后出现 `ObjectDisposedException` 或隐蔽的内存泄漏。
+
+### 5.3 性能优化 (GC 意识)
 
 C# 是托管语言，垃圾回收 (GC) 会导致游戏卡顿。
 

@@ -25,9 +25,7 @@
   - `string` **$\approx$** TS `string`
   - `string?` **$\approx$** TS `string | null`
 
-**C#**
-
-```
+```C#
 string  name = "Godot"; // ✅ 必须有值，不能为 null
 string? desc = null;    // ✅ 允许为空
 ```
@@ -52,9 +50,7 @@ string? desc = null;    // ✅ 允许为空
 
 如果对象是 null，直接返回 null，不报错（不崩溃）。
 
-**C#**
-
-```
+```C#
 // 如果 player 为空，Name 也返回空，游戏继续运行
 string? name = player?.Name;
 ```
@@ -63,9 +59,7 @@ string? name = player?.Name;
 
 如果是 null，就给个备胎（默认值）。 **拆包神器** 。
 
-**C#**
-
-```
+```C#
 // 如果 config.Volume 是 null，就默认用 100
 int volume = config.Volume ?? 100;
 ```
@@ -74,9 +68,7 @@ int volume = config.Volume ?? 100;
 
 告诉编译器：“我知道它看起来像空的，但我保证它现在有值，别报错。”
 
-**C#**
-
-```
+```C#
 // GetNodeOrNull 返回 Node?，但我确定场景里肯定有它
 var hero = GetNodeOrNull<Node2D>("Hero")!;
 ```
@@ -85,9 +77,7 @@ var hero = GetNodeOrNull<Node2D>("Hero")!;
 
 强行取出 `int?` 里的 `int`。 **危险操作** ，如果是 null 会崩。
 
-**C#**
-
-```
+```C#
 int? score = 100;
 int final = score.Value; // ✅ 安全，因为有值
 // int final = ((int?)null).Value; // ❌ 崩溃：InvalidOperationException
