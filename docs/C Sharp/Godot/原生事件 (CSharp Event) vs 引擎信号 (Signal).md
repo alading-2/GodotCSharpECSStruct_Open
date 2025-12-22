@@ -26,6 +26,22 @@
 
 现代 C# 开发中，我们不再手动定义 `delegate`，而是直接配合 `System.Action` 使用。
 
+### 快速掌握
+
+```C#
+// 定义
+public event Action<int> OnHealthChanged;
+
+// 触发
+OnHealthChanged?.Invoke(currentHp);
+
+// 订阅
+player.OnHealthChanged += UpdateUI;
+
+// 取消
+player.OnHealthChanged -= UpdateUI;
+```
+
 ### A. 定义事件 (发布者)
 
 不需要 `[Signal]`，不需要 `EventHandler` 后缀，就是一个标准的 C# 变量。
@@ -113,49 +129,96 @@ public static class EventBus
 
 ---
 
-## 4. 什么时候还需要用 `[Signal]`？ (特定场景)
+## 4. 重点：监听引擎原生信号 (C#使用Godot原生信号)
 
-虽然 C# Event 很好，但在以下 **3 种情况** 下，你必须用 Godot 的 `[Signal]`：
+很多初学者还在找 `Connect("area_entered", ...)`，其实 Godot 已经把所有原生信号都包装成了 **C# 事件**。
 
-1. **编辑器连线**：如果你想在 Godot 编辑器的右侧 "Node" 面板里，把信号拖拽连接到另一个节点。
-2. **跨语言交互**：如果你的逻辑是 C# 写的，但 UI 是用 **GDScript** 写的，GDScript 只能监听 `[Signal]`，听不懂 C# Event。
-3. **引擎自带信号**：按钮的点击 (`Pressed`)、碰撞检测 (`BodyEntered`)，这些是 Godot 提供的，我们只能用 `+=` 去连接它们。
+### A. 核心规则：命名转换
+- **GDScript**: `area_entered` (蛇形命名)
+- **C# Event**: `AreaEntered` (大驼峰命名)
 
-### 示例：监听引擎自带信号
+### B. 实战：碰撞检测与模式匹配
+
+这是处理游戏逻辑最优雅的方式。不需要通过字符串判断，直接利用 C# 的**类型系统**。
 
 ```C#
-public override void _Ready()
+public partial class Player : CharacterBody2D
 {
-    // Button.Pressed 本质上是 Godot 封装好的 Event
-    // 这里的用法和 C# 原生事件完全一致
-    GetNode<Button>("Btn").Pressed += () => GD.Print("点击");
+    private static readonly Log _log = new Log("Player");
+
+    public override void _Ready()
+    {
+        // 1. 获取节点并订阅事件
+        var hurtBox = GetNode<Area2D>("HurtBox");
+        hurtBox.AreaEntered += OnAreaEntered;
+    }
+
+    private void OnAreaEntered(Area2D area)
+    {        
+        // 2. 利用模式匹配 (Pattern Matching) 识别对象
+        switch (area)
+        {
+            case Bullet b when b.Damage > 0:
+                _log.Info($"受到子弹伤害: {b.Damage}");
+                TakeDamage(b.Damage);
+                b.QueueFree();
+                break;
+
+            case Coin c:
+                _log.Success("捡到金币！");
+                AddMoney(c.Value);
+                c.QueueFree();
+                break;
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        // 3. 别忘了在退出树时取消订阅
+        GetNode<Area2D>("HurtBox").AreaEntered -= OnAreaEntered;
+    }
 }
 ```
 
+### C. 如何查找参数？
+不需要死记硬背。在 IDE (VS Code) 中输入 `+=` 后，把鼠标悬停在事件名（如 `BodyEntered`）上，IDE 会告诉你回调函数的签名。
+- `Pressed` -> `() => ...` (无参数)
+- `AreaEntered` -> `(Area2D area) => ...`
+- `TextChanged` -> `(string newText) => ...`
+
 ---
 
-## 5. 自定义 `[Signal]` 的写法 (不推荐用于纯逻辑)
+## 5. 什么时候还需要用 `[Signal]`？
 
-如果你确实需要跨语言交互，必须写自定义信号，请注意以下 Godot C# 独有的**命名规则陷阱**。
+虽然 C# Event 覆盖了 90% 的场景，但在以下情况你必须使用 Godot 的 `[Signal]`：
 
-### 第一步：声明 (陷阱所在)
+1. **编辑器连线**：需要在 Godot 编辑器的 "Node" 面板手动连接信号。
+2. **跨语言交互**：你的逻辑是 C#，但 UI 或其他脚本是 **GDScript** 写的。
+3. **动画轨道调用**：在 AnimationPlayer 的轨道中插入信号调用。
 
+---
+
+## 6. 自定义 `[Signal]` 的写法
+
+如果确实需要定义自定义信号，请遵循 Godot C# 的特定语法。
+
+### 第一步：声明
 必须以 `delegate` 声明，且名字必须以 `EventHandler` 结尾。
 
 ```C#
 [Signal]
-// 实际生成的信号名是 "HealthChanged" (去掉了后缀)
+// 实际生成的信号名是 "HealthChanged" (自动去掉后缀)
 public delegate void HealthChangedEventHandler(int newValue);
 ```
 
 ### 第二步：发射
-
-必须使用 `EmitSignal`，且引用 `SignalName`。
+必须使用 `EmitSignal`，且建议引用 `SignalName` 以获得类型安全。
 
 ```C#
-EmitSignal(SignalName.HealthChanged, 100);
+EmitSignal(SignalName.HealthChanged, currentHp);
 ```
 
 ### 总结
-
-**一句话口诀**：**定义时加 `EventHandler`，使用时去掉它。** (这也是为什么不推荐用的原因之一，太麻烦了)。
+- **逻辑内部**：用 `event Action` (C# 原生)。
+- **监听引擎**：直接 `+=` (官方包装好的 Event)。
+- **跨语言/编辑器**：用 `[Signal]`。
