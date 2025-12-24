@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Brotato_my"
-run/main_scene="uid://bhgq8nbkx887j"
+run/main_scene="uid://xe0xker8n1lw"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -25,7 +25,7 @@ project/assembly_name="Brotato_my"
 
 [editor_plugins]
 
-enabled=PackedStringArray()
+enabled=PackedStringArray("res://addons/SpriteFramesGenerator/plugin.cfg")
 
 [input]
 

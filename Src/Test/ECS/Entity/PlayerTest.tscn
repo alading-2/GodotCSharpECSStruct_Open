@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7khr2y8khnt6"]
+
+[ext_resource type="PackedScene" uid="uid://b44qhdfrf0i63" path="res://Src/ECS/Entities/Player/Player.tscn" id="1_lr3d3"]
+
+[node name="PlayerTest" type="Node2D"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_left = -233.0
+offset_top = -184.0
+offset_right = -148.0
+offset_bottom = -98.0
+color = Color(0.88419455, 0, 0.019058045, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+offset_left = 262.0
+offset_top = 151.0
+offset_right = 347.0
+offset_bottom = 237.0
+color = Color(0.38065836, 0.417551, 0.8298063, 1)
+
+[node name="Player" parent="." instance=ExtResource("1_lr3d3")]
