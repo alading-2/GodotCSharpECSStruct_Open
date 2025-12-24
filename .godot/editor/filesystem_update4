@@ -1,0 +1,4 @@
+res://assets/character/ememy/chailangren/AnimatedSprite2D/AnimatedSprite2D.tscn
+res://assets/character/ememy/鱼人/AnimatedSprite2D/AnimatedSprite2D.tscn
+res://Src/Test/ECS/Entity/PlayerTest.tscn
+res://Src/ECS/Entities/Enemies/Enemy.tscn

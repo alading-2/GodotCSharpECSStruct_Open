@@ -12,13 +12,30 @@
 
 ## 2. 使用方法
 
-### 方式一：通过 Project 菜单 (推荐)
+### 方式一：批量生成 (推荐)
 
-1. 在 **FileSystem (文件系统)** 面板中，点击选中包含序列帧图片的文件夹（例如 `res://assets/character/guangfa/`）。
-2. 点击编辑器顶部菜单栏 **Project (项目) -> Tools (工具) -> Generate SpriteFrames (Auto)**。
-3. 插件会自动在当前选中的文件夹下生成一个同名的 `.tres` 文件（例如 `guangfa_SpriteFrames.tres`）。
+1. 点击编辑器顶部菜单栏 **Project (项目) -> Tools (工具) -> Generate All SpriteFrames (Batch)**。
+2. 插件会自动扫描以下预设目录下的所有子文件夹：
+   - `res://assets/character/ememy`
+   - `res://assets/character/player`
+3. 只要子文件夹内包含 PNG 序列，就会自动在其中创建 `AnimatedSprite2D` 文件夹并生成场景。
 
-### 方式二：自动识别规则
+### 方式二：手动选中生成 (Single)
+
+1. 在 **FileSystem (文件系统)** 面板中，**右键点击** 包含序列帧图片的文件夹。
+2. 在弹出的菜单中选择 **Generate SpriteFrames (Single/Selection)**。
+
+- **自动转换**：插件会将识别到的原始名称转换为标准名称。
+- **当前规则**：
+
+| 原始名称 (素材中)        | 标准名称 (生成后) | 说明         |
+| :----------------------- | :---------------- | :----------- |
+| `movement`               | `run`             | 统一移动动画 |
+| `deaded`, `death`, `die` | `dead`            | 统一死亡动画 |
+
+- **自定义**：你可以通过修改 `SpriteFramesGeneratorPlugin.cs` 中的 `_nameMap` 字典来添加自己的映射规则。
+
+### 方式三：自动识别格式规则
 
 插件支持以下两种文件命名格式：
 
@@ -29,6 +46,7 @@
    - 示例：`hero_guangfa-Idle_01.png` -> 识别为动画名 `idle`
 
 2. **简单格式**：
+
    - 格式：`动画名_序号.png`
    - 示例：`Run_00.png` -> 识别为动画名 `run`
 

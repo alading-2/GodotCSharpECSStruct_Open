@@ -10,58 +10,156 @@ namespace BrotatoMy.Addons
     [Tool]
     public partial class SpriteFramesGeneratorPlugin : EditorPlugin
     {
-        private const string MENU_ITEM_NAME = "Generate SpriteFrames (Auto)";
+        private const string MENU_ITEM_NAME = "Generate SpriteFrames (Single/Selection)";
+        private const string MENU_ITEM_BATCH_NAME = "Generate All SpriteFrames (Batch)";
+
+        // 预设的自动扫描路径
+        private static readonly string[] BATCH_PATHS = { "res://assets/character/ememy", "res://assets/character/player" };
+
+        // 规范化映射表：[原始名称] -> [标准名称]
+        private static readonly Dictionary<string, string> _nameMap = new()
+        {
+            { "movement", "run" },
+            { "deaded", "dead" },
+            { "death", "dead" },
+            { "die", "dead" },
+        };
+
+        private string NormalizeName(string rawName)
+        {
+            rawName = rawName.ToLower();
+            return _nameMap.GetValueOrDefault(rawName, rawName);
+        }
+
+        private FolderContextMenuPlugin _contextMenuPlugin;
 
         public override void _EnterTree()
         {
-            // 添加工具菜单项
-            // 在 Godot 4 中，直接使用 EditorInterface.Singleton.GetSelectedPaths() 获取选中项更可靠
-            AddToolMenuItem(MENU_ITEM_NAME, Callable.From(GenerateFromSelection));
+            // 1. 顶部工具菜单仅保留批量生成
+            AddToolMenuItem(MENU_ITEM_BATCH_NAME, Callable.From(GenerateAllFromPredefinedPaths));
+
+            // 2. 注册文件系统右键菜单插件
+            _contextMenuPlugin = new FolderContextMenuPlugin(this);
+            AddContextMenuPlugin(EditorContextMenuPlugin.ContextMenuSlot.Filesystem, _contextMenuPlugin);
         }
 
         public override void _ExitTree()
         {
-            RemoveToolMenuItem(MENU_ITEM_NAME);
+            RemoveToolMenuItem(MENU_ITEM_BATCH_NAME);
+            if (_contextMenuPlugin != null)
+            {
+                RemoveContextMenuPlugin(_contextMenuPlugin);
+                _contextMenuPlugin = null;
+            }
         }
 
-        private void GenerateFromSelection()
+        public void GenerateFromPaths(string[] paths)
         {
-            // 获取当前选中的路径
-            var selectedPaths = EditorInterface.Singleton.GetSelectedPaths();
-            if (selectedPaths.Length == 0)
+            if (paths == null || paths.Length == 0) return;
+
+            string path = paths[0];
+
+            // 如果选中了文件，则获取其所在的父文件夹
+            if (FileAccess.FileExists(path))
             {
-                GD.PrintErr("请先在文件系统面板中选中一个文件夹！");
-                return;
+                path = path.GetBaseDir();
             }
 
-            string path = selectedPaths[0];
-
-            // 确保是文件夹
-            var dir = DirAccess.Open(path);
-            if (dir == null)
+            // 只要文件夹存在就尝试生成
+            if (DirAccess.DirExistsAbsolute(path))
             {
-                // 可能是选中了文件，尝试获取其父目录
-                if (FileAccess.FileExists(path))
-                {
-                    path = path.GetBaseDir();
-                    dir = DirAccess.Open(path);
-                }
-            }
-
-            if (dir != null)
-            {
-                GenerateSpriteFrames(path);
+                GenerateSpriteFrames(path, true);
             }
             else
             {
-                GD.PrintErr($"无法访问路径: {path}");
+                GD.PrintErr($"路径不存在或无法访问: {path}");
             }
         }
 
-        private void GenerateSpriteFrames(string folderPath)
+        private partial class FolderContextMenuPlugin : EditorContextMenuPlugin
+        {
+            private SpriteFramesGeneratorPlugin _plugin;
+
+            public FolderContextMenuPlugin() { }
+            public FolderContextMenuPlugin(SpriteFramesGeneratorPlugin plugin)
+            {
+                _plugin = plugin;
+            }
+
+            public override void _PopupMenu(string[] paths)
+            {
+                foreach (var path in paths)
+                {
+                    if (DirAccess.DirExistsAbsolute(path))
+                    {
+                        AddContextMenuItem(MENU_ITEM_NAME, Callable.From(() => _plugin.GenerateFromPaths(paths)));
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void GenerateAllFromPredefinedPaths()
+        {
+            int totalGenerated = 0;
+            foreach (var basePath in BATCH_PATHS)
+            {
+                if (!DirAccess.DirExistsAbsolute(basePath))
+                {
+                    GD.Print($"[SpriteFramesGenerator] 路径不存在: {basePath}");
+                    continue;
+                }
+
+                using var dir = DirAccess.Open(basePath);
+                if (dir == null) continue;
+
+                dir.ListDirBegin();
+                string subDirName = dir.GetNext();
+                while (subDirName != "")
+                {
+                    if (dir.CurrentIsDir() && !subDirName.StartsWith("."))
+                    {
+                        string fullSubPath = basePath.PathJoin(subDirName);
+                        // 检查该目录下是否有 PNG
+                        if (HasPngFiles(fullSubPath))
+                        {
+                            GenerateSpriteFrames(fullSubPath, false); // 不在每一步都扫描文件系统
+                            totalGenerated++;
+                        }
+                    }
+                    subDirName = dir.GetNext();
+                }
+                dir.ListDirEnd();
+            }
+
+            if (totalGenerated > 0)
+            {
+                EditorInterface.Singleton.GetResourceFilesystem().Scan(); // 批量完成后统一扫描
+                GD.PrintRich($"[color=cyan]批量生成完成！共处理 {totalGenerated} 个角色目录。[/color]");
+            }
+            else
+            {
+                GD.PrintRich("[color=yellow]未在预设路径下发现可处理的资源。[/color]");
+            }
+        }
+
+        private bool HasPngFiles(string path)
+        {
+            using var dir = DirAccess.Open(path);
+            if (dir == null) return false;
+
+            foreach (var file in dir.GetFiles())
+            {
+                if (file.EndsWith(".png") && !file.EndsWith(".import")) return true;
+            }
+            return false;
+        }
+
+
+        private void GenerateSpriteFrames(string folderPath, bool triggerScan = true)
         {
             GD.Print($"正在扫描文件夹: {folderPath}");
-            var dir = DirAccess.Open(folderPath);
+            using var dir = DirAccess.Open(folderPath);
             string[] files = dir.GetFiles();
             var pngFiles = files.Where(f => f.EndsWith(".png") && !f.EndsWith(".import")).ToList();
 
@@ -90,7 +188,7 @@ namespace BrotatoMy.Addons
                 var match = regexComplex.Match(fileName);
                 if (match.Success)
                 {
-                    animName = match.Groups[1].Value.ToLower();
+                    animName = NormalizeName(match.Groups[1].Value);
                     frameIndex = int.Parse(match.Groups[2].Value);
                     matched = true;
                 }
@@ -99,7 +197,7 @@ namespace BrotatoMy.Addons
                     match = regexSimple.Match(fileName);
                     if (match.Success)
                     {
-                        animName = match.Groups[1].Value.ToLower();
+                        animName = NormalizeName(match.Groups[1].Value);
                         frameIndex = int.Parse(match.Groups[2].Value);
                         matched = true;
                     }
@@ -169,6 +267,17 @@ namespace BrotatoMy.Addons
             spriteNode.Name = "AnimatedSprite2D";
             spriteNode.SpriteFrames = spriteFrames;
 
+            // 核心修复：强制使用 Identity 变换，彻底消除根节点警告
+            spriteNode.Transform = Transform2D.Identity;
+            spriteNode.Position = Vector2.Zero;   // 双重保险
+            spriteNode.Rotation = 0;
+            spriteNode.Scale = Vector2.One;
+
+            spriteNode.Centered = true;           // 确保图片居中
+            spriteNode.Offset = Vector2.Zero;     // 清空手动偏移
+
+            GD.Print($"[Generator] 正在生成场景: {folderPath} | Position: {spriteNode.Position} | Centered: {spriteNode.Centered}");
+
             // 设置默认动画（优先选择 idle）
             if (spriteFrames.HasAnimation("idle"))
                 spriteNode.Animation = "idle";
@@ -181,6 +290,13 @@ namespace BrotatoMy.Addons
             if (packErr == Error.Ok)
             {
                 string scenePath = outputDir.PathJoin("AnimatedSprite2D.tscn");
+
+                // 删除旧文件，确保没有残留数据
+                if (FileAccess.FileExists(scenePath))
+                {
+                    DirAccess.RemoveAbsolute(scenePath);
+                }
+
                 Error sceneSaveErr = ResourceSaver.Save(packedScene, scenePath);
 
                 if (sceneSaveErr == Error.Ok)
@@ -201,7 +317,10 @@ namespace BrotatoMy.Addons
             // 释放临时节点
             spriteNode.QueueFree();
 
-            EditorInterface.Singleton.GetResourceFilesystem().Scan();
+            if (triggerScan)
+            {
+                EditorInterface.Singleton.GetResourceFilesystem().Scan();
+            }
         }
     }
 }

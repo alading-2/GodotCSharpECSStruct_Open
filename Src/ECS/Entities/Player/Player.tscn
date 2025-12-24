@@ -1,11 +1,12 @@
 [gd_scene load_steps=5 format=3 uid="uid://b44qhdfrf0i63"]
 
 [ext_resource type="Script" uid="uid://d3cifehq7mpiv" path="res://Src/ECS/Entities/Player/Player.cs" id="1_a3twn"]
-[ext_resource type="PackedScene" uid="uid://d4f5osa385a6o" path="res://assets/character/guangfa/AnimatedSprite2D/AnimatedSprite2D.tscn" id="3_a3twn"]
+[ext_resource type="PackedScene" uid="uid://briqv073sqyvk" path="res://assets/character/player/德鲁伊/AnimatedSprite2D/AnimatedSprite2D.tscn" id="3_a3twn"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Components/VelocityComponent/VelocityComponent.tscn" id="3_qo223"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_a3twn"]
-height = 28.0
+radius = 24.0
+height = 79.7
 
 [node name="Player" type="CharacterBody2D"]
 motion_mode = 1
@@ -15,8 +16,8 @@ script = ExtResource("1_a3twn")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(1, -25)
-shape = SubResource("CapsuleShape2D_a3twn")
-
 [node name="AnimatedSprite2D" parent="." instance=ExtResource("3_a3twn")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(1, -52)
+shape = SubResource("CapsuleShape2D_a3twn")

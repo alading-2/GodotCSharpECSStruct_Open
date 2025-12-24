@@ -1,0 +1,85 @@
+{
+  "format": 1,
+  "restore": {
+    "E:\\Godot\\Games\\MyGames\\复刻土豆兄弟\\brotato-my\\Brotato_my.csproj": {}
+  },
+  "projects": {
+    "E:\\Godot\\Games\\MyGames\\复刻土豆兄弟\\brotato-my\\Brotato_my.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\Godot\\Games\\MyGames\\复刻土豆兄弟\\brotato-my\\Brotato_my.csproj",
+        "projectName": "Brotato_my",
+        "projectPath": "E:\\Godot\\Games\\MyGames\\复刻土豆兄弟\\brotato-my\\Brotato_my.csproj",
+        "packagesPath": "C:\\Users\\alading\\.nuget\\packages\\",
+        "outputPath": "E:\\Godot\\Games\\MyGames\\复刻土豆兄弟\\brotato-my\\.godot\\mono\\temp\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\alading\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Godot.SourceGenerators": {
+              "target": "Package",
+              "version": "[4.5.1, )",
+              "autoReferenced": true
+            },
+            "GodotSharp": {
+              "target": "Package",
+              "version": "[4.5.1, )",
+              "autoReferenced": true
+            },
+            "GodotSharpEditor": {
+              "target": "Package",
+              "version": "[4.5.1, )",
+              "autoReferenced": true
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "D:\\Programme_code\\Environment\\.Net\\.Net8.0\\dotnet-sdk-8.0.416-win-x64\\sdk\\8.0.416/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

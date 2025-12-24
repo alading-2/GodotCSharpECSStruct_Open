@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://b7khr2y8khnt6"]
+[gd_scene load_steps=3 format=3 uid="uid://b7khr2y8khnt6"]
 
 [ext_resource type="PackedScene" uid="uid://b44qhdfrf0i63" path="res://Src/ECS/Entities/Player/Player.tscn" id="1_lr3d3"]
+[ext_resource type="PackedScene" uid="uid://drfdd6mt4hjpl" path="res://Src/ECS/Entities/Enemies/Enemy.tscn" id="2_vydb7"]
 
 [node name="PlayerTest" type="Node2D"]
 
@@ -19,3 +20,6 @@ offset_bottom = 237.0
 color = Color(0.38065836, 0.417551, 0.8298063, 1)
 
 [node name="Player" parent="." instance=ExtResource("1_lr3d3")]
+
+[node name="CharacterBody2D" parent="." instance=ExtResource("2_vydb7")]
+position = Vector2(88, 61)

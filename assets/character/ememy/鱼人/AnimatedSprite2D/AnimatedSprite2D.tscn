@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://v3pe5mueociq"]
+
+[ext_resource type="SpriteFrames" uid="uid://by8vf4lptwahm" path="res://assets/character/ememy/鱼人/AnimatedSprite2D/AnimatedSprite2D.tres" id="1_tlcfi"]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D"]
+position = Vector2(9, -40)
+sprite_frames = ExtResource("1_tlcfi")
+animation = &"idle"
