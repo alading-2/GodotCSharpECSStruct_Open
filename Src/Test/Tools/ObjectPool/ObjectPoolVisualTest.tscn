@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://c8yq2x405j7k"]
+[gd_scene load_steps=2 format=3 uid="uid://bfd66nauebxxi"]
 
-[ext_resource type="Script" uid="uid://335b7slbm74" path="res://Src/Test/Tools/ObjectPool/ObjectPoolVisualTest.cs" id="1_visual"]
+[ext_resource type="Script" path="res://Src/Test/Tools/ObjectPool/ObjectPoolVisualTest.cs" id="1_visual"]
 
 [node name="ObjectPoolVisualTest" type="Control"]
 layout_mode = 3

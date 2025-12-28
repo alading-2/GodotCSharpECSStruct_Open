@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace BrotatoMy.Tests.ObjectPool.Visual;
+namespace BrotatoMy.Test;
 
 /// <summary>
 /// 可视化测试用的子弹对象

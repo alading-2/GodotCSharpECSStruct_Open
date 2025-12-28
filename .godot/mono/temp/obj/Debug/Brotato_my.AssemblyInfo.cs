@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Brotato_my")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+38cc1f20e9d3fc9c1704285ceebd9c330cdfa29f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5f495979c20cb41d5f3b0d7c758373fbbfaadd5c")]
 [assembly: System.Reflection.AssemblyProductAttribute("Brotato_my")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Brotato_my")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

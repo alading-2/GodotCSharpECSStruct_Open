@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 // 采用混合命名空间策略：核心工具类放在全局命名空间，方便调用
@@ -39,24 +40,20 @@ public struct PoolStats
 public struct ObjectPoolConfig
 {
     /// <summary> 初始预热大小。在构造时会预先创建此数量的对象，建议设置为场景平均使用量 </summary>
-    public int InitialSize;
+    public int InitialSize = 10;
     /// <summary> 池的最大容量上限。超过此数量的对象在归还时会被销毁，防止内存无限增长 </summary>
-    public int MaxSize;
+    public int MaxSize = 100;
     /// <summary> 池的名称。用于日志输出、统计区分以及 ObjectPoolManager 的全局检索 </summary>
     public string? Name;
+    /// <summary> 池对象的父节点路径。默认为 "ECS/Node"。ObjectPool 会自动将新创建的对象挂载到此节点下。 </summary>
+    public string ParentPath = "ECS/Node";
     /// <summary> 是否启用统计信息收集。关闭可微弱提升性能 </summary>
-    public bool EnableStats;
+    public bool EnableStats = true;
 
     /// <summary>
     /// 获取默认配置
     /// </summary>
-    public static ObjectPoolConfig Default => new ObjectPoolConfig
-    {
-        InitialSize = 10,
-        MaxSize = 100,
-        Name = "UnnamedPool",
-        EnableStats = true
-    };
+    public ObjectPoolConfig() { }
 }
 
 /// <summary>
@@ -94,6 +91,7 @@ public interface IObjectPool
     void Clear();
     void Destroy();
     void Cleanup(int retainCount);
+    void ReleaseAll(); // 回收所有活跃对象
 
     // 用于管理器非泛型归还
     void ReleaseObject(object obj);
@@ -122,6 +120,9 @@ public class ObjectPool<T> : IObjectPool where T : class
     // 内部统计数据
     private PoolStats _stats;
 
+    // 追踪当前活跃的对象集合，用于支持 ReleaseAll
+    private readonly HashSet<T> _activeItems = new();
+
     /// <summary> 当对象被成功获取出池时触发 </summary>
     public event Action<T>? OnInstanceAcquire;
     /// <summary> 当对象被归还入池时触发 </summary>
@@ -136,6 +137,7 @@ public class ObjectPool<T> : IObjectPool where T : class
     /// <summary> 当前正在外部使用的对象数量 </summary>
     public int ActiveCount => _stats.ActiveCount;
 
+    private static readonly Log _log = new Log("ObjectPool");
     /// <summary>
     /// 初始化对象池
     /// </summary>
@@ -153,6 +155,7 @@ public class ObjectPool<T> : IObjectPool where T : class
     {
         _createFunc = createFunc ?? throw new ArgumentNullException(nameof(createFunc));
         _config = config;
+
         _resetMethod = resetMethod;
         _stack = new Stack<T>(config.InitialSize);
 
@@ -167,6 +170,12 @@ public class ObjectPool<T> : IObjectPool where T : class
             TotalReleased = 0,
             TotalDiscarded = 0
         };
+
+        // 自动注册父节点
+        if (!string.IsNullOrEmpty(_config.Name) && !string.IsNullOrEmpty(_config.ParentPath))
+        {
+            ParentManager.RegisterParent(_config.Name, _config.ParentPath);
+        }
 
         // 构造时直接预热，将性能开销放在初始化阶段
         Warmup(config.InitialSize);
@@ -192,14 +201,29 @@ public class ObjectPool<T> : IObjectPool where T : class
     /// <summary> 内部：创建新对象并记录统计 </summary>
     private T CreateNew()
     {
-        var obj = _createFunc();
-        if (obj is Node node)
+        var result = _createFunc();
+
+        if (result is Node node)
         {
+            // 为新生成的节点分配唯一名称，避免 Godot 默认命名导致在场景树中难以定位或冲突
+            node.Name = $"{_config.Name}_{Guid.NewGuid().ToString().Substring(0, 8)}";
+
             node.GetData().Set("ObjectPool", this);
-            node.GetData().Set("InPool", false); // 初始状态不在池中
+            node.GetData().Set("InPool", false);
+
+            // 自动挂载到父节点
+            if (node.GetParent() == null && !string.IsNullOrEmpty(_config.Name))
+            {
+                var parent = ParentManager.GetParent(_config.Name);
+                if (parent != null)
+                {
+                    parent.AddChild(node);
+                }
+            }
         }
+
         _stats.TotalCreated++;
-        return obj;
+        return result;
     }
 
     /// <summary> 内部：将对象推入闲置栈，并执行 Godot 挂起逻辑 </summary>
@@ -238,6 +262,9 @@ public class ObjectPool<T> : IObjectPool where T : class
         _stats.ActiveCount++;
         _stats.TotalAcquired++;
 
+        // 追踪活跃对象
+        _activeItems.Add(obj);
+
         // 核心功能：建立对象与池的映射，使得 ReturnToPool(obj) 能够工作
         ObjectPoolManager.RegisterInstance(obj, this);
 
@@ -261,27 +288,10 @@ public class ObjectPool<T> : IObjectPool where T : class
     }
 
     /// <summary>
-    /// [生成] 获取 Node 对象并确保其在指定父节点下
-    /// 如果对象是 Node 类型，会自动处理父子关系：
-    /// 1. 如果对象没有父节点，直接添加
-    /// 2. 如果对象已有父节点且不同，会重新挂载（Reparent）
+    /// [生成] 从池中获取一个对象并激活
+    /// 语义化方法，内部直接调用 Get()
     /// </summary>
-    /// <param name="parent">要添加到的父节点（不能为 null）</param>
-    /// <returns>获取到的对象实例</returns>
-    public T Spawn(Node parent)
-    {
-        var obj = Get();
-        if (obj is Node node && parent != null)
-        {
-            if (node.GetParent() != parent)
-            {
-                // 注意：Reparent 开销较大，尽量避免在战斗中频繁调用
-                node.GetParent()?.RemoveChild(node);
-                parent.AddChild(node);
-            }
-        }
-        return obj;
-    }
+    public T Spawn() => Get();
 
     /// <summary>
     /// [批量生成] 批量获取对象 (纯数据)
@@ -298,22 +308,7 @@ public class ObjectPool<T> : IObjectPool where T : class
         return list;
     }
 
-    /// <summary>
-    /// [批量生成] 批量获取 Node 对象并自动添加到父节点
-    /// 内部循环调用 Spawn(parent)
-    /// </summary>
-    /// <param name="parent">父节点</param>
-    /// <param name="count">数量</param>
-    /// <returns>包含所有获取 Node 的列表</returns>
-    public List<T> SpawnBatch(Node parent, int count)
-    {
-        var list = new List<T>(count);
-        for (int i = 0; i < count; i++)
-        {
-            list.Add(Spawn(parent));
-        }
-        return list;
-    }
+
 
     /// <summary>
     /// [归还] 将对象归还到池中
@@ -347,6 +342,9 @@ public class ObjectPool<T> : IObjectPool where T : class
 
         _stats.ActiveCount--;
         _stats.TotalReleased++;
+
+        // 移除活跃追踪
+        _activeItems.Remove(obj);
 
         // 3. 生命周期回调: 清理
         if (obj is IPoolable poolable) poolable.OnPoolRelease();
@@ -427,6 +425,21 @@ public class ObjectPool<T> : IObjectPool where T : class
         _stack.Clear();
         _stats.Count = 0;
         // 注意：无法销毁外部活跃的对象
+    }
+
+    /// <summary>
+    /// 回收所有当前活跃的对象
+    /// 适用于：波次结束清场、切换场景、游戏结束
+    /// </summary>
+    public void ReleaseAll()
+    {
+        // 必须先复制一份列表，因为 Release 会修改 _activeItems 集合
+        var itemsToRelease = _activeItems.ToList();
+        foreach (var item in itemsToRelease)
+        {
+            Release(item);
+        }
+        _activeItems.Clear();
     }
 
     /// <summary>

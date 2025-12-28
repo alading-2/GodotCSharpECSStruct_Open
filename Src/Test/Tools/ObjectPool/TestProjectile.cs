@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace BrotatoMy.Tests.ObjectPool;
+namespace BrotatoMy.Test;
 
 /// <summary>
 /// 测试用投射物

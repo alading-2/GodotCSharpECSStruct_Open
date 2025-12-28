@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-namespace BrotatoMy.Tests.ObjectPool.Visual;
+namespace BrotatoMy.Test;
 
 /// <summary>
 /// C# 版对象池可视化测试场景
@@ -11,7 +11,6 @@ namespace BrotatoMy.Tests.ObjectPool.Visual;
 public partial class ObjectPoolVisualTest : Control
 {
     private ObjectPool<VisualTestBullet> _pool;
-    private Node2D _bulletContainer;
     private Rect2 _spawnBounds;
 
     // UI References
@@ -29,6 +28,10 @@ public partial class ObjectPoolVisualTest : Control
 
     public override void _Ready()
     {
+        // 0. 初始化游戏容器 (ZIndex=1 确保可见)
+        var gameContainer = new Node2D { Name = "GameContainer", ZIndex = 1 };
+        AddChild(gameContainer);
+
         // 1. 构建 UI
         BuildUI();
 
@@ -53,10 +56,6 @@ public partial class ObjectPoolVisualTest : Control
 
     private void InitializePool()
     {
-        // 创建一个用于承载子弹的 Node2D 容器
-        _bulletContainer = new Node2D { Name = "BulletContainer", ZIndex = 0 };
-        AddChild(_bulletContainer);
-
         _pool = new ObjectPool<VisualTestBullet>(
             createFunc: () =>
             {
@@ -69,7 +68,8 @@ public partial class ObjectPoolVisualTest : Control
                 Name = "VisualTestPool",
                 InitialSize = 10,
                 MaxSize = _maxPoolSize,
-                EnableStats = true
+                EnableStats = true,
+                ParentPath = $"{Name}/GameContainer" // 明确指定父节点路径
             }
         );
 
@@ -117,7 +117,7 @@ public partial class ObjectPoolVisualTest : Control
 
     private void SpawnAt(Vector2 pos)
     {
-        var bullet = _pool.Spawn(_bulletContainer);
+        var bullet = _pool.Spawn(); // 使用新的 Spawn 语义
 
         // 随机速度方向
         var angle = (float)GD.RandRange(0, Math.PI * 2);
@@ -222,10 +222,11 @@ public partial class ObjectPoolVisualTest : Control
 
     private void ReturnAllActive()
     {
-        // 遍历 BulletContainer 的子节点并归还
-        // 注意：ReturnToPool 是安全的，即使对象不属于池也没事
-        // 我们倒序遍历，因为归还可能会从树中移除节点
-        var children = _bulletContainer.GetChildren();
+        // 遍历父节点路径下的所有子节点并归还
+        var parent = ParentManager.GetParent("VisualTestPool");
+        if (parent == null) return;
+
+        var children = parent.GetChildren();
         for (int i = children.Count - 1; i >= 0; i--)
         {
             if (children[i] is VisualTestBullet b)
@@ -250,21 +251,14 @@ public partial class ObjectPoolVisualTest : Control
 
     private void UpdatePoolVisualizer()
     {
-        // 简单的可视化：用方块数量代表池中闲置数量
-        // 为了性能，不每帧完全重建，而是增量更新
-        // 但为了简单起见，这里先简单粗暴地重建（如果数量不多）
-        // 优化：仅在数量变化时更新 Label 即可，或者用 TextureRect
-
-        // 这里我们用一种更轻量的方式：仅显示方块数量，最多显示 50 个
         int count = _pool.Count;
         int currentVisuals = _poolVisualizerContainer.GetChildCount();
 
         if (count > currentVisuals)
         {
-            // 需要增加
             for (int i = 0; i < count - currentVisuals; i++)
             {
-                if (_poolVisualizerContainer.GetChildCount() >= 50) break; // 限制显示数量
+                if (_poolVisualizerContainer.GetChildCount() >= 50) break;
                 var rect = new ColorRect
                 {
                     CustomMinimumSize = new Vector2(10, 10),
@@ -275,7 +269,6 @@ public partial class ObjectPoolVisualTest : Control
         }
         else if (count < currentVisuals)
         {
-            // 需要减少
             for (int i = 0; i < currentVisuals - count; i++)
             {
                 var child = _poolVisualizerContainer.GetChild(0);

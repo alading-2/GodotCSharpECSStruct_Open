@@ -86,6 +86,7 @@ public partial class MyClass : Node
   - 测试代码必须用 `namespace BrotatoMy.Test`
   - 第三方库必须独立命名空间
 - **事件**: 优先使用 C# 原生事件 `event Action<T>`，务必在 `_ExitTree` 解绑
+- **唯一标识符**: 动态创建 Node 或对象且需要唯一名称时，优先使用 `System.Guid.NewGuid()` 以避免命名冲突
 
 ## 3. 架构模式
 
