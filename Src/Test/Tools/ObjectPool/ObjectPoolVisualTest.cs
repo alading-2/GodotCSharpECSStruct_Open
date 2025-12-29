@@ -223,7 +223,7 @@ public partial class ObjectPoolVisualTest : Control
     private void ReturnAllActive()
     {
         // 遍历父节点路径下的所有子节点并归还
-        var parent = ParentManager.GetParent("VisualTestPool");
+        var parent = ParentManager.Instance.GetParent("VisualTestPool");
         if (parent == null) return;
 
         var children = parent.GetChildren();

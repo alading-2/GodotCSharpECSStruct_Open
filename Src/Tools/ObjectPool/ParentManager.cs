@@ -11,8 +11,12 @@ using System.Runtime.CompilerServices;
 public partial class ParentManager : Node
 {
     private static readonly Log _log = new Log("ParentManager");
-    private static readonly Dictionary<string, Node> _poolParents = new();
-    private static ParentManager _instance = null!;
+    private readonly Dictionary<string, Node> _poolParents = new();
+
+    /// <summary>
+    /// 全局单例引用
+    /// </summary>
+    public static ParentManager Instance { get; private set; } = null!;
 
     /// <summary>
     /// 模块初始化：以核心优先级注册，确保在 System 级别的对象池初始化前就绪。
@@ -23,15 +27,15 @@ public partial class ParentManager : Node
         AutoLoad.Register("ParentManager", "res://Src/Tools/ObjectPool/ParentManager.cs", AutoLoad.Priority.Core);
     }
 
-    public override void _Ready()
+    public override void _EnterTree()
     {
-        _instance = this;
+        Instance = this;
     }
 
     /// <summary>
     /// 获取指定池名称对应的父节点
     /// </summary>
-    public static Node? GetParent(string poolName)
+    public Node? GetParent(string poolName)
     {
         var node = _poolParents.GetValueOrDefault(poolName);
         return IsInstanceValid(node) ? node : null;
@@ -39,26 +43,36 @@ public partial class ParentManager : Node
 
     /// <summary>
     /// 注册池的父节点路径
-    /// 自动在 ParentManager 节点下创建层级
+    /// 自动在场景树根节点 (Root) 下创建层级，确保对象池节点全局持久化且在远程调试中位置明确。
     /// </summary>
-    public static void RegisterParent(string poolName, string path)
+    public void RegisterParent(string poolName, string path)
     {
-        if (_instance == null)
+        if (!IsInsideTree())
         {
-            _log.Error($"无法为 {poolName} 注册路径 {path}: ParentManager 尚未就绪。请检查 AutoLoad 优先级。");
+            _log.Error($"无法为 {poolName} 注册路径 {path}: ParentManager 尚未进入场景树。");
             return;
         }
 
-        Node current = _instance;
+        Node root = GetTree().Root;
         var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        Node current = root;
 
         foreach (var segment in segments)
         {
-            var next = current.GetNodeOrNull(segment);
+            Node? next = current.GetNodeOrNull(segment);
+
             if (next == null)
             {
                 next = new Node { Name = segment };
-                current.AddChild(next);
+                // 使用 CallDeferred 避免初始化期间的树锁定问题
+                if (current == root)
+                {
+                    current.CallDeferred(Node.MethodName.AddChild, next);
+                }
+                else
+                {
+                    current.AddChild(next);
+                }
             }
             current = next;
         }
@@ -66,7 +80,7 @@ public partial class ParentManager : Node
         _poolParents[poolName] = current;
     }
 
-    private static bool IsInstanceValid(Node? node)
+    private bool IsInstanceValid(Node? node)
     {
         return node != null && GodotObject.IsInstanceValid(node) && !node.IsQueuedForDeletion();
     }

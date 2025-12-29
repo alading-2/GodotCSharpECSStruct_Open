@@ -174,7 +174,7 @@ public class ObjectPool<T> : IObjectPool where T : class
         // 自动注册父节点
         if (!string.IsNullOrEmpty(_config.Name) && !string.IsNullOrEmpty(_config.ParentPath))
         {
-            ParentManager.RegisterParent(_config.Name, _config.ParentPath);
+            ParentManager.Instance.RegisterParent(_config.Name, _config.ParentPath);
         }
 
         // 构造时直接预热，将性能开销放在初始化阶段
@@ -214,7 +214,7 @@ public class ObjectPool<T> : IObjectPool where T : class
             // 自动挂载到父节点
             if (node.GetParent() == null && !string.IsNullOrEmpty(_config.Name))
             {
-                var parent = ParentManager.GetParent(_config.Name);
+                var parent = ParentManager.Instance.GetParent(_config.Name);
                 if (parent != null)
                 {
                     parent.AddChild(node);
