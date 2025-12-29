@@ -2,26 +2,32 @@ using Godot;
 using System.Collections.Generic;
 
 /// <summary>
-/// 全局生成配置 - 用于替代分散的 WaveData
+/// 全局生成配置 - 静态配置方式（相当于常量调用）
 /// </summary>
-[GlobalClass]
-public partial class SpawnConfig : Resource
+public static class SpawnConfig
 {
 	/// <summary> 每一波的默认持续时间（秒） </summary>
-	[Export] public float WaveDuration { get; set; } = 60.0f;
+	public const float WaveDuration = 60.0f;
 
-	/// <summary> 最大波次数量（达到后可能循环或结束） </summary>
-	[Export] public int MaxWaves { get; set; } = 20;
+	/// <summary> 最大波次数量 </summary>
+	public const int MaxWaves = 20;
 
 	/// <summary> 波次间隔时间（休息时间） </summary>
-	[Export] public float WaveBreakTime { get; set; } = 5.0f;
+	public const float WaveBreakTime = 5.0f;
 
-	/// <summary> 所有敌人的生成规则列表 </summary>
-	[Export] public Godot.Collections.Array<EnemySpawnRule> SpawnRules { get; set; } = new();
-
-	// 提供默认构造函数，方便代码中直接 new
-	public SpawnConfig() { }
-
-	// 可以添加更多全局曲线，例如：
-	// [Export] public Curve GlobalDifficultyCurve { get; set; }
+	/// <summary>
+	/// 所有敌人的生成规则列表。
+	/// 第一次访问时会从资源路径加载对应的 .tres 文件。
+	/// </summary>
+	public static List<EnemySpawnRule> SpawnRules
+	{
+		get
+		{
+			return new List<EnemySpawnRule>
+				{
+					GD.Load<EnemySpawnRule>("res://Data/Spawn/SpawnRule/豺狼人生成规则.tres"),
+					GD.Load<EnemySpawnRule>("res://Data/Spawn/SpawnRule/鱼人生成规则.tres")
+				};
+		}
+	}
 }

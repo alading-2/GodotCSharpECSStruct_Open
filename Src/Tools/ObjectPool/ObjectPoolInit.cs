@@ -41,12 +41,10 @@ public partial class ObjectPoolInit : Node
 
     public override void _Ready()
     {
-        // 使用 CallDeferred 代替 async/await
-        // 这会将初始化推迟到当前帧末尾，此时 SceneTree.Root 已经完全就绪
-        CallDeferred(nameof(DeferredInit));
+        InitPools();
     }
 
-    private void DeferredInit()
+    private void InitPools()
     {
         // 1. 初始化 EnemyPool
         var scene = GD.Load<PackedScene>("res://Src/ECS/Entities/Enemy/Enemy.tscn");

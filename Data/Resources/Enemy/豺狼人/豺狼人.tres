@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("2_script")
 EnemyName = "Goblin"
-DefaultStrategy = 2
+DefaultStrategy = 3
 MaxHp = 15.0
 Speed = 150.0
 Damage = 8.0

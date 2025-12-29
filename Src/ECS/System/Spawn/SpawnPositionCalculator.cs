@@ -3,6 +3,77 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
+/// 敌人生成位置的策略枚举
+/// </summary>
+public enum SpawnPositionStrategy
+{
+    /// <summary> 矩形区域内随机 </summary>
+    Rectangle,
+    /// <summary> 圆形区域内随机 </summary>
+    Circle,
+    /// <summary> 圆周上随机 (边缘) </summary>
+    Perimeter,
+    /// <summary> 屏幕视野外（在指定矩形范围内挖去视野区域） </summary>
+    Offscreen,
+    /// <summary> 规律网格阵型 </summary>
+    Grid,
+    /// <summary> 螺旋线排列 </summary>
+    Spiral,
+    /// <summary> 扎堆生成（基于 BaseStrategy 确定中心点，再在周围散布） </summary>
+    Cluster
+}
+
+/// <summary>
+/// 用于传递给生成计算器的参数包。
+/// 使用此对象避免方法签名中出现过多的可选参数。
+/// </summary>
+public struct SpawnPositionParams
+{
+    /// <summary>
+    /// 显式声明无参构造函数以支持字段初始值设定项 (C# 10+ 规范)
+    /// </summary>
+    public SpawnPositionParams() { }
+
+    // --- Rectangle / Offscreen 策略参数 ---
+    public float MinX { get; set; } = -1500f;
+    public float MaxX { get; set; } = 1500f;
+    public float MinY { get; set; } = -1000f;
+    public float MaxY { get; set; } = 1000f;
+
+    // --- Circle / Perimeter 策略参数 ---
+    /// <summary> 圆心位置 </summary>
+    public Vector2 Center { get; set; } = Vector2.Zero;
+    /// <summary> 圆形半径 </summary>
+    public float Radius { get; set; } = 700f;
+
+    // --- Offscreen 策略参数 ---
+    /// <summary> 视野区域的额外缓冲距离（防止生成在刚好可见的边缘） </summary>
+    public float ViewportPadding { get; set; } = 50f;
+
+    // --- Grid 策略参数 ---
+    /// <summary> 网格起始原点（如果不设置，默认会基于 Viewport 中心或 (0,0)） </summary>
+    public Vector2? GridOrigin { get; set; } = null;
+    /// <summary> 每行显示的列数 </summary>
+    public int GridColumns { get; set; } = 5;
+    /// <summary> 每个网格单元的间距 </summary>
+    public float GridSpacing { get; set; } = 100f;
+    /// <summary> 当前生成的索引位置（用于递增） </summary>
+    public int GridIndex { get; set; } = 0;
+
+    // --- Cluster 策略参数 ---
+    /// <summary> 扎堆生成的基准策略（决定中心点在哪里） </summary>
+    public SpawnPositionStrategy ClusterBaseStrategy { get; set; } = SpawnPositionStrategy.Rectangle;
+    /// <summary> 扎堆散布的半径范围 </summary>
+    public float ClusterRadius { get; set; } = 150f;
+
+    // --- Spiral 策略参数 ---
+    /// <summary> 螺旋线的角度步进（弧度） </summary>
+    public float SpiralAngleStep { get; set; } = 0.5f;
+    /// <summary> 螺旋线的距离增长步进 </summary>
+    public float SpiralDistStep { get; set; } = 5f;
+}
+
+/// <summary>
 /// 敌人生成位置计算工具 - 负责根据不同的生成策略计算具体的 2D 坐标。
 /// 该类为静态工具类，不持有状态，适用于 ECS 系统或生成管理器调用。
 /// </summary>
@@ -22,11 +93,13 @@ public static class SpawnPositionCalculator
     {
         return strategy switch
         {
-            SpawnPositionStrategy.Random => GetRandomPosition(parameters),
-            SpawnPositionStrategy.Circle => GetCirclePosition(parameters),
-            SpawnPositionStrategy.Offscreen => GetOffscreenPosition(parameters, viewport),
-            SpawnPositionStrategy.Grid => GetGridPosition(parameters),
-            SpawnPositionStrategy.Cluster => GetClusterPosition(parameters, viewport),
+            SpawnPositionStrategy.Rectangle => GetRandomRectanglePosition(parameters),
+            SpawnPositionStrategy.Circle => GetRandomCirclePosition(parameters),
+            SpawnPositionStrategy.Perimeter => GetPerimeterPosition(parameters),
+            SpawnPositionStrategy.Offscreen => GetOffscreenHollowPosition(parameters, viewport),
+            SpawnPositionStrategy.Grid => GetGridPosition(parameters, viewport),
+            SpawnPositionStrategy.Spiral => GetSpiralPosition(parameters, viewport),
+            SpawnPositionStrategy.Cluster => GetClusterPosition(parameters, viewport), // 单次调用 Cluster 会退化为随机散布
             _ => Vector2.Zero
         };
     }
@@ -44,31 +117,39 @@ public static class SpawnPositionCalculator
         var results = new List<Vector2>(count);
 
         // 特殊策略处理：Cluster (扎堆生成)
-        // 逻辑：先在屏幕外确定一个“母点”，然后在其周围随机散布子点
+        // 逻辑：使用 BaseStrategy 确定一个“母点”，然后在其周围随机散布子点
         if (strategy == SpawnPositionStrategy.Cluster)
         {
-            // 1. 确定中心点：通常是一个屏幕外的随机位置
-            var center = GetOffscreenPosition(parameters, viewport);
+            // 1. 确定中心点：根据 ClusterBaseStrategy 计算
+            // 注意：这里递归调用 GetSpawnPosition 获取中心点
+            var center = GetSpawnPosition(parameters.ClusterBaseStrategy, parameters, viewport);
 
             // 2. 在中心点周围随机散布
             for (int i = 0; i < count; i++)
             {
                 // 使用极坐标转笛卡尔坐标实现圆内随机散布
                 float angle = GD.Randf() * Mathf.Tau; // Tau = 2 * PI
-                float dist = GD.Randf() * parameters.ClusterRadius;
+                // 使用 sqrt 保证在圆内均匀分布，否则会聚集在圆心
+                float dist = Mathf.Sqrt(GD.Randf()) * parameters.ClusterRadius;
                 results.Add(center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist);
             }
         }
         else
         {
-            // 其他策略（如 Random, Circle, Grid）直接循环生成
+            // 其他策略直接循环生成
             for (int i = 0; i < count; i++)
             {
-                // Grid (网格) 策略需要维护一个索引来递增坐标
-                if (strategy == SpawnPositionStrategy.Grid)
+                // Grid/Spiral 等策略可能需要递增索引
+                if (strategy == SpawnPositionStrategy.Grid || strategy == SpawnPositionStrategy.Spiral)
                 {
-                    parameters.GridIndex++; // ⚠️ 注意：这会修改传入的引用对象，连续调用需注意重置
+                    parameters.GridIndex++; // ⚠️ 修改传入的 struct 副本 (但这是按值传递的参数，不会影响外部，除非用 ref)
+                    // 修正：由于 parameters 是 struct 且按值传递，这里的修改只在循环内有效？
+                    // 不，List<Vector2> 是一次性返回，这里的 parameters 是循环外的局部变量吗？
+                    // GetSpawnPositions 的 parameters 参数是局部变量副本。
+                    // 但我们在循环内调用 GetSpawnPosition(..., parameters, ...)，需要把修改后的 parameters 传进去。
+                    // 所以这里的 parameters.GridIndex++ 修改的是当前方法作用域内的副本，是有效的。
                 }
+
                 results.Add(GetSpawnPosition(strategy, parameters, viewport));
             }
         }
@@ -79,7 +160,7 @@ public static class SpawnPositionCalculator
     /// <summary>
     /// 矩形区域内随机生成。
     /// </summary>
-    private static Vector2 GetRandomPosition(SpawnPositionParams p)
+    private static Vector2 GetRandomRectanglePosition(SpawnPositionParams p)
     {
         return new Vector2(
             (float)GD.RandRange(p.MinX, p.MaxX),
@@ -88,141 +169,157 @@ public static class SpawnPositionCalculator
     }
 
     /// <summary>
-    /// 圆形区域内随机生成。
+    /// 圆形区域内随机生成 (实心圆)。
     /// </summary>
-    private static Vector2 GetCirclePosition(SpawnPositionParams p)
+    private static Vector2 GetRandomCirclePosition(SpawnPositionParams p)
     {
         float angle = GD.Randf() * Mathf.Tau;
-        float distance = GD.Randf() * p.Radius; // 均匀散布在圆盘内
+        float distance = Mathf.Sqrt(GD.Randf()) * p.Radius; // 均匀分布
         return p.Center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
     }
 
     /// <summary>
-    /// 屏幕外边缘生成逻辑。常用于“割草”类游戏，确保敌人从屏幕视野外进入。
+    /// 圆周上随机生成 (空心圆环边缘)。
     /// </summary>
-    private static Vector2 GetOffscreenPosition(SpawnPositionParams p, Viewport viewport)
+    private static Vector2 GetPerimeterPosition(SpawnPositionParams p)
     {
-        if (viewport == null)
-        {
-            _log.Error("屏幕外生成策略需要提供有效的视口 (Viewport) 引用。");
-            return Vector2.Zero;
-        }
-
-        // 获取当前视口的可见区域大小
-        var viewportSize = viewport.GetVisibleRect().Size;
-        var camera = viewport.GetCamera2D();
-
-        Vector2 cameraPos = Vector2.Zero;
-        if (camera != null)
-        {
-            // 如果存在活动相机，以相机位置作为屏幕中心
-            cameraPos = camera.GlobalPosition;
-        }
-        else
-        {
-            // 如果没有相机，通过变换矩阵计算屏幕中心点
-            // CanvasTransform.Origin 的取反通常对应了屏幕在世界空间中的平移
-            cameraPos = viewport.GetCanvasTransform().Origin * -1 + viewportSize / 2;
-        }
-
-        var halfSize = viewportSize / 2;
-
-        // 随机选择屏幕的四个方向之一进行生成 (0:上, 1:右, 2:下, 3:左)
-        int side = (int)(GD.Randi() % 4);
-        return side switch
-        {
-            // 上方：Y坐标固定在视口顶部向上偏移处，X坐标在视口宽度内随机
-            0 => cameraPos + new Vector2((float)GD.RandRange(-halfSize.X, halfSize.X), -halfSize.Y - p.OffscreenDistance),
-            // 右方：X坐标固定在视口右侧向右偏移处，Y坐标在视口高度内随机
-            1 => cameraPos + new Vector2(halfSize.X + p.OffscreenDistance, (float)GD.RandRange(-halfSize.Y, halfSize.Y)),
-            // 下方：Y坐标固定在视口底部向下偏移处，X坐标在视口宽度内随机
-            2 => cameraPos + new Vector2((float)GD.RandRange(-halfSize.X, halfSize.X), halfSize.Y + p.OffscreenDistance),
-            // 左方：X坐标固定在视口左侧向左偏移处，Y坐标在视口高度内随机
-            _ => cameraPos + new Vector2(-halfSize.X - p.OffscreenDistance, (float)GD.RandRange(-halfSize.Y, halfSize.Y))
-        };
+        float angle = GD.Randf() * Mathf.Tau;
+        return p.Center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * p.Radius;
     }
 
     /// <summary>
-    /// 按照固定的网格规律生成。常用于测试或特定的阵型排列。
+    /// 屏幕外生成逻辑 (Hollow Rectangle)。
+    /// 在 [Min, Max] 定义的大矩形内，挖去 Viewport 定义的小矩形。
     /// </summary>
-    private static Vector2 GetGridPosition(SpawnPositionParams p)
+    private static Vector2 GetOffscreenHollowPosition(SpawnPositionParams p, Viewport viewport)
     {
-        // 根据当前索引计算所在行列
+        if (viewport == null) return Vector2.Zero;
+
+        // 1. 获取视口区域 (World Space)
+        var visibleRect = viewport.GetVisibleRect();
+        var camera = viewport.GetCamera2D();
+        Vector2 viewCenter = camera != null ? camera.GlobalPosition : (visibleRect.Position + visibleRect.Size / 2);
+        Vector2 viewSize = visibleRect.Size;
+
+        // 视口边界 (含 Padding)
+        float viewLeft = viewCenter.X - viewSize.X / 2 - p.ViewportPadding;
+        float viewRight = viewCenter.X + viewSize.X / 2 + p.ViewportPadding;
+        float viewTop = viewCenter.Y - viewSize.Y / 2 - p.ViewportPadding;
+        float viewBottom = viewCenter.Y + viewSize.Y / 2 + p.ViewportPadding;
+
+        // 2. 外部大矩形边界
+        // 确保外部矩形至少包裹住视口，否则无法生成
+        float outerLeft = Mathf.Min(p.MinX, viewLeft);
+        float outerRight = Mathf.Max(p.MaxX, viewRight);
+        float outerTop = Mathf.Min(p.MinY, viewTop);
+        float outerBottom = Mathf.Max(p.MaxY, viewBottom);
+
+        // 3. 将剩余区域划分为 4 个不重叠的矩形块 (上、下、左、右)
+        // Top: (OuterLeft, OuterTop) -> (OuterRight, ViewTop)
+        // Bottom: (OuterLeft, ViewBottom) -> (OuterRight, OuterBottom)
+        // Left: (OuterLeft, ViewTop) -> (ViewLeft, ViewBottom)
+        // Right: (ViewRight, ViewTop) -> (OuterRight, ViewBottom)
+
+        float areaTop = (outerRight - outerLeft) * (viewTop - outerTop);
+        float areaBottom = (outerRight - outerLeft) * (outerBottom - viewBottom);
+        float areaLeft = (viewLeft - outerLeft) * (viewBottom - viewTop);
+        float areaRight = (outerRight - viewRight) * (viewBottom - viewTop);
+
+        // 防止负面积 (如果大矩形比视口小)
+        areaTop = Mathf.Max(0, areaTop);
+        areaBottom = Mathf.Max(0, areaBottom);
+        areaLeft = Mathf.Max(0, areaLeft);
+        areaRight = Mathf.Max(0, areaRight);
+
+        float totalArea = areaTop + areaBottom + areaLeft + areaRight;
+
+        if (totalArea <= 0.001f)
+        {
+            // 如果没有可用区域，退化为 Viewport 边缘生成
+            return viewCenter + new Vector2(viewSize.X / 2 + 50, 0).Rotated(GD.Randf() * Mathf.Tau);
+        }
+
+        // 4. 按面积权重随机选择一个区域
+        float r = GD.Randf() * totalArea;
+
+        if (r < areaTop) // 在 Top 区域生成
+        {
+            return new Vector2(
+                (float)GD.RandRange(outerLeft, outerRight),
+                (float)GD.RandRange(outerTop, viewTop)
+            );
+        }
+        else if (r < areaTop + areaBottom) // 在 Bottom 区域生成
+        {
+            return new Vector2(
+                (float)GD.RandRange(outerLeft, outerRight),
+                (float)GD.RandRange(viewBottom, outerBottom)
+            );
+        }
+        else if (r < areaTop + areaBottom + areaLeft) // 在 Left 区域生成
+        {
+            return new Vector2(
+                (float)GD.RandRange(outerLeft, viewLeft),
+                (float)GD.RandRange(viewTop, viewBottom)
+            );
+        }
+        else // 在 Right 区域生成
+        {
+            return new Vector2(
+                (float)GD.RandRange(viewRight, outerRight),
+                (float)GD.RandRange(viewTop, viewBottom)
+            );
+        }
+    }
+
+    /// <summary>
+    /// 网格生成位置。
+    /// </summary>
+    private static Vector2 GetGridPosition(SpawnPositionParams p, Viewport viewport)
+    {
+        // 确定原点：如果有指定则用指定，否则用视口中心，再否则用 (0,0)
+        Vector2 origin = p.GridOrigin ?? (viewport?.GetCamera2D()?.GlobalPosition ?? Vector2.Zero);
+
+        // 为了让网格居中，可以做个偏移
+        // 这里简化实现：直接从 origin 开始向右下排布
         int col = p.GridIndex % p.GridColumns;
         int row = p.GridIndex / p.GridColumns;
 
-        return p.GridOrigin + new Vector2(col * p.GridSpacing, row * p.GridSpacing);
+        // 可以做个中心化偏移，让 origin 是网格的中心
+        float offsetX = (p.GridColumns - 1) * p.GridSpacing / 2f;
+        // float offsetY... 暂不处理行数未知的情况
+
+        return origin + new Vector2(col * p.GridSpacing - offsetX, row * p.GridSpacing);
     }
 
     /// <summary>
-    /// 单个 Cluster 模式位置。当单独调用时，退化为屏幕外随机散布点。
+    /// 螺旋线生成位置。
+    /// </summary>
+    private static Vector2 GetSpiralPosition(SpawnPositionParams p, Viewport viewport)
+    {
+        Vector2 center = p.Center;
+        if (viewport != null)
+        {
+            center = viewport.GetCamera2D()?.GlobalPosition ?? p.Center;
+        }
+
+        float angle = p.GridIndex * p.SpiralAngleStep;
+        float dist = p.GridIndex * p.SpiralDistStep; // 距离随索引增加
+
+        return center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
+    }
+
+    /// <summary>
+    /// 单个 Cluster 模式位置 (退化为基于 BaseStrategy 的单点偏移)。
     /// </summary>
     private static Vector2 GetClusterPosition(SpawnPositionParams p, Viewport viewport)
     {
-        // 先找一个屏幕外基点
-        var center = GetOffscreenPosition(p, viewport);
-        // 在该基点周围随机偏移
+        // 如果直接调用 GetSpawnPosition(Cluster)，我们只能随机选一个中心点，然后偏离一点
+        var center = GetSpawnPosition(p.ClusterBaseStrategy, p, viewport);
         float angle = GD.Randf() * Mathf.Tau;
-        float dist = GD.Randf() * p.ClusterRadius;
+        float dist = Mathf.Sqrt(GD.Randf()) * p.ClusterRadius;
         return center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
     }
 }
 
-/// <summary>
-/// 敌人生成位置的策略枚举
-/// </summary>
-public enum SpawnPositionStrategy
-{
-    /// <summary> 矩形区域随机 </summary>
-    Random,
-    /// <summary> 圆形区域随机 </summary>
-    Circle,
-    /// <summary> 屏幕视野外（根据相机动态调整） </summary>
-    Offscreen,
-    /// <summary> 规律网格阵型 </summary>
-    Grid,
-    /// <summary> 扎堆生成（先定大区域再小散步） </summary>
-    Cluster
-}
 
-/// <summary>
-/// 用于传递给生成计算器的参数包。
-/// 使用此对象避免方法签名中出现过多的可选参数。
-/// </summary>
-public struct SpawnPositionParams
-{
-    /// <summary>
-    /// 显式声明无参构造函数以支持字段初始值设定项 (C# 10+ 规范)
-    /// </summary>
-    public SpawnPositionParams() { }
-
-    // --- Random 策略参数 ---
-    public float MinX { get; set; } = 0f;
-    public float MaxX { get; set; } = 1000f;
-    public float MinY { get; set; } = 0f;
-    public float MaxY { get; set; } = 1000f;
-
-    // --- Circle 策略参数 ---
-    /// <summary> 圆心位置 </summary>
-    public Vector2 Center { get; set; } = Vector2.Zero;
-    /// <summary> 圆形半径 </summary>
-    public float Radius { get; set; } = 500f;
-
-    // --- Offscreen 策略参数 ---
-    /// <summary> 生成点距离屏幕边缘的最小额外距离 </summary>
-    public float OffscreenDistance { get; set; } = 100f;
-
-    // --- Grid 策略参数 ---
-    /// <summary> 网格起始原点（左上角） </summary>
-    public Vector2 GridOrigin { get; set; } = Vector2.Zero;
-    /// <summary> 每行显示的列数 </summary>
-    public int GridColumns { get; set; } = 5;
-    /// <summary> 每个网格单元的间距 </summary>
-    public float GridSpacing { get; set; } = 100f;
-    /// <summary> 当前生成的索引位置（用于递增） </summary>
-    public int GridIndex { get; set; } = 0;
-
-    // --- Cluster 策略参数 ---
-    /// <summary> 扎堆散布的半径范围 </summary>
-    public float ClusterRadius { get; set; } = 100f;
-}

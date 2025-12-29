@@ -17,6 +17,7 @@ public partial class SpawnSystem : Node
 	public static void Initialize()
 	{
 		// 注册到 AutoLoad，现在使用 .tscn 场景文件而非 .cs 脚本
+		// 添加对 ObjectPoolInit 的依赖，确保敌人对象池先于生成系统初始化
 		AutoLoad.Register("SpawnSystem", "res://Src/ECS/System/Spawn/SpawnSystem.tscn", AutoLoad.Priority.System);
 	}
 
@@ -27,12 +28,6 @@ public partial class SpawnSystem : Node
 	/// </summary>
 	public static SpawnSystem Instance { get; private set; }
 
-	// === 策划配置数据 ===
-	/// <summary>
-	/// 全局生成配置，包含所有敌人生成规则。
-	/// 可以直接在编辑器分配，也可以在代码中动态配置。
-	/// </summary>
-	[Export] public SpawnConfig Config { get; set; } = new();
 
 	// === 实时运行状态 ===
 	/// <summary> 当前进行的波次索引（从 1 开始），-1 表示尚未开始 </summary>
@@ -124,10 +119,9 @@ public partial class SpawnSystem : Node
 	/// <param name="waveIndex">波次索引 (1-based)</param>
 	public void StartWave(int waveIndex)
 	{
-		if (Config == null) { _log.Error("SpawnConfig 未配置！"); return; }
 
 		// 检查是否超过最大波次（如果 SpawnConfig.MaxWaves > 0）
-		if (Config.MaxWaves > 0 && waveIndex > Config.MaxWaves)
+		if (SpawnConfig.MaxWaves > 0 && waveIndex > SpawnConfig.MaxWaves)
 		{
 			_log.Info("已通过最大波次，触发游戏结束");
 			EventBus.TriggerGameOver(true);
@@ -138,30 +132,30 @@ public partial class SpawnSystem : Node
 		IsWaveActive = true;
 
 		// 1. 设置波次总时长计时器
-		_waveTimer.WaitTime = Config.WaveDuration;
+		_waveTimer.WaitTime = SpawnConfig.WaveDuration;
 		_waveTimer.Start();
 
 		// 2. 初始化规则状态
 		_activeStates.Clear();
 
 		// 安全检查：防止 SpawnRules 为 null
-		if (Config.SpawnRules == null)
+		if (SpawnConfig.SpawnRules == null)
 		{
 			_log.Error("SpawnConfig 中的 SpawnRules 列表为空（null）！");
 			return;
 		}
 
-		foreach (var rule in Config.SpawnRules)
+		// 检查通用对象池是否存在
+		if (ObjectPoolManager.GetPool(PoolNames.EnemyPool) == null)
+		{
+			_log.Error($"严重错误：未找到通用敌人对象池 '{PoolNames.EnemyPool}'！波次将无法生成敌人。");
+			// 这里不直接 return，允许计时器跑完（空波次），或者选择中断
+		}
+
+		foreach (var rule in SpawnConfig.SpawnRules)
 		{
 			if (IsRuleActiveForWave(rule, waveIndex))
 			{
-				// 按需验证：仅检查当前波次激活的规则是否有对应的对象池
-				if (ObjectPoolManager.GetPool(rule.EnemyData.EnemyName) == null)
-				{
-					_log.Error($"波次 {waveIndex} 激活了规则 '{rule.EnemyData.EnemyName}'，但未找到对应的对象池！请检查预加载配置。");
-					continue;
-				}
-
 				_activeStates.Add(new RuleRuntimeState
 				{
 					Rule = rule,
@@ -174,7 +168,7 @@ public partial class SpawnSystem : Node
 		// 启动检查循环
 		_checkTimer.Start();
 
-		_log.Info($"波次 {waveIndex} 开始! 持续时间: {Config.WaveDuration}s, 激活规则数: {_activeStates.Count}");
+		_log.Info($"波次 {waveIndex} 开始! 持续时间: {SpawnConfig.WaveDuration}s, 激活规则数: {_activeStates.Count}");
 		// 通过事件总线通知 UI 和其他系统
 		EventBus.TriggerWaveStarted(waveIndex);
 	}
@@ -233,7 +227,7 @@ public partial class SpawnSystem : Node
 
 				if (count > 0)
 				{
-					SpawnBatch(count, state.Rule.EnemyData.DefaultStrategy);
+					SpawnBatch(count, state.Rule.EnemyData);
 				}
 			}
 
@@ -250,8 +244,8 @@ public partial class SpawnSystem : Node
 	/// 手动批量生成敌人（用于测试或特殊事件）
 	/// </summary>
 	/// <param name="count">数量</param>
-	/// <param name="strategy">生成策略 (默认 Offscreen)</param>
-	public void SpawnBatch(int count, SpawnPositionStrategy strategy = SpawnPositionStrategy.Offscreen)
+	/// <param name="enemyData">敌人资源配置</param>
+	public void SpawnBatch(int count, EnemyResource enemyData)
 	{
 		// 1. 计算位置
 		// 获取当前视口（Viewport），用于确定屏幕边界和相机位置，确保敌人能正确生成在玩家视野外
@@ -261,7 +255,7 @@ public partial class SpawnSystem : Node
 		// SpawnPositionParams 是 struct，分配在栈上，无 GC 压力
 		var spawnParams = new SpawnPositionParams();
 
-		var positions = SpawnPositionCalculator.GetSpawnPositions(strategy, count, spawnParams, viewport);
+		var positions = SpawnPositionCalculator.GetSpawnPositions(enemyData.DefaultStrategy, count, spawnParams, viewport);
 
 		// 2. 循环生成
 		// 修正：统一使用 PoolNames.EnemyPool，不再依赖传入的 enemyName
@@ -285,28 +279,6 @@ public partial class SpawnSystem : Node
 				if (enemy is Node2D node2d) node2d.GlobalPosition = pos;
 			}
 		}
-	}
-
-	/// <summary>
-	/// 基础生成接口：从对象池中取出一个敌人并放置到指定位置。
-	/// </summary>
-	public Node? SpawnEnemy(string enemyName, Vector2 position)
-	{
-		// 修正：忽略 enemyName，强制使用统一的 EnemyPool
-		var pool = ObjectPoolManager.GetPool(PoolNames.EnemyPool);
-		if (pool is ObjectPool<Node> nodePool)
-		{
-			var enemy = nodePool.Get();
-			if (enemy is Node2D node2d) node2d.GlobalPosition = position;
-			return enemy;
-		}
-		return null;
-	}
-
-	// 兼容旧接口，只需重定向参数名
-	public void SpawnEnemyOffscreen(string enemyName, float distance = 50f)
-	{
-		SpawnBatch(1, SpawnPositionStrategy.Offscreen);
 	}
 
 	// ========================================
@@ -337,21 +309,9 @@ public partial class SpawnSystem : Node
 	/// </summary>
 	public void KillAllEnemies()
 	{
-		if (Config == null) return;
-
-		// 遍历所有规则涉及的敌人类型
-		foreach (var rule in Config.SpawnRules)
-		{
-			if (rule.EnemyData == null) continue;
-
-			// 获取对应的对象池并执行全量回收
-			var pool = ObjectPoolManager.GetPool(rule.EnemyData.EnemyName);
-			if (pool is IObjectPool typedPool)
-			{
-				// ReleaseAll 会将所有从该池生成的活跃对象归还到池中
-				typedPool.ReleaseAll();
-			}
-		}
-		_log.Debug("已清理所有活跃敌人。");
+		// 获取通用对象池并执行全量回收
+		var pool = ObjectPoolManager.GetPool(PoolNames.EnemyPool);
+		pool.ReleaseAll();
+		_log.Debug("已清理所有活跃敌人 (EnemyPool)。");
 	}
 }

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EnemySpawnRule" load_steps=3 format=3 uid="uid://bh3wdyv6cnv6i"]
+
+[ext_resource type="Resource" uid="uid://daw5s8n3o6q2y" path="res://Data/Resources/Enemy/豺狼人/豺狼人.tres" id="1_enemy"]
+[ext_resource type="Script" uid="uid://pv80ksvtuou3" path="res://Data/Spawn/EnemySpawnRule.cs" id="2_script"]
+
+[resource]
+script = ExtResource("2_script")
+EnemyData = ExtResource("1_enemy")
+MinWave = 1
+SpawnInterval = 2.0

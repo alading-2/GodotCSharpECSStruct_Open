@@ -80,5 +80,5 @@ public partial class SpawnSystem : Node
 
 ## 6. 现有资源
 
-- **位置计算工具**: `Src/ECS/System/Spawn/SpawnPositionCalculator.cs` (已包含 4 种位置策略)
+- **位置计算工具**: Src/ECS/System/Spawn/SpawnPositionCalculator.cs (已包含 5 种位置策略)
 - **对象池**: `ObjectPoolManager`

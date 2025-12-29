@@ -44,6 +44,10 @@ public static class EventBus
         WaveCompleted?.Invoke(waveIndex);
     }
 
+    public static void TriggerGameStart()
+    {
+        GameStart?.Invoke();
+    }
     public static void TriggerGameOver(bool isVictory)
     {
         GameOver?.Invoke(isVictory);

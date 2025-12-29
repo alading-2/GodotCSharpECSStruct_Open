@@ -1,4 +1,8 @@
 # Godot 4+ specific ignores
 .history/
-.godot/
 参考/
+.godot/
+# C# builds (如果你在外部编译，或者是 Godot 3 的习惯)
+.mono/
+bin/
+obj/

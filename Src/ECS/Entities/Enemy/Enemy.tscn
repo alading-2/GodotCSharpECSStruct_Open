@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://drfdd6mt4hjpl"]
+[gd_scene load_steps=4 format=3 uid="uid://drfdd6mt4hjpl"]
 
-[ext_resource type="Script" uid="uid://pj3op0qfykmq" path="res://Src/ECS/Entities/Enemies/Enemy.cs" id="1_id0n2"]
+[ext_resource type="Script" uid="uid://pj3op0qfykmq" path="res://Src/ECS/Entities/Enemy/Enemy.cs" id="1_id0n2"]
+[ext_resource type="PackedScene" uid="uid://cio2lh5l1a86o" path="res://assets/character/ememy/豺狼人/AnimatedSprite2D/AnimatedSprite2D.tscn" id="2_5ix0c"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_vqy82"]
 radius = 25.0
@@ -9,6 +10,8 @@ height = 75.0
 [node name="Enemy" type="CharacterBody2D"]
 script = ExtResource("1_id0n2")
 
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="."]
+[node name="AnimatedSprite2D" parent="." instance=ExtResource("2_5ix0c")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -46)
 shape = SubResource("CapsuleShape2D_vqy82")
