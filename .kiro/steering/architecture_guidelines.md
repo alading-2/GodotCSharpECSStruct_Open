@@ -37,7 +37,7 @@
 
 ## 3. 目录规范
 
-- `Src/ECS/Components/`：核心功能组件。
+- `Src/ECS/Component/`：核心功能组件。
 - `Src/Autoload/`：全局单例。
 - `Src/Tools/`：底层工具（Log, Data, ObjectPool）。
 - `Resources/Data/`：静态配置文件 (.tres)。

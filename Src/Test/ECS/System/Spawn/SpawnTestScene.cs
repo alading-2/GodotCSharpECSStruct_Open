@@ -151,7 +151,7 @@ namespace BrotatoMy.Test
             // 更新 UI 统计
             _fpsLabel.Text = $"FPS: {Engine.GetFramesPerSecond()}";
 
-            var pool = ObjectPoolManager.GetPool(PoolNames.EnemyPool);
+            var pool = ObjectPoolManager.GetPool<Enemy>(PoolNames.EnemyPool);
             if (pool != null)
             {
                 var stats = pool.GetStats();

@@ -12,6 +12,52 @@
 - **详细统计** - 实时追踪命中率、活跃数、闲置数及创建/销毁总量。
 - **线程安全** - 内部使用 `lock` 确保管理器操作的安全性。
 
+## 文件组织
+
+- `ObjectPool.cs`: 核心对象池逻辑与 `IPoolable` 接口定义。
+- `ObjectPoolManager.cs`: 全局池管理逻辑，负责池的注册、查找与静态归还。
+- `ParentManager.cs`: 内部工具类，负责处理池化节点的父级挂载逻辑。
+- `ObjectPoolInit.cs`: 推荐的全局初始化入口（AutoLoad）。
+
+## 重要限制
+
+### 静态归还仅支持 Node 对象
+
+`ObjectPoolManager.ReturnToPool()` 方法**仅支持 Godot Node 对象**的自动归还，因为它依赖 `Node.Data` 容器存储池名称。
+
+**支持的用法**：
+
+```csharp
+// ✅ Node 对象 - 支持静态归还
+var enemy = enemyPool.Get();
+ObjectPoolManager.ReturnToPool(enemy);  // 自动查找池并归还
+```
+
+**不支持的用法**：
+
+```csharp
+// ❌ 纯 C# 类 - 不支持静态归还
+public class MyData { }
+var pool = new ObjectPool<MyData>(() => new MyData(), config);
+var data = pool.Get();
+ObjectPoolManager.ReturnToPool(data);  // 会报错！
+```
+
+**纯 C# 类的正确用法**：
+
+```csharp
+// ✅ 直接调用池的 Release 方法
+var pool = new ObjectPool<MyData>(() => new MyData(), config);
+var data = pool.Get();
+pool.Release(data);  // 必须持有池引用
+```
+
+**设计原因**：
+
+- 移除了冗余的 `_instanceToPoolName` 字典，性能更优
+- Godot 游戏中 99% 的池化对象都是 Node（Enemy、Bullet、Item）
+- 纯 C# 类池化场景极少，直接持有池引用更简洁
+
 ## 快速开始
 
 ### 1. 全局初始化 (推荐)
@@ -23,7 +69,7 @@
 public override void _Ready()
 {
     // 使用 PoolNames 常量避免字符串硬编码
-    var scene = GD.Load<PackedScene>("res://Src/ECS/Entities/Enemies/Enemy.tscn");
+    var scene = GD.Load<PackedScene>("res://Src/ECS/Entity/Enemies/Enemy.tscn");
     new ObjectPool<Node>(
         () => scene.Instantiate(),
         new ObjectPoolConfig { Name = PoolNames.EnemyPool, InitialSize = 100, MaxSize = 500 }
@@ -45,12 +91,15 @@ var pool = new ObjectPool<Bullet>(
 
 ```csharp
 // 方式 A: 通过管理器查找 (解耦)
-var pool = ObjectPoolManager.GetPool(PoolNames.EnemyPool) as ObjectPool<Node>;
-var enemy = pool?.Spawn();
+var pool = ObjectPoolManager.GetPool<Node>(PoolNames.EnemyPool);
+var enemy = pool?.Get();
 
-// 方式 B: 静态全局归还 (最整洁，推荐)
-// 对象不需要持有池的引用，管理器会自动查找它属于哪个池
+// 方式 B: 静态全局归还 (最整洁，推荐 - 仅限 Node 对象)
+// 对象不需要持有池的引用，管理器会自动从 Node.Data 中查找池名称
 ObjectPoolManager.ReturnToPool(enemy);
+
+// 方式 C: 直接调用池的 Release (适用于所有类型)
+pool.Release(enemy);
 ```
 
 ## IPoolable 接口
@@ -110,17 +159,20 @@ public partial class Enemy : CharacterBody2D, IPoolable
 
 ### ObjectPoolManager (全局管理器)
 
-| 方法                            | 描述                                             |
-| :------------------------------ | :----------------------------------------------- |
-| `GetPool(string name)`          | 根据名称查找已注册的对象池接口 (`IObjectPool`)。 |
-| `ReturnToPool(object instance)` | **核心方法**：自动查找对象所属的池并归还。       |
-| `GetAllStats()`                 | 获取所有已注册池的统计快照。                     |
-| `CleanupAll(int retainCount)`   | 批量清理所有池的闲置对象。                       |
-| `DestroyAll()`                  | 一键清理所有池（建议在场景切换时调用）。         |
+| 方法                            | 描述                                                               |
+| :------------------------------ | :----------------------------------------------------------------- |
+| `GetPool<T>(string name)`       | 根据名称查找已注册的对象池（泛型版本，类型安全）。                 |
+| `ReturnToPool(object instance)` | **核心方法**：自动查找对象所属的池并归还（**仅支持 Node 对象**）。 |
+| `GetAllStats()`                 | 获取所有已注册池的统计快照。                                       |
+| `CleanupAll(int retainCount)`   | 批量清理所有池的闲置对象。                                         |
+| `DestroyAll()`                  | 一键清理所有池（建议在场景切换时调用）。                           |
 
 ## 项目规范建议
 
 1.  **名称管理**：所有全局池名称必须定义在 `PoolNames` 结构体中。
 2.  **初始化**：核心系统的对象池（敌人、玩家、掉落物）应在 `ObjectPoolInit` 中完成预热。
-3.  **回收**：优先在对象自身的死亡逻辑中调用 `ObjectPoolManager.ReturnToPool(this)`。
+3.  **回收**：
+    - **Node 对象**：优先在对象自身的死亡逻辑中调用 `ObjectPoolManager.ReturnToPool(this)`。
+    - **纯 C# 类**：必须持有池引用并调用 `pool.Release(obj)`。
 4.  **性能**：对象池会自动处理节点的挂载逻辑。对于极高频率（如每秒百发）的子弹，建议在配置中指定合理的 `ParentPath`。
+5.  **类型选择**：本项目主要池化 Node 对象（Enemy、Bullet、Item），极少需要池化纯 C# 类。

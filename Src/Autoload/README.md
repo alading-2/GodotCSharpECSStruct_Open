@@ -7,7 +7,7 @@ AutoLoad 只管理**真正的全局单例**：
 ### ✅ 适合放 AutoLoad 的
 
 - **AudioManager**：全局音频管理
-- **ResourceManager**：全局资源加载
+- **DataResourceIndex**：全局资源加载
 - **GameManager**：游戏流程控制
 - **LogWriter**：全局日志文件写入
 

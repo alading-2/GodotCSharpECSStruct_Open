@@ -80,6 +80,8 @@ public partial class TestProjectile : Node2D, IPoolable
         }
     }
 
+    // --- IPoolable 实现 ---
+
     public void OnPoolAcquire()
     {
         _reuseCount++;

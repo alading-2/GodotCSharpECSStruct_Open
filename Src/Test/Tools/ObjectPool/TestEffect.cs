@@ -44,9 +44,12 @@ public partial class TestEffect : Node2D, IPoolable
 
         if (_lifetime >= _maxLifetime)
         {
+            // 使用 Manager 静态归还
             ObjectPoolManager.ReturnToPool(this);
         }
     }
+
+    // --- IPoolable 实现 ---
 
     public void OnPoolAcquire()
     {
@@ -63,5 +66,6 @@ public partial class TestEffect : Node2D, IPoolable
     {
         _lifetime = 0;
         Scale = Vector2.One;
+        Modulate = Colors.White;
     }
 }

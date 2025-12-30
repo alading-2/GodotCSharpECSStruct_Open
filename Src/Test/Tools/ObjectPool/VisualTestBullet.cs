@@ -84,7 +84,8 @@ public partial class VisualTestBullet : Node2D, IPoolable
         }
     }
 
-    // IPoolable 接口实现
+    // --- IPoolable 接口实现 ---
+
     public void OnPoolAcquire()
     {
         _reuseCount++;
@@ -96,7 +97,6 @@ public partial class VisualTestBullet : Node2D, IPoolable
     public void OnPoolRelease()
     {
         SetProcess(false);
-        // Hide() 由 ObjectPool 处理，但这里也可以显式调用以防万一
     }
 
     public void OnPoolReset()

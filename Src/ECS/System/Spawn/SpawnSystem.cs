@@ -146,7 +146,7 @@ public partial class SpawnSystem : Node
 		}
 
 		// 检查通用对象池是否存在
-		if (ObjectPoolManager.GetPool(PoolNames.EnemyPool) == null)
+		if (ObjectPoolManager.GetPool<Enemy>(PoolNames.EnemyPool) == null)
 		{
 			_log.Error($"严重错误：未找到通用敌人对象池 '{PoolNames.EnemyPool}'！波次将无法生成敌人。");
 			// 这里不直接 return，允许计时器跑完（空波次），或者选择中断
@@ -258,26 +258,15 @@ public partial class SpawnSystem : Node
 		var positions = SpawnPositionCalculator.GetSpawnPositions(enemyData.DefaultStrategy, count, spawnParams, viewport);
 
 		// 2. 循环生成
-		// 修正：统一使用 PoolNames.EnemyPool，不再依赖传入的 enemyName
-		var pool = ObjectPoolManager.GetPool(PoolNames.EnemyPool);
-		if (pool == null)
-		{
-			_log.Error($"无法手动生成敌人：找不到对应的对象池 '{PoolNames.EnemyPool}'。");
-			return;
-		}
-
-		// 尝试使用 ObjectPool 的 SpawnBatch (如果支持 Node 父节点处理)
-		// 当前 ObjectPool<T> 有 Spawn(parent)，我们可以循环调用
-		// 或者扩展 ObjectPool 增加 SpawnBatch(parent, count)
-
-		// 这里手动循环 Spawn
+		// 使用 EntityFactory 统一处理生成逻辑 (获取实例 + 数据注入)
 		foreach (var pos in positions)
 		{
-			if (pool is ObjectPool<Node> nodePool)
-			{
-				var enemy = nodePool.Get();
-				if (enemy is Node2D node2d) node2d.GlobalPosition = pos;
-			}
+			// var enemy = EntityFactory.SpawnEnemy(enemyData, pos);
+			// if (enemy == null)
+			// {
+			// 	// 如果生成失败（如池已满且策略为 discard），则跳过
+			// 	// _log.Warn("生成敌人失败。"); 
+			// }
 		}
 	}
 
@@ -310,7 +299,7 @@ public partial class SpawnSystem : Node
 	public void KillAllEnemies()
 	{
 		// 获取通用对象池并执行全量回收
-		var pool = ObjectPoolManager.GetPool(PoolNames.EnemyPool);
+		var pool = ObjectPoolManager.GetPool<Enemy>(PoolNames.EnemyPool);
 		pool.ReleaseAll();
 		_log.Debug("已清理所有活跃敌人 (EnemyPool)。");
 	}

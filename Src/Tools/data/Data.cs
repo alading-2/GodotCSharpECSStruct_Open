@@ -253,10 +253,10 @@ public class Data
     /// <summary>
     /// 根据简写名称（如 "Player"）自动获取 Resource 并将其公开属性映射到 Data 容器中。
     /// </summary>
-    /// <param name="resourceName">ResourceManager 中注册的简写名称</param>
+    /// <param name="resourceName">DataResourceIndex 中注册的简写名称</param>
     public void ApplyResource(string resourceName)
     {
-        var res = ResourceManager.GetResource(resourceName);
+        var res = DataResourceIndex.GetResource(resourceName);
         if (res != null)
         {
             ApplyResourceInternal(res);

@@ -80,29 +80,16 @@ public interface IPoolable
     void OnPoolReset() { }
 }
 
-/// <summary>
-/// 对象池通用接口（非泛型），用于管理器统一管理
-/// </summary>
-public interface IObjectPool
-{
-    string PoolName { get; }
-    Type ItemType { get; }
-    PoolStats GetStats();
-    void Clear();
-    void Destroy();
-    void Cleanup(int retainCount);
-    void ReleaseAll(); // 回收所有活跃对象
-
-    // 用于管理器非泛型归还
-    void ReleaseObject(object obj);
-}
+// IObjectPool 接口已移除
+// 原因：非泛型接口无法提供类型安全的 Get() 方法
+// 新方案：ObjectPoolManager 使用 Dictionary<string, object> + 泛型方法
 
 /// <summary>
 /// 通用对象池实现
 /// 专门针对 Godot 引擎优化，自动处理 Node 的生命周期和处理模式
 /// </summary>
 /// <typeparam name="T">池化对象类型，必须是引用类型（class）</typeparam>
-public class ObjectPool<T> : IObjectPool where T : class
+public class ObjectPool<T> where T : class
 {
     // 使用 Stack 而非 List，因为出池/入池操作在栈顶执行效率最高 (O(1))
     // 且具有更好的 CPU 缓存亲和性 (LIFO - 最近归还的对象最热)
@@ -206,9 +193,10 @@ public class ObjectPool<T> : IObjectPool where T : class
         if (result is Node node)
         {
             // 为新生成的节点分配唯一名称，避免 Godot 默认命名导致在场景树中难以定位或冲突
-            node.Name = $"{_config.Name}_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            node.Name = $"{_config.Name}_{Guid.NewGuid().ToString()[..8]}";
 
-            node.GetData().Set("ObjectPool", this);
+            // 存储池名称而非池引用，避免循环引用和类型转换问题
+            node.GetData().Set("ObjectPoolName", _config.Name);
             node.GetData().Set("InPool", false);
 
             // 自动挂载到父节点
@@ -264,9 +252,6 @@ public class ObjectPool<T> : IObjectPool where T : class
 
         // 追踪活跃对象
         _activeItems.Add(obj);
-
-        // 核心功能：建立对象与池的映射，使得 ReturnToPool(obj) 能够工作
-        ObjectPoolManager.RegisterInstance(obj, this);
 
         // 执行 Godot 激活逻辑
         if (obj is Node node)
@@ -329,17 +314,11 @@ public class ObjectPool<T> : IObjectPool where T : class
         // 1. 检查是否已经在池中 (对标 GDScript 的 meta 检查)
         if (obj is Node node && node.GetData().Get<bool>("InPool"))
         {
-            GD.PushWarning($"[ObjectPool] {PoolName}: 实例 {obj} 已在池中。已忽略。");
+            _log.Warn($"{PoolName}: 实例 {obj} 已在池中。已忽略。");
             return;
         }
 
-        // 2. 解除映射关系 (Manager 侧的安全检查)
-        if (!ObjectPoolManager.UnregisterInstance(obj))
-        {
-            GD.PushWarning($"[ObjectPool] {PoolName}: 试图归还一个未注册或已归还的对象: {obj}。已忽略。");
-            return;
-        }
-
+        // 2. 更新统计
         _stats.ActiveCount--;
         _stats.TotalReleased++;
 
@@ -368,19 +347,7 @@ public class ObjectPool<T> : IObjectPool where T : class
         PushToStack(obj);
     }
 
-    // 显式实现接口方法
-    void IObjectPool.ReleaseObject(object obj)
-    {
-        if (obj is T item)
-        {
-            Release(item);
-        }
-    }
-
-    void IObjectPool.Clear()
-    {
-        Clear();
-    }
+    // 接口实现已移除（IObjectPool 接口已废弃）
 
     /// <summary>
     /// 批量归还对象
@@ -457,162 +424,5 @@ public class ObjectPool<T> : IObjectPool where T : class
     public PoolStats GetStats()
     {
         return _stats;
-    }
-}
-
-/// <summary>
-/// 全局对象池管理器
-/// 提供静态访问接口，支持自动归还和全局池生命周期管理
-/// </summary>
-public static class ObjectPoolManager
-{
-    // 全局池字典，按 PoolName 索引
-    private static readonly Dictionary<string, IObjectPool> _pools = new();
-    // 对象实例到所属池的映射，用于 ReturnToPool(obj) 自动归还
-    private static readonly Dictionary<object, IObjectPool> _instanceMap = new();
-    // 线程锁对象
-    private static readonly object _lock = new();
-
-    /// <summary> 注册一个对象池到管理器 </summary>
-    public static void Register(IObjectPool pool)
-    {
-        lock (_lock)
-        {
-            if (_pools.ContainsKey(pool.PoolName))
-            {
-                GD.PushWarning($"[ObjectPoolManager] 池名称 '{pool.PoolName}' 已存在。将覆盖旧池。");
-            }
-            _pools[pool.PoolName] = pool;
-        }
-    }
-
-    /// <summary> 从管理器中注销一个对象池 </summary>
-    public static void Unregister(IObjectPool pool)
-    {
-        lock (_lock)
-        {
-            if (_pools.ContainsKey(pool.PoolName))
-            {
-                _pools.Remove(pool.PoolName);
-            }
-        }
-    }
-
-    /// <summary> 内部：注册对象实例与其所属池的映射关系 </summary>
-    public static void RegisterInstance(object instance, IObjectPool pool)
-    {
-        lock (_lock)
-        {
-            _instanceMap[instance] = pool;
-        }
-    }
-
-    /// <summary> 内部：移除对象实例的归属映射 </summary>
-    /// <returns>如果移除成功返回 true，如果对象不存在（已被移除）返回 false</returns>
-    public static bool UnregisterInstance(object instance)
-    {
-        lock (_lock)
-        {
-            return _instanceMap.Remove(instance);
-        }
-    }
-
-    /// <summary>
-    /// 静态归还方法（核心功能）
-    /// 非常有必要，且是对象池系统的核心便利功能。
-    /// 自动查找对象所属的对象池并执行归还操作。
-    /// 建议对象在销毁前直接调用此方法，无需关心自己属于哪个池。
-    /// </summary>
-    /// <param name="instance">要归还的对象（Node 或 Class）</param>
-    public static void ReturnToPool(object instance)
-    {
-        if (instance == null) return;
-
-        IObjectPool? pool = null;
-
-        // 1. 优先从 Node Data 中获取关联的池 (对标 GDScript 的 static return_to_pool 逻辑)
-        if (instance is Node node && node.HasData())
-        {
-            var data = node.GetData();
-            if (data.TryGetValue<IObjectPool>("ObjectPool", out var p))
-            {
-                pool = p;
-            }
-        }
-
-        // 2. 如果没找到，从全局映射字典中查找 (兼容非 Node 对象或 Data 丢失的情况)
-        if (pool == null)
-        {
-            lock (_lock)
-            {
-                _instanceMap.TryGetValue(instance, out pool);
-            }
-        }
-
-        if (pool != null)
-        {
-            pool.ReleaseObject(instance);
-        }
-        else
-        {
-            // 如果对象不属于任何池，则按 Godot 标准流程销毁，确保不会出现内存泄漏
-            GD.PushWarning($"[ObjectPoolManager] 实例 {instance} 未在任何对象池中注册。将退回到 QueueFree/Dispose。");
-            if (instance is Node fallbackNode) fallbackNode.QueueFree();
-            else if (instance is IDisposable disposable) disposable.Dispose();
-        }
-    }
-
-    /// <summary> 根据名称获取对象池实例 </summary>
-    public static IObjectPool? GetPool(string name)
-    {
-        lock (_lock)
-        {
-            _pools.TryGetValue(name, out var pool);
-            return pool;
-        }
-    }
-
-    /// <summary> 获取当前所有池的详细统计信息 </summary>
-    public static Dictionary<string, PoolStats> GetAllStats()
-    {
-        lock (_lock)
-        {
-            var stats = new Dictionary<string, PoolStats>();
-            foreach (var kvp in _pools)
-            {
-                stats[kvp.Key] = kvp.Value.GetStats();
-            }
-            return stats;
-        }
-    }
-
-    /// <summary> 清理所有池中的闲置对象，保留每个池指定的最小数量 </summary>
-    public static void CleanupAll(int retainCount)
-    {
-        lock (_lock)
-        {
-            foreach (var pool in _pools.Values)
-            {
-                pool.Cleanup(retainCount);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 彻底销毁所有池
-    /// 在场景切换或游戏结束时调用，确保内存释放
-    /// </summary>
-    public static void DestroyAll()
-    {
-        lock (_lock)
-        {
-            foreach (var pool in _pools.Values)
-            {
-                pool.Clear();
-            }
-            _pools.Clear();
-            _instanceMap.Clear();
-        }
-        GD.Print("[ObjectPoolManager] 所有对象池已销毁并清空。");
     }
 }

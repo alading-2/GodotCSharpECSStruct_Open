@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Collections.Generic;
 
 namespace BrotatoMy.Test;
 
@@ -117,7 +116,7 @@ public partial class ObjectPoolVisualTest : Control
 
     private void SpawnAt(Vector2 pos)
     {
-        var bullet = _pool.Spawn(); // 使用新的 Spawn 语义
+        var bullet = _pool.Spawn();
 
         // 随机速度方向
         var angle = (float)GD.RandRange(0, Math.PI * 2);
@@ -222,18 +221,7 @@ public partial class ObjectPoolVisualTest : Control
 
     private void ReturnAllActive()
     {
-        // 遍历父节点路径下的所有子节点并归还
-        var parent = ParentManager.Instance.GetParent("VisualTestPool");
-        if (parent == null) return;
-
-        var children = parent.GetChildren();
-        for (int i = children.Count - 1; i >= 0; i--)
-        {
-            if (children[i] is VisualTestBullet b)
-            {
-                ObjectPoolManager.ReturnToPool(b);
-            }
-        }
+        _pool.ReleaseAll();
     }
 
     private void UpdateStatsUI()
@@ -271,6 +259,7 @@ public partial class ObjectPoolVisualTest : Control
         {
             for (int i = 0; i < currentVisuals - count; i++)
             {
+                if (_poolVisualizerContainer.GetChildCount() == 0) break;
                 var child = _poolVisualizerContainer.GetChild(0);
                 _poolVisualizerContainer.RemoveChild(child);
                 child.QueueFree();
