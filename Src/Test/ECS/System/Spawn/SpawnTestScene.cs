@@ -38,7 +38,7 @@ namespace BrotatoMy.Test
         private void SetupEnvironment()
         {
             // 加载测试用敌人资源
-            _testEnemy = GD.Load<EnemyResource>("res://Data/Resources/Enemy/豺狼人/豺狼人.tres");
+            _testEnemy = GD.Load<EnemyResource>("res://Data/Resources/Unit/Enemy/豺狼人/豺狼人.tres");
             if (_testEnemy == null) _log.Error("Failed to load test enemy resource!");
 
             // 添加相机以便观察 Offscreen 策略

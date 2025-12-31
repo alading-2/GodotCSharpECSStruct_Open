@@ -16,10 +16,11 @@ public static class DataResourceIndex
     /// </summary>
     private static readonly Dictionary<string, string> _pathRegistry = new()
     {
-        { "Player", "res://Resources/PLayer/PlayerAttribute.tres" },
-        { "WellDone", "res://Resources/PLayer/WellDone.tres" },
-        { "Ranger", "res://Resources/PLayer/Ranger.tres" },
-        { "Knight", "res://Resources/PLayer/Knight.tres" }
+        // 玩家资源
+        { "Player", "res://Data/Resources/Unit/Player/DefaultPlayer.tres" },
+        // 敌人资源
+        { "豺狼人", "res://Data/Resources/Unit/Enemy/豺狼人/豺狼人.tres" },
+        { "鱼人", "res://Data/Resources/Unit/Enemy/鱼人/鱼人.tres" }
     };
 
     /// <summary>

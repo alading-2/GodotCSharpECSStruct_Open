@@ -1,14 +1,15 @@
 [gd_resource type="Resource" script_class="EnemyResource" load_steps=3 format=3 uid="uid://daw5s8n3o6q2y"]
 
 [ext_resource type="PackedScene" uid="uid://cio2lh5l1a86o" path="res://assets/character/ememy/豺狼人/AnimatedSprite2D/AnimatedSprite2D.tscn" id="1_qaoba"]
-[ext_resource type="Script" uid="uid://bp4qrp31oy2xl" path="res://Data/Resources/Enemy/EnemyResource.cs" id="2_script"]
+[ext_resource type="Script" path="res://Data/Resources/Unit/EnemyResource.cs" id="2_script"]
 
 [resource]
 script = ExtResource("2_script")
-EnemyName = "Goblin"
-DefaultStrategy = 3
+UnitName = "豺狼人"
 MaxHp = 15.0
 Speed = 150.0
 Damage = 8.0
+VisualScene = ExtResource("1_qaoba")
+DefaultStrategy = 0
 ExpReward = 4
-EnemyScene = ExtResource("1_qaoba")
+ContactDamage = 8.0

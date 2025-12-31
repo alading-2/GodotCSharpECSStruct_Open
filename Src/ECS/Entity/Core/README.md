@@ -1,28 +1,37 @@
-# Entity 系统说明文档
+# Entity 系统 - API 文档与使用指南
+
+**文档类型**：API 文档 | 使用指南  
+**目标受众**：开发者、维护者  
+**最后更新**：2024-12-31
+
+---
 
 ## 📋 概述
 
-Entity 系统是 Brotato 复刻项目的核心模块，基于 **Scene 即 Entity** 的伪 ECS 设计理念。
+Entity 系统是 Brotato 复刻项目的核心模块，提供统一的实体生命周期管理和关系管理。
 
-## 🎯 核心概念
+**核心模块**：
 
-- **Entity = Scene (.tscn)**：每个游戏对象都是独立的场景文件
-- **EntityManager**：统一的生命周期管理入口（生成、注册、查询、销毁）
-- **EntityRelationshipManager**：管理 Entity 间的关系（父子、拥有、装备等）
-- **Component = 子节点**：通过 NodeExtensions 动态挂载功能模块
+- **EntityManager**：实体生命周期管理（生成、注册、查询、销毁）
+- **EntityRelationshipManager**：实体关系管理（父子、拥有、装备等）
+- **EntityRelationshipType**：关系类型常量定义
+
+**设计理念**：详见 `Docs/框架/ECS/Entity/Entity架构设计理念.md`
+
+---
 
 ## 📁 文件结构
 
 ```
 Src/ECS/Entity/Core/
-├── EntityManager.cs                    # ✅ 已完成 - 实体管理器
-├── EntityRelationshipManager.cs       # ✅ 已完成 - 关系管理器
-└── EntityRelationshipType.cs          # ✅ 已完成 - 关系类型常量
+├── EntityManager.cs                    # 实体管理器
+├── EntityRelationshipManager.cs       # 关系管理器
+├── EntityRelationshipType.cs          # 关系类型常量
+└── README.md                           # 本文档（API 使用指南）
 
 Docs/框架/ECS/Entity/
-├── README.md                           # 本文档
-├── Entity架构深度解析.md              # 架构设计详解
-└── EntityManager设计说明.md           # EntityManager 详细说明
+├── Entity架构设计理念.md              # 架构设计与哲学
+└── EntityManager设计说明.md           # EntityManager 详细设计
 ```
 
 ## 🚀 快速开始

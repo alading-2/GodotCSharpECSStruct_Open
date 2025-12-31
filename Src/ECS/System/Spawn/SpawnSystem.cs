@@ -261,12 +261,12 @@ public partial class SpawnSystem : Node
 		// 使用 EntityFactory 统一处理生成逻辑 (获取实例 + 数据注入)
 		foreach (var pos in positions)
 		{
-			// var enemy = EntityFactory.SpawnEnemy(enemyData, pos);
-			// if (enemy == null)
-			// {
-			// 	// 如果生成失败（如池已满且策略为 discard），则跳过
-			// 	// _log.Warn("生成敌人失败。"); 
-			// }
+			var enemy = EntityManager.Spawn<Enemy>(PoolNames.EnemyPool, enemyData, pos);
+			if (enemy == null)
+			{
+				// 如果生成失败（如池已满且策略为 discard），则跳过
+				_log.Warn("生成敌人失败。");
+			}
 		}
 	}
 

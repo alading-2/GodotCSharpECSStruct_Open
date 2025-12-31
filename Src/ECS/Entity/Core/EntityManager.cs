@@ -32,29 +32,23 @@ public static class EntityManager
     /// <returns>已配置好的 Entity 实例</returns>
     public static T? Spawn<T>(string poolName, Resource resource) where T : Node
     {
-        // 1. 验证池名称
-        if (string.IsNullOrEmpty(poolName))
-        {
-            _log.Error("池名称不能为空");
-            return null;
-        }
-
-        // 2. 从 ObjectPool 获取实例（使用泛型方法，类型安全）
+        // 1. 从 ObjectPool 获取实例（使用泛型方法，类型安全）
         var pool = ObjectPoolManager.GetPool<T>(poolName);
         if (pool == null)
         {
             _log.Error($"对象池 {poolName} 不存在，请检查 ObjectPoolInit");
             return null;
         }
-
         // 直接调用泛型方法，无需类型转换
         var entity = pool.Get();
 
-        // 3. 数据注入（核心：将 Resource 配置写入 Data）
+        // 2. 数据注入（核心：将 Resource 配置写入 Data）
         InjectResourceData(entity, resource);
 
+        // 2.1 自动加载 VisualScene (如有)
+        InjectVisual(entity, resource);
 
-        // 4. 自动注册
+        // 3. 自动注册
         string entityType = typeof(T).Name;
         Register(entity, entityType);
 
@@ -110,59 +104,90 @@ public static class EntityManager
     }
 
     /// <summary>
-    /// 数据注入：将 Resource 的静态配置写入 Entity 的 Data 容器
-    /// 这是连接"静态配置"与"运行时数据"的桥梁
+    /// 数据注入：将 Resource 的所有属性自动注入到 Entity 的 Data 容器
+    /// 使用反射机制，支持任意 Resource 类型的自动注入
+    /// 规则：
+    /// 1. 自动注入所有 public 属性（包括 [Export] 标记的）
+    /// 2. 跳过 Godot 内置属性（ResourcePath 等）
+    /// 3. 特殊处理：MaxHp 会额外初始化 CurrentHp
     /// </summary>
     private static void InjectResourceData(Node entity, Resource resource)
     {
         var data = entity.GetData();
+        var resourceType = resource.GetType();
 
-        // 根据 Resource 类型分发注入逻辑
-        switch (resource)
+        // 只获取 公开 (Public) 且 非静态 (Instance) 的属性。跳过私有变量、静态变量。
+        var properties = resourceType.GetProperties(
+            System.Reflection.BindingFlags.Public |
+            System.Reflection.BindingFlags.Instance
+        );
+
+        foreach (var prop in properties)
         {
-            case EnemyResource enemyRes:
-                // 基础属性（AttributeComponent 会监听这些值）
-                data.Set("BaseMaxHp", enemyRes.MaxHp);
-                data.Set("BaseSpeed", enemyRes.Speed);
-                data.Set("BaseDamage", enemyRes.Damage);
+            // 通过检查 DeclaringType （声明该属性的类），跳过 Godot Resource/GodotObject 基类的内置属性，留下用户自定义 Resource 类。
+            if (prop.DeclaringType == typeof(Resource) || prop.DeclaringType == typeof(GodotObject))
+                continue;
 
-                // 当前血量初始化为最大值
-                data.Set("CurrentHp", enemyRes.MaxHp);
+            // 跳过只写属性。有些属性可能只有 set 访问器（只写属性），或者在当前上下文中不可访问。
+            // 例如，Godot 内置属性（如 ResourcePath）通常没有 get 访问器。如果一个属性无法读取，那么它就无法作为初始化数据。
+            if (!prop.CanRead)
+                continue;
 
-                // 其他数据
-                data.Set("ExpReward", enemyRes.ExpReward);
-                data.Set("EnemyName", enemyRes.EnemyName);
-                data.Set("DefaultStrategy", enemyRes.DefaultStrategy);
-                break;
+            try
+            {
+                var value = prop.GetValue(resource);
+                string key = prop.Name;
 
-            // 未来扩展：BulletResource, ItemResource, BuffResource 等
-            // case BulletResource bulletRes:
-            //     data.Set("BaseDamage", bulletRes.Damage);
-            //     data.Set("BaseSpeed", bulletRes.Speed);
-            //     data.Set("Lifetime", bulletRes.Lifetime);
-            //     break;
+                // 注入到 Data 容器
+                data.Set(key, value);
 
-            // case ItemResource itemRes:
-            //     data.Set("ItemName", itemRes.ItemName);
-            //     data.Set("ItemType", itemRes.ItemType);
-            //     data.Set("Value", itemRes.Value);
-            //     data.Set("Rarity", itemRes.Rarity);
-            //     break;
-
-            // case BuffResource buffRes:
-            //     data.Set("BuffName", buffRes.BuffName);
-            //     data.Set("Duration", buffRes.Duration);
-            //     data.Set("StackCount", 1); // 初始层数
-            //     data.Set("BuffType", buffRes.BuffType);
-            //     break;
-
-            default:
-                _log.Warn($"未处理的 Resource 类型: {resource.GetType().Name}");
-                break;
+                _log.Info($"注入属性: {key} = {value}");
+            }
+            catch (Exception ex)
+            {
+                _log.Warn($"注入属性 {prop.Name} 失败: {ex.Message}");
+            }
         }
 
-        // 触发 Data 变化事件，AttributeComponent 会自动重算
-        // 无需手动通知，Data.Set() 内部已实现事件机制
+        _log.Debug($"完成 {resourceType.Name} 数据注入，共 {properties.Length} 个属性");
+    }
+
+    /// <summary>
+    /// 自动加载 VisualScene (AnimatedSprite2D)
+    /// 从 Resource 中读取 VisualScene 属性，实例化并挂载到 Entity 下
+    /// 统一设置 ZIndex 以保证显示层级
+    /// </summary>
+    private static void InjectVisual(Node entity, Resource resource)
+    {
+        // 尝试获取 VisualScene 属性 (兼容 UnitResource, ItemResource 等)
+        // 使用反射以支持任意 Resource 类型
+        var prop = resource.GetType().GetProperty("VisualScene");
+        if (prop == null) return;
+
+        var scene = prop.GetValue(resource) as PackedScene;
+        if (scene == null) return;
+
+        // 1. 清理旧的 VisualRoot (对象池复用时)
+        // 使用 Free() 立即释放，防止同帧内命名冲突
+        var existingVisual = entity.GetNodeOrNull("VisualRoot");
+        if (existingVisual != null)
+        {
+            existingVisual.Free();
+        }
+
+        // 2. 实例化并挂载
+        var visual = scene.Instantiate();
+        visual.Name = "VisualRoot";
+        entity.AddChild(visual);
+
+        // 3. 统一设置 ZIndex (如果是 Node2D)
+        // 提高层级，确保显示在阴影或背景之上
+        if (visual is Node2D visual2D)
+        {
+            visual2D.ZIndex = 10;
+        }
+
+        _log.Debug($"已加载 VisualScene: {scene.ResourcePath}");
     }
 
     // ==================== 注册与注销 ====================
@@ -264,7 +289,7 @@ public static class EntityManager
     /// <summary>
     /// 回收 Entity（归还到对象池）
     /// </summary>
-    public static void Recycle(Node entity)
+    public static void Destroy(Node entity)
     {
         // 1. 注销
         Unregister(entity);
@@ -289,7 +314,7 @@ public static class EntityManager
         var entities = set.ToList();
         foreach (var entity in entities)
         {
-            Recycle(entity);
+            Destroy(entity);
         }
 
         _log.Info($"已销毁所有 {entityType} 类型的 Entity，共 {entities.Count} 个");
@@ -297,11 +322,28 @@ public static class EntityManager
 
     /// <summary>
     /// 清理所有 Entity（场景切换时调用）
+    /// 会真正销毁所有实体并归还到对象池
     /// </summary>
     public static void Clear()
     {
+        // 复制列表避免迭代时修改
+        var allEntities = _entities.Values.ToList();
+        int count = allEntities.Count;
+
+        foreach (var entity in allEntities)
+        {
+            // 清理关系
+            string id = entity.GetInstanceId().ToString();
+            EntityRelationshipManager.RemoveAllRelationships(id);
+
+            // 归还到对象池
+            ObjectPoolManager.ReturnToPool(entity);
+        }
+
+        // 清空字典
         _entities.Clear();
         _entitiesByType.Clear();
-        _log.Info("EntityManager 已清空");
+
+        _log.Info($"EntityManager 已清空，共销毁 {count} 个 Entity");
     }
 }

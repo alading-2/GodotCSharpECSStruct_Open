@@ -1,14 +1,15 @@
 [gd_resource type="Resource" script_class="EnemyResource" load_steps=3 format=3 uid="uid://b8v4r7m2n5p1x"]
 
 [ext_resource type="PackedScene" uid="uid://v3pe5mueociq" path="res://assets/character/ememy/鱼人/AnimatedSprite2D/AnimatedSprite2D.tscn" id="1_4uwcq"]
-[ext_resource type="Script" uid="uid://bp4qrp31oy2xl" path="res://Data/Resources/Enemy/EnemyResource.cs" id="2_script"]
+[ext_resource type="Script" path="res://Data/Resources/Unit/EnemyResource.cs" id="2_script"]
 
 [resource]
 script = ExtResource("2_script")
-EnemyName = "Slime"
-DefaultStrategy = 2
+UnitName = "鱼人"
 MaxHp = 20.0
 Speed = 80.0
 Damage = 5.0
+VisualScene = ExtResource("1_4uwcq")
+DefaultStrategy = 2
 ExpReward = 2
-EnemyScene = ExtResource("1_4uwcq")
+ContactDamage = 5.0

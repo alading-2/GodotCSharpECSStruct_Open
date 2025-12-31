@@ -1,13 +1,10 @@
 using Godot;
-using System;
 
 /// <summary>
-/// 敌人实体类。
+/// 敌人实体类（Scene 即 Entity）。
 /// <para>
-/// 核心职责：
-/// 1. 继承 Entity 基类，获得组件管理能力。
-/// 2. 实现 IPoolable 接口，管理对象池生命周期。
-/// 3. 负责在重置时级联重置子组件。
+/// 职责：AI 驱动、对象池管理（IPoolable）、掉落逻辑。
+/// 架构：与 Player 逻辑分离，通过组件（Component）复用共享行为。
 /// </para>
 /// </summary>
 public partial class Enemy : CharacterBody2D, IPoolable
