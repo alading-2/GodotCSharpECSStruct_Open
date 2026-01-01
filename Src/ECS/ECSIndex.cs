@@ -38,14 +38,44 @@ public static class ECSIndex
         { Component.FollowComponent, "res://Src/ECS/Component/FollowComponent/FollowComponent.tscn" },
         { Component.PickupComponent, "res://Src/ECS/Component/PickupComponent/PickupComponent.tscn" },
 
-        { "PlayerEntity", "res://Src/ECS/Entity/Player/Player.tscn" },
-        { "EnemyEntity", "res://Src/ECS/Entity/Enemy/Enemy.tscn" }
+        { Entity.PlayerEntity, "res://Src/ECS/Entity/Player/Player.tscn" },
+        { Entity.EnemyEntity, "res://Src/ECS/Entity/Enemy/Enemy.tscn" }
+    };
+
+    // ================= Component 类型识别（白名单）=================
+    // 用于识别不符合命名约定的特殊 Component（如 Hitbox, Hurtbox）
+    private static readonly HashSet<string> _componentWhitelist = new()
+    {
+        // "Hitbox",
+        // "Hurtbox",
+        // "CollisionShape2D",  // 特殊情况：物理组件
+        // "AnimatedSprite2D",  // 特殊情况：视觉组件
     };
 
     /// <summary>
-    /// 根据定义的常量名获取路径。
-    /// 例如：ECSIndex.Get("PlayerEntity") -> "res://Src/ECS/Entity/Player/Player.tscn"
+    /// 判断节点类型名是否为 Component
+    /// 识别规则（按优先级）：
+    /// 1. 实现了 IComponent 接口（由 EntityManager 检查）
+    /// 2. 类名以 "Component" 结尾
+    /// 3. 在白名单中
     /// </summary>
+    public static bool IsComponentWhitelist(string typeName)
+    {
+        if (ECSIndex._componentWhitelist.Contains(typeName))
+            return true;
+        return false;
+    }
+
+    /// <summary>
+    /// 添加自定义 Component 类型到白名单
+    /// 用于运行时动态注册特殊 Component
+    /// </summary>
+    public static void RegisterComponentType(string typeName)
+    {
+        _componentWhitelist.Add(typeName);
+    }
+
+    /// <summary>
     public static string Get(string name)
     {
         if (_nameToPathMap.TryGetValue(name, out var path))

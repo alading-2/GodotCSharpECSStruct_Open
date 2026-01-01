@@ -17,7 +17,37 @@ public enum RelationshipConstraint
 
 /// <summary>
 /// Entity 关系管理器
-/// 负责管理 Entity 之间的关系，采用三索引结构实现高效查询
+/// 
+/// 职责范围：
+/// - Entity-Component 关系：Entity 拥有哪些 Component
+/// - Entity-Entity 关系：装备、Buff、父子关系等
+/// - 高效查询：基于三索引结构（父索引、子索引、类型索引）
+/// 
+/// 核心关系类型：
+/// - ENTITY_TO_COMPONENT：Entity 与 Component 的组合关系
+/// - UNIT_TO_ITEM：单位装备物品
+/// - UNIT_TO_BUFF：单位拥有 Buff
+/// - PARENT：通用父子关系
+/// 
+/// 设计优势：
+/// - 数据源唯一：所有关系都通过本管理器维护
+/// - 支持任意层级：不依赖节点树结构
+/// - 高性能查询：O(1) 索引查找
+/// 
+/// 使用示例：
+/// <code>
+/// // 查询 Entity 的所有 Component
+/// var componentIds = EntityRelationshipManager.GetChildEntitiesByParentAndType(
+///     entityId, 
+///     EntityRelationshipType.ENTITY_TO_COMPONENT
+/// );
+/// 
+/// // 查询 Component 所属的 Entity
+/// var entityId = EntityRelationshipManager.GetParentEntitiesByChildAndType(
+///     componentId,
+///     EntityRelationshipType.ENTITY_TO_COMPONENT
+/// ).FirstOrDefault();
+/// </code>
 /// </summary>
 public static class EntityRelationshipManager
 {

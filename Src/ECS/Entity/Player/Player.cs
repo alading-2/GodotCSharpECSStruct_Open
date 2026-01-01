@@ -24,7 +24,7 @@ public partial class Player : CharacterBody2D
     public override void _ExitTree()
     {
         // 注销
-        EntityManager.Unregister(this);
+        EntityManager.UnregisterEntity(this);
         base._ExitTree();
     }
 }

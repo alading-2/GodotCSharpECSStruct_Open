@@ -1,166 +1,261 @@
-# Entity 系统 - API 文档与使用指南
+# Entity 系统 - 使用指南
 
-**文档类型**：API 文档 | 使用指南  
-**目标受众**：开发者、维护者  
-**最后更新**：2024-12-31
+**文档类型**：API 文档  
+**目标受众**：开发者  
+**最后更新**：2025-01-01
 
 ---
 
-## 📋 概述
+## 概述
 
-Entity 系统是 Brotato 复刻项目的核心模块，提供统一的实体生命周期管理和关系管理。
+Entity 系统提供统一的实体生命周期管理和关系管理。
 
 **核心模块**：
 
-- **EntityManager**：实体生命周期管理（生成、注册、查询、销毁）
-- **EntityRelationshipManager**：实体关系管理（父子、拥有、装备等）
-- **EntityRelationshipType**：关系类型常量定义
+- **EntityManager**：生命周期管理（生成、注册、查询、销毁）
+- **EntityRelationshipManager**：关系管理（Entity-Component、Entity-Entity）
 
 **设计理念**：详见 `Docs/框架/ECS/Entity/Entity架构设计理念.md`
 
 ---
 
-## 📁 文件结构
+## 快速开始
 
-```
-Src/ECS/Entity/Core/
-├── EntityManager.cs                    # 实体管理器
-├── EntityRelationshipManager.cs       # 关系管理器
-├── EntityRelationshipType.cs          # 关系类型常量
-└── README.md                           # 本文档（API 使用指南）
-
-Docs/框架/ECS/Entity/
-├── Entity架构设计理念.md              # 架构设计与哲学
-└── EntityManager设计说明.md           # EntityManager 详细设计
-```
-
-## 🚀 快速开始
-
-### 1. 生成 Entity
+### 生成 Entity
 
 ```csharp
 // 生成敌人（带位置）
-var enemy = EntityManager.Spawn<Enemy>(enemyResource, spawnPosition);
+var enemy = EntityManager.Spawn<Enemy>("EnemyPool", enemyResource, spawnPosition);
 
-// 生成 Buff（无位置，挂载到玩家）
-var buff = EntityManager.Spawn<Buff>(buffResource, player);
+// 生成 Buff（无位置）
+var buff = EntityManager.Spawn<Buff>("BuffPool", buffResource);
 
 // 发射子弹（带位置和方向）
-var bullet = EntityManager.Spawn<Bullet>(bulletResource, position, angle);
+var bullet = EntityManager.Spawn<Bullet>("BulletPool", bulletResource, position, angle);
 ```
 
-### 2. 建立关系
-
-```csharp
-// 玩家拾取物品
-EntityRelationshipManager.AddRelationship(
-    playerId,
-    itemId,
-    EntityRelationshipType.UNIT_TO_ITEM
-);
-
-// 查询玩家的所有物品
-var itemIds = EntityRelationshipManager.GetChildEntitiesByParentAndType(
-    playerId,
-    EntityRelationshipType.UNIT_TO_ITEM
-);
-```
-
-### 3. Entity 脚本模板
+### Entity 脚本模板
 
 ```csharp
 public partial class Enemy : CharacterBody2D
 {
     private static readonly Log _log = new("Enemy");
 
-    public override void _Ready()
-    {
-        // EntityManager.Spawn 已自动注册，无需手动调用
-    }
+    // Spawn 已自动注册，无需手动调用
+    public override void _Ready() { }
 
+    // 必须：注销自己
     public override void _ExitTree()
     {
-        // 必须：注销自己
-        EntityManager.Unregister(this);
+        EntityManager.UnregisterEntity(this);
     }
 
+    // 死亡时回收到对象池
     private void Die()
     {
-        // 回收到对象池（而不是 QueueFree）
-        EntityManager.Recycle(this);
+        EntityManager.Destroy(this);
     }
 }
 ```
 
-## 📚 详细文档
+### Component 脚本模板
 
-### [Entity 架构深度解析.md](./Entity架构深度解析.md)
+```csharp
+public partial class HealthComponent : Node, IComponent
+{
+    private static readonly Log _log = new("HealthComponent");
 
-**内容**：
+    // 可选：获取 Entity 引用
+    public void OnComponentRegistered(Node entity)
+    {
+        _log.Debug($"注册到 Entity: {entity.Name}");
+    }
 
-- Scene 即 Entity 的设计理念
-- 为什么不使用 Entity 基类
-- 三层架构（Scene + Manager + Extension）
-- EntityManager 完整实现
-- EntityRelationshipManager 三索引结构
-- 数据驱动：Data 与 AttributeComponent
-- 架构总结与优势
+    // 可选：清理资源
+    public void OnComponentUnregistered()
+    {
+        _log.Debug("Component 注销");
+    }
 
-**适用人群**：所有开发者（必读）
+    // 通过 EntityManager 查找 Entity
+    public void TakeDamage(float damage)
+    {
+        var entity = EntityManager.GetEntityByComponent(this);
+        if (entity == null) return;
 
-### [EntityManager 设计说明.md](./EntityManager设计说明.md)
-
-**内容**：
-
-- 设计动机与解决方案
-- 核心方法详解（Spawn、InjectResourceData、Register、Recycle）
-- 与其他系统的协作（ObjectPool、AttributeComponent、SpawnSystem）
-- 扩展性设计
-- 性能考量
-- 最佳实践
-
-**适用人群**：深入了解 EntityManager 实现细节的开发者
-
-## ⚡ 核心特性
-
-### 1. 三个 Spawn 方法重载
-
-| 方法签名                                    | 适用场景      | 示例            |
-| ------------------------------------------- | ------------- | --------------- |
-| `Spawn<T>(Resource, Node?)`                 | 无位置 Entity | Buff、背包物品  |
-| `Spawn<T>(Resource, Vector2, Node?)`        | 带位置 Entity | Enemy、掉落物品 |
-| `Spawn<T>(Resource, Vector2, float, Node?)` | 带方向 Entity | Bullet、投射物  |
-
-### 2. 自动化流程
-
-```
-EntityManager.Spawn()
-    ↓
-ObjectPool.Get()        # 从对象池获取实例
-    ↓
-InjectResourceData()    # 注入 Resource 配置到 Data
-    ↓
-Register()              # 自动注册到 EntityManager
-    ↓
-返回已配置好的实例
+        var data = entity.GetData();
+        float currentHp = data.Get<float>("CurrentHp");
+        data.Set("CurrentHp", currentHp - damage);
+    }
+}
 ```
 
-### 3. 三索引关系管理
+---
 
-EntityRelationshipManager 采用高效的三索引结构：
+## API 文档
 
-- **主存储**：`relationshipId -> RelationshipRecord`
-- **父索引**：`parentEntityId -> Set<relationshipId>`
-- **子索引**：`childEntityId -> Set<relationshipId>`
-- **类型索引**：`relationType -> Set<relationshipId>`
+### EntityManager
 
-支持多维度查询：
+#### Spawn<T>() - 生成 Entity
 
-- 查询父 Entity 的所有子 Entity（如玩家的所有物品）
-- 查询子 Entity 的所有父 Entity（如物品的拥有者）
-- 按关系类型查询所有关系
+**三个重载**：
 
-## 🎨 使用场景
+```csharp
+// 1. 无位置（Buff、背包物品）
+Spawn<T>(string poolName, Resource resource)
+
+// 2. 带位置（Enemy、掉落物品）
+Spawn<T>(string poolName, Resource resource, Vector2 position)
+
+// 3. 带位置和旋转（Bullet、投射物）
+Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation)
+```
+
+**参数**：
+
+- `poolName`：对象池名称（必须，如 "EnemyPool"）
+- `resource`：静态配置 Resource
+- `position`：初始位置（可选）
+- `rotation`：初始旋转角度（可选）
+
+**返回**：已配置好的 Entity 实例
+
+**示例**：
+
+```csharp
+var enemy = EntityManager.Spawn<Enemy>("EnemyPool", enemyResource, spawnPos);
+```
+
+#### 查询方法
+
+```csharp
+// 按类型查询所有 Entity
+GetEntitiesByType<T>(string entityType)
+
+// 按类型查询所有 Component
+GetComponentsByType<T>(string componentType)
+
+// 通过 Component 查找 Entity
+GetEntityByComponent(Node component)
+
+// 范围查询
+GetEntitiesInRange<T>(Vector2 position, float range, string entityType)
+
+// 获取最近的 Entity
+GetNearestEntity<T>(Vector2 position, string entityType, float maxRange)
+```
+
+**示例**：
+
+```csharp
+// 查询所有敌人
+var enemies = EntityManager.GetEntitiesByType<Enemy>("Enemy");
+
+// AI 寻敌
+var nearbyEnemies = EntityManager.GetEntitiesInRange<Enemy>(
+    playerPos, 500f, "Enemy"
+);
+```
+
+#### 生命周期管理
+
+```csharp
+// 注册 Entity（通常由 Spawn 自动调用）
+Register(Node entity, string entityType)
+
+// 注销 Entity（必须在 _ExitTree 中调用）
+UnregisterEntity(Node entity)
+
+// 回收到对象池
+Destroy(Node entity)
+
+// 清理所有 Entity（场景切换时）
+Clear()
+```
+
+### EntityRelationshipManager
+
+#### 建立关系
+
+```csharp
+AddRelationship(
+    string parentId,
+    string childId,
+    string relationType,
+    Dictionary<string, object>? data = null,
+    RelationshipConstraint constraint = RelationshipConstraint.None,
+    int priority = 0
+)
+```
+
+**参数**：
+
+- `parentId`：父 Entity ID
+- `childId`：子 Entity ID
+- `relationType`：关系类型（如 `EntityRelationshipType.UNIT_TO_ITEM`）
+- `data`：关系附加数据（可选）
+- `constraint`：关系约束（None/OneToOne/OneToMany）
+- `priority`：优先级（数值越小优先级越高）
+
+**示例**：
+
+```csharp
+// 玩家拾取物品
+EntityRelationshipManager.AddRelationship(
+    playerId,
+    itemId,
+    EntityRelationshipType.UNIT_TO_ITEM,
+    data: new() { { "Slot", 0 } },
+    priority: 0
+);
+```
+
+#### 查询关系
+
+```csharp
+// 查询父 Entity 的所有子 Entity
+GetChildEntitiesByParentAndType(string parentId, string relationType)
+
+// 查询子 Entity 的所有父 Entity
+GetParentEntitiesByChildAndType(string childId, string relationType)
+
+// 查询关系记录（支持优先级排序）
+GetChildRelationshipsByParentAndType(
+    string parentId,
+    string relationType,
+    bool sortByPriority = false
+)
+```
+
+**示例**：
+
+```csharp
+// 查询玩家的所有物品
+var itemIds = EntityRelationshipManager.GetChildEntitiesByParentAndType(
+    playerId,
+    EntityRelationshipType.UNIT_TO_ITEM
+);
+
+// 查询物品的拥有者
+var ownerId = EntityRelationshipManager.GetParentEntitiesByChildAndType(
+    itemId,
+    EntityRelationshipType.UNIT_TO_ITEM
+).FirstOrDefault();
+```
+
+#### 移除关系
+
+```csharp
+// 移除指定关系
+RemoveRelationship(string parentId, string childId, string relationType)
+
+// 移除 Entity 的所有关系
+RemoveAllRelationships(string entityId)
+```
+
+---
+
+## 使用场景
 
 ### SpawnSystem 中生成敌人
 
@@ -171,8 +266,8 @@ public partial class SpawnSystem : Node
 
     private void SpawnEnemy(Vector2 position)
     {
-        // 一行代码完成：获取实例 + 数据注入 + 注册
-        var enemy = EntityManager.Spawn<Enemy>(_enemyResource, position);
+        // 一行代码完成生成
+        var enemy = EntityManager.Spawn<Enemy>("EnemyPool", _enemyResource, position);
 
         // 可选：额外配置
         enemy?.GetData().Set("IsElite", true);
@@ -212,18 +307,34 @@ public partial class Player : CharacterBody2D
             EntityRelationshipType.UNIT_TO_ITEM
         );
 
-        return itemIds.Select(id => EntityManager.GetEntityById(id));
+        return itemIds
+            .Select(id => EntityManager.GetEntityById(id))
+            .Where(item => item != null);
     }
 }
 ```
 
-## 🔧 扩展指南
+### 动态添加 Component
+
+```csharp
+// 运行时添加 Buff Component
+public void ApplySpeedBuff(Node player, float duration)
+{
+    var buffComp = new SpeedBuffComponent();
+    buffComp.Duration = duration;
+
+    // 自动注册并建立关系
+    EntityManager.AddComponent(player, buffComp);
+}
+```
+
+---
+
+## 扩展指南
 
 ### 新增 Entity 类型
 
-只需三步：
-
-1. **创建 Resource**
+**1. 创建 Resource**
 
 ```csharp
 [GlobalClass]
@@ -234,47 +345,71 @@ public partial class ItemResource : Resource
 }
 ```
 
-2. **注册对象池**（在 `ObjectPoolInit.cs`）
+**2. 注册对象池**
 
 ```csharp
 new ObjectPool<Node>(
     () => itemScene.Instantiate(),
-    new ObjectPoolConfig { Name = PoolNames.ItemPool }
+    new ObjectPoolConfig { Name = "ItemPool" }
 );
 ```
 
-3. **添加注入逻辑**（在 `EntityManager.InjectResourceData`）
+**3. 无需修改 EntityManager**
+
+反射自动注入所有 public 属性。
+
+---
+
+## 注意事项
+
+1. **必须注销**：Entity 在 `_ExitTree()` 中必须调用 `EntityManager.UnregisterEntity(this)`
+2. **使用 Destroy**：Entity 销毁时使用 `EntityManager.Destroy()` 而不是 `QueueFree()`
+3. **关系自动清理**：`Destroy()` 会自动清理所有关系
+4. **池名称**：必须明确指定对象池名称，避免硬编码
+5. **Component 识别**：推荐实现 `IComponent` 接口，或类名以 "Component" 结尾
+
+---
+
+## 性能优化
+
+### 缓存查询结果
 
 ```csharp
-case ItemResource itemRes:
-    data.Set("ItemName", itemRes.ItemName);
-    data.Set("Value", itemRes.Value);
-    break;
+// ❌ 避免：每帧查询
+public override void _Process(double delta)
+{
+    var enemies = EntityManager.GetEntitiesByType<Enemy>("Enemy");
+}
+
+// ✅ 推荐：缓存查询
+private List<Enemy> _cachedEnemies = new();
+private float _updateInterval = 0.5f;
+private float _timer = 0f;
+
+public override void _Process(double delta)
+{
+    _timer += (float)delta;
+    if (_timer >= _updateInterval)
+    {
+        _timer = 0f;
+        _cachedEnemies.Clear();
+        _cachedEnemies.AddRange(
+            EntityManager.GetEntitiesByType<Enemy>("Enemy")
+        );
+    }
+}
 ```
 
-## ⚠️ 注意事项
+---
 
-1. **必须注销**：Entity 在 `_ExitTree()` 中必须调用 `EntityManager.Unregister(this)`
-2. **使用 Recycle**：Entity 销毁时使用 `EntityManager.Recycle()` 而不是 `QueueFree()`
-3. **关系清理**：`Recycle()` 会自动清理所有关系，无需手动调用
-4. **性能优化**：查询方法返回 `IEnumerable`，使用 LINQ 延迟执行
+## 相关文档
 
-## 📊 性能特点
-
-- **零 GC 优化**：使用 HashSet、Dictionary 等高效数据结构
-- **索引查询**：O(1) 时间复杂度的类型查询
-- **对象池集成**：自动复用实例，避免频繁 GC
-- **反射缓存**：可缓存 MethodInfo 优化反射调用
-
-## 🔗 相关模块
-
-- **ObjectPool**：`Src/Tools/ObjectPool/ObjectPool.cs`
-- **NodeExtensions**：`Src/Tools/Extensions/NodeExtension/NodeExtensions.cs`
-- **Data**：`Src/Tools/Data/Data.cs`
-- **SpawnSystem**：`Src/ECS/System/Spawn/SpawnSystem.cs`
+- **架构设计**：`Docs/框架/ECS/Entity/Entity架构设计理念.md`
+- **详细设计**：`Docs/框架/ECS/Entity/EntityManager设计说明.md`
+- **项目规则**：`.trae/rules/project_rules.md`
 
 ---
 
 **维护者**：项目团队  
-**最后更新**：2024-12-30  
-**版本**：v1.0
+**文档版本**：v2.0  
+**创建日期**：2025-01-01

@@ -9,9 +9,12 @@
 /// </summary>
 public static class EntityRelationshipType
 {
-    // ==================== 通用关系 ====================
+    // ==================== 核心关系 ====================
 
-    /// <summary>父子关系</summary>
+    /// <summary>Entity 与 Component 关系（核心）</summary>
+    public const string ENTITY_TO_COMPONENT = "relationship.entity.component";
+
+    /// <summary>父子关系（通用）</summary>
     public const string PARENT = "relationship.parent";
 
     // ==================== 单位相关关系 ====================
@@ -19,7 +22,7 @@ public static class EntityRelationshipType
     /// <summary>单位与玩家关系</summary>
     public const string UNIT_TO_PLAYER = "relationship.unit.player";
 
-    /// <summary>单位与物品关系</summary>
+    /// <summary>单位与物品关系（如装备武器）</summary>
     public const string UNIT_TO_ITEM = "relationship.unit.item";
 
     /// <summary>单位与技能关系</summary>

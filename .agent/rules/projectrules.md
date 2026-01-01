@@ -218,4 +218,23 @@ public partial class WeaponData : Resource
 1. **架构变更**：先更新 Docs/ 的设计文档，再更新 Src/ 的 README
 2. **API 变更**：直接更新 Src/ 的 README，必要时同步 Docs/ 的示例
 3. **概念澄清**：更新 Docs/ 的设计文档
-4. **使用问题**：更新 Src/ 的 README 的注意事项部分
+4. **使用问题**：更新 Src/ README 的注意事项部分
+
+## 8. 索引维护规则
+
+### 8.1 索引同步 (Mandatory)
+
+凡是涉及以下目录的文件变更，必须同步更新对应的索引类：
+
+- **ECS 索引 (`ECSIndex.cs`)**:
+  - 变更范围：`Src/ECS/Entity/` 或 `Src/ECS/Component/` 下的 `.tscn` 场景文件。
+  - 操作：更新 `ECSIndex` 类中的常量定义及 `_nameToPathMap` 映射。
+- **数据资源索引 (`DataResourceIndex.cs`)**:
+  - 变更范围：`Data/Resources/` 下的 `.tres` 资源文件。
+  - 操作：更新 `DataResourceIndex` 类中的 `_pathRegistry` 映射，确保简写名称与路径一致。
+
+### 8.2 维护目的
+
+- **解耦**: 业务代码通过简写或常量访问资源，无需关心物理路径。
+- **安全**: 统一管理路径，方便在重构目录结构时进行全局替换和验证。
+- **性能**: 通过索引进行预加载或缓存管理。
