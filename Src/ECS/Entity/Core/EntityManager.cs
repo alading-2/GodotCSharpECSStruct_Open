@@ -64,7 +64,8 @@ public static class EntityManager
         var entity = pool.Get();
 
         // 2. 数据注入（核心：将 Resource 配置写入 Data）
-        InjectResourceData(entity, resource);
+        // 使用 Data 容器内置的 LoadFromResource 方法，替代原有的 InjectResourceData
+        entity.GetData().LoadFromResource(resource);
 
         // 2.1 自动加载 VisualScene (如有)
         InjectVisualScene(entity, resource);
@@ -127,54 +128,6 @@ public static class EntityManager
         return entity;
     }
 
-    /// <summary>
-    /// 数据注入：将 Resource 的所有属性自动注入到 Entity 的 Data 容器
-    /// 使用反射机制，支持任意 Resource 类型的自动注入
-    /// 规则：
-    /// 1. 自动注入所有 public 属性（包括 [Export] 标记的）
-    /// 2. 跳过 Godot 内置属性（ResourcePath 等）
-    /// 3. 特殊处理：MaxHp 会额外初始化 CurrentHp
-    /// </summary>
-    private static void InjectResourceData(Node entity, Resource resource)
-    {
-        var data = entity.GetData();
-        var resourceType = resource.GetType();
-
-        // 只获取 公开 (Public) 且 非静态 (Instance) 的属性。跳过私有变量、静态变量。
-        var properties = resourceType.GetProperties(
-            System.Reflection.BindingFlags.Public |
-            System.Reflection.BindingFlags.Instance
-        );
-
-        foreach (var prop in properties)
-        {
-            // 通过检查 DeclaringType （声明该属性的类），跳过 Godot Resource/GodotObject 基类的内置属性，留下用户自定义 Resource 类。
-            if (prop.DeclaringType == typeof(Resource) || prop.DeclaringType == typeof(GodotObject))
-                continue;
-
-            // 跳过只写属性。有些属性可能只有 set 访问器（只写属性），或者在当前上下文中不可访问。
-            // 例如，Godot 内置属性（如 ResourcePath）通常没有 get 访问器。如果一个属性无法读取，那么它就无法作为初始化数据。
-            if (!prop.CanRead)
-                continue;
-
-            try
-            {
-                var value = prop.GetValue(resource);
-                string key = prop.Name;
-
-                // 注入到 Data 容器
-                data.Set(key, value);
-
-                _log.Info($"注入属性: {key} = {value}");
-            }
-            catch (Exception ex)
-            {
-                _log.Warn($"注入属性 {prop.Name} 失败: {ex.Message}");
-            }
-        }
-
-        _log.Debug($"完成 {resourceType.Name} 数据注入，共 {properties.Length} 个属性");
-    }
 
     /// <summary>
     /// 自动加载 VisualScene (AnimatedSprite2D)

@@ -13,11 +13,12 @@ public static class ObjectPoolManager
     private static readonly Log _log = new("ObjectPoolManager");
 
     // 全局池字典，按 PoolName 索引（存储任意类型的池）
-    // [] 是 C# 12 的集合表达式语法，等价于 new Dictionary<string, object>()
     private static readonly Dictionary<string, object> _pools = [];
     
-    // 线程锁对象，用于确保在多线程环境下（如异步加载、后台线程归还对象）对 _pools 字典的操作是安全的
-    // 它可以防止多个线程同时修改字典导致的崩溃或数据不一致（竞态条件）
+    // 非 Node 对象到池名称的映射（用于纯 C# 对象的静态归还）
+    private static readonly Dictionary<object, string> _objectToPoolMap = [];
+
+    // 线程锁对象
     private static readonly object _lock = new();
 
     /// <summary> 注册一个对象池到管理器（泛型版本） </summary>
@@ -39,42 +40,81 @@ public static class ObjectPoolManager
         lock (_lock)
         {
             _pools.Remove(pool.PoolName);
+            // 注意：这里很难高效清理 _objectToPoolMap 中属于该池的对象，
+            // 但通常 Unregister 只在销毁时发生，此时 Map 也会被清理。
+        }
+    }
+
+    /// <summary>
+    /// 注册对象归属关系（供 ObjectPool 内部调用）
+    /// </summary>
+    public static void MapObject(object obj, string poolName)
+    {
+        // Node 对象使用 MetaData 存储，不需要字典映射
+        if (obj is Node) return;
+
+        lock (_lock)
+        {
+            _objectToPoolMap[obj] = poolName;
+        }
+    }
+
+    /// <summary>
+    /// 解除对象归属关系（供 ObjectPool 内部调用）
+    /// </summary>
+    public static void UnmapObject(object obj)
+    {
+        if (obj is Node) return;
+
+        lock (_lock)
+        {
+            _objectToPoolMap.Remove(obj);
         }
     }
 
     /// <summary>
     /// 静态归还方法（核心功能）
     /// 自动查找对象所属的对象池并执行归还操作。
-    ///! 仅支持 Node 对象（通过 Data 容器存储池名称）。因为现在只有Godot Node 对象才有 GetData() 
-    /// 非 Node 对象请直接调用 pool.Release(obj)。
+    /// 支持 Node 对象（通过 MetaData）和纯 C# 对象（通过内部映射）。
     /// </summary>
-    /// <param name="instance">要归还的对象（必须是 Node）</param>
+    /// <param name="instance">要归还的对象</param>
     public static void ReturnToPool(object instance)
     {
         if (instance == null) return;
 
-        // 只支持 Node 对象的自动归还
-        if (instance is not Node node)
-        {
-            _log.Error($"实例 {instance} 不是 Node，无法自动归还。请直接调用 pool.Release()。");
-            return;
-        }
-
-        // 从 Node.Data 中读取池名称
         string? poolName = null;
-        if (node.HasData())
+
+        // 1. 尝试从 Node MetaData 获取
+        if (instance is Node node)
         {
-            poolName = node.GetData().Get<string>("ObjectPoolName");
+            if (node.HasMeta("ObjectPoolName"))
+            {
+                poolName = node.GetMeta("ObjectPoolName").AsString();
+            }
+            
+            if (poolName == null)
+            {
+                _log.Warn($"Node {node.Name} 未找到 ObjectPoolName MetaData。将退回到 QueueFree。");
+                node.QueueFree();
+                return;
+            }
+        }
+        // 2. 尝试从内部映射获取 (纯 C# 对象)
+        else
+        {
+            lock (_lock)
+            {
+                _objectToPoolMap.TryGetValue(instance, out poolName);
+            }
+
+            if (poolName == null)
+            {
+                _log.Error($"实例 {instance} 未注册到 ObjectPoolManager，无法自动归还。请确保它是通过 Spawn/Get 获取的。");
+                return;
+            }
         }
 
-        if (poolName == null)
-        {
-            _log.Warn($"Node {node.Name} 的 Data 中未找到 ObjectPoolName。将退回到 QueueFree。");
-            node.QueueFree();
-            return;
-        }
-
-        // 查找池并调用 Release
+        // 3. 查找池并调用 Release
         lock (_lock)
         {
             if (_pools.TryGetValue(poolName, out var poolObj))
@@ -88,9 +128,16 @@ public static class ObjectPoolManager
             }
         }
 
-        // 池不存在，降级处理
-        _log.Warn($"池 '{poolName}' 不存在。Node {node.Name} 将退回到 QueueFree。");
-        node.QueueFree();
+        // 池不存在
+        if (instance is Node n)
+        {
+            _log.Warn($"池 '{poolName}' 不存在。Node {n.Name} 将退回到 QueueFree。");
+            n.QueueFree();
+        }
+        else
+        {
+            _log.Error($"池 '{poolName}' 不存在。对象 {instance} 无法归还。");
+        }
     }
 
     /// <summary> 根据名称获取对象池实例（泛型版本，提供类型安全） </summary>
@@ -114,7 +161,6 @@ public static class ObjectPoolManager
             var stats = new Dictionary<string, PoolStats>();
             foreach (var kvp in _pools)
             {
-                // 使用反射调用 GetStats 方法
                 var getStatsMethod = kvp.Value.GetType().GetMethod("GetStats");
                 if (getStatsMethod != null)
                 {
@@ -136,7 +182,6 @@ public static class ObjectPoolManager
         {
             foreach (var poolObj in _pools.Values)
             {
-                // 使用反射调用 Cleanup 方法
                 var cleanupMethod = poolObj.GetType().GetMethod("Cleanup");
                 cleanupMethod?.Invoke(poolObj, new object[] { retainCount });
             }
@@ -153,11 +198,11 @@ public static class ObjectPoolManager
         {
             foreach (var poolObj in _pools.Values)
             {
-                // 使用反射调用 Clear 方法
                 var clearMethod = poolObj.GetType().GetMethod("Clear");
                 clearMethod?.Invoke(poolObj, null);
             }
             _pools.Clear();
+            _objectToPoolMap.Clear();
         }
         _log.Info("所有对象池已销毁并清空。");
     }

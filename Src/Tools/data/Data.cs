@@ -1,174 +1,241 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Godot;
 
 /// <summary>
-/// 健壮的动态数据 (Data) 容器类，灵感来源于 ECS (实体组件系统) 的实体数据管理。
-/// 支持强类型访问、算术运算（加法、乘法）以及数据变更事件监听。
-/// 适用于游戏对象属性、动态状态、配置项或任何需要灵活数据管理的场景。
+/// 增强版动态数据容器 - 统一数据管理系统
+/// 支持：强类型访问、元数据约束、修改器系统、计算数据、事件监听
+/// 
+/// 【核心理念】
+/// Data 是唯一数据源，所有数据（普通数据、可修改数据、计算数据）统一从 Data 容器访问。
+/// 
+/// 【公式】
+/// 最终值 = (基础值 + Σ加法修改器) × Π乘法修改器
 /// </summary>
 public class Data
 {
+    private static readonly Log _log = new("Data");
+
     /// <summary>
-    /// 内部存储数据的字典
+    /// 内部存储基础数据的字典
     /// </summary>
     private readonly Dictionary<string, object> _data = new();
 
     /// <summary>
-    /// 当任何数据发生变化时触发的全局事件。
+    /// 修改器字典：Key -> 修改器列表
+    /// </summary>
+    private readonly Dictionary<string, List<DataModifier>> _modifiers = new();
+
+    /// <summary>
+    /// 最终值缓存字典
+    /// </summary>
+    private readonly Dictionary<string, object> _cachedValues = new();
+
+    /// <summary>
+    /// 脏标记集合（需要重新计算的键）
+    /// </summary>
+    private readonly HashSet<string> _dirtyKeys = new();
+
+    /// <summary>
+    /// 当任何数据发生变化时触发的全局事件
     /// 参数依次为：键名 (Key), 旧值 (OldValue), 新值 (NewValue)
     /// </summary>
     public event Action<string, object?, object?>? OnValueChanged;
 
     /// <summary>
-    /// 特定键名的监听器字典，用于支持针对单个数据项的订阅
+    /// 特定键名的监听器字典
     /// </summary>
     private readonly Dictionary<string, Action<object?, object?>> _listeners = new();
 
+    // ================= 基础数据操作 =================
+
     /// <summary>
-    /// 设置数据值。
+    /// 设置基础值（自动应用元数据约束）
     /// </summary>
-    /// <typeparam name="T">值的类型。</typeparam>
-    /// <param name="key">键名。</param>
-    /// <param name="value">要设置的新值。</param>
-    /// <returns>如果值发生了实际变化（或新增）则返回 true，如果新旧值相等则返回 false。</returns>
+    /// <typeparam name="T">值的类型</typeparam>
+    /// <param name="key">键名</param>
+    /// <param name="value">要设置的新值</param>
+    /// <returns>如果值发生了实际变化则返回 true</returns>
     public bool Set<T>(string key, T value)
     {
+        // 应用元数据约束
+        var meta = DataRegistry.GetMeta(key);
+        object finalValue = value!;
+        if (meta != null)
+        {
+            // 选项验证
+            if (meta.HasOptions && !meta.IsValidOption(value!))
+            {
+                _log.Error($"无效的选项值: {key} = {value}");
+                return false;
+            }
+            finalValue = meta.Clamp(value!);
+        }
+
         object? oldValue = null;
         if (_data.TryGetValue(key, out var existing))
         {
             oldValue = existing;
-            // 检查相等性以避免触发不必要的变更事件
-            if (Equals(existing, value))
+            if (Equals(existing, finalValue))
             {
                 return false;
             }
         }
 
-        _data[key] = value!;
-        NotifyChanged(key, oldValue, value);
+        _data[key] = finalValue;
+        MarkDirty(key);
+        NotifyChanged(key, oldValue, finalValue);
         return true;
     }
 
     /// <summary>
-    /// 尝试获取数据值。
+    /// 获取最终值（自动推断类型）
+    /// 逻辑：优先从注册表获取元数据，根据元数据定义的类型和默认值进行获取
     /// </summary>
-    /// <typeparam name="T">期望获取的类型。</typeparam>
-    /// <param name="key">键名。</param>
-    /// <param name="value">如果找到且类型匹配，则返回该值；否则返回默认值。</param>
-    /// <returns>如果找到且类型匹配（或可转换）则返回 true。</returns>
-    public bool TryGetValue<T>(string key, out T value)
+    public object Get(string key)
     {
-        if (_data.TryGetValue(key, out var rawValue))
+        var meta = DataRegistry.GetMeta(key);
+        if (meta == null)
         {
-            if (rawValue is T typedValue)
-            {
-                value = typedValue;
-                return true;
-            }
-
-            try
-            {
-                value = (T)Convert.ChangeType(rawValue, typeof(T));
-                return true;
-            }
-            catch
-            {
-                // 转换失败
-            }
+            // 如果未注册，尝试直接从基础数据字典获取
+            if (_data.TryGetValue(key, out var val)) return val;
+            _log.Warn($"未注册的数据键: {key}");
+            return null!;
         }
-
-        value = default!;
-        return false;
+        // 使用元数据定义的类型进行统一获取流程
+        return GetValue(key, meta.Type, meta.GetDefaultValue());
     }
 
     /// <summary>
-    /// 获取数据值。
+    /// 获取最终值（泛型访问，编译期类型安全）
     /// </summary>
-    /// <typeparam name="T">期望获取的类型。</typeparam>
-    /// <param name="key">键名。</param>
-    /// <param name="defaultValue">如果不存在或类型不匹配时返回的默认值。</param>
-    /// <returns>返回数据值或默认值。</returns>
+    /// <typeparam name="T">期望获取的类型</typeparam>
+    /// <param name="key">键名</param>
+    /// <param name="defaultValue">默认值（若未设置则使用此值）</param>
+    /// <returns>最终计算值</returns>
     public T Get<T>(string key, T defaultValue = default!)
     {
-        if (_data.TryGetValue(key, out var value))
-        {
-            // 如果类型直接匹配，直接返回
-            if (value is T typedValue)
-            {
-                return typedValue;
-            }
+        return (T)GetValue(key, typeof(T), defaultValue!);
+    }
 
-            // 尝试进行类型转换（例如从 double 转换为 float）
-            try
-            {
-                return (T)Convert.ChangeType(value, typeof(T));
-            }
-            catch
-            {
-                // 转换失败则忽略错误，返回默认值
-            }
+    /// <summary>
+    /// 核心获取流程（统一处理计算数据、修改器和基础值）
+    /// </summary>
+    /// <param name="key">键名</param>
+    /// <param name="type">目标类型</param>
+    /// <param name="defaultValue">默认值</param>
+    /// <returns>最终对象值</returns>
+    private object GetValue(string key, Type type, object defaultValue)
+    {
+        // 步骤 1：检查是否为计算数据（Computed Data）
+        // 计算数据是由其他数据派生的，具有最高优先级
+        var computedData = DataRegistry.GetComputed(key);
+        if (computedData != null)
+        {
+            return GetComputedValueBoxed(key, computedData, defaultValue, type);
+        }
+
+        // 步骤 2：获取基础值（Base Value）
+        // 如果基础字典中没有该键，直接返回默认值
+        if (!_data.TryGetValue(key, out var baseValue) || baseValue == null)
+        {
+            return defaultValue;
+        }
+
+        // 步骤 3：检查是否支持修改器（Modifiers）
+        // 只有在 DataRegistry 中声明支持修改器的数据才会进入修改器逻辑
+        if (!DataRegistry.SupportModifiers(key))
+        {
+            // 不支持修改器，直接进行类型转换后返回
+            return ConvertValueBoxed(baseValue, type, defaultValue);
+        }
+
+        // 步骤 4：应用修改器并返回最终值
+        // 该方法内部包含缓存逻辑
+        return GetModifiedValueBoxed(key, baseValue, defaultValue, type);
+    }
+
+    /// <summary>
+    /// 获取基础值（不应用修改器，用于计算数据内部调用）
+    /// </summary>
+    /// <typeparam name="T">期望获取的类型</typeparam>
+    /// <param name="key">键名</param>
+    /// <param name="defaultValue">默认值</param>
+    /// <returns>基础值</returns>
+    public T GetBase<T>(string key, T defaultValue = default!)
+    {
+        if (_data.TryGetValue(key, out var value) && value != null)
+        {
+            return (T)ConvertValueBoxed(value, typeof(T), defaultValue!);
         }
         return defaultValue;
     }
 
     /// <summary>
-    /// 检查是否存在指定的键名。
+    /// 尝试获取数据值
     /// </summary>
-    /// <param name="key">键名。</param>
-    /// <returns>存在返回 true。</returns>
-    public bool Has(string key)
+    public bool TryGetValue<T>(string key, out T value)
     {
+        var result = Get<T>(key);
+        if (result != null && !result.Equals(default(T)))
+        {
+            value = result;
+            return true;
+        }
+        value = default!;
         return _data.ContainsKey(key);
     }
 
     /// <summary>
-    /// 移除指定的数据项。
+    /// 检查是否存在指定的键名
     /// </summary>
-    /// <param name="key">键名。</param>
-    /// <returns>如果成功移除则返回 true，如果不存在则返回 false。</returns>
+    public bool Has(string key)
+    {
+        return _data.ContainsKey(key) || DataRegistry.IsComputed(key);
+    }
+
+    /// <summary>
+    /// 移除指定的数据项
+    /// </summary>
     public bool Remove(string key)
     {
         if (_data.TryGetValue(key, out var oldValue))
         {
             _data.Remove(key);
+            _modifiers.Remove(key);
+            _cachedValues.Remove(key);
+            _dirtyKeys.Remove(key);
             NotifyChanged(key, oldValue, null);
             return true;
         }
         return false;
     }
 
+    // ================= 算术运算 =================
+
     /// <summary>
-    /// 对现有数值执行加法操作。
-    /// 如果尚不存在，则将其初始值视为 0 并加上增量。
+    /// 对现有数值执行加法操作
     /// </summary>
-    /// <typeparam name="T">数值类型 (需实现 INumber 接口)。</typeparam>
-    /// <param name="key">键名。</param>
-    /// <param name="delta">要增加的数值（增量）。</param>
     public void Add<T>(string key, T delta) where T : INumber<T>
     {
-        var current = Get<T>(key, T.Zero);
+        var current = GetBase<T>(key, T.Zero);
         Set(key, current + delta);
     }
 
     /// <summary>
-    /// 对现有数值执行乘法操作。
-    /// 如果尚不存在，则将其初始值视为 0。
+    /// 对现有数值执行乘法操作
     /// </summary>
-    /// <typeparam name="T">数值类型 (需实现 INumber 接口)。</typeparam>
-    /// <param name="key">键名。</param>
-    /// <param name="factor">乘数因子。</param>
     public void Multiply<T>(string key, T factor) where T : INumber<T>
     {
-        var current = Get<T>(key, T.Zero);
+        var current = GetBase<T>(key, T.Zero);
         Set(key, current * factor);
     }
 
     /// <summary>
-    /// 批量设置多个数据项。
+    /// 批量设置多个数据项
     /// </summary>
-    /// <param name="properties">包含多个键值对的字典。</param>
     public void SetMultiple(Dictionary<string, object> properties)
     {
         foreach (var kvp in properties)
@@ -177,11 +244,186 @@ public class Data
         }
     }
 
+    // ================= 修改器系统 =================
+
     /// <summary>
-    /// 注册特定数据项的变更监听器。
+    /// 添加修改器
     /// </summary>
-    /// <param name="key">要监听的键名。</param>
-    /// <param name="callback">回调函数，参数为 (旧值, 新值)。</param>
+    /// <param name="key">目标数据键</param>
+    /// <param name="modifier">修改器实例</param>
+    public void AddModifier(string key, DataModifier modifier)
+    {
+        if (!DataRegistry.SupportModifiers(key))
+        {
+            _log.Warn($"数据 '{key}' 不支持修改器，已忽略");
+            return;
+        }
+
+        if (!_modifiers.ContainsKey(key))
+        {
+            _modifiers[key] = new List<DataModifier>();
+        }
+
+        // 检查 ID 冲突
+        if (_modifiers[key].Any(m => m.Id == modifier.Id))
+        {
+            _log.Warn($"ID 为 '{modifier.Id}' 的修改器已存在于 '{key}'，已忽略");
+            return;
+        }
+
+        _modifiers[key].Add(modifier);
+        MarkDirty(key);
+
+        _log.Debug($"添加修改器: {modifier.Id} ({modifier.Type} {modifier.Value}) -> {key}");
+
+        // 触发变更事件
+        var finalValue = Get<float>(key);
+        NotifyChanged(key, null, finalValue);
+    }
+
+    /// <summary>
+    /// 移除修改器
+    /// </summary>
+    /// <param name="key">目标数据键</param>
+    /// <param name="modifierId">修改器 ID</param>
+    public void RemoveModifier(string key, string modifierId)
+    {
+        if (_modifiers.TryGetValue(key, out var modifiers))
+        {
+            var removed = modifiers.RemoveAll(m => m.Id == modifierId);
+            if (removed > 0)
+            {
+                MarkDirty(key);
+                _log.Debug($"移除修改器: {modifierId} <- {key}");
+
+                var finalValue = Get<float>(key);
+                NotifyChanged(key, null, finalValue);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 根据 ID 移除所有匹配的修改器（跨所有数据键）
+    /// </summary>
+    /// <param name="modifierId">修改器 ID</param>
+    public void RemoveModifierById(string modifierId)
+    {
+        foreach (var key in _modifiers.Keys.ToList())
+        {
+            RemoveModifier(key, modifierId);
+        }
+    }
+
+    /// <summary>
+    /// 根据来源对象移除所有匹配的修改器（跨所有数据键）
+    /// 常用于：卸载装备、移除 Buff
+    /// </summary>
+    /// <param name="source">来源对象（如 ItemEntity）</param>
+    public void RemoveModifiersBySource(object source)
+    {
+        if (source == null) return;
+
+        foreach (var key in _modifiers.Keys.ToList())
+        {
+            if (_modifiers.TryGetValue(key, out var modifiers))
+            {
+                var removedCount = modifiers.RemoveAll(m => m.Source == source);
+                if (removedCount > 0)
+                {
+                    MarkDirty(key);
+                    _log.Debug($"移除来源为 {source} 的修改器: {removedCount} 个 <- {key}");
+
+                    var finalValue = Get<float>(key);
+                    NotifyChanged(key, null, finalValue);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 将另一个 Data 容器的数据转换为修改器应用到当前容器
+    /// 常用于：装备属性应用到角色
+    /// </summary>
+    /// <param name="sourceData">源数据容器</param>
+    /// <param name="sourceEntity">来源实体（作为修改器 Source）</param>
+    public void ApplyDataAsModifiers(Data sourceData, object sourceEntity)
+    {
+        if (sourceData == null || sourceEntity == null) return;
+
+        var allData = sourceData.GetAll();
+        foreach (var kvp in allData)
+        {
+            // 仅处理数值类型
+            if (kvp.Value is float || kvp.Value is int)
+            {
+                float value = Convert.ToSingle(kvp.Value);
+                if (Math.Abs(value) < float.Epsilon) continue;
+
+                // 检查目标是否支持修改器
+                if (DataRegistry.SupportModifiers(kvp.Key))
+                {
+                    var modifier = new DataModifier(
+                        ModifierType.Additive,
+                        value,
+                        priority: 0,
+                        source: sourceEntity
+                    );
+                    AddModifier(kvp.Key, modifier);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 检查是否拥有特定修改器
+    /// </summary>
+    public bool HasModifier(string key, string modifierId)
+    {
+        return _modifiers.TryGetValue(key, out var modifiers) &&
+               modifiers.Any(m => m.Id == modifierId);
+    }
+
+    /// <summary>
+    /// 获取指定数据键的所有修改器副本
+    /// 返回副本是为了确保迭代安全性，防止在遍历时修改器列表发生变动导致异常
+    /// </summary>
+    public List<DataModifier> GetModifiers(string key)
+    {
+        return _modifiers.TryGetValue(key, out var modifiers)
+            ? new List<DataModifier>(modifiers)
+            : new List<DataModifier>();
+    }
+
+    /// <summary>
+    /// 清除指定数据键的所有修改器
+    /// </summary>
+    public void ClearModifiers(string key)
+    {
+        if (_modifiers.TryGetValue(key, out var modifiers) && modifiers.Count > 0)
+        {
+            modifiers.Clear();
+            MarkDirty(key);
+            _log.Debug($"清除所有修改器: {key}");
+        }
+    }
+
+    /// <summary>
+    /// 清除所有修改器
+    /// </summary>
+    public void ClearAllModifiers()
+    {
+        foreach (var key in _modifiers.Keys.ToList())
+        {
+            ClearModifiers(key);
+        }
+        _modifiers.Clear();
+    }
+
+    // ================= 事件监听 =================
+
+    /// <summary>
+    /// 注册特定数据项的变更监听器
+    /// </summary>
     public void On(string key, Action<object?, object?> callback)
     {
         if (!_listeners.ContainsKey(key))
@@ -195,24 +437,28 @@ public class Data
     }
 
     /// <summary>
-    /// 注销特定数据项的变更监听器。
+    /// 注销特定数据项的变更监听器
     /// </summary>
-    /// <param name="key">键名。</param>
-    /// <param name="callback">要移除的回调函数。</param>
     public void Off(string key, Action<object?, object?> callback)
     {
-        if (_listeners.ContainsKey(key))
+        if (_listeners.TryGetValue(key, out var listener))
         {
-            _listeners[key] -= callback;
-            if (_listeners[key] == null)
+            listener -= callback;
+            if (listener == null)
             {
                 _listeners.Remove(key);
+            }
+            else
+            {
+                _listeners[key] = listener;
             }
         }
     }
 
+    // ================= 工具方法 =================
+
     /// <summary>
-    /// 清空所有数据，并触发变更事件（新值为 null）。
+    /// 清空所有数据
     /// </summary>
     public void Clear()
     {
@@ -221,20 +467,199 @@ public class Data
         {
             Remove(key);
         }
+        _modifiers.Clear();
+        _cachedValues.Clear();
+        _dirtyKeys.Clear();
     }
 
     /// <summary>
-    /// 内部方法：触发变更通知。
+    /// 获取当前所有基础数据的副本
     /// </summary>
-    /// <param name="key">键名。</param>
-    /// <param name="oldValue">变化前的值。</param>
-    /// <param name="newValue">变化后的新值。</param>
+    public Dictionary<string, object> GetAll()
+    {
+        return new Dictionary<string, object>(_data);
+    }
+
+    /// <summary>
+    /// 根据简写名称自动获取 Resource 并映射到 Data 容器
+    /// </summary>
+    public void ApplyResource(string resourceName)
+    {
+        var res = DataResourceIndex.GetResource(resourceName);
+        if (res != null)
+        {
+            LoadFromResource(res);
+        }
+    }
+
+    /// <summary>
+    /// 从 Resource 加载数据到容器
+    /// 自动遍历 Resource 的属性并设置到 Data 中
+    /// </summary>
+    public void LoadFromResource(Resource resource)
+    {
+        if (resource == null) return;
+
+        var resourceType = resource.GetType();
+        var properties = resourceType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+
+        foreach (var prop in properties)
+        {
+            // 跳过 Godot 内部属性和 Resource 基类属性
+            if (prop.DeclaringType == typeof(Resource) || prop.DeclaringType == typeof(Godot.GodotObject))
+                continue;
+
+            if (!prop.CanRead)
+                continue;
+
+            try
+            {
+                var value = prop.GetValue(resource);
+                if (value == null) continue;
+
+                string key = prop.Name;
+                Set(key, value);
+
+                _log.Debug($"从 Resource 加载: {key} = {value}");
+            }
+            catch (Exception ex)
+            {
+                _log.Warn($"加载属性 {prop.Name} 失败: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 重置数据容器（用于对象池复用）
+    /// </summary>
+    public void Reset()
+    {
+        _data.Clear();
+        _modifiers.Clear();
+        _cachedValues.Clear();
+        _dirtyKeys.Clear();
+        // 注意：不清除监听器，由外部管理
+        _log.Debug("Data 容器已重置");
+    }
+
+    // ================= 私有方法 =================
+
+    /// <summary>
+    /// 获取计算数据的值（带缓存逻辑）
+    /// </summary>
+    private object GetComputedValueBoxed(string key, ComputedData computedData, object defaultValue, Type targetType)
+    {
+        // 1. 检查缓存：如果该键不是“脏”的，且缓存中存在值，则直接返回
+        if (!_dirtyKeys.Contains(key) && _cachedValues.TryGetValue(key, out var cached))
+        {
+            if (cached == null) return defaultValue;
+            return ConvertValueBoxed(cached, targetType, defaultValue);
+        }
+
+        // 2. 缓存失效或不存在，调用计算逻辑
+        var result = computedData.Compute(this);
+
+        // 3. 更新缓存并移除脏标记
+        _cachedValues[key] = result;
+        _dirtyKeys.Remove(key);
+
+        if (result == null) return defaultValue;
+        return ConvertValueBoxed(result, targetType, defaultValue);
+    }
+
+    /// <summary>
+    /// 获取应用修改器后的最终值（带缓存逻辑）
+    /// </summary>
+    private object GetModifiedValueBoxed(string key, object baseValue, object defaultValue, Type targetType)
+    {
+        // 1. 检查缓存：修改器变动或基础值变动会标记为脏
+        if (!_dirtyKeys.Contains(key) && _cachedValues.TryGetValue(key, out var cached))
+        {
+            if (cached == null) return defaultValue;
+            return ConvertValueBoxed(cached, targetType, defaultValue);
+        }
+
+        // 2. 核心计算：将基础值（如 float）应用所有已注册的修改器
+        float baseFloat = Convert.ToSingle(baseValue);
+        float finalValue = CalculateFinalValue(key, baseFloat);
+
+        // 3. 更新缓存
+        _cachedValues[key] = finalValue;
+        _dirtyKeys.Remove(key);
+
+        return ConvertValueBoxed(finalValue, targetType, defaultValue);
+    }
+
+    /// <summary>
+    /// 修改器核心算法实现
+    /// 公式：最终值 = (基础值 + Σ加法修正) × Π乘法修正
+    /// </summary>
+    /// <param name="key">数据键</param>
+    /// <param name="baseValue">基础数值</param>
+    /// <returns>应用修改器并经过元数据约束后的 float 值</returns>
+    private float CalculateFinalValue(string key, float baseValue)
+    {
+        // 如果没有任何修改器，直接返回基础值
+        if (!_modifiers.TryGetValue(key, out var modifiers) || modifiers.Count == 0)
+        {
+            return baseValue;
+        }
+
+        // 按修改器优先级（Priority）从小到大排序，确保计算顺序一致性
+        var sorted = modifiers.OrderBy(m => m.Priority).ToList();
+
+        // 1. 累加所有加法修改器 (ModifierType.Additive)
+        float additiveSum = sorted
+            .Where(m => m.Type == ModifierType.Additive)
+            .Sum(m => m.Value);
+
+        // 2. 累乘所有乘法修改器 (ModifierType.Multiplicative)
+        // 初始值为 1.0f
+        float multiplicativeProduct = sorted
+            .Where(m => m.Type == ModifierType.Multiplicative)
+            .Aggregate(1f, (acc, m) => acc * m.Value);
+
+        // 3. 应用核心公式计算初步结果
+        float result = (baseValue + additiveSum) * multiplicativeProduct;
+
+        // 4. 应用元数据约束 (Meta Clamp)
+        // 确保最终结果在定义的 MinValue 和 MaxValue 范围内
+        var meta = DataRegistry.GetMeta(key);
+        if (meta != null)
+        {
+            result = (float)meta.Clamp(result);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 标记数据及其依赖项为“脏”（Dirty）
+    /// 当基础值改变或修改器增删时调用，确保下次获取时重新计算
+    /// </summary>
+    private void MarkDirty(string key)
+    {
+        // 1. 标记当前键为脏
+        _dirtyKeys.Add(key);
+        _cachedValues.Remove(key);
+
+        // 2. 级联标记：查找所有依赖于此数据的计算数据 (ComputedData)
+        // 例如：若 Damage 改变，则依赖它的 DPS 缓存也必须失效
+        var dependents = DataRegistry.GetDependentComputedKeys(key);
+        foreach (var depKey in dependents)
+        {
+            _dirtyKeys.Add(depKey);
+            _cachedValues.Remove(depKey);
+        }
+    }
+
+    /// <summary>
+    /// 触发变更通知
+    /// </summary>
     private void NotifyChanged(string key, object? oldValue, object? newValue)
     {
-        // 触发全局监听器
         OnValueChanged?.Invoke(key, oldValue, newValue);
 
-        // 触发特定键名监听器
         if (_listeners.TryGetValue(key, out var listener))
         {
             listener.Invoke(oldValue, newValue);
@@ -242,54 +667,22 @@ public class Data
     }
 
     /// <summary>
-    /// 获取当前所有数据的副本。
+    /// 类型转换辅助方法
     /// </summary>
-    /// <returns>包含所有数据的字典副本。</returns>
-    public Dictionary<string, object> GetAll()
+    private object ConvertValueBoxed(object value, Type targetType, object defaultValue)
     {
-        return new Dictionary<string, object>(_data);
-    }
-
-    /// <summary>
-    /// 根据简写名称（如 "Player"）自动获取 Resource 并将其公开属性映射到 Data 容器中。
-    /// </summary>
-    /// <param name="resourceName">DataResourceIndex 中注册的简写名称</param>
-    public void ApplyResource(string resourceName)
-    {
-        var res = DataResourceIndex.GetResource(resourceName);
-        if (res != null)
+        if (targetType.IsInstanceOfType(value))
         {
-            ApplyResourceInternal(res);
+            return value;
         }
-    }
 
-    /// <summary>
-    /// 内部方法：将资源对象中的所有公开属性自动映射到 Data 容器中。
-    /// </summary>
-    private void ApplyResourceInternal(Resource res)
-    {
-        if (res == null) return;
-
-        // 1. 获取对象的运行时类型
-        var type = res.GetType();
-
-        // 2. 扫描该类型中定义的公开且属于对象实例的所有属性
-        var properties = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-
-        foreach (var prop in properties)
+        try
         {
-            // 3. 过滤属性类型：目前只处理基础数值类型和布尔值
-            if (prop.PropertyType == typeof(float) ||
-                prop.PropertyType == typeof(int) ||
-                prop.PropertyType == typeof(bool) ||
-                prop.PropertyType == typeof(string))
-            {
-                // 4. 获取该属性在当前实例中的具体数值
-                var value = prop.GetValue(res);
-
-                // 5. 使用属性名作为 Key 存入 Data 容器
-                Set(prop.Name, value);
-            }
+            return Convert.ChangeType(value, targetType);
+        }
+        catch
+        {
+            return defaultValue;
         }
     }
 }

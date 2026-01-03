@@ -196,8 +196,9 @@ public class ObjectPool<T> where T : class
             node.Name = $"{_config.Name}_{Guid.NewGuid().ToString()[..8]}";
 
             // 存储池名称而非池引用，避免循环引用和类型转换问题
-            node.GetData().Set("ObjectPoolName", _config.Name);
-            node.GetData().Set("InPool", false);
+            // 使用 Godot 原生 Meta 数据存储，解耦 Data 系统
+            node.SetMeta("ObjectPoolName", _config.Name);
+            node.SetMeta("InPool", false);
 
             // 自动挂载到父节点
             if (node.GetParent() == null && !string.IsNullOrEmpty(_config.Name))
@@ -219,7 +220,7 @@ public class ObjectPool<T> where T : class
     {
         if (obj is Node node)
         {
-            node.GetData().Set("InPool", true);
+            node.SetMeta("InPool", true);
             // 关键：停止节点的所有处理逻辑（PhysicsProcess, Process, Input 等）
             node.ProcessMode = Node.ProcessModeEnum.Disabled;
             // 隐藏节点，避免渲染开销
@@ -252,12 +253,14 @@ public class ObjectPool<T> where T : class
 
         // 追踪活跃对象
         _activeItems.Add(obj);
+        // 注册对象归属映射 (支持非 Node 对象的静态归还)
+        ObjectPoolManager.MapObject(obj, PoolName);
 
         // 执行 Godot 激活逻辑
         if (obj is Node node)
         {
             // 标记对象已出池
-            node.GetData().Set("InPool", false);
+            node.SetMeta("InPool", false);
 
             // 恢复节点的处理能力
             node.ProcessMode = Node.ProcessModeEnum.Inherit;
@@ -312,7 +315,7 @@ public class ObjectPool<T> where T : class
         if (obj == null) return;
 
         // 1. 检查是否已经在池中 (对标 GDScript 的 meta 检查)
-        if (obj is Node node && node.GetData().Get<bool>("InPool"))
+        if (obj is Node node && node.HasMeta("InPool") && node.GetMeta("InPool").AsBool())
         {
             _log.Warn($"{PoolName}: 实例 {obj} 已在池中。已忽略。");
             return;
@@ -324,6 +327,8 @@ public class ObjectPool<T> where T : class
 
         // 移除活跃追踪
         _activeItems.Remove(obj);
+        // 解除对象归属映射
+        ObjectPoolManager.UnmapObject(obj);
 
         // 3. 生命周期回调: 清理
         if (obj is IPoolable poolable) poolable.OnPoolRelease();

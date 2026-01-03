@@ -1,18 +1,4 @@
-/// <summary>
-/// 修改器类型枚举。
-/// </summary>
-public enum ModifierType
-{
-    /// <summary>
-    /// 加法修改器：直接加到基础值上。
-    /// </summary>
-    Additive,
 
-    /// <summary>
-    /// 乘法修改器：乘以基础值（加法修改后）。
-    /// </summary>
-    Multiplicative
-}
 
 /// <summary>
 /// 属性修改器 - 用于 Buff/Debuff 系统。
