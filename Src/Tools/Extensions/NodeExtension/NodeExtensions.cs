@@ -9,13 +9,14 @@ using Godot;
 /// 提供常用的 Node 操作扩展方法
 /// 
 /// 重要说明：
-/// Data 系统不扩展到 Node，只在 Entity 中使用。
-/// Entity 类中直接包含 Data 属性：public Data Data { get; private set; } = new Data();
+/// Data 系统已重构，不再扩展到所有 Node。
+/// Entity 通过 IEntity 接口直接拥有 Data 属性：entity.Data
+/// Component 通过 EntityManager.GetEntityData(component) 或保存 IEntity 引用访问 Entity Data
 /// 
 /// 设计理念：
 /// - Data 是 Entity 的核心组成部分，不是所有 Node 都需要 Data
 /// - 避免过度扩展，保持职责清晰
-/// - 需要使用 Data 的组件通过 GetParent<Entity>() 获取父 Entity 的 Data
+/// - 需要使用 Data 的组件通过 IEntity 接口访问父 Entity 的 Data
 /// </summary>
 public static class NodeExtensions
 {

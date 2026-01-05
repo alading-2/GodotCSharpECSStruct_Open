@@ -2,50 +2,79 @@ using Godot;
 using System;
 
 /// <summary>
-/// 生命值组件。
+/// 生命值组件
 /// <para>
-/// 遵循无状态设计：所有状态数据 (CurrentHp, MaxHp) 均存储在 AttributeComponent 中。
+/// 遵循无状态设计：所有数据存储在 Entity.Data 中。
 /// 本组件只负责逻辑处理和事件分发。
 /// </para>
 /// </summary>
-public partial class HealthComponent : Node
+public partial class HealthComponent : Node, IComponent
 {
     private static readonly Log _log = new("HealthComponent");
 
-    // 缓存引用
-    private Node _entity;
-    private AttributeComponent _dataComp;
+    // ================= IComponent 实现 =================
 
-    // 事件
-    public event Action<float> Damaged;
-    public event Action Died;
+    private Data? _data;
+
+    public void OnComponentRegistered(Node entity)
+    {
+        // 组件注册时缓存 Data 引用
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+        }
+    }
+
+    public void OnComponentUnregistered()
+    {
+        // 清理事件
+        Damaged = null;
+        Died = null;
+    }
+
+    // ================= 事件 =================
+
+    public event Action<float>? Damaged;
+    public event Action? Died;
+
+    // ================= Godot 生命周期 =================
 
     public override void _Ready()
     {
-        _entity = GetParent();
-        if (_entity == null)
+        // 懒加载：如果 OnComponentRegistered 未被调用
+        if (_data == null)
         {
-            _log.Error("HealthComponent 必须挂载在实体节点下");
+            _data = EntityManager.GetEntityData(this);
+        }
+
+        if (_data == null)
+        {
+            _log.Error("无法获取 Data 容器");
             return;
         }
 
-        // 懒加载获取 AttributeComponent
-        _dataComp = _entity.GetComponent<AttributeComponent>(ECSIndex.Component.AttributeComponent);
+        _log.Debug($"就绪, MaxHp: {_data.Get<float>(DataKey.MaxHp, 100f)}");
     }
 
+    public override void _ExitTree()
+    {
+        // 清理事件
+        Damaged = null;
+        Died = null;
+    }
+
+    // ================= 业务逻辑 =================
+
     /// <summary>
-    /// 造成伤害。
+    /// 造成伤害
     /// </summary>
     public void TakeDamage(float amount)
     {
-        if (_dataComp == null) _dataComp = _entity.GetComponent<AttributeComponent>(ECSIndex.Component.AttributeComponent);
-        if (_dataComp == null) return;
+        if (_data == null) return;
 
-        var data = _entity.GetData(); // 直接用 NodeExtensions 获取 Data
-
-        float currentHp = data.Get<float>("CurrentHp");
+        float currentHp = _data.Get<float>(DataKey.CurrentHp);
         currentHp -= amount;
-        data.Set("CurrentHp", currentHp);
+        _data.Set(DataKey.CurrentHp, currentHp);
 
         Damaged?.Invoke(amount);
 
@@ -56,25 +85,14 @@ public partial class HealthComponent : Node
     }
 
     /// <summary>
-    /// 重置逻辑。
-    /// 确保 CurrentHp 被重置为 MaxHp。
+    /// 重置生命值（对象池复用时调用）
     /// </summary>
     public void Reset()
     {
-        var data = _entity.GetData();
+        if (_data == null) return;
 
-        // 从 AttributeComponent 获取最终的 MaxHp
-        float maxHp = 0;
-        if (_dataComp != null)
-        {
-            maxHp = _dataComp.Get("MaxHp", 10f); // 假设默认 10 HP
-        }
-        else
-        {
-            // 如果没有属性组件，尝试从 Data 获取（备选）
-            maxHp = data.Get<float>("MaxHp", 10f);
-        }
-
-        data.Set("CurrentHp", maxHp);
+        // 从 Data 获取 MaxHp 并重置 CurrentHp
+        float maxHp = _data.Get<float>(DataKey.MaxHp, 100f);
+        _data.Set(DataKey.CurrentHp, maxHp);
     }
 }

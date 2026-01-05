@@ -1,4 +1,4 @@
-// 注意：ModifierType 枚举已在 AttributeModifier.cs 中定义，此处复用
+
 
 /// <summary>
 /// 修改器类型枚举。

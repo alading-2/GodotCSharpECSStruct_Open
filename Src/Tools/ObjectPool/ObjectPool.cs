@@ -400,6 +400,33 @@ public class ObjectPool<T> where T : class
     }
 
     /// <summary>
+    /// 获取所有活跃对象的只读快照
+    /// 注意：返回的是快照列表，不会因为后续的 Get/Release 操作而改变
+    /// </summary>
+    /// <returns>活跃对象的列表副本</returns>
+    public List<T> GetActiveSnapshot()
+    {
+        return _activeItems.ToList();
+    }
+
+    /// <summary>
+    /// 对所有活跃对象执行指定操作（安全版本）
+    /// 内部会先创建快照，避免在遍历时修改集合导致异常
+    /// </summary>
+    /// <param name="action">要执行的操作</param>
+    public void ForEachActive(Action<T> action)
+    {
+        if (action == null) return;
+
+        // 复制一份列表，防止在遍历时修改集合
+        var snapshot = GetActiveSnapshot();
+        foreach (var item in snapshot)
+        {
+            action(item);
+        }
+    }
+
+    /// <summary>
     /// 回收所有当前活跃的对象
     /// 适用于：波次结束清场、切换场景、游戏结束
     /// </summary>

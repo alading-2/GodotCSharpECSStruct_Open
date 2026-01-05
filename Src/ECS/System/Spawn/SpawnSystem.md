@@ -4,14 +4,15 @@
 
 ## 核心设计理念
 
-- **规则驱动 (Rule-Based)**: 不再手动配置每一波的敌人，而是定义“规则”。
-  - 例如：“史莱姆在第 1-5 波出现，间隔 3 秒”。
+- **规则驱动 (Rule-Based)**: 不再手动配置每一波的敌人,而是定义"规则"。
+  - 例如:"史莱姆在第 1-5 波出现,间隔 3 秒"。
   - 系统会根据当前波次自动筛选并激活符合条件的规则。
 - **全局配置 (Global Config)**: 使用 `SpawnConfig` 资源文件统一管理游戏节奏。
+- **TimerManager 驱动**: 使用项目统一的 `TimerManager` 管理所有计时器,实现对象池复用,零 GC 压力。
 - **生成管线化 (Pipeline)**:
   - **What (生成什么)**: 由 `SpawnConfig` 中的 `EnemySpawnRule` 决定。
   - **Where (在哪里生成)**: 委托给 `SpawnPositionCalculator` 处理（支持屏幕外、随机等策略）。
-  - **How (如何生成)**: 系统在初始化时自动为所有配置的敌人创建对象池，并强制使用 `ObjectPoolManager` 进行复用。
+  - **How (如何生成)**: 系统在初始化时自动为所有配置的敌人创建对象池,并强制使用 `ObjectPoolManager` 进行复用。
 
 ## 数据结构
 
@@ -36,28 +37,28 @@
 ## 核心逻辑流
 
 1.  **系统初始化 (`_Ready`)**:
-    - 系统启动时，会自动读取 `SpawnConfig`。
-    - 遍历所有 `SpawnRules`，检查是否已存在对应的对象池。
-    - 如果不存在，则根据 `EnemyData.EnemyScene` 自动创建并注册 `ObjectPool<Node>`。
-    - 确保后续生成时 `ObjectPoolManager.GetPool(name)` 始终可用。
+
+    - 系统启动时,会自动读取 `SpawnConfig`。
+    - 遍历所有 `SpawnRules`,检查是否已存在对应的对象池。
+    - 如果不存在,则根据 `EnemyData.EnemyScene` 自动创建并注册 `ObjectPool<Node>`。
     - 确保后续生成时 `ObjectPoolManager.GetPool(name)` 始终能获取到有效的池实例。
 
 2.  **启动波次 (`StartWave`)**:
 
-    - 配置波次主计时器 (`_waveTimer`)。
+    - 使用 `TimerManager.CreateTimer()` 创建波次主计时器 (`_waveTimer`)。
     - 筛选当前波次 (`CurrentWaveIndex`) 激活的所有规则。
-    - 初始化运行时状态 (`RuleRuntimeState`)，重置累积时间。
-    - 启动核心轮询计时器 (`_checkTimer`)。
+    - 初始化运行时状态 (`RuleRuntimeState`),重置累积时间。
+    - 使用 `TimerManager.CreateLoopTimer()` 创建核心轮询计时器 (`_checkTimer`)。
 
-3.  **生成的驱动 (Single Timer Architecture)**:
+3.  **生成的驱动 (TimerManager Architecture)**:
 
-    - 采用**单计时器轮询**架构，而非为每个规则创建独立计时器（大幅降低节点开销）。
-    - `_checkTimer` 每 0.2 秒（可配）触发一次。
-    - 在回调中遍历所有激活的规则，累加 `delta` 时间。
-    - 当 `AccumulatedTime >= SpawnInterval` 时，触发生成逻辑并扣除时间（支持“追赶”机制以应对卡顿）。
+    - 采用 **TimerManager 统一管理** 架构,所有计时器由对象池复用,零 GC 压力。
+    - `_checkTimer` 每 0.2 秒触发一次 `OnCheckTimerTimeout` 回调。
+    - 在回调中遍历所有激活的规则,累加 `delta` 时间。
+    - 当 `AccumulatedTime >= SpawnInterval` 时,触发生成逻辑并扣除时间(支持"追赶"机制以应对卡顿)。
 
 4.  **动态适应**:
-    - 如果某一波没有任何规则匹配（空波次），系统会发出警告，但游戏流程不会中断。
+    - 如果某一波没有任何规则匹配(空波次),系统会发出警告,但游戏流程不会中断。
     - 支持无限波次模式。
 
 ## 公开接口

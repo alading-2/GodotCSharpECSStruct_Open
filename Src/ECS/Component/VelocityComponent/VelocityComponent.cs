@@ -2,155 +2,172 @@ using Godot;
 
 
 /// <summary>
-/// 移动组件 - 管理实体的物理移动，包括速度、加速度和摩擦力。
+/// 移动组件 - 管理实体的物理移动
+/// <para>
 /// 通过组合方式附加到实体上，提供平滑的移动控制。
+/// 所有数据从 Entity.Data 读取。
+/// </para>
 /// </summary>
-public partial class VelocityComponent : Node
+public partial class VelocityComponent : Node, IComponent
 {
-	private static readonly Log Log = new("VelocityComponent");
+    private static readonly Log Log = new("VelocityComponent");
 
-	// ================= Private State =================
+    // ================= IComponent 实现 =================
 
-	/// <summary>
-	/// 父实体的动态数据容器。
-	/// </summary>
-	private Data _data = null!;
+    private Data? _data;
+    private CharacterBody2D? _body;
 
-	/// <summary>
-	/// 父节点引用 (CharacterBody2D)
-	/// </summary>
-	private CharacterBody2D _parent = null!;
+    public void OnComponentRegistered(Node entity)
+    {
+        // 组件注册时缓存引用
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+        }
 
-	// ================= Runtime State =================
+        if (entity is CharacterBody2D body)
+        {
+            _body = body;
+        }
+    }
 
-	/// <summary>
-	/// 当前速度向量。
-	/// </summary>
-	public Vector2 Velocity { get; private set; } = Vector2.Zero;
+    public void OnComponentUnregistered()
+    {
+        // 清理引用
+        _data = null;
+        _body = null;
+    }
 
-	/// <summary>
-	/// 获取速度。
-	/// </summary>
-	public float Speed => _data.Get<float>("Speed", 400f);
+    // ================= 运行时状态 =================
 
-	/// <summary>
-	/// 获取最大速度。
-	/// </summary>
-	public float MaxSpeed => _data.Get<float>("MaxSpeed", 1000f);
+    /// <summary>
+    /// 当前速度向量
+    /// </summary>
+    public Vector2 Velocity { get; private set; } = Vector2.Zero;
 
-	/// <summary>
-	/// 加速度因子
-	/// <para>值越大，加速度越快。</para>
-	/// <para>典型值: 10.0 (正常) ~ 20.0 (快速)。</para>
-	/// </summary>
-	public float Acceleration => _data.Get<float>("Acceleration", 10.0f);
+    /// <summary>
+    /// 获取速度
+    /// </summary>
+    public float Speed => _data?.Get<float>(DataKey.Speed, 400f) ?? 400f;
 
-	// ================= Godot Lifecycle =================
+    /// <summary>
+    /// 获取最大速度
+    /// </summary>
+    public float MaxSpeed => _data?.Get<float>(DataKey.MaxSpeed, 1000f) ?? 1000f;
 
-	public override void _Ready()
-	{
-		var parent = GetParent();
-		if (parent == null)
-		{
-			Log.Error("VelocityComponent 错误: 必须作为实体 (Node) 的子节点存在。");
-			return;
-		}
-		_data = parent.GetData();
+    /// <summary>
+    /// 加速度因子
+    /// <para>值越大，加速越快。</para>
+    /// <para>典型值: 10.0 (正常) ~ 20.0 (快速)。</para>
+    /// </summary>
+    public float Acceleration => _data?.Get<float>(DataKey.Acceleration, 10.0f) ?? 10.0f;
 
-		if (parent is CharacterBody2D body)
-		{
-			_parent = body;
-			Log.Debug($"VelocityComponent attached to CharacterBody2D: {_parent.Name}");
-		}
-		else
-		{
-			Log.Error($"VelocityComponent: 父节点必须是 CharacterBody2D，当前是: {parent.GetType().Name}");
-			return;
-		}
+    // ================= Godot 生命周期 =================
 
-		Log.Success($"Ready, Parent: {_parent?.Name}");
+    public override void _Ready()
+    {
+        // 懒加载：如果 OnComponentRegistered 未被调用
+        if (_data == null)
+        {
+            _data = EntityManager.GetEntityData(this);
+        }
 
-		// 初始化数据
-	}
+        if (_body == null)
+        {
+            var entity = EntityManager.GetEntityByComponent(this);
+            if (entity is CharacterBody2D body)
+            {
+                _body = body;
+            }
+        }
 
-	public override void _ExitTree()
-	{
-		Log.Trace("移动组件退出场景树。");
-	}
+        if (_data == null || _body == null)
+        {
+            Log.Error("无法获取 Data 容器或 CharacterBody2D");
+            return;
+        }
 
-	public override void _Process(double delta)
-	{
-		if (_parent == null) return;
+        Log.Success($"就绪, Parent: {_body.Name}");
+    }
 
-		// 获取输入
-		Vector2 inputDir = InputManager.GetMoveInput();
+    public override void _ExitTree()
+    {
+        _data = null;
+        _body = null;
+        Log.Trace("移动组件退出场景树");
+    }
 
-		// 计算期望的目标速度
-		Vector2 targetVelocity = inputDir.Normalized() * Speed;
-		// 平滑
-		Velocity = Velocity.Lerp(targetVelocity, 1.0f - Mathf.Exp(-Acceleration * (float)delta));
+    public override void _Process(double delta)
+    {
+        if (_body == null) return;
 
-		// 确保不超过最大速度
-		ClampVelocity();
+        // 获取输入
+        Vector2 inputDir = InputManager.GetMoveInput();
 
-		// 应用位移 - 使用 CharacterBody2D 的标准移动方式
-		_parent.Velocity = Velocity;
-		_parent.MoveAndSlide();
+        // 计算期望的目标速度
+        Vector2 targetVelocity = inputDir.Normalized() * Speed;
 
-		// 更新组件的 Velocity (虽然 CharacterBody2D.Velocity 可能会被物理引擎修改，但这里保持同步)
-		Velocity = _parent.Velocity;
+        // 平滑插值
+        Velocity = Velocity.Lerp(targetVelocity, 1.0f - Mathf.Exp(-Acceleration * (float)delta));
 
-	}
+        // 确保不超过最大速度
+        ClampVelocity();
 
-	// ================= 公开方法 =================
+        // 应用位移
+        _body.Velocity = Velocity;
+        _body.MoveAndSlide();
 
-	/// <summary>
-	/// 立即停止移动。
-	/// </summary>
-	public void Stop()
-	{
-		Velocity = Vector2.Zero;
-		Log.Debug("移动已停止。");
-	}
+        // 同步速度（物理引擎可能会修改）
+        Velocity = _body.Velocity;
+    }
 
-	/// <summary>
-	/// 直接设置速度（会被限制在 Speed 内）。
-	/// </summary>
-	/// <param name="velocity">目标速度向量。</param>
-	public void SetVelocity(Vector2 velocity)
-	{
-		Velocity = velocity;
-		ClampVelocity();
-		Log.Trace($"设置速度: {Velocity}");
-	}
+    // ================= 公开方法 =================
 
-	/// <summary>
-	/// 获取当前速度向量。
-	/// </summary>
-	public Vector2 GetVelocity()
-	{
-		return Velocity;
-	}
+    /// <summary>
+    /// 立即停止移动
+    /// </summary>
+    public void Stop()
+    {
+        Velocity = Vector2.Zero;
+        Log.Debug("移动已停止");
+    }
 
-	/// <summary>
-	/// 获取当前速度大小。
-	/// </summary>
-	public float GetSpeed()
-	{
-		return Velocity.Length();
-	}
+    /// <summary>
+    /// 直接设置速度（会被限制在 MaxSpeed 内）
+    /// </summary>
+    public void SetVelocity(Vector2 velocity)
+    {
+        Velocity = velocity;
+        ClampVelocity();
+        Log.Trace($"设置速度: {Velocity}");
+    }
 
-	// ================= Private Methods =================
+    /// <summary>
+    /// 获取当前速度向量
+    /// </summary>
+    public Vector2 GetVelocity()
+    {
+        return Velocity;
+    }
 
-	/// <summary>
-	/// 将速度限制在 Speed 内。
-	/// </summary>
-	private void ClampVelocity()
-	{
-		//TODO
-		if (Velocity.Length() > MaxSpeed)
-		{
-			Velocity = Velocity.Normalized() * MaxSpeed;
-		}
-	}
+    /// <summary>
+    /// 获取当前速度大小
+    /// </summary>
+    public float GetSpeed()
+    {
+        return Velocity.Length();
+    }
+
+    // ================= 私有方法 =================
+
+    /// <summary>
+    /// 将速度限制在 MaxSpeed 内
+    /// </summary>
+    private void ClampVelocity()
+    {
+        if (Velocity.Length() > MaxSpeed)
+        {
+            Velocity = Velocity.Normalized() * MaxSpeed;
+        }
+    }
 }

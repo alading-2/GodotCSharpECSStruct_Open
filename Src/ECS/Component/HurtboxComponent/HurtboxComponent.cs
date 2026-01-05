@@ -24,7 +24,7 @@ public partial class HurtboxComponent : Area2D
     /// <summary>
     /// 获取无敌时间。
     /// </summary>
-    public float InvincibilityTime => _data.Get<float>("InvincibilityTime", 0f);
+    public float InvincibilityTime => _data.Get<float>(DataKey.InvincibilityTime, 0f);
 
     // ================= C# Events =================
 
@@ -51,13 +51,12 @@ public partial class HurtboxComponent : Area2D
 
     public override void _Ready()
     {
-        var parent = GetParent();
-        if (parent == null)
+        _data = EntityManager.GetEntityData(this)!;
+        if (_data == null)
         {
-            Log.Error("HurtboxComponent 错误: 必须作为实体 (Node) 的子节点存在。");
+            Log.Error($"[HurtboxComponent] 无法通过 EntityManager 获取 Data 容器！");
             return;
         }
-        _data = parent.GetData();
 
         // 连接 area_entered 信号
         AreaEntered += OnAreaEntered;

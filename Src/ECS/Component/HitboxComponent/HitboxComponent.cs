@@ -22,12 +22,12 @@ public partial class HitboxComponent : Area2D
     /// <summary>
     /// 获取伤害值。
     /// </summary>
-    public float Damage => _data.Get<float>("Damage", 10f);
+    public float Damage => _data.Get<float>(DataKey.Damage, 10f);
 
     /// <summary>
     /// 获取击退力。
     /// </summary>
-    public float Knockback => _data.Get<float>("Knockback", 100f);
+    public float Knockback => _data.Get<float>(DataKey.Knockback, 100f);
 
     /// <summary>
     /// 攻击来源（用于避免自伤）。
@@ -38,13 +38,12 @@ public partial class HitboxComponent : Area2D
 
     public override void _Ready()
     {
-        var parent = GetParent();
-        if (parent == null)
+        _data = EntityManager.GetEntityData(this)!;
+        if (_data == null)
         {
-            Log.Error("HitboxComponent 错误: 必须作为实体 (Node) 的子节点存在。");
+            Log.Error($"[HitboxComponent] 无法通过 EntityManager 获取 Data 容器！");
             return;
         }
-        _data = parent.GetData();
 
         Log.Debug($"攻击判定组件初始化完成: 伤害={Damage}, 击退力={Knockback}");
     }

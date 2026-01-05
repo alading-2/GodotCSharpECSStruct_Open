@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Godot;
 
@@ -7,7 +6,7 @@ using Godot;
 /// 全局定时器管理器
 /// 
 /// 用法：
-/// 代码调用：TimerManager.Instance.CreateTimer(...)
+/// TimerManager.Instance.CreateTimer(...)
 /// 
 /// 特性：
 /// - 支持受 TimeScale 影响的游戏时间
@@ -15,73 +14,64 @@ using Godot;
 /// - 支持循环定时器
 /// - 支持标签管理 (批量暂停/取消)
 /// - 自动生命周期绑定 (Node 销毁时自动清理)
-/// - 内部对象池复用 (零 GC 压力)
+/// - 集成项目统一对象池系统 (零 GC 压力)
 /// </summary>
 public partial class TimerManager : Node
 {
+    /// <summary>
+    /// 自动注册到引导器 (AutoLoad)
+    /// 使用 ModuleInitializer 确保在程序集加载时自动完成注册，无需手动在编辑器中配置。
+    /// </summary>
     [ModuleInitializer]
     public static void Initialize() => AutoLoad.Register("TimerManager", "res://Src/Tools/Timer/TimerManager.cs", AutoLoad.Priority.System);
 
+    /// <summary> 获取全局单例实例 </summary>
+    public static TimerManager Instance => _instance;
     private static TimerManager _instance;
-    public static TimerManager Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _log.Warn("TimerManager 未初始化。请确保已将其添加到 AutoLoad。");
-            }
-            return _instance;
-        }
-    }
 
     private static readonly Log _log = new("TimerManager");
 
-    private readonly List<GameTimer> _timers = new();
-    private readonly List<GameTimer> _timersToAdd = new();
+    /// <summary> 定时器对象池，减少频繁创建销毁带来的 GC 压力 </summary>
+    private ObjectPool<GameTimer> _timerPool;
 
-    // 对象池：复用 GameTimer 实例，避免频繁 GC
-    private readonly Stack<GameTimer> _timerPool = new();
-    private const int MaxPoolSize = 100;
-
-    // ID 生成器
-    private long _nextId = 1;
-
-    // 真实时间追踪（用于 UnscaledTime）
+    /// <summary> 上一帧的时间戳（毫秒），用于计算真实时间流逝 </summary>
     private ulong _lastTicksMsec;
+
+    /// <summary> 真实时间增量（不受 Engine.TimeScale 影响） </summary>
     private float _unscaledDeltaTime;
 
     public override void _EnterTree()
     {
-        if (_instance != null && _instance != this)
-        {
-            QueueFree();
-            return;
-        }
         _instance = this;
         _lastTicksMsec = Time.GetTicksMsec();
 
-        // 监听场景树暂停事件
+        // 从全局管理器获取定时器对象池
+        _timerPool = ObjectPoolManager.GetPool<GameTimer>(PoolNames.TimerPool);
+
+        if (_timerPool == null)
+        {
+            _log.Error("无法获取 TimerPool，请确保 ObjectPoolInit 已正确初始化");
+            return;
+        }
+
+        // 绑定场景树的 ProcessFrame 信号，确保在每帧开始时计算真实时间
         GetTree().Connect(SceneTree.SignalName.ProcessFrame, Callable.From(OnProcessFrame));
     }
 
     public override void _ExitTree()
     {
-        // 清理所有定时器
-        foreach (var timer in _timers)
-        {
-            timer.Cancel();
-        }
-        _timers.Clear();
-        _timersToAdd.Clear();
-        _timerPool.Clear();
-
+        // 场景切换或退出时清理所有定时器和池
+        _timerPool?.ReleaseAll();
+        _timerPool?.Destroy();
         _instance = null;
     }
 
+    /// <summary>
+    /// 每帧执行一次，计算两次调用之间真实经过的时间。
+    /// 这种方式比使用 delta 转换更准确，因为它直接读取系统时钟。
+    /// </summary>
     private void OnProcessFrame()
     {
-        // 计算真实时间差（不受 TimeScale 影响）
         ulong currentTicks = Time.GetTicksMsec();
         _unscaledDeltaTime = (currentTicks - _lastTicksMsec) / 1000.0f;
         _lastTicksMsec = currentTicks;
@@ -92,66 +82,48 @@ public partial class TimerManager : Node
         ProcessTimers(delta);
     }
 
+    /// <summary>
+    /// 核心更新逻辑：遍历所有活跃定时器并更新它们的状态。
+    /// </summary>
+    /// <param name="delta">Godot 传入的每帧增量时间（受 TimeScale 影响）</param>
     private void ProcessTimers(double delta)
     {
-        // 1. 添加待处理的定时器
-        if (_timersToAdd.Count > 0)
+        float scaledDelta = (float)delta;
+        float unscaledDelta = _unscaledDeltaTime;
+
+        // 使用 ObjectPool 的 ForEachActive 遍历所有当前正在使用的定时器
+        _timerPool.ForEachActive(timer =>
         {
-            _timers.AddRange(_timersToAdd);
-            _timersToAdd.Clear();
-        }
+            // 1. 检查是否已完成。如果是，则将其归还到对象池。
+            if (timer.IsDone)
+            {
+                _timerPool.Release(timer);
+                return;
+            }
 
-        // 2. 更新定时器
-        float scaledDelta = (float)delta; // 受 TimeScale 影响
-        float unscaledDelta = _unscaledDeltaTime; // 真实时间
+            // 2. 检查是否已暂停。
+            if (timer.IsPaused) return;
 
-        for (int i = 0; i < _timers.Count; i++)
-        {
-            var timer = _timers[i];
-            if (timer.IsDone || timer.IsPaused) continue;
-
-            // 根据定时器类型选择时间源
+            // 3. 根据定时器配置，选择使用“游戏时间”或“真实时间”进行更新。
             float dt = timer.UseUnscaledTime ? unscaledDelta : scaledDelta;
             timer.Update(dt);
-        }
-
-        // 3. 清理已完成的定时器并回收到对象池
-        for (int i = _timers.Count - 1; i >= 0; i--)
-        {
-            if (_timers[i].IsDone)
-            {
-                var timer = _timers[i];
-                _timers.RemoveAt(i);
-                RecycleTimer(timer);
-            }
-        }
+        });
     }
 
     /// <summary>
-    /// 创建一个一次性定时器
+    /// 创建一个单次定时器
     /// </summary>
     /// <param name="duration">持续时间（秒）</param>
-    /// <param name="onComplete">完成回调</param>
-    /// <param name="useUnscaledTime">是否使用不受 TimeScale 影响的真实时间</param>
-    /// <returns>定时器对象</returns>
+    /// <param name="onComplete">完成后的回调</param>
+    /// <param name="useUnscaledTime">是否使用真实时间（默认为 false，受游戏倍速影响）</param>
+    /// <returns>返回创建好的定时器对象，调用者需要在 _ExitTree 中手动 Cancel 归还对象池</returns>
     public GameTimer CreateTimer(float duration, Action onComplete = null, bool useUnscaledTime = false)
     {
-        var timer = GetOrCreateTimer(duration, false, useUnscaledTime);
+        var timer = _timerPool.Get();
+        timer.Configure(duration, false, useUnscaledTime);
+        timer.Id = Guid.NewGuid().ToString(); // 分配唯一ID以便于精确控制
+
         if (onComplete != null) timer.OnComplete += onComplete;
-        Register(timer);
-        return timer;
-    }
-
-    /// <summary>
-    /// 创建一个绑定 Node 生命周期的定时器
-    /// Node 销毁时自动取消定时器
-    /// </summary>
-    public GameTimer CreateTimer(Node owner, float duration, Action onComplete = null, bool useUnscaledTime = false)
-    {
-        var timer = CreateTimer(duration, onComplete, useUnscaledTime);
-
-        // 绑定生命周期
-        owner.TreeExiting += () => timer.Cancel();
 
         return timer;
     }
@@ -159,123 +131,73 @@ public partial class TimerManager : Node
     /// <summary>
     /// 创建一个循环定时器
     /// </summary>
-    /// <param name="interval">间隔时间（秒）</param>
-    /// <param name="onLoop">每次循环触发的回调</param>
-    /// <param name="useUnscaledTime">是否使用不受 TimeScale 影响的真实时间</param>
-    /// <returns>定时器对象</returns>
+    /// <param name="interval">循环间隔时间（秒）</param>
+    /// <param name="onLoop">每次循环结束时的回调</param>
+    /// <param name="useUnscaledTime">是否使用真实时间</param>
+    /// <returns>返回创建好的定时器对象，调用者需要在 _ExitTree 中手动 Cancel 归还对象池</returns>
     public GameTimer CreateLoopTimer(float interval, Action onLoop, bool useUnscaledTime = false)
     {
-        var timer = GetOrCreateTimer(interval, true, useUnscaledTime);
+        var timer = _timerPool.Get();
+        timer.Configure(interval, true, useUnscaledTime);
+        timer.Id = Guid.NewGuid().ToString();
+
         if (onLoop != null) timer.OnLoop += onLoop;
-        Register(timer);
-        return timer;
-    }
-
-    /// <summary>
-    /// 创建一个绑定 Node 生命周期的循环定时器
-    /// </summary>
-    public GameTimer CreateLoopTimer(Node owner, float interval, Action onLoop, bool useUnscaledTime = false)
-    {
-        var timer = CreateLoopTimer(interval, onLoop, useUnscaledTime);
-        owner.TreeExiting += () => timer.Cancel();
-        return timer;
-    }
-
-    /// <summary>
-    /// 从对象池获取或创建新的定时器
-    /// </summary>
-    private GameTimer GetOrCreateTimer(float duration, bool isLoop, bool useUnscaledTime)
-    {
-        GameTimer timer;
-
-        if (_timerPool.Count > 0)
-        {
-            timer = _timerPool.Pop();
-            timer.Reset(duration, isLoop, useUnscaledTime);
-        }
-        else
-        {
-            timer = new GameTimer(duration, isLoop, useUnscaledTime);
-        }
 
         return timer;
     }
 
     /// <summary>
-    /// 回收定时器到对象池
+    /// 根据唯一 ID 手动取消特定的定时器，TimerManager 会将其收回池中，且不会触发 OnComplete 回调。
     /// </summary>
-    private void RecycleTimer(GameTimer timer)
+    public void Cancel(string id)
     {
-        if (_timerPool.Count < MaxPoolSize)
+        _timerPool.ForEachActive(timer =>
         {
-            timer.Clear(); // 清理事件订阅
-            _timerPool.Push(timer);
-        }
+            if (timer.Id == id) timer.Cancel();
+        });
     }
 
     /// <summary>
-    /// 注册自定义定时器
+    /// 根据标签批量取消定时器
     /// </summary>
-    public void Register(GameTimer timer)
-    {
-        timer.Id = _nextId++;
-        _timersToAdd.Add(timer);
-    }
-
-    /// <summary>
-    /// 取消指定 ID 的定时器
-    /// </summary>
-    public void Cancel(long id)
-    {
-        var timer = _timers.Find(t => t.Id == id);
-        timer?.Cancel();
-    }
-
-    /// <summary>
-    /// 取消指定 Tag 的所有定时器
-    /// </summary>
+    /// <param name="tag">目标标签</param>
     public void CancelByTag(string tag)
     {
-        foreach (var timer in _timers)
+        _timerPool.ForEachActive(timer =>
         {
             if (timer.Tag == tag) timer.Cancel();
-        }
-
-        foreach (var timer in _timersToAdd)
-        {
-            if (timer.Tag == tag) timer.Cancel();
-        }
+        });
     }
 
     /// <summary>
-    /// 暂停/恢复所有定时器
+    /// 批量设置所有活跃定时器的暂停状态
     /// </summary>
-    public void SetPaused(bool paused)
+    public void SetAllTimerPaused(bool paused)
     {
-        foreach (var timer in _timers)
+        _timerPool.ForEachActive(timer =>
         {
             timer.IsPaused = paused;
-        }
+        });
     }
 
     /// <summary>
-    /// 暂停/恢复指定 Tag 的定时器
+    /// 根据标签批量设置暂停状态
     /// </summary>
-    public void SetPausedByTag(string tag, bool paused)
+    public void SetAllTimerPausedByTag(string tag, bool paused)
     {
-        foreach (var timer in _timers)
+        _timerPool.ForEachActive(timer =>
         {
             if (timer.Tag == tag) timer.IsPaused = paused;
-        }
+        });
     }
 
-    /// <summary>
-    /// 获取当前活跃的定时器数量
-    /// </summary>
-    public int GetActiveTimerCount() => _timers.Count;
+    /// <summary> 获取当前正在运行的定时器总数 </summary>
+    public int GetActiveTimerCount() => _timerPool.ActiveCount;
 
-    /// <summary>
-    /// 获取对象池统计信息
-    /// </summary>
-    public (int Active, int Pooled) GetStats() => (_timers.Count, _timerPool.Count);
+    /// <summary> 获取对象池统计信息 (活跃数, 总池容量) </summary>
+    public (int Active, int Pooled) GetStats()
+    {
+        var stats = _timerPool.GetStats();
+        return (stats.ActiveCount, stats.Count);
+    }
 }

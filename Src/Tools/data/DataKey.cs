@@ -10,9 +10,11 @@ public static class DataKey
 
     // === 生命系统 ===
     public const string MaxHp = "MaxHp";
+    public const string CurrentHp = "CurrentHp";
     public const string HpRegen = "HpRegen";
     public const string LifeSteal = "LifeSteal";
     public const string Armor = "Armor";
+    public const string InvincibilityTime = "InvincibilityTime";
 
     // === 攻击系统 ===
     public const string Damage = "Damage";
@@ -29,11 +31,17 @@ public static class DataKey
 
     // === 移动系统 ===
     public const string Speed = "Speed";
+    public const string MaxSpeed = "MaxSpeed";
+    public const string Acceleration = "Acceleration";
+    public const string FollowSpeed = "FollowSpeed";
+    public const string StopDistance = "StopDistance";
 
     // === 资源系统 ===
     public const string PickupRange = "PickupRange";
     public const string ExpGain = "ExpGain";
     public const string LuckBonus = "LuckBonus";
+    public const string MagnetSpeed = "MagnetSpeed";
+    public const string MagnetEnabled = "MagnetEnabled";
 
     // === 特殊机制 ===
     public const string Pierce = "Pierce";

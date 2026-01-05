@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" uid="uid://d8mdp5488hga" path="res://Src/ECS/Component/AttributeComponent/AttributeComponent.cs" id="1_attr"]
-
-[node name="AttributeComponent" type="Node"]
-script = ExtResource("1_attr")

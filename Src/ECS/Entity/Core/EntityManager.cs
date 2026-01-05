@@ -4,19 +4,33 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Entity 管理器 - 统一的实体生命周期管理入口
+/// Entity 管理器 - 伪 ECS 架构的统一节点生命周期管理入口
 /// 
-/// 职责范围：
+/// ==================== 设计理念 ====================
+/// 
+/// 1. 命名哲学：
+///    - 在本项目的伪 ECS 架构中，Component 本质上也是 Entity（都是 Node）
+///    - EntityManager 管理的是"所有需要生命周期管理的 Node"，而非狭义的"游戏实体"
+///    - 这与 Unity ECS 的 EntityManager 设计理念一致（同时管理 Entity 和 Component）
+/// 
+/// 2. 职责边界：
+///    - EntityManager：管理节点的 **生命周期**（生成、注册、查询、销毁）
+///    - EntityRelationshipManager：管理节点的 **关系**（父子、依赖、组合）
+///    - 两者协作构成完整的 ECS 管理体系
+/// 
+/// 3. 统一数据源：
+///    - Entity 和 Component 都注册到 _entities 字典（InstanceId -> Node）
+///    - 通过 _entitiesByType 索引实现高效的类型查询
+///    - 通过方法名区分操作语义（Spawn vs AddComponent）
+/// 
+/// ==================== 职责范围 ====================
+/// 
 /// - Entity 管理：生成、注册、查询、销毁
 /// - Component 管理：动态添加/移除、查询、生命周期
-/// - 关系建立：自动建立 Entity-Component 关系（通过 EntityRelationshipManager）
+/// - 关系建立：自动建立 Entity-Component 关系（委托给 EntityRelationshipManager）
 /// 
-/// 设计理念：
-/// - Component 本质上也是 Entity（都是 Node，都注册到 _entities）
-/// - EntityManager 是所有 Node 的统一管理入口
-/// - 通过方法名区分操作对象（Spawn vs AddComponent）
+/// ==================== 使用示例 ====================
 /// 
-/// 使用示例：
 /// <code>
 /// // 生成 Entity
 /// var enemy = EntityManager.Spawn&lt;Enemy&gt;(poolName, resource, position);
@@ -26,6 +40,9 @@ using System.Linq;
 /// 
 /// // 查询 Component
 /// var healthComps = EntityManager.GetComponentsByType&lt;HealthComponent&gt;("HealthComponent");
+/// 
+/// // 通过 Component 反查 Entity
+/// var entity = EntityManager.GetEntityByComponent(component);
 /// </code>
 /// </summary>
 public static class EntityManager
@@ -51,7 +68,7 @@ public static class EntityManager
     /// <param name="poolName">对象池名称（必须）</param>
     /// <param name="resource">静态配置 Resource</param>
     /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolName, Resource resource) where T : Node
+    public static T? Spawn<T>(string poolName, Resource resource) where T : Node, IEntity
     {
         // 1. 从 ObjectPool 获取实例（使用泛型方法，类型安全）
         var pool = ObjectPoolManager.GetPool<T>(poolName);
@@ -65,7 +82,7 @@ public static class EntityManager
 
         // 2. 数据注入（核心：将 Resource 配置写入 Data）
         // 使用 Data 容器内置的 LoadFromResource 方法，替代原有的 InjectResourceData
-        entity.GetData().LoadFromResource(resource);
+        entity.Data.LoadFromResource(resource);
 
         // 2.1 自动加载 VisualScene (如有)
         InjectVisualScene(entity, resource);
@@ -91,7 +108,7 @@ public static class EntityManager
     /// <param name="resource">静态配置 Resource</param>
     /// <param name="position">初始位置</param>
     /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolName, Resource resource, Vector2 position) where T : Node2D
+    public static T? Spawn<T>(string poolName, Resource resource, Vector2 position) where T : Node2D, IEntity
     {
         // 调用通用版本
         var entity = Spawn<T>(poolName, resource);
@@ -116,7 +133,7 @@ public static class EntityManager
     /// <param name="position">初始位置</param>
     /// <param name="rotation">初始旋转角度（弧度）</param>
     /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation) where T : Node2D
+    public static T? Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation) where T : Node2D, IEntity
     {
         var entity = Spawn<T>(poolName, resource, position);
 
@@ -168,20 +185,26 @@ public static class EntityManager
     }
 
     /// <summary>
-    /// 自动注册 Entity 的所有 Component
+    /// 自动注册 Entity 的所有 Component（递归查找所有层级）
     /// 识别规则（按优先级）：
     /// 1. 实现了 IComponent 接口（最高优先级）
     /// 2. 类名以 "Component" 结尾（命名约定）
     /// 3. 在 ECSIndex 白名单中（特殊情况）
     /// 
     /// 自动建立 Entity-Component 关系（通过 EntityRelationshipManager）
+    /// 
+    /// 注意：使用 FindChildren() 递归查找，支持任意层级的 Component
     /// </summary>
     private static void RegisterComponents(Node entity)
     {
         int registeredCount = 0;
         string entityId = entity.GetInstanceId().ToString();
 
-        foreach (Node child in entity.GetChildren())
+        // 使用 FindChildren 递归查找所有层级的子节点
+        // 参数: pattern="*" (匹配所有名字), type="" (所有类型), recursive=true (递归), owned=false (包括非拥有节点)
+        var allChildren = entity.FindChildren("*", "Node", true, false);
+
+        foreach (Node child in allChildren)
         {
             bool isComponent = false;
             string componentType = child.GetType().Name;
@@ -244,10 +267,15 @@ public static class EntityManager
 
     /// <summary>
     /// 注册 Entity/Component 到 EntityManager
+    /// 
+    /// 注意：Entity 和 Component 都会注册到同一个 _entities 字典中
+    /// 通过 nodeType 参数区分类型，便于后续按类型查询
     /// </summary>
-    public static void Register(Node entity, string entityType)
+    /// <param name="node">要注册的节点（Entity 或 Component）</param>
+    /// <param name="nodeType">节点类型名称（如 "Enemy", "HealthComponent"）</param>
+    public static void Register(Node node, string nodeType)
     {
-        string id = entity.GetInstanceId().ToString();
+        string id = node.GetInstanceId().ToString();
 
         // 防止重复注册
         if (_entities.ContainsKey(id))
@@ -256,12 +284,12 @@ public static class EntityManager
             return;
         }
 
-        _entities[id] = entity;
+        _entities[id] = node;
 
         // 更新类型索引
-        if (!_entitiesByType.ContainsKey(entityType))
-            _entitiesByType[entityType] = new HashSet<Node>();
-        _entitiesByType[entityType].Add(entity);
+        if (!_entitiesByType.ContainsKey(nodeType))
+            _entitiesByType[nodeType] = new HashSet<Node>();
+        _entitiesByType[nodeType].Add(node);
     }
 
     /// <summary>
@@ -358,7 +386,7 @@ public static class EntityManager
     }
 
     /// <summary>
-    /// 根据 ID 获取 Entity
+    /// 根据 ID 获取 Entity/Component
     /// </summary>
     public static Node? GetEntityById(string id)
     {
@@ -390,6 +418,7 @@ public static class EntityManager
     /// 获取所有指定类型 Component 的 ID 列表
     /// 常用场景：配合 EntityRelationshipManager 进行反向查询
     /// </summary>
+    /// <returns>Component 的 ID 列表</returns>
     public static IEnumerable<string> GetComponentIdsByType(string componentType)
     {
         if (!_entitiesByType.TryGetValue(componentType, out var set))
@@ -416,43 +445,13 @@ public static class EntityManager
     /// 常用于 Component 访问 Entity 的运行时数据
     /// </summary>
     /// <param name="component">Component 节点</param>
-    /// <returns>Entity 的 Data 容器，如果 Entity 未找到则返回 null</returns>
+    /// <returns>Entity 的 Data 容器，如果 Entity 未找到或不是 IEntity 则返回 null</returns>
     public static Data? GetEntityData(Node component)
     {
         var entity = GetEntityByComponent(component);
-        return entity?.GetData();
-    }
-
-    /// <summary>
-    /// 范围查询（常用于 AI 寻敌、AOE 伤害）
-    /// </summary>
-    public static IEnumerable<T> GetEntitiesInRange<T>(Vector2 position, float range, string entityType)
-        where T : Node2D
-    {
-        return GetEntitiesByType<T>(entityType)
-            .Where(e => e.GlobalPosition.DistanceTo(position) <= range);
-    }
-
-    /// <summary>
-    /// 获取最近的 Entity（常用于 AI 锁定目标）
-    /// </summary>
-    public static T? GetNearestEntity<T>(Vector2 position, string entityType, float maxRange = float.MaxValue)
-        where T : Node2D
-    {
-        T? nearest = null;
-        float minDistance = maxRange;
-
-        foreach (var entity in GetEntitiesByType<T>(entityType))
-        {
-            float distance = entity.GlobalPosition.DistanceTo(position);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                nearest = entity;
-            }
-        }
-
-        return nearest;
+        if (entity is IEntity iEntity)
+            return iEntity.Data;
+        return null;
     }
 
     // ==================== 动态 Component 管理 ====================
@@ -461,20 +460,32 @@ public static class EntityManager
     /// 动态添加 Component 到 Entity
     /// 自动处理：挂载节点 → 注册 → 建立关系 → 触发回调
     /// 常用场景：运行时添加 Buff、技能等
+    /// 
+    /// 注意：Component 会被添加到 Entity/Component 路径下，如果 Component 节点不存在会自动创建
     /// </summary>
     /// <typeparam name="T">Component 类型</typeparam>
     /// <param name="entity">目标 Entity</param>
     /// <param name="component">要添加的 Component</param>
     public static void AddComponent<T>(Node entity, T component) where T : Node
     {
-        // 1. 挂载到 Entity
-        entity.AddChild(component);
+        // 1. 获取或创建 Component 容器节点
+        Node componentContainer = entity.GetNodeOrNull("Component");
+        if (componentContainer == null)
+        {
+            componentContainer = new Node();
+            componentContainer.Name = "Component";
+            entity.AddChild(componentContainer);
+            _log.Debug($"为 Entity {entity.Name} 创建 Component 容器节点");
+        }
 
-        // 2. 注册 Component
+        // 2. 挂载到 Component 容器下
+        componentContainer.AddChild(component);
+
+        // 3. 注册 Component
         string componentType = typeof(T).Name;
         Register(component, componentType);
 
-        // 3. 建立关系
+        // 4. 建立关系
         string entityId = entity.GetInstanceId().ToString();
         string componentId = component.GetInstanceId().ToString();
         EntityRelationshipManager.AddRelationship(
@@ -483,7 +494,7 @@ public static class EntityManager
             EntityRelationshipType.ENTITY_TO_COMPONENT
         );
 
-        // 4. 触发 IComponent 回调
+        // 5. 触发 IComponent 回调
         if (component is IComponent icomp)
         {
             try
@@ -497,15 +508,81 @@ public static class EntityManager
             }
         }
 
-        _log.Info($"已动态添加 Component: {componentType} 到 Entity: {entity.Name}");
+        _log.Info($"已动态添加 Component: {componentType} 到 Entity: {entity.Name}/Component");
     }
 
     /// <summary>
-    /// 从 Entity 移除 Component
+    /// 从 Entity 获取指定类型的 Component
+    /// 常用场景：通过 ECSIndex.Component.HealthComponent 获取组件
+    /// </summary>
+    /// <typeparam name="T">Component 类型</typeparam>
+    /// <param name="entity">目标 Entity</param>
+    /// <returns>找到的 Component，如果不存在则返回 null</returns>
+    public static T? GetComponent<T>(Node entity) where T : Node
+    {
+        string entityId = entity.GetInstanceId().ToString();
+
+        // 通过关系管理器获取所有 Component ID
+        var componentIds = EntityRelationshipManager
+            .GetChildEntitiesByParentAndType(entityId, EntityRelationshipType.ENTITY_TO_COMPONENT);
+
+        foreach (var componentId in componentIds)
+        {
+            var component = GetEntityById(componentId);
+            if (component == null) continue;
+
+            // 检查类型是否匹配
+            if (component.GetType().Name == typeof(T).Name && component is T typedComponent)
+            {
+                return typedComponent;
+            }
+        }
+
+        _log.Warn($"Entity {entity.Name} 未找到 Component: {typeof(T).Name}");
+        return null;
+    }
+
+    /// <summary>
+    /// 从 Entity 移除 Component（通过类型字符串）
+    /// 自动处理：查找 Component → 触发回调 → 移除关系 → 注销 → 销毁节点
+    /// 常用场景：通过 ECSIndex.Component.HealthComponent 移除组件
+    /// </summary>
+    /// <param name="entity">目标 Entity</param>
+    /// <param name="componentType">Component 类型名称（如 "HealthComponent"）</param>
+    /// <returns>是否成功移除</returns>
+    public static bool RemoveComponent(Node entity, string componentType)
+    {
+        string entityId = entity.GetInstanceId().ToString();
+
+        // 通过关系管理器获取所有 Component ID
+        var componentIds = EntityRelationshipManager
+            .GetChildEntitiesByParentAndType(entityId, EntityRelationshipType.ENTITY_TO_COMPONENT)
+            .ToList();
+
+        foreach (var componentId in componentIds)
+        {
+            var component = GetEntityById(componentId);
+            if (component == null) continue;
+
+            // 检查类型是否匹配
+            if (component.GetType().Name == componentType)
+            {
+                // 调用重载方法执行实际移除逻辑
+                RemoveComponent(entity, component);
+                return true;
+            }
+        }
+
+        _log.Warn($"Entity {entity.Name} 未找到 Component: {componentType}，无法移除");
+        return false;
+    }
+
+    /// <summary>
+    /// 从 Entity 移除 Component（通过 Component 实例）
     /// 自动处理：触发回调 → 移除关系 → 注销 → 销毁节点
     /// </summary>
     /// <param name="entity">目标 Entity</param>
-    /// <param name="component">要移除的 Component</param>
+    /// <param name="component">要移除的 Component 实例</param>
     public static void RemoveComponent(Node entity, Node component)
     {
         string componentType = component.GetType().Name;
@@ -536,14 +613,52 @@ public static class EntityManager
         // 3. 从注册表移除
         if (_entities.Remove(componentId))
         {
-            foreach (var set in _entitiesByType.Values)
+            // 从类型索引中移除
+            if (_entitiesByType.TryGetValue(componentType, out var set))
+            {
                 set.Remove(component);
+                if (set.Count == 0)
+                    _entitiesByType.Remove(componentType);
+            }
         }
 
         // 4. 从节点树移除
         component.QueueFree();
 
         _log.Info($"已移除 Component: {componentType} 从 Entity: {entity.Name}");
+    }
+
+    // ==================== 范围查询工具 ====================
+    /// <summary>
+    /// 范围查询（常用于 AI 寻敌、AOE 伤害）
+    /// </summary>
+    public static IEnumerable<T> GetEntitiesInRange<T>(Vector2 position, float range, string entityType)
+        where T : Node2D
+    {
+        return GetEntitiesByType<T>(entityType)
+            .Where(e => e.GlobalPosition.DistanceTo(position) <= range);
+    }
+
+    /// <summary>
+    /// 获取最近的 Entity（常用于 AI 锁定目标）
+    /// </summary>
+    public static T? GetNearestEntity<T>(Vector2 position, string entityType, float maxRange = float.MaxValue)
+        where T : Node2D
+    {
+        T? nearest = null;
+        float minDistance = maxRange;
+
+        foreach (var entity in GetEntitiesByType<T>(entityType))
+        {
+            float distance = entity.GlobalPosition.DistanceTo(position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearest = entity;
+            }
+        }
+
+        return nearest;
     }
 
     // ==================== 生命周期管理 ====================

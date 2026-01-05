@@ -19,7 +19,6 @@ public static class ECSIndex
 
     public static class Component
     {
-        public const string AttributeComponent = "AttributeComponent";
         public const string HealthComponent = "HealthComponent";
         public const string VelocityComponent = "VelocityComponent";
         public const string HitboxComponent = "HitboxComponent";
@@ -30,7 +29,6 @@ public static class ECSIndex
 
     private static readonly Dictionary<string, string> _nameToPathMap = new()
     {
-        { Component.AttributeComponent, "res://Src/ECS/Component/AttributeComponent/AttributeComponent.tscn" },
         { Component.HealthComponent, "res://Src/ECS/Component/HealthComponent/HealthComponent.tscn" },
         { Component.VelocityComponent, "res://Src/ECS/Component/VelocityComponent/VelocityComponent.tscn" },
         { Component.HitboxComponent, "res://Src/ECS/Component/HitboxComponent/HitboxComponent.tscn" },

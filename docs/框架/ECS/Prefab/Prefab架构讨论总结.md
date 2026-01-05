@@ -95,8 +95,7 @@ Src/ECS/Entity/Unit/
 
 共享逻辑通过组件实现：
 ├── HealthComponent              # 共有：生命值管理
-├── VelocityComponent            # 共有：移动与物理同步
-└── AttributeComponent           # 共有：属性计算系统
+└── VelocityComponent            # 共有：移动与物理同步
 ```
 
 ### 3.2 深度洞察：避免层级地狱与性能损耗

@@ -2,169 +2,474 @@
 
 **文档类型**：详细设计  
 **目标受众**：开发者、维护者  
-**最后更新**：2025-01-01
+**最后更新**：2026-01-04
 
 ---
 
 ## 设计动机
 
-EntityManager 是 Entity 系统的统一入口，整合了生成、注册、查询、销毁的完整流程。
+EntityManager 是 Entity 系统的**统一入口**，整合了生成、注册、查询、销毁的完整流程。
 
 ### 解决的问题
 
-传统架构中，Entity 生成流程分散：
+传统架构中，Entity 生成流程分散且容易出错：
 
-```
-SpawnSystem → ObjectPool.Get() → 手动注入数据 → 手动注册
+```csharp
+// ❌ 传统做法：手动操作多步骤
+var enemy = ObjectPoolManager.GetPool<Enemy>("EnemyPool").Get();  // 1. 获取实例
+enemy.Data.Set(DataKey.MaxHp, 100);                                      // 2. 手动注入数据
+enemy.Data.Set(DataKey.Speed, 200);
+enemy.GlobalPosition = spawnPos;                                   // 3. 设置位置
+EntityManager.Register(enemy, "Enemy");                            // 4. 手动注册
+
+// 问题：
+// - 代码冗余，每次生成都重复这些步骤
+// - 易出错，忘记注册或漏设属性
+// - 维护困难，修改流程需要改动多处
+// - Component 注册需要手动处理
 ```
 
-**问题**：职责不清、代码冗余、易出错、难维护
+### 解决方案：统一入口
 
-### 解决方案
+```csharp
+// ✅ 新架构：一行代码完成
+var enemy = EntityManager.Spawn<Enemy>("EnemyPool", enemyResource, spawnPos);
 
+// EntityManager 自动完成：
+// 1. 从对象池获取实例
+// 2. 反射注入 Resource 数据到 Data
+// 3. 加载 VisualScene（如果配置了）
+// 4. 递归注册所有 Component
+// 5. 建立 Entity-Component 关系
+// 6. 注册 Entity 到全局索引
+// 7. 返回已完全配置好的实例
 ```
-SpawnSystem → EntityManager.Spawn(poolName, resource, position)
-                ↓ (内部自动完成)
-                ├─ ObjectPool.Get()
-                ├─ InjectResourceData()
-                ├─ InjectVisualScene()
-                ├─ RegisterComponents()
-                ├─ Register()
-                └─ 返回已配置好的实例
-```
+
+**优势**：
+
+- 代码简洁，一行搞定
+- 零出错，自动化所有步骤
+- 易扩展，新增 Entity 类型无需修改框架
+- 统一管理，所有 Entity/Component 通过同一入口
 
 ---
 
-## 核心职责
+## 核心职责划分
 
-| 模块              | 职责                   | 示例                            |
-| ----------------- | ---------------------- | ------------------------------- |
-| **EntityManager** | 生成、注册、查询、销毁 | `Spawn<Enemy>(poolName, res)`   |
-| **ObjectPool**    | 内存管理、对象复用     | `Get()`, `Release()`            |
-| **Resource**      | 静态配置（编辑器）     | `EnemyResource.tres`            |
-| **Data**          | 运行时数据（动态）     | `node.GetData().Set("HP", 100)` |
-| **Component**     | 逻辑模块               | `HealthComponent.TakeDamage()`  |
+| 模块                          | 职责                         | 示例                                      |
+| ----------------------------- | ---------------------------- | ----------------------------------------- |
+| **EntityManager**             | 生成、注册、查询、销毁       | `Spawn<Enemy>(poolName, res, pos)`        |
+| **EntityRelationshipManager** | 管理关系（Entity-Component） | `AddRelationship(entityId, compId, type)` |
+| **ObjectPoolManager**         | 内存管理、对象复用           | `GetPool<T>(poolName).Get()`              |
+| **Resource**                  | 静态配置（编辑器设计）       | `EnemyResource.tres`                      |
+| **Data**                      | 运行时数据（动态）           | `entity.Data.Set("HP", 100)`              |
+| **Component**                 | 功能模块                     | `HealthComponent.TakeDamage()`            |
+
+**职责边界**：
+
+- EntityManager 只管理**生命周期**，不处理游戏逻辑
+- Component 只实现**功能模块**，不关心注册流程
+- Data 只存储**运行时数据**，不包含静态配置
 
 ---
 
-## 数据流转
+## 数据流转设计
 
 ```
-1. 静态配置（编辑器）
+┌──────────────────────────────────────────────────────────┐
+│ 1. 静态配置（编辑器，设计时）                            │
+└──────────────────────────────────────────────────────────┘
    EnemyResource.tres
    ├── MaxHp = 100
    ├── Speed = 200
-   └── VisualScene = "res://..."
+   ├── Damage = 10
+   └── VisualScene = "res://Scenes/Enemy/EnemyVisual.tscn"
+                     ↓
+┌──────────────────────────────────────────────────────────┐
+│ 2. 生成时注入（自动，运行时）                            │
+└──────────────────────────────────────────────────────────┘
+   EntityManager.Spawn<Enemy>("EnemyPool", enemyResource, pos)
+   │
+   ├─ ObjectPoolManager.GetPool("EnemyPool").Get()   ①从池中获取
+   ├─ Data.LoadFromResource(resource)                 ②反射注入所有属性
+   ├─ InjectVisualScene(resource.VisualScene)         ③加载视觉场景
+   ├─ RegisterComponents(entity)                      ④递归注册 Component
+   ├─ Register(entity, "Enemy")                       ⑤注册 Entity
+   └─ return enemy                                    ⑥返回已配置实例
+                     ↓
+┌──────────────────────────────────────────────────────────┐
+│ 3. 运行时数据（动态，游戏逻辑）                          │
+└──────────────────────────────────────────────────────────┘
+   enemy.Data
+    ├── Get<float>(DataKey.MaxHp)      → 100 (来自 Resource)
+    ├── Set(DataKey.CurrentHp, 80)     → 受伤后更新
+    ├── Get<float>(DataKey.MaxHp)      → 200 (来自 Resource)
+    └── Add("TotalDamage", 50)   → 累计伤害（运行时数据）
+                     ↓
+┌──────────────────────────────────────────────────────────┐
+│ 4. 组件响应（事件驱动）                                  │
+└──────────────────────────────────────────────────────────┘
+   HealthComponent
+   └─ 监听 Data.OnValueChanged
+      └─ 当 Hp 变化时 → 处理逻辑（如死亡、动画）
+   UI 系统
+   └─ 监听 Data.OnValueChanged
+      └─ 当 CurrentHp 变化时 → 更新血条显示
+```
 
-2. 生成时注入（自动）
-   EntityManager.Spawn()
-   ├── InjectResourceData()  // 反射注入所有属性
-   └── InjectVisualScene()   // 加载视觉场景
+**关键点**：
 
-3. 运行时数据（动态）
-   enemy.GetData()
-   ├── Set("CurrentHp", 80)
-   └── Get<float>("Speed")
+1. **Resource 是只读的静态配置**，在编辑器中设计
+2. **Data 是可读写的运行时数据**，存储游戏过程中的变化
+3. **自动注入**：EntityManager 自动将 Resource 复制到 Data
+4. **事件驱动**：Data 变更时自动通知监听器
 
-4. 组件响应（事件驱动）
-   AttributeComponent
-   └── 监听 Data.OnValueChanged
-       └── 自动重算最终属性
+---
+
+## 核心方法详解
+
+### 1. Spawn<T>() - 生成 Entity
+
+#### 三个重载版本
+
+```csharp
+// 版本 1：无位置（Buff、背包物品）
+T? Spawn<T>(string poolName, Resource resource)
+    where T : Node, IEntity
+
+// 版本 2：带位置（Enemy、掉落物品）
+T? Spawn<T>(string poolName, Resource resource, Vector2 position)
+    where T : Node2D, IEntity
+
+// 版本 3：带位置和旋转（Bullet、投射物）
+T? Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation)
+    where T : Node2D, IEntity
+```
+
+#### 内部流程
+
+```csharp
+public static T? Spawn<T>(string poolName, Resource resource) where T : Node, IEntity
+{
+    // ① 从对象池获取实例
+    var pool = ObjectPoolManager.GetPool<T>(poolName);
+    if (pool == null)
+    {
+        _log.Error($"对象池 {poolName} 不存在");
+        return null;
+    }
+    var entity = pool.Get();
+
+    // ② 数据注入（核心：Resource → Data）
+    entity.Data.LoadFromResource(resource);
+
+    // ③ 自动加载 VisualScene
+    InjectVisualScene(entity, resource);
+
+    // ④ 自动注册所有 Component
+    RegisterComponents(entity);
+
+    // ⑤ 注册 Entity
+    string entityType = typeof(T).Name;
+    Register(entity, entityType);
+
+    return entity;
+}
+```
+
+#### 使用示例
+
+```csharp
+// SpawnSystem.cs
+public partial class SpawnSystem : Node
+{
+    [Export] private EnemyResource _enemyResource;
+
+    private void SpawnEnemy()
+    {
+        var pos = GetRandomSpawnPosition();
+
+        // 一行代码生成敌人
+        var enemy = EntityManager.Spawn<Enemy>("EnemyPool", _enemyResource, pos);
+
+        if (enemy == null)
+        {
+            _log.Error("生成敌人失败");
+            return;
+        }
+
+        // 可选：额外配置
+        enemy.Data.Set("IsElite", true);
+    }
+}
+```
+
+### 2. InjectVisualScene() - 视觉场景加载
+
+#### 功能
+
+自动从 Resource 中读取 `VisualScene` 属性，实例化并挂载到 Entity 下。
+
+#### 流程
+
+```csharp
+private static void InjectVisualScene(Node entity, Resource resource)
+{
+    // 1. 反射获取 VisualScene 属性（兼容任意 Resource 类型）
+    var prop = resource.GetType().GetProperty("VisualScene");
+    if (prop == null) return;
+
+    var scene = prop.GetValue(resource) as PackedScene;
+    if (scene == null) return;
+
+    // 2. 清理旧的 VisualRoot（对象池复用时）
+    var existingVisual = entity.GetNodeOrNull("VisualRoot");
+    if (existingVisual != null)
+    {
+        existingVisual.Free();  // 立即释放，防止命名冲突
+    }
+
+    // 3. 实例化并挂载
+    var visual = scene.Instantiate();
+    visual.Name = "VisualRoot";
+    entity.AddChild(visual);
+
+    // 4. 设置 ZIndex（确保显示在背景之上）
+    if (visual is Node2D visual2D)
+    {
+        visual2D.ZIndex = 10;
+    }
+}
+```
+
+#### 配置示例
+
+```csharp
+// EnemyResource.cs
+[GlobalClass]
+public partial class EnemyResource : Resource
+{
+    [Export] public float MaxHp { get; set; }
+    [Export] public float Speed { get; set; }
+
+    // EntityManager 会自动加载此场景
+    [Export] public PackedScene VisualScene { get; set; }
+}
+```
+
+### 3. RegisterComponents() - 自动注册 Component
+
+#### 识别规则（按优先级）
+
+1. **实现 IComponent 接口**（推荐）
+2. **类名以 "Component" 结尾**（兼容旧代码）
+3. **在 ECSIndex 白名单中**（特殊情况）
+
+#### 流程
+
+```csharp
+private static void RegisterComponents(Node entity)
+{
+    int registeredCount = 0;
+    string entityId = entity.GetInstanceId().ToString();
+
+    // 使用 FindChildren 递归查找所有层级的子节点
+    var allChildren = entity.FindChildren("*", "Node", true, false);
+
+    foreach (Node child in allChildren)
+    {
+        bool isComponent = false;
+        string componentType = child.GetType().Name;
+
+        // 规则 1：IComponent 接口（优先级最高）
+        if (child is IComponent component)
+        {
+            isComponent = true;
+
+            // 触发回调，让 Component 获取 Entity 引用
+            component.OnComponentRegistered(entity);
+        }
+        // 规则 2：命名约定
+        else if (componentType.EndsWith("Component"))
+        {
+            isComponent = true;
+        }
+        // 规则 3：白名单
+        else if (ECSIndex.IsComponentWhitelist(componentType))
+        {
+            isComponent = true;
+        }
+
+        if (isComponent)
+        {
+            // 注册 Component
+            Register(child, componentType);
+
+            // 建立 Entity-Component 关系
+            string componentId = child.GetInstanceId().ToString();
+            EntityRelationshipManager.AddRelationship(
+                entityId,
+                componentId,
+                EntityRelationshipType.ENTITY_TO_COMPONENT
+            );
+
+            registeredCount++;
+        }
+    }
+}
+```
+
+#### 示例：Component 实现
+
+```csharp
+// HealthComponent.cs
+public partial class HealthComponent : Node, IComponent
+{
+    private Data? _data;
+
+    // EntityManager 自动触发此回调
+    public void OnComponentRegistered(Node entity)
+    {
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+            _log.Debug($"注册到 Entity: {entity.Name}");
+        }
+    }
+
+    public override void _Ready()
+    {
+        // 懒加载模式
+        if (_data == null)
+            _data = EntityManager.GetEntityData(this);
+    }
+}
+```
+
+### 4. UnregisterEntity() - 注销 Entity
+
+#### 功能
+
+Entity 销毁时的完整清理流程。
+
+#### 流程
+
+```csharp
+public static void UnregisterEntity(Node entity)
+{
+    string id = entity.GetInstanceId().ToString();
+
+    // 1. 从注册表移除
+    if (!_entities.Remove(id))
+    {
+        _log.Warn($"Entity {id} 未注册，无法注销");
+        return;
+    }
+
+    // 2. 从类型索引中移除
+    foreach (var set in _entitiesByType.Values)
+        set.Remove(entity);
+
+    // 3. 注销所有 Component
+    UnregisterComponents(entity);
+
+    // 4. 清理所有关系
+    EntityRelationshipManager.RemoveAllRelationships(id);
+}
+```
+
+#### 使用示例
+
+```csharp
+// Enemy.cs
+public override void _ExitTree()
+{
+    // 必须：注销自己
+    EntityManager.UnregisterEntity(this);
+
+    // 清理 Data
+    Data.Clear();
+
+    base._ExitTree();
+}
+```
+
+### 5. GetComponent<T>() - 获取 Component
+
+#### 实现
+
+```csharp
+public static T? GetComponent<T>(Node entity) where T : Node
+{
+    string entityId = entity.GetInstanceId().ToString();
+
+    // 通过关系管理器获取所有 Component ID
+    var componentIds = EntityRelationshipManager
+        .GetChildEntitiesByParentAndType(entityId, EntityRelationshipType.ENTITY_TO_COMPONENT);
+
+    foreach (var componentId in componentIds)
+    {
+        var component = GetEntityById(componentId);
+        if (component == null) continue;
+
+        // 检查类型是否匹配
+        if (component.GetType().Name == typeof(T).Name && component is T typedComponent)
+        {
+            return typedComponent;
+        }
+    }
+
+    return null;
+}
+```
+
+#### 使用示例
+
+```csharp
+// Enemy.cs
+public override void _Ready()
+{
+    // 获取 HealthComponent
+    var health = EntityManager.GetComponent<HealthComponent>(this);
+    if (health != null)
+    {
+        health.Died += OnDied;
+    }
+}
+```
+
+### 6. GetEntityData() - 获取 Entity 的 Data
+
+#### 实现
+
+```csharp
+public static Data? GetEntityData(Node component)
+{
+    var entity = GetEntityByComponent(component);
+    if (entity is IEntity iEntity)
+        return iEntity.Data;
+    return null;
+}
+```
+
+#### 使用示例
+
+```csharp
+// VelocityComponent.cs
+public override void _Ready()
+{
+    // 直接获取 Entity 的 Data 容器
+    var data = EntityManager.GetEntityData(this);
+    if (data != null)
+    {
+        float speed = data.Get<float>(DataKey.Speed, 400f);
+    }
+}
 ```
 
 ---
 
-## 核心方法
-
-### 1. Spawn<T>() - 三个重载
-
-#### 通用版本（无位置）
-
-```csharp
-Spawn<T>(string poolName, Resource resource)
-```
-
-**适用**：Buff、背包物品、技能实例
-
-```csharp
-var buff = EntityManager.Spawn<Buff>("BuffPool", buffResource);
-```
-
-#### 带位置版本
-
-```csharp
-Spawn<T>(string poolName, Resource resource, Vector2 position)
-```
-
-**适用**：Enemy、掉落物品
-
-```csharp
-var enemy = EntityManager.Spawn<Enemy>("EnemyPool", enemyResource, spawnPos);
-```
-
-#### 带位置和旋转版本
-
-```csharp
-Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation)
-```
-
-**适用**：Bullet、投射物
-
-```csharp
-var bullet = EntityManager.Spawn<Bullet>("BulletPool", bulletResource, pos, angle);
-```
-
-### 2. InjectResourceData() - 反射注入
-
-**功能**：自动将 Resource 的所有 public 属性注入到 Entity.Data
-
-**规则**：
-
-- 跳过 Godot 内置属性（ResourcePath 等）
-- 跳过只写属性
-- 自动触发 Data.OnValueChanged 事件
-
-**扩展**：新增 Entity 类型无需修改代码，反射自动处理
-
-### 3. InjectVisualScene() - 视觉加载
-
-**功能**：从 Resource.VisualScene 加载 AnimatedSprite2D
-
-**流程**：
-
-1. 清理旧的 VisualRoot（对象池复用时）
-2. 实例化并挂载为 "VisualRoot"
-3. 设置 ZIndex = 10（确保显示层级）
-
-### 4. RegisterComponents() - 自动注册
-
-**识别规则**（按优先级）：
-
-1. 实现 `IComponent` 接口（推荐）
-2. 类名以 "Component" 结尾
-3. 在 `ECSIndex` 白名单中
-
-**自动操作**：
-
-- 注册 Component 到 EntityManager
-- 建立 Entity-Component 关系（EntityRelationshipManager）
-- 触发 `IComponent.OnComponentRegistered()` 回调
-
-### 5. UnregisterEntity() - 注销清理
-
-**功能**：Entity 销毁时的完整清理流程
-
-**流程**：
-
-1. 从 `_entities` 和 `_entitiesByType` 移除
-2. 注销所有 Component（通过 EntityRelationshipManager 查询）
-3. 清理所有关系（作为父或子）
-
-**注意**：必须在 Entity.\_ExitTree() 中调用
-
----
-
-## 查询接口
+## 查询接口设计
 
 ### 按类型查询
 
@@ -172,17 +477,17 @@ var bullet = EntityManager.Spawn<Bullet>("BulletPool", bulletResource, pos, angl
 // 查询所有 Enemy
 var enemies = EntityManager.GetEntitiesByType<Enemy>("Enemy");
 
-// 查询所有 Component
+// 查询所有 HealthComponent
 var healthComps = EntityManager.GetComponentsByType<HealthComponent>("HealthComponent");
 
-// 通过 Component 查找 Entity
-var entity = EntityManager.GetEntityByComponent(component);
+// 内部实现：基于类型索引（O(1) 查询）
+private static readonly Dictionary<string, HashSet<Node>> _entitiesByType = new();
 ```
 
 ### 范围查询
 
 ```csharp
-// AI 寻敌
+// AI 寻敌：范围内所有敌人
 var nearbyEnemies = EntityManager.GetEntitiesInRange<Enemy>(
     playerPos,
     range: 500f,
@@ -195,52 +500,92 @@ var nearest = EntityManager.GetNearestEntity<Enemy>(
     "Enemy",
     maxRange: 1000f
 );
+
+// 实现：先类型查询，再距离过滤
+public static IEnumerable<T> GetEntitiesInRange<T>(
+    Vector2 position,
+    float range,
+    string entityType) where T : Node2D
+{
+    return GetEntitiesByType<T>(entityType)
+        .Where(e => e.GlobalPosition.DistanceTo(position) <= range);
+}
+```
+
+### 关系查询
+
+```csharp
+// 通过 Component 反查 Entity
+var entity = EntityManager.GetEntityByComponent(component);
+
+// 从 Entity 获取 Component
+var health = EntityManager.GetComponent<HealthComponent>(entity);
+
+// 内部实现：通过 EntityRelationshipManager
+var entityId = EntityRelationshipManager
+    .GetParentEntitiesByChildAndType(componentId, EntityRelationshipType.ENTITY_TO_COMPONENT)
+    .FirstOrDefault();
 ```
 
 ---
 
 ## 系统协作
 
-### 与 ObjectPool
+### 与 ObjectPoolManager 协作
 
 ```csharp
-// 初始化对象池
-new ObjectPool<Node>(
-    () => enemyScene.Instantiate(),
-    new ObjectPoolConfig { Name = "EnemyPool", InitialSize = 100 }
+// ObjectPoolInit.cs - 初始化对象池
+public override void _Ready()
+{
+    new ObjectPool<Enemy>(
+        () => EnemyScene.Instantiate<Enemy>(),
+        new ObjectPoolConfig {
+            Name = "EnemyPool",
+            InitialSize = 50,
+            MaxSize = 200
+        }
+    );
+}
+
+// EntityManager 自动使用对象池
+var enemy = EntityManager.Spawn<Enemy>("EnemyPool", resource, pos);
+
+// 归还对象池
+EntityManager.Destroy(enemy);  // 内部调用 ObjectPoolManager.ReturnToPool()
+```
+
+### 与 Data 容器协作
+
+EntityManager 负责将 Resource 中的静态数据反射注入到 Entity 的 Data 容器中。Component 则可以监听 Data 的变更来实现自恰的逻辑。
+
+```csharp
+// EntityManager 自动注入
+entity.Data.Set(DataKey.MaxHp, 100);
+
+// Component 响应式更新
+public override void _Ready()
+{
+    _data = EntityManager.GetEntityData(this);
+    _data.On(DataKey.CurrentHp, (oldVal, newVal) => {
+        UpdateVisual(newVal);
+    });
+}
+```
+
+### 与 DataInit 协作
+
+```csharp
+// DataInit.cs - 注册计算属性
+DataRegistry.RegisterComputed(
+    "CurrentHp",
+    entity => {
+        var health = EntityManager.GetComponent<HealthComponent>(entity);
+        return health?.CurrentHp ?? 0f;
+    }
 );
 
-// EntityManager 自动使用
-var enemy = EntityManager.Spawn<Enemy>("EnemyPool", enemyResource, position);
-```
-
-### 与 AttributeComponent
-
-```csharp
-// EntityManager 注入数据
-data.Set("MaxHp", 100);
-
-// AttributeComponent 自动响应
-data.On("MaxHp", (oldVal, newVal) => {
-    _isDirty = true;  // 标记需要重算
-});
-```
-
-### 与 SpawnSystem
-
-```csharp
-public partial class SpawnSystem : Node
-{
-    [Export] private EnemyResource _enemyResource;
-
-    private void SpawnWave()
-    {
-        var pos = GetRandomSpawnPosition();
-
-        // 一行代码完成生成
-        var enemy = EntityManager.Spawn<Enemy>("EnemyPool", _enemyResource, pos);
-    }
-}
+// 业务代码直接访问
+float currentHp = entity.Data.Get<float>("CurrentHp");  // 自动计算
 ```
 
 ---
@@ -249,7 +594,9 @@ public partial class SpawnSystem : Node
 
 ### 新增 Entity 类型
 
-**1. 创建 Resource**
+**需要做的**：
+
+1. 创建 Resource 类
 
 ```csharp
 [GlobalClass]
@@ -260,18 +607,51 @@ public partial class ItemResource : Resource
 }
 ```
 
-**2. 注册对象池**
+2. 注册对象池
 
 ```csharp
-new ObjectPool<Node>(
-    () => itemScene.Instantiate(),
+new ObjectPool<Item>(
+    () => itemScene.Instantiate<Item>(),
     new ObjectPoolConfig { Name = "ItemPool" }
 );
 ```
 
-**3. 无需修改 EntityManager**
+**不需要做的**：
 
-反射自动注入所有 public 属性，无需添加 case 分支。
+- ❌ 修改 EntityManager（反射自动处理）
+- ❌ 添加 case 分支
+- ❌ 手动注入数据
+
+### 新增 Component 类型
+
+**推荐做法**：
+
+```csharp
+public partial class NewComponent : Node, IComponent
+{
+    private Data? _data;
+
+    public void OnComponentRegistered(Node entity)
+    {
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+        }
+    }
+
+    public void OnComponentUnregistered()
+    {
+        // 清理资源
+    }
+}
+```
+
+**自动完成**：
+
+- ✅ EntityManager 自动识别（IComponent 接口）
+- ✅ 自动注册
+- ✅ 自动建立关系
+- ✅ 自动触发回调
 
 ---
 
@@ -280,55 +660,102 @@ new ObjectPool<Node>(
 ### Entity 脚本模板
 
 ```csharp
-public partial class Enemy : CharacterBody2D
+using Godot;
+
+public partial class MyEntity : CharacterBody2D, IEntity, IPoolable
 {
-    private static readonly Log _log = new("Enemy");
+    private static readonly Log _log = new("MyEntity");
 
-    // Spawn 已自动注册，无需手动调用
-    public override void _Ready() { }
+    // ================= IEntity 实现 =================
 
-    // 必须：注销自己
+    public Data Data { get; private set; } = new Data();
+    public string EntityId { get; private set; } = string.Empty;
+
+    // ================= Godot 生命周期 =================
+
+    public override void _Ready()
+    {
+        base._Ready();
+        EntityId = GetInstanceId().ToString();
+    }
+
     public override void _ExitTree()
     {
+        // 必须：注销和清理
         EntityManager.UnregisterEntity(this);
+        Data.Clear();
+        base._ExitTree();
     }
 
-    // 死亡时回收到对象池
-    private void Die()
+    // ================= IPoolable 实现 =================
+
+    public void OnPoolAcquire()
     {
-        EntityManager.Destroy(this);
+        // 从池中取出时重新激活
     }
+
+    public void OnPoolRelease()
+    {
+        // 归还池时重置状态
+        Data.Clear();
+    }
+
+    public void OnPoolReset() { }
 }
 ```
 
 ### Component 脚本模板
 
 ```csharp
-public partial class HealthComponent : Node, IComponent
-{
-    private static readonly Log _log = new("HealthComponent");
+using Godot;
 
-    // 可选：获取 Entity 引用
+public partial class MyComponent : Node, IComponent
+{
+    private static readonly Log _log = new("MyComponent");
+
+    // 缓存数据引用
+    private Data? _data;
+
+    // ================= IComponent 实现 =================
+
     public void OnComponentRegistered(Node entity)
     {
-        _log.Debug($"注册到 Entity: {entity.Name}");
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+            _log.Debug($"注册到 Entity: {entity.Name}");
+        }
     }
 
-    // 可选：清理资源
     public void OnComponentUnregistered()
     {
         _log.Debug("Component 注销");
     }
 
-    // 通过 EntityManager 查找 Entity
-    public void TakeDamage(float damage)
-    {
-        var entity = EntityManager.GetEntityByComponent(this);
-        if (entity == null) return;
+    // ================= Godot 生命周期 =================
 
-        var data = entity.GetData();
-        float currentHp = data.Get<float>("CurrentHp");
-        data.Set("CurrentHp", currentHp - damage);
+    public override void _Ready()
+    {
+        // 懒加载（如果 OnComponentRegistered 未被调用）
+        if (_data == null)
+        {
+            _data = EntityManager.GetEntityData(this);
+        }
+
+        if (_data == null)
+        {
+            _log.Error("无法获取 Data 容器！");
+        }
+    }
+
+    // ================= 业务逻辑 =================
+
+    public void DoSomething()
+    {
+        if (_data == null) return;
+
+        float value = _data.Get<float>(DataKey.Damage, 0f);
+        _data.Set(DataKey.Damage, value + 1);
     }
 }
 ```
@@ -337,16 +764,17 @@ public partial class HealthComponent : Node, IComponent
 
 ## 性能优化
 
-### 热路径优化
+### 1. 缓存查询结果
 
 ```csharp
 // ❌ 避免：每帧查询
 public override void _Process(double delta)
 {
     var enemies = EntityManager.GetEntitiesByType<Enemy>("Enemy");
+    // ...
 }
 
-// ✅ 推荐：缓存查询结果
+// ✅ 推荐：定期更新缓存
 private List<Enemy> _cachedEnemies = new();
 private float _updateInterval = 0.5f;
 private float _timer = 0f;
@@ -358,36 +786,74 @@ public override void _Process(double delta)
     {
         _timer = 0f;
         _cachedEnemies.Clear();
-        _cachedEnemies.AddRange(EntityManager.GetEntitiesByType<Enemy>("Enemy"));
+        _cachedEnemies.AddRange(
+            EntityManager.GetEntitiesByType<Enemy>("Enemy")
+        );
     }
 }
 ```
 
-### 内存管理
+### 2. 对象池配置
 
-- **对象池配置**：InitialSize = 平均使用量，MaxSize = 峰值 × 1.5
-- **场景切换**：调用 `EntityManager.Clear()` 清理所有实体
-- **定期清理**：调用 `ObjectPoolManager.CleanupAll()` 清理闲置对象
+```csharp
+// 根据实际使用量调整
+new ObjectPoolConfig
+{
+    Name = "EnemyPool",
+    InitialSize = 50,      // 平均使用量
+    MaxSize = 200,         // 峰值 × 1.5
+    EnableAutoCleanup = true,
+    CleanupInterval = 60f  // 60 秒清理一次闲置对象
+}
+```
+
+### 3. 场景切换清理
+
+```csharp
+// SceneManager.cs
+public void ChangeScene(string scenePath)
+{
+    // 清理所有 Entity
+    EntityManager.Clear();
+
+    // 清理对象池
+    ObjectPoolManager.CleanupAll();
+
+    // 切换场景
+    GetTree().ChangeSceneToFile(scenePath);
+}
+```
 
 ---
 
 ## 总结
 
-EntityManager 实现了：
+EntityManager 实现了以下目标：
 
-1. **统一入口**：Spawn() 自动完成获取、注入、注册
-2. **反射注入**：自动处理所有 Resource 属性，无需手动维护
-3. **自动识别**：Component 通过 IComponent 接口自动注册
-4. **关系管理**：集成 EntityRelationshipManager，支持复杂查询
-5. **高性能**：基于索引查询（O(1)）+ 对象池集成
+1. **统一入口**：所有 Entity/Component 操作通过一个接口
+2. **自动化流程**：Spawn() 自动完成获取、注入、注册等步骤
+3. **零配置扩展**：新增 Entity 类型无需修改框架代码
+4. **反射注入**：自动处理所有 Resource 属性
+5. **自动识别**：Component 通过接口/命名/白名单自动注册
+6. **关系管理**：集成 EntityRelationshipManager，支持复杂查询
+7. **高性能**：基于索引查询（O(1)）+ 对象池集成
+
+**设计哲学**：
+
+- 简单易用：开发者只需关心业务逻辑
+- 自动化：框架自动处理繁琐的管理工作
+- 可扩展：通过接口和反射实现零配置扩展
 
 ---
 
-**相关文档**：
+## 相关文档
 
-- 架构理念：`Docs/框架/ECS/Entity/Entity架构设计理念.md`
-- API 使用：`Src/ECS/Entity/Core/README.md`
+- **架构理念**：[`Docs/框架/ECS/Entity/Entity架构设计理念.md`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Docs/框架/ECS/Entity/Entity架构设计理念.md)
+- **API 使用**：[`Src/ECS/Entity/Core/README.md`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/README.md)
+- **项目规则**：[`.agent/rules/projectrules.md`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/.agent/rules/projectrules.md)
+
+---
 
 **维护者**：项目团队  
-**文档版本**：v2.0  
-**创建日期**：2025-01-01
+**文档版本**：v3.0  
+**创建日期**：2026-01-04

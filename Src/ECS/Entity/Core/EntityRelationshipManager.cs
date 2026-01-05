@@ -237,6 +237,7 @@ public static class EntityRelationshipManager
     /// <summary>
     /// 获取父 Entity 的所有子 Entity（指定关系类型）
     /// 常用场景：获取玩家的所有物品
+    /// <returns>子 Entity ID 列表</returns>
     /// </summary>
     public static IEnumerable<string> GetChildEntitiesByParentAndType(string parentId, string relationType)
     {

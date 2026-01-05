@@ -7,22 +7,35 @@ using Godot;
 /// 架构：与 Player 逻辑分离，通过组件（Component）复用共享行为。
 /// </para>
 /// </summary>
-public partial class Enemy : CharacterBody2D, IPoolable
+public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 {
     private static readonly Log _log = new("Enemy", LogLevel.Info);
+
+    // ================= IEntity 实现 =================
+
+    /// <summary>
+    /// 动态数据容器
+    /// </summary>
+    public Data Data { get; private set; } = new Data();
+
+    /// <summary>
+    /// Entity唯一标识符
+    /// </summary>
+    public string EntityId { get; private set; } = string.Empty;
 
     // ================= Godot 生命周期 =================
 
     public override void _Ready()
     {
         base._Ready();
+        EntityId = GetInstanceId().ToString();
         _log.Debug($"敌人 {Name} 初始化完成。");
     }
 
     public override void _ExitTree()
     {
         // 确保解绑事件
-        var health = this.Component().HealthComponent;
+        var health = EntityManager.GetComponent<HealthComponent>(this);
         if (health != null)
         {
             health.Died -= OnDied;
@@ -52,9 +65,8 @@ public partial class Enemy : CharacterBody2D, IPoolable
     /// </summary>
     public void OnSpawn(EnemyResource resource)
     {
-        // 确保核心组件已挂载（双重保险，通常由 Factory 负责添加）
-        // 如果是代码动态添加，这里可以进行组件的事件绑定
-        var health = this.GetComponent<HealthComponent>(ECSIndex.Component.HealthComponent);
+        // 确保核心组件已挂载
+        var health = EntityManager.GetComponent<HealthComponent>(this);
         if (health != null)
         {
             // 防止重复绑定
@@ -71,7 +83,7 @@ public partial class Enemy : CharacterBody2D, IPoolable
     public void OnPoolAcquire()
     {
         // 重新激活组件
-        var health = this.GetComponent<HealthComponent>(ECSIndex.Component.HealthComponent);
+        var health = EntityManager.GetComponent<HealthComponent>(this);
         if (health != null)
         {
             // 确保事件绑定
@@ -87,15 +99,13 @@ public partial class Enemy : CharacterBody2D, IPoolable
     public void OnPoolRelease()
     {
         // 1. 级联重置子组件 (Cascading Reset)
-        // 使用 GetComponent 动态获取，不再依赖字段缓存
-        this.Component().HealthComponent?.Reset();
-        this.Component().AttributeComponent?.Reset();
+        EntityManager.GetComponent<HealthComponent>(this)?.Reset();
 
         // 2. 重置自身状态
         Velocity = Vector2.Zero;
 
         // 3. 清空 Data
-        this.GetData().Clear();
+        Data.Clear();
     }
 
     /// <summary>

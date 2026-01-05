@@ -13,6 +13,8 @@ public struct PoolNames
     /// <summary> 基础敌人对象池 </summary>
     public const string EnemyPool = "EnemyPool";
 
+    /// <summary> 定时器对象池 </summary>
+    public const string TimerPool = "TimerPool";
 }
 
 /// <summary>
@@ -30,8 +32,8 @@ public partial class ObjectPoolInit : Node
     [ModuleInitializer]
     public static void Initialize()
     {
-        // 修正路径：从 Data/ObjectPool/ 改为 Src/Tools/ObjectPool/
-        AutoLoad.Register("ObjectPoolInit", "res://Src/Tools/ObjectPool/ObjectPoolInit.cs", AutoLoad.Priority.System);
+        // 对象池初始化需要早一点
+        AutoLoad.Register("ObjectPoolInit", "res://Src/Tools/ObjectPool/ObjectPoolInit.cs", AutoLoad.Priority.Core);
     }
 
 
@@ -39,14 +41,28 @@ public partial class ObjectPoolInit : Node
     // 生命周期
     // ============================================================
 
-    public override void _Ready()
+    public override void _EnterTree()
     {
+        // 关键：必须在 _EnterTree 中初始化，因为其他系统可能在它们的 _EnterTree 中就需要获取对象池
+        // 如果放在 _Ready 中，会导致时序问题（_EnterTree 先于 _Ready 执行）
         InitPools();
     }
 
     private void InitPools()
     {
-        // 1. 初始化 EnemyPool
+        // 1. 初始化 TimerPool (纯 C# 对象池)
+        new ObjectPool<GameTimer>(
+            () => new GameTimer(),
+            new ObjectPoolConfig
+            {
+                Name = PoolNames.TimerPool,
+                InitialSize = 50,
+                MaxSize = 200,
+                ParentPath = "Tool/GameTimer"
+            }
+        );
+
+        // 2. 初始化 EnemyPool (Node 对象池)
         // 注意：必须使用 ObjectPool<Enemy> 而不是 ObjectPool<Node>，否则 SpawnSystem 无法通过 GetPool<Enemy> 获取
         var scene = GD.Load<PackedScene>("res://Src/ECS/Entity/Enemy/Enemy.tscn");
         new ObjectPool<Enemy>(

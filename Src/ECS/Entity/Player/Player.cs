@@ -7,13 +7,26 @@ using Godot;
 /// 架构：单例常驻，与 Enemy 逻辑分离，通过组件（Component）复用共享行为。
 /// </para>
 /// </summary>
-public partial class Player : CharacterBody2D
+public partial class Player : CharacterBody2D, IEntity
 {
     private static readonly Log _log = new("Player");
+
+    // ================= IEntity 实现 =================
+
+    /// <summary>
+    /// 动态数据容器
+    /// </summary>
+    public Data Data { get; private set; } = new Data();
+
+    /// <summary>
+    /// Entity唯一标识符
+    /// </summary>
+    public string EntityId { get; private set; } = string.Empty;
 
     public override void _Ready()
     {
         base._Ready();
+        EntityId = GetInstanceId().ToString();
 
         // 注册到 EntityManager（如果需要全局查询）
         EntityManager.Register(this, "Player");
@@ -25,6 +38,10 @@ public partial class Player : CharacterBody2D
     {
         // 注销
         EntityManager.UnregisterEntity(this);
+
+        // 清空Data
+        Data.Clear();
+
         base._ExitTree();
     }
 }

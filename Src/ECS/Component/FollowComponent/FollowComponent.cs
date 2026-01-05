@@ -1,87 +1,109 @@
 using Godot;
 
 /// <summary>
-/// 跟随组件 - 实现 AI 实体跟随目标的逻辑。
+/// 跟随组件 - 实现 AI 实体跟随目标的逻辑
+/// <para>
 /// 提供方向计算和距离检测功能。
+/// 所有数据从 Entity.Data 读取。
+/// </para>
 /// </summary>
-public partial class FollowComponent : Node
+public partial class FollowComponent : Node, IComponent
 {
     private static readonly Log Log = new("FollowComponent");
 
-    // ================= Export Properties =================
+    // ================= IComponent 实现 =================
 
-    // ================= Private State =================
+    private Data? _data;
+    private Node2D? _owner;
+
+    public void OnComponentRegistered(Node entity)
+    {
+        // 组件注册时缓存引用
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+        }
+
+        if (entity is Node2D node2D)
+        {
+            _owner = node2D;
+        }
+    }
+
+    public void OnComponentUnregistered()
+    {
+        // 清理引用
+        Target = null;
+        _data = null;
+        _owner = null;
+    }
+
+    // ================= 运行时状态 =================
 
     /// <summary>
-    /// 父实体的动态数据容器。
-    /// </summary>
-    private Data _data = null!;
-
-    // ================= Runtime State =================
-
-    /// <summary>
-    /// 跟随目标。
+    /// 跟随目标
     /// </summary>
     public Node2D? Target { get; set; }
 
     /// <summary>
-    /// 获取跟随速度。
+    /// 获取跟随速度
     /// </summary>
-    public float FollowSpeed => _data.Get<float>("FollowSpeed", 100f);
+    public float FollowSpeed => _data?.Get<float>(DataKey.FollowSpeed, 100f) ?? 100f;
 
     /// <summary>
-    /// 获取停止距离。
+    /// 获取停止距离
     /// </summary>
-    public float StopDistance => _data.Get<float>("StopDistance", 10f);
+    public float StopDistance => _data?.Get<float>(DataKey.StopDistance, 10f) ?? 10f;
 
-    /// <summary>
-    /// 获取所属实体（父节点）。
-    /// </summary>
-    private Node2D? OwnerEntity => GetParent<Node2D>();
-
-    // ================= Godot Lifecycle =================
+    // ================= Godot 生命周期 =================
 
     public override void _Ready()
     {
-        var parent = GetParent();
-        if (parent == null)
+        // 懒加载：如果 OnComponentRegistered 未被调用
+        if (_data == null)
         {
-            Log.Error("FollowComponent 错误: 必须作为实体 (Node) 的子节点存在。");
+            _data = EntityManager.GetEntityData(this);
+        }
+
+        if (_owner == null)
+        {
+            var entity = EntityManager.GetEntityByComponent(this);
+            if (entity is Node2D node2D)
+            {
+                _owner = node2D;
+            }
+        }
+
+        if (_data == null || _owner == null)
+        {
+            Log.Error("无法获取 Data 容器或所属实体");
             return;
         }
-        _data = parent.GetData();
 
-        Log.Debug($"跟随组件初始化完成: 速度={FollowSpeed}, 停止距离={StopDistance}");
+        Log.Debug($"就绪: 速度={FollowSpeed}, 停止距离={StopDistance}");
     }
 
     public override void _ExitTree()
     {
         Target = null;
-        Log.Trace("跟随组件退出场景树，已清除目标引用。");
+        _data = null;
+        _owner = null;
+        Log.Trace("跟随组件退出场景树");
     }
 
     // ================= 公开方法 =================
 
-
     /// <summary>
-    /// 获取指向目标的归一化方向向量。
+    /// 获取指向目标的归一化方向向量
     /// </summary>
-    /// <returns>归一化方向向量，若无有效目标则返回 Vector2.Zero。</returns>
     public Vector2 GetDirectionToTarget()
     {
-        if (!IsTargetValid())
+        if (!IsTargetValid() || _owner == null)
         {
             return Vector2.Zero;
         }
 
-        var owner = OwnerEntity;
-        if (owner == null)
-        {
-            Log.Trace("获取方向失败: 未找到所属实体节点。");
-            return Vector2.Zero;
-        }
-
-        Vector2 direction = Target!.GlobalPosition - owner.GlobalPosition;
+        Vector2 direction = Target!.GlobalPosition - _owner.GlobalPosition;
 
         if (direction.LengthSquared() < 0.0001f)
         {
@@ -92,27 +114,20 @@ public partial class FollowComponent : Node
     }
 
     /// <summary>
-    /// 获取到目标的距离。
+    /// 获取到目标的距离
     /// </summary>
-    /// <returns>距离值，若无有效目标则返回 float.MaxValue。</returns>
     public float GetDistanceToTarget()
     {
-        if (!IsTargetValid())
+        if (!IsTargetValid() || _owner == null)
         {
             return float.MaxValue;
         }
 
-        var owner = OwnerEntity;
-        if (owner == null)
-        {
-            return float.MaxValue;
-        }
-
-        return owner.GlobalPosition.DistanceTo(Target!.GlobalPosition);
+        return _owner.GlobalPosition.DistanceTo(Target!.GlobalPosition);
     }
 
     /// <summary>
-    /// 检查是否在停止距离内。
+    /// 检查是否在停止距离内
     /// </summary>
     public bool IsInRange()
     {
@@ -120,7 +135,7 @@ public partial class FollowComponent : Node
     }
 
     /// <summary>
-    /// 检查是否应该继续跟随（有目标且不在停止距离内）。
+    /// 检查是否应该继续跟随
     /// </summary>
     public bool ShouldFollow()
     {
@@ -128,7 +143,7 @@ public partial class FollowComponent : Node
     }
 
     /// <summary>
-    /// 检查目标是否有效（非空且未被释放）。
+    /// 检查目标是否有效
     /// </summary>
     public bool IsTargetValid()
     {
@@ -136,7 +151,7 @@ public partial class FollowComponent : Node
     }
 
     /// <summary>
-    /// 设置跟随目标。
+    /// 设置跟随目标
     /// </summary>
     public void SetTarget(Node2D? target)
     {
@@ -147,7 +162,7 @@ public partial class FollowComponent : Node
         }
         else
         {
-            Log.Debug("跟随目标已清除。");
+            Log.Debug("跟随目标已清除");
         }
     }
 }

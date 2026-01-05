@@ -124,7 +124,30 @@ public partial class Enemy : CharacterBody2D, IPoolable
 
 ## 常见问题与技术细节
 
-### 1. 自动初始化时机 (AutoLoad Timing)
+### 1. 为什么 ObjectPoolInit 使用 \_EnterTree 而非 \_Ready？
+
+**关键时序问题**：
+
+```
+AutoLoad 加载顺序（按 Priority）：
+1. ObjectPoolInit._EnterTree()  ← 必须在这里初始化对象池
+2. TimerManager._EnterTree()    ← 在这里获取对象池
+3. ObjectPoolInit._Ready()      ← 如果在这里初始化就太晚了！
+4. TimerManager._Ready()
+```
+
+**原因**：
+
+- Godot 的生命周期是：所有节点的 `_EnterTree()` 执行完后，才开始执行 `_Ready()`
+- 如果 ObjectPoolInit 在 `_Ready()` 中初始化，其他系统在 `_EnterTree()` 中就无法获取对象池
+- 使用 `_EnterTree()` 确保对象池在所有系统需要时已经就绪
+
+**Priority 的作用**：
+
+- `Priority.System - 10` 确保 ObjectPoolInit 比其他系统先进入场景树
+- 但只有在 `_EnterTree()` 中初始化，才能保证时序正确
+
+### 2. 自动初始化时机 (AutoLoad Timing)
 
 **现象**：在 `ObjectPoolInit` (AutoLoad) 的 `_Ready` 中创建 `ParentPath` 时，场景树中不显示节点。
 **原因**：Godot 的 AutoLoad 节点在主场景加载前初始化。此时 `SceneTree.Root` 虽然存在，但立即同步调用 `AddChild` 可能会因为引擎内部的状态机尚未切换到“就绪”而导致节点挂载失败或在远程调试器中不可见。
@@ -152,6 +175,8 @@ public partial class Enemy : CharacterBody2D, IPoolable
 | `Release(T item)`                    | 归还对象到池中。                                     |
 | `ReleaseBatch(IEnumerable<T> items)` | 批量归还对象。                                       |
 | `ReleaseAll()`                       | 回收当前池中所有正在外部使用的对象。                 |
+| `GetActiveSnapshot()`                | **新增**: 获取所有活跃对象的只读快照列表。           |
+| `ForEachActive(Action<T>)`           | **新增**: 对所有活跃对象执行操作（内部使用快照）。   |
 | `Warmup(int count)`                  | 手动预热，提前实例化指定数量的对象。                 |
 | `Cleanup(int retainCount)`           | 清理闲置对象，仅保留指定数量。                       |
 | `Clear()`                            | 销毁池内所有闲置对象。                               |
