@@ -16,17 +16,24 @@ public partial class HealthComponent : Node, IComponent
 
     private Data? _data;
 
+
     public void OnComponentRegistered(Node entity)
     {
         // 组件注册时缓存 Data 引用
         if (entity is IEntity iEntity)
         {
             _data = iEntity.Data;
+            _data.On(DataKey.CurrentHp, OnCurrentHpChanged);
         }
     }
 
     public void OnComponentUnregistered()
     {
+        if (_data != null)
+        {
+            _data.Off(DataKey.CurrentHp, OnCurrentHpChanged);
+        }
+
         // 清理事件
         Damaged = null;
         Died = null;
@@ -46,6 +53,11 @@ public partial class HealthComponent : Node, IComponent
 
     public override void _ExitTree()
     {
+        if (_data != null)
+        {
+            _data.Off(DataKey.CurrentHp, OnCurrentHpChanged);
+        }
+
         // 清理事件
         Damaged = null;
         Died = null;
@@ -54,22 +66,50 @@ public partial class HealthComponent : Node, IComponent
     // ================= 业务逻辑 =================
 
     /// <summary>
+    /// 监听血量变化
+    /// </summary>
+    private void OnCurrentHpChanged(object? oldValueObj, object? newValueObj)
+    {
+        float oldValue = Convert.ToSingle(oldValueObj);
+        float newValue = Convert.ToSingle(newValueObj);
+        float delta = newValue - oldValue;
+
+        if (delta < 0)
+        {
+            Damaged?.Invoke(Mathf.Abs(delta));
+        }
+        // else if (delta > 0) { Healed?.Invoke(delta); }
+
+        // 死亡判定：从有血变成没血
+        if (newValue <= 0 && oldValue > 0)
+        {
+            Died?.Invoke();
+        }
+    }
+
+    /// <summary>
     /// 造成伤害
     /// </summary>
-    public void TakeDamage(float amount)
+    /// <summary>
+    /// 修改生命值
+    /// <param name="amount">正数回血，负数扣血</param>
+    /// </summary>
+    public void ModifyHealth(float amount)
     {
         if (_data == null) return;
 
         float currentHp = _data.Get<float>(DataKey.CurrentHp);
-        currentHp -= amount;
-        _data.Set(DataKey.CurrentHp, currentHp);
+        float maxHp = _data.Get<float>(DataKey.MaxHp, 100f);
 
-        Damaged?.Invoke(amount);
+        // 应用修改
+        float newHp = currentHp + amount;
 
-        if (currentHp <= 0)
-        {
-            Died?.Invoke();
-        }
+        // 限制范围
+        if (newHp > maxHp) newHp = maxHp;
+        if (newHp < 0) newHp = 0;
+
+        _data.Set(DataKey.CurrentHp, newHp);
+        // 事件触发移交给了 OnCurrentHpChanged
     }
 
     /// <summary>

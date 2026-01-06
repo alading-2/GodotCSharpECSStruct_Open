@@ -52,6 +52,7 @@ public partial class ECSTest : Node
             TestTimerSystem();
             TestObjectPoolSystem();
             TestEntitySystem();
+            TestDamageSystem();
         }
         catch (Exception e)
         {
@@ -233,6 +234,16 @@ public partial class ECSTest : Node
         EntityManager.Destroy(entity);
 
         Pass("Entity System");
+    }
+
+    private void TestDamageSystem()
+    {
+        _log.Info("--- Testing Damage System ---");
+        var test = new DamageSystemTest();
+        AddChild(test);
+        test.RunTests();
+        test.QueueFree();
+        Pass("Damage System");
     }
 
     private void Assert(bool condition, string message)

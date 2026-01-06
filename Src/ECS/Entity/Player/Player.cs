@@ -7,7 +7,7 @@ using Godot;
 /// 架构：单例常驻，与 Enemy 逻辑分离，通过组件（Component）复用共享行为。
 /// </para>
 /// </summary>
-public partial class Player : CharacterBody2D, IEntity
+public partial class Player : CharacterBody2D, IEntity, IUnit
 {
     private static readonly Log _log = new("Player");
 
@@ -22,6 +22,9 @@ public partial class Player : CharacterBody2D, IEntity
     /// Entity唯一标识符
     /// </summary>
     public string EntityId { get; private set; } = string.Empty;
+
+    // 0: Player
+    public int FactionId => 0;
 
     public override void _Ready()
     {

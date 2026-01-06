@@ -7,7 +7,7 @@ using Godot;
 /// 架构：与 Player 逻辑分离，通过组件（Component）复用共享行为。
 /// </para>
 /// </summary>
-public partial class Enemy : CharacterBody2D, IEntity, IPoolable
+public partial class Enemy : CharacterBody2D, IEntity, IPoolable, IUnit
 {
     private static readonly Log _log = new("Enemy", LogLevel.Info);
 
@@ -22,6 +22,9 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
     /// Entity唯一标识符
     /// </summary>
     public string EntityId { get; private set; } = string.Empty;
+
+    // 1: Enemy
+    public int FactionId => 1;
 
     // ================= Godot 生命周期 =================
 

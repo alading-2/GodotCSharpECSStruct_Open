@@ -5,9 +5,9 @@
 ## 核心功能
 
 - **血量管理**: 实时维护当前生命值，并自动同步到实体的 `Data` 容器。
-- **伤害计算**: 处理受到的伤害，确保血量不会低于 0。
+- **伤害计算**: 提供 `ModifyHealth` 接口修改血量，或直接修改 `Data` 均可生效。
 - **治疗逻辑**: 处理治疗效果，确保血量不会超过最大上限。
-- **事件驱动**: 提供 `Damaged`, `Healed`, `Died` 事件，方便其他组件（如 UI 或特效组件）监听。
+- **事件驱动**: 监听 `Data` 容器的 `CurrentHp` 变化，自动触发 `Damaged` 和 `Died` 事件。
 - **状态重置**: 提供 `Reset()` 方法，适配对象池复用场景。
 
 ## 属性 (Data 容器)
@@ -35,8 +35,7 @@
 
 ### 方法
 
-- `TakeDamage(float damage)`: 对实体造成伤害。
-- `Heal(float amount)`: 为实体恢复血量。
+- `ModifyHealth(float amount)`: 修改实体血量（正数回血，负数扣血）。
 - `Reset()`: 重置血量和死亡标记（用于对象池）。
 
 ## 使用示例
@@ -47,6 +46,10 @@ healthComponent.Died += () => {
     Log.Info("播放死亡动画并掉落物品");
 };
 
-// 造成伤害
-healthComponent.TakeDamage(25.0f);
+// 造成伤害 (方式 1: 使用组件接口)
+healthComponent.ModifyHealth(-25.0f);
+
+// 造成伤害 (方式 2: 直接修改 Data，组件会自动响应)
+entity.Data.Add(DataKey.CurrentHp, -25.0f);
+
 ```

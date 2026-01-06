@@ -28,6 +28,9 @@ public static class DataKey
     public const string DodgeChance = "DodgeChance";
     public const string DamageReduction = "DamageReduction";
     public const string Thorns = "Thorns";
+    public const string Shield = "Shield"; // 护盾
+    public const string MagicResist = "MagicResist"; // 魔抗 (预留)
+    public const string DamageTakenMultiplier = "DamageTakenMultiplier"; // 易伤/减伤乘区 (默认 1.0)
 
     // === 移动系统 ===
     public const string Speed = "Speed";
