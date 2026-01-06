@@ -201,8 +201,14 @@ public override void _Ready()
 
 ### Entity 生成时
 
-```
-EntityManager.Spawn<Enemy>(poolName, resource, position)
+```C#
+EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+{
+    Resource = resource,
+    UsingObjectPool = true,
+    PoolName = ObjectPoolNames.EnemyPool,
+    Position = position
+})
     ↓
 RegisterComponents(entity)  // 自动识别所有 Component
     ├─ 检查 IComponent 接口
@@ -214,7 +220,7 @@ RegisterComponents(entity)  // 自动识别所有 Component
 
 ### Entity 销毁时
 
-```
+```C#
 EntityManager.Destroy(entity)
     ↓
 UnregisterComponents(entity)  // 自动注销所有 Component

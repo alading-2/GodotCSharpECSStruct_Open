@@ -67,25 +67,42 @@ public partial class Enemy : CharacterBody2D, IEntity
 #### 1.2 使用 EntityManager 生成 Entity
 
 ```csharp
-// 场景：SpawnSystem 生成敌人
+// 场景 1：SpawnSystem 批量生成敌人（使用对象池）
+var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+{
+    Resource = enemyData,
+    UsingObjectPool = true,
+    PoolName = ObjectPoolNames.EnemyPool,
+    Position = pos
+});
 
-// 1. 带位置（最常用）
-var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, enemyResource, spawnPosition);
+// 场景 2：游戏初始化生成玩家（不使用对象池）
+var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
+{
+    Resource = playerData,
+    UsingObjectPool = false,       // 全局唯一，直接场景实例化
+    ScenePath = ECSIndex.Entity.PlayerEntity,
+    Position = startPos
+});
 
-// 2. 无位置（Buff、纯逻辑实体）
-var buff = EntityManager.Spawn<Buff>(ECSIndex.Entity.BuffEntity, buffResource);
-
-// 3. 带位置和方向（子弹、投射物）
-var bullet = EntityManager.Spawn<Bullet>(ECSIndex.Entity.BulletEntity, bulletResource, position, rotation);
+// 场景 3：生成子弹（使用位置和方向）
+var bullet = EntityManager.Spawn<Bullet>(new EntitySpawnConfig
+{
+    Resource = bulletData,
+    UsingObjectPool = true,
+    PoolName = ObjectPoolNames.BulletPool,
+    Position = muzzlePos,
+    Rotation = shootAngle
+});
 ```
 
 **自动化操作**：
 
-- ✅ 从对象池获取实例
-- ✅ 将 Resource 数据自动注入到 `Data` 容器
-- ✅ 加载 VisualScene（如果配置了）
-- ✅ 注册所有 Component 并建立关系
-- ✅ 注册 Entity 到 EntityManager
+- ✅ **模式自适应**：根据 `UsingObjectPool` 自动选择对象池获取或场景实例化
+- ✅ **数据注入**：将 Resource 数据自动注入到 `Data` 容器
+- ✅ **视觉加载**：自动加载 VisualScene（如果 Resource 中配置了）
+- ✅ **组件管理**：自动注册所有 Component 并建立 Entity-Component 关系
+- ✅ **生命周期注册**：将 Entity 注册到 EntityManager 进行统一管理
 
 ### 2. 创建 Component
 
@@ -272,43 +289,41 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 
 ### EntityManager - Entity 生成
 
-#### Spawn<T>() - 三个重载
+#### Spawn<T>(EntitySpawnConfig config)
+
+统一的实体生成入口，通过 `EntitySpawnConfig` 对象传递参数。
+
+**参数配置 (`EntitySpawnConfig`)**：
+
+- `Resource`：**必填**。静态配置资源（如 `UnitResource`, `ItemResource`）。
+- `UsingObjectPool`：是否使用对象池。
+  - `true`：从对象池获取（适用于 Enemy, Bullet, Effect）。内部通过 `typeof(T).Name` 匹配池名。
+  - `false`：直接从场景路径实例化（适用于 Player, UniqueBoss）。
+- `PoolName`：**必填** (当 `UsingObjectPool` 为 true 时)。对象池名称（如 `ObjectPoolNames.EnemyPool`）。
+- `ScenePath`：**必填** (当 `UsingObjectPool` 为 false 时)。ECSIndex 中定义的场景路径。
+- `Position`：(可选) 初始位置 `Vector2`。
+- `Rotation`：(可选) 初始旋转角度（弧度）。
+
+**代码示例**：
 
 ```csharp
-// 1. 无位置（Buff、背包物品）
-T? Spawn<T>(string poolName, Resource resource) where T : Node, IEntity
+// 1. 对象池模式 (Enemy)
+var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+{
+    Resource = enemyData,
+    UsingObjectPool = true,
+    PoolName = ObjectPoolNames.EnemyPool,
+    Position = new Vector2(100, 100)
+});
 
-// 2. 带位置（Enemy、掉落物品）
-T? Spawn<T>(string poolName, Resource resource, Vector2 position) where T : Node2D, IEntity
-
-// 3. 带位置和旋转（Bullet、投射物）
-T? Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation) where T : Node2D, IEntity
-```
-
-**参数说明**：
-
-- `poolNameOrScenePath`：ECSIndex 中定义的场景路径常量（如 `ECSIndex.Entity.EnemyEntity`），内部会自动通过 `typeof(T).Name` 查找对应对象池
-- `resource`：静态配置 Resource（如 `EnemyResource`）
-- `position`：初始位置
-- `rotation`：初始旋转角度（弧度）
-
-**示例**：
-
-```csharp
-// SpawnSystem 中生成敌人
-var enemy = EntityManager.Spawn<Enemy>(
-    ECSIndex.Entity.EnemyEntity,
-    enemyResource,
-    new Vector2(100, 100)
-);
-
-// 生成子弹
-var bullet = EntityManager.Spawn<Bullet>(
-    ECSIndex.Entity.BulletEntity,
-    bulletResource,
-    playerPos,
-    shootAngle
-);
+// 2. 场景实例化模式 (Player)
+var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
+{
+    Resource = playerData,
+    UsingObjectPool = false,
+    ScenePath = ECSIndex.Entity.PlayerEntity,
+    Position = Vector2.Zero
+});
 ```
 
 ### EntityManager - 查询接口
@@ -322,7 +337,13 @@ T? GetComponent<T>(Node entity) where T : Node
 **示例**：
 
 ```csharp
-var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, resource, pos);
+var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+{
+    Resource = resource,
+    UsingObjectPool = true,
+     PoolName = ObjectPoolNames.EnemyPool,
+    Position = pos
+});
 
 // 获取 HealthComponent
 var health = EntityManager.GetComponent<HealthComponent>(enemy);
@@ -553,8 +574,14 @@ public partial class SpawnSystem : Node
 
     private void SpawnEnemy(Vector2 position)
     {
-        // 一行代码完成生成
-        var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, _enemyResource, position);
+        // 使用参数对象，明确指定使用对象池
+        var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+        {
+            Resource = _enemyResource,
+            UsingObjectPool = true,
+             PoolName = ObjectPoolNames.EnemyPool,
+            Position = position
+        });
 
         if (enemy == null)
         {
@@ -796,21 +823,6 @@ public override void _ExitTree()
     health.Died -= OnDied;
 }
 ```
-
-### 5. 统一使用 ECSIndex 引用 Entity
-
-**强制规范**：所有 Spawn 调用必须使用 `ECSIndex` 中定义的场景路径常量：
-
-```csharp
-// ✅ 正确：使用 ECSIndex
-var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, resource, pos);
-var bullet = EntityManager.Spawn<Bullet>(ECSIndex.Entity.BulletEntity, resource, pos);
-
-// ❌ 错误：硬编码字符串
-var enemy = EntityManager.Spawn<Enemy>("EnemyPool", resource, pos);
-```
-
-**内部机制**：EntityManager 会自动通过 `typeof(T).Name` 查找对应的对象池，无需手动传入池名称。
 
 ---
 

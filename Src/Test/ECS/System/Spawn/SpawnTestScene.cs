@@ -151,7 +151,7 @@ namespace BrotatoMy.Test
             // 更新 UI 统计
             _fpsLabel.Text = $"FPS: {Engine.GetFramesPerSecond()}";
 
-            var pool = ObjectPoolManager.GetPool<Enemy>(PoolNames.EnemyPool);
+            var pool = ObjectPoolManager.GetPool<Enemy>(ObjectPoolNames.EnemyPool);
             if (pool != null)
             {
                 var stats = pool.GetStats();
@@ -159,7 +159,7 @@ namespace BrotatoMy.Test
             }
             else
             {
-                _countLabel.Text = $"{PoolNames.EnemyPool} Not Found!";
+                _countLabel.Text = $"{ObjectPoolNames.EnemyPool} Not Found!";
             }
 
             // 简单的相机移动控制 (方便查看 Offscreen 生成)

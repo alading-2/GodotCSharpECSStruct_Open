@@ -200,11 +200,13 @@ GD.Print($"拾取范围: {player.PickupRange}");
 
 ```csharp
 // EntityManager 会自动识别类型并注入所有属性
-var enemy = EntityManager.Spawn<Enemy>(
-    PoolNames.EnemyPool,
-    enemyResource,
-    spawnPosition
-);
+var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+{
+    Resource = enemyData,
+    UsingObjectPool = true,
+    PoolName = ObjectPoolNames.EnemyPool,
+    Position = pos
+});
 
 // Data 容器中会包含所有属性（基类 + 子类）
 var data = enemy.GetData();

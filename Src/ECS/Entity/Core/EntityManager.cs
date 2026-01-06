@@ -4,6 +4,31 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
+/// Entity 生成配置参数
+/// 类似 TypeScript 的接口对象，支持命名参数初始化
+/// </summary>
+public record EntitySpawnConfig
+{
+    /// <summary>Resource 配置数据（必填）</summary>
+    public required Resource Resource { get; init; }
+
+    /// <summary>是否使用对象池（默认 false）</summary>
+    public bool UsingObjectPool { get; init; } = false;
+
+    /// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
+    public string? PoolName { get; init; }
+
+    /// <summary>场景路径（UsingObjectPool=false 时必填，如 ECSIndex.Entity.EnemyEntity）</summary>
+    public string? ScenePath { get; init; }
+
+    /// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
+    public Vector2? Position { get; init; }
+
+    /// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
+    public float? Rotation { get; init; }
+}
+
+/// <summary>
 /// Entity 管理器 - 伪 ECS 架构的统一节点生命周期管理入口
 /// 
 /// ==================== 设计理念 ====================
@@ -32,8 +57,23 @@ using System.Linq;
 /// ==================== 使用示例 ====================
 /// 
 /// <code>
-/// // 生成 Entity
-/// var enemy = EntityManager.Spawn&lt;Enemy&gt;(poolName, resource, position);
+/// // 生成 Entity (对象池)
+/// var enemy = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+/// {
+///     Resource = enemyData,
+///     UsingObjectPool = true,
+///     PoolName = ObjectPoolNames.EnemyPool,
+///     Position = new Vector2(100, 200)
+/// });
+/// 
+/// // 生成 Entity (场景)
+/// var boss = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+/// {
+///     Resource = bossData,
+///     UsingObjectPool = false,
+/// ScenePath = ECSIndex.Entity.EnemyEntity,
+///     Position = new Vector2(500, 300)
+/// });
 /// 
 /// // 动态添加 Component
 /// EntityManager.AddComponent(enemy, buffComponent);
@@ -60,107 +100,109 @@ public static class EntityManager
     // ==================== 实体生成（核心功能）====================
 
     /// <summary>
-    /// 生成 Entity(通用版本,适用于所有 Node 类型)
-    /// 自动检测: 对象池获取 OR 场景实例化 → 注册到 ECS → 数据注入 → 视觉加载
+    /// 生成 Entity (统一参数版本)
+    /// 支持对象池和场景两种创建模式，通过 EntitySpawnConfig 对象传递参数
     /// 
-    /// 适用场景: 所有 Entity(Enemy, Player, Buff, Item 等)
+    /// 使用示例：
+    /// <code>
+    /// // 对象池 Entity
+    /// var enemy = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+    /// {
+    ///     Resource = enemyData,
+    ///     UsingObjectPool = true,
+    ///     PoolName = ObjectPoolNames.EnemyPool,
+    ///     Position = new Vector2(100, 200)
+    /// });
+    /// 
+    /// // 场景 Entity
+    /// var boss = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+    /// {
+    ///     Resource = bossData,
+    ///     UsingObjectPool = false,
+    ///     ScenePath = ECSIndex.Entity.EnemyEntity,
+    ///     Position = new Vector2(500, 300),
+    ///     Rotation = Mathf.Pi / 4
+    /// });
+    /// </code>
     /// </summary>
     /// <typeparam name="T">Entity 类型(如 Enemy, Player)</typeparam>
-    /// <param name="poolNameOrScenePath">对象池名称 或 场景文件路径</param>
-    /// <param name="resource">静态配置 Resource</param>
+    /// <param name="config">生成配置参数</param>
     /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolNameOrScenePath, Resource resource) where T : Node, IEntity
+    public static T? Spawn<T>(EntitySpawnConfig config) where T : Node, IEntity
     {
         T? entity;
 
-        // 1. 先尝试从对象池获取（通过类型名称）
-        var pool = ObjectPoolManager.GetPool<T>(typeof(T).Name);
-
-        if (pool != null)
+        // 1. 根据模式创建 Entity
+        if (config.UsingObjectPool)
         {
             // 路径 1: 对象池 Entity
+            if (string.IsNullOrEmpty(config.PoolName))
+            {
+                _log.Error($"使用对象池模式但未提供 PoolName: {typeof(T).Name}");
+                return null;
+            }
+
+            var pool = ObjectPoolManager.GetPool<T>(config.PoolName);
+            if (pool == null)
+            {
+                _log.Error($"对象池不存在: 期望名称 '{config.PoolName}' (类型: {typeof(T).Name})");
+                return null;
+            }
             entity = pool.Get();
-            _log.Debug($"从对象池获取 Entity: {typeof(T).Name} (池: {poolNameOrScenePath})");
+            _log.Debug($"从对象池获取 Entity: {typeof(T).Name} (池名: {config.PoolName})");
         }
         else
         {
-            // 路径 2: 场景 Entity - 尝试作为场景路径加载
-            var scene = GD.Load<PackedScene>(poolNameOrScenePath);
+            // 路径 2: 场景 Entity
+            if (string.IsNullOrEmpty(config.ScenePath))
+            {
+                _log.Error($"场景路径为空，无法实例化 {typeof(T).Name}");
+                return null;
+            }
+
+            var scene = GD.Load<PackedScene>(config.ScenePath);
             if (scene == null)
             {
-                _log.Error($"对象池 '{poolNameOrScenePath}' 不存在,且作为场景路径也无法加载");
+                _log.Error($"场景加载失败: {config.ScenePath}");
                 return null;
             }
             entity = scene.Instantiate<T>();
-            _log.Debug($"从场景实例化 Entity: {typeof(T).Name} (场景: {poolNameOrScenePath})");
+            _log.Debug($"从场景实例化 Entity: {typeof(T).Name} (场景: {config.ScenePath})");
         }
 
-        // 2. 自动注册Entity
         string entityType = typeof(T).Name;
-        // 是否重复注册，因为对象池复用必然重复
-        bool isAlreadyRegistered = Register(entity, entityType);
-        if (!isAlreadyRegistered)
+        string id = entity.GetInstanceId().ToString();
+
+        // 2. 防止重复注册（对象池复用场景）
+        if (!_entities.ContainsKey(id))
         {
-            //不是重复注册才注册Entity 的所有 Component
-            // 3. 自动注册 Entity 的所有 Component
+            Register(entity, entityType);
             RegisterComponents(entity);
         }
 
-        // 4. 数据注入(核心: 将 Resource 配置写入 Data)
-        entity.Data.LoadFromResource(resource);
+        // 3. 数据注入（核心: 将 Resource 配置写入 Data）
+        entity.Data.LoadFromResource(config.Resource);
 
-        // 5. 自动加载 VisualScene (如有)
-        InjectVisualScene(entity, resource);
+        // 4. 自动加载 VisualScene (如有)
+        InjectVisualScene(entity, config.Resource);
+
+        // 5. 设置位置和旋转（仅对 Node2D 生效）
+        if (entity is Node2D entity2D)
+        {
+            if (config.Position.HasValue)
+            {
+                entity2D.GlobalPosition = config.Position.Value;
+                _log.Debug($"设置 Entity 位置: {typeof(T).Name} at {config.Position.Value}");
+            }
+
+            if (config.Rotation.HasValue)
+            {
+                entity2D.GlobalRotation = config.Rotation.Value;
+                _log.Debug($"设置 Entity 旋转: {typeof(T).Name} rotation {config.Rotation.Value}");
+            }
+        }
 
         _log.Debug($"生成 Entity 完成: {typeof(T).Name}");
-        return entity;
-    }
-
-    /// <summary>
-    /// 生成 Entity(带位置参数,适用于 Node2D 及其子类)
-    /// 自动处理: 对象池/场景创建 → 位置初始化 → 注册管理
-    /// 
-    /// 适用场景: Enemy、Bullet、Player 等需要位置的实体
-    /// </summary>
-    /// <typeparam name="T">Entity 类型(如 Enemy, Player, Bullet)</typeparam>
-    /// <param name="poolNameOrScenePath">对象池名称 或 场景文件路径</param>
-    /// <param name="resource">静态配置 Resource</param>
-    /// <param name="position">初始位置</param>
-    /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolNameOrScenePath, Resource resource, Vector2 position) where T : Node2D, IEntity
-    {
-        // 调用通用版本
-        var entity = Spawn<T>(poolNameOrScenePath, resource);
-
-        // 额外设置位置
-        if (entity != null)
-        {
-            entity.GlobalPosition = position;
-            _log.Debug($"设置 Entity 位置: {typeof(T).Name} at {position}");
-        }
-
-        return entity;
-    }
-
-    /// <summary>
-    /// 生成 Entity(带位置和旋转参数,适用于需要方向的 Entity)
-    /// 适用场景: 子弹、投射物等需要初始方向的实体
-    /// </summary>
-    /// <typeparam name="T">Entity 类型(如 Bullet, Projectile)</typeparam>
-    /// <param name="poolNameOrScenePath">对象池名称 或 场景文件路径</param>
-    /// <param name="resource">静态配置 Resource</param>
-    /// <param name="position">初始位置</param>
-    /// <param name="rotation">初始旋转角度(弧度)</param>
-    /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolNameOrScenePath, Resource resource, Vector2 position, float rotation) where T : Node2D, IEntity
-    {
-        var entity = Spawn<T>(poolNameOrScenePath, resource, position);
-
-        if (entity != null)
-        {
-            entity.GlobalRotation = rotation;
-        }
-
         return entity;
     }
 
@@ -296,8 +338,7 @@ public static class EntityManager
     /// </summary>
     /// <param name="node">要注册的节点（Entity 或 Component）</param>
     /// <param name="nodeType">节点类型名称（如 "Enemy", "HealthComponent"）</param>
-    /// <returns>是否重复注册，true：重复注册</returns>
-    public static Boolean Register(Node node, string nodeType)
+    public static void Register(Node node, string nodeType)
     {
         string id = node.GetInstanceId().ToString();
 
@@ -305,7 +346,7 @@ public static class EntityManager
         if (_entities.ContainsKey(id))
         {
             _log.Warn($"Entity {id} 已注册，跳过");
-            return true;
+            return;
         }
 
         _entities[id] = node;
@@ -314,7 +355,6 @@ public static class EntityManager
         if (!_entitiesByType.ContainsKey(nodeType))
             _entitiesByType[nodeType] = new HashSet<Node>();
         _entitiesByType[nodeType].Add(node);
-        return false;
     }
 
     /// <summary>

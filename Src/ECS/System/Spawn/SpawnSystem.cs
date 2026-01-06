@@ -113,8 +113,8 @@ public partial class SpawnSystem : Node
     public void StartWave(int waveIndex)
     {
 
-        // 检查是否超过最大波次（如果 SpawnConfig.MaxWaves > 0）
-        if (SpawnConfig.MaxWaves > 0 && waveIndex > SpawnConfig.MaxWaves)
+        // 检查是否超过最大波次（如果 SpawnSystemConfig.MaxWaves > 0）
+        if (SpawnSystemConfig.MaxWaves > 0 && waveIndex > SpawnSystemConfig.MaxWaves)
         {
             _log.Info("已通过最大波次，触发游戏结束");
             EventBus.TriggerGameOver(true);
@@ -126,22 +126,22 @@ public partial class SpawnSystem : Node
 
         // 1. 创建波次总时长计时器
         _waveTimer?.Cancel(); // 取消旧计时器
-        _waveTimer = TimerManager.Instance.CreateTimer(SpawnConfig.WaveDuration, OnWaveTimeout);
+        _waveTimer = TimerManager.Instance.CreateTimer(SpawnSystemConfig.WaveDuration, OnWaveTimeout);
         _waveTimer.Tag = "SpawnSystem";
 
         // 2. 初始化规则状态
         _activeStates.Clear();
 
         // 安全检查：防止 SpawnRules 为 null
-        if (SpawnConfig.SpawnRules == null)
+        if (SpawnSystemConfig.SpawnRules == null)
         {
-            _log.Error("SpawnConfig 中的 SpawnRules 列表为空(null)!");
+            _log.Error("SpawnSystemConfig 中的 SpawnRules 列表为空(null)!");
             return;
         }
 
 
 
-        foreach (var rule in SpawnConfig.SpawnRules)
+        foreach (var rule in SpawnSystemConfig.SpawnRules)
         {
             if (IsRuleActiveForWave(rule, waveIndex))
             {
@@ -159,7 +159,7 @@ public partial class SpawnSystem : Node
         _checkTimer = TimerManager.Instance.CreateLoopTimer(0.2f, OnCheckTimerTimeout);
         _checkTimer.Tag = "SpawnSystem";
 
-        _log.Info($"波次 {waveIndex} 开始! 持续时间: {SpawnConfig.WaveDuration}s, 激活规则数: {_activeStates.Count}");
+        _log.Info($"波次 {waveIndex} 开始! 持续时间: {SpawnSystemConfig.WaveDuration}s, 激活规则数: {_activeStates.Count}");
         // 通过事件总线通知 UI 和其他系统
         EventBus.TriggerWaveStarted(waveIndex);
     }
@@ -253,7 +253,16 @@ public partial class SpawnSystem : Node
         // 使用 EntityFactory 统一处理生成逻辑 (获取实例 + 数据注入)
         foreach (var pos in positions)
         {
-            var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, enemyData, pos);
+            // 使用新的 EntitySpawnConfig 参数对象方式
+            // 注意：这里使用场景路径而非对象池，因为需要动态生成不同类型的敌人
+            var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+            {
+                Resource = enemyData,
+                UsingObjectPool = true,
+                PoolName = ObjectPoolNames.EnemyPool,
+                Position = pos
+            });
+
             if (enemy == null)
             {
                 // 如果生成失败（如池已满且策略为 discard），则跳过
@@ -290,8 +299,8 @@ public partial class SpawnSystem : Node
     /// </summary>
     public void KillAllEnemies()
     {
-        // 通过类型名称获取对象池并执行全量回收
-        var pool = ObjectPoolManager.GetPool<Enemy>(typeof(Enemy).Name);
+        // 关键修复：必须使用注册时的常量池名 "EnemyPool" 而非类型名 "Enemy"
+        var pool = ObjectPoolManager.GetPool<Enemy>(ObjectPoolNames.EnemyPool);
         pool?.ReleaseAll();
         _log.Debug("已清理所有活跃敌人。");
     }

@@ -8,13 +8,13 @@ using System.Runtime.CompilerServices;
 /// 对象池名称常量定义
 /// 统一管理所有对象池的名称，避免字符串硬编码带来的维护困难
 /// </summary>
-public struct PoolNames
+public struct ObjectPoolNames
 {
     /// <summary> 基础敌人对象池 </summary>
-    public const string EnemyPool = "Enemy";
+    public const string EnemyPool = "EnemyPool";
 
     /// <summary> 定时器对象池 </summary>
-    public const string TimerPool = "Timer";
+    public const string TimerPool = "TimerPool";
 }
 
 /// <summary>
@@ -55,7 +55,7 @@ public partial class ObjectPoolInit : Node
             () => new GameTimer(),
             new ObjectPoolConfig
             {
-                Name = PoolNames.TimerPool,
+                Name = ObjectPoolNames.TimerPool,
                 InitialSize = 50,
                 MaxSize = 200,
                 ParentPath = "Tool/GameTimer"
@@ -69,7 +69,7 @@ public partial class ObjectPoolInit : Node
             () => (Enemy)scene.Instantiate(),
             new ObjectPoolConfig
             {
-                Name = PoolNames.EnemyPool,
+                Name = ObjectPoolNames.EnemyPool,
                 InitialSize = 100,
                 MaxSize = 500,
                 ParentPath = "ECS/Entity/Enemy"

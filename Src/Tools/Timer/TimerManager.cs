@@ -46,7 +46,7 @@ public partial class TimerManager : Node
         _lastTicksMsec = Time.GetTicksMsec();
 
         // 从全局管理器获取定时器对象池
-        _timerPool = ObjectPoolManager.GetPool<GameTimer>(PoolNames.TimerPool);
+        _timerPool = ObjectPoolManager.GetPool<GameTimer>(ObjectPoolNames.TimerPool);
 
         if (_timerPool == null)
         {

@@ -7,16 +7,16 @@
 - **规则驱动 (Rule-Based)**: 不再手动配置每一波的敌人,而是定义"规则"。
   - 例如:"史莱姆在第 1-5 波出现,间隔 3 秒"。
   - 系统会根据当前波次自动筛选并激活符合条件的规则。
-- **全局配置 (Global Config)**: 使用 `SpawnConfig` 资源文件统一管理游戏节奏。
+- **全局配置 (Global Config)**: 使用 `SpawnSystemConfig` 资源文件统一管理游戏节奏。
 - **TimerManager 驱动**: 使用项目统一的 `TimerManager` 管理所有计时器,实现对象池复用,零 GC 压力。
 - **生成管线化 (Pipeline)**:
-  - **What (生成什么)**: 由 `SpawnConfig` 中的 `EnemySpawnRule` 决定。
+  - **What (生成什么)**: 由 `SpawnSystemConfig` 中的 `EnemySpawnRule` 决定。
   - **Where (在哪里生成)**: 委托给 `SpawnPositionCalculator` 处理（支持屏幕外、随机等策略）。
   - **How (如何生成)**: 系统在初始化时自动为所有配置的敌人创建对象池,并强制使用 `ObjectPoolManager` 进行复用。
 
 ## 数据结构
 
-### SpawnConfig (Resource)
+### SpawnSystemConfig (Resource)
 
 全局游戏节奏配置。
 
@@ -38,7 +38,7 @@
 
 1. **系统初始化 (`_Ready`)**:
 
-   - 系统启动时,会自动读取 `SpawnConfig`。
+   - 系统启动时,会自动读取 `SpawnSystemConfig`。
    - 遍历所有 `SpawnRules`,检查是否已存在对应的对象池。
    - 如果不存在,则根据 `EnemyData.EnemyScene` 自动创建并注册 `ObjectPool<Node>`。
    - 确保后续生成时 `ObjectPoolManager.GetPool(name)` 始终能获取到有效的池实例。
@@ -81,7 +81,7 @@
 
 ### 1. 配置生成规则
 
-在 Godot 编辑器中创建一个 `SpawnConfig` 资源文件（例如 `Level1_Config.tres`）。
+在 Godot 编辑器中创建一个 `SpawnSystemConfig` 资源文件（例如 `Level1_Config.tres`）。
 
 - 设置 `WaveDuration = 60`。
 - 添加 `SpawnRules`:
@@ -96,7 +96,7 @@
 
 ### 2. 注入配置
 
-将创建好的 `SpawnConfig` 拖入场景中 `SpawnSystem` 节点的 `Config` 属性中。
+将创建好的 `SpawnSystemConfig` 拖入场景中 `SpawnSystem` 节点的 `Config` 属性中。
 
 ### 3. 启动游戏
 
