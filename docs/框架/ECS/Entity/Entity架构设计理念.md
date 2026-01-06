@@ -2,7 +2,7 @@
 
 **文档类型**：架构设计  
 **目标受众**：架构师、新成员、AI 助手  
-**最后更新**：2026-01-04
+**最后更新**：2026-01-05
 
 ---
 
@@ -123,41 +123,66 @@ public interface IComponent
 {
     /// <summary>
     /// Component 注册到 Entity 时的回调
+    /// 在此方法中缓存 Entity 引用和 Data 容器
     /// </summary>
-    void OnComponentRegistered(Node entity) { }
+    void OnComponentRegistered(Node entity);
 
     /// <summary>
     /// Component 从 Entity 注销时的回调
     /// </summary>
-    void OnComponentUnregistered() { }
+    void OnComponentUnregistered();
 }
 ```
 
 **职责**：标记一个 Node 是 Component，并提供生命周期回调。
 
-**实现模板**：
+**标准实现模板**（2026-01-05 更新）：
 
 ```csharp
 public partial class HealthComponent : Node, IComponent
 {
+    private static readonly Log _log = new("HealthComponent");
+
+    // ================= 标准字段 =================
     private Data? _data;
+    private IEntity? _entity;
+
+    // ================= IComponent 实现 =================
 
     public void OnComponentRegistered(Node entity)
     {
+        // 组件注册时缓存引用
         if (entity is IEntity iEntity)
         {
             _data = iEntity.Data;
+            _entity = iEntity;
         }
     }
 
+    public void OnComponentUnregistered()
+    {
+        // 清理引用
+        _data = null;
+        _entity = null;
+    }
+
+    // ================= Godot 生命周期 =================
+
     public override void _Ready()
     {
-        // 懒加载补全
-        if (_data == null)
-            _data = EntityManager.GetEntityData(this);
+        // ✅ 仅做日志或信号连接
+        // ❌ 不做验证或懒加载（OnComponentRegistered 已保证初始化）
+        _log.Debug("组件就绪");
     }
 }
 ```
+
+**关键规则**：
+
+1. **统一使用 `_entity` 引用**：不再使用 `_owner`、`_body` 等多个引用字段
+2. **`OnComponentRegistered` 负责全部初始化**：缓存 `_data` 和 `_entity`
+3. **`_Ready` 不做验证**：ObjectPool 和 EntityManager 保证了注册时序
+4. **需要特定类型时使用类型判断**：`if (_entity is CharacterBody2D body)`
 
 ### 2. 管理层（生命周期控制）
 
@@ -175,6 +200,30 @@ public partial class HealthComponent : Node, IComponent
 - **统一入口**：所有 Entity/Component 操作都通过 EntityManager
 - **自动化**：自动完成数据注入、组件注册、关系建立
 - **数据源唯一**：所有查询基于统一的注册表
+
+**生命周期流程**（2026-01-05 更新）：
+
+```
+ObjectPool.CreateNew()
+   ↓
+_createFunc() 实例化
+   ↓
+检查 is IEntity? → YES
+   ↓
+EntityManager.Register(Entity)
+   ↓
+EntityManager.RegisterComponents(Entity)
+   ├─ 识别 Component
+   ├─ Register(Component)
+   ├─ AddRelationship(Entity→Component)
+   └─ OnComponentRegistered(Entity) ← 组件缓存 _data 和 _entity
+   ↓
+AddChild 挂载到场景树
+   ↓
+Godot._Ready 执行（此时组件已完全初始化）
+   ↓
+EntityManager.Spawn 注入数据
+```
 
 #### EntityRelationshipManager（关系管理）
 
@@ -279,12 +328,19 @@ private static readonly HashSet<string> _componentWhitelist = new()
 
 2. 生成时注入（自动，运行时）
    ┌─────────────────────────┐
+   │ ObjectPool.CreateNew()  │
+   │ ├─ 实例化 Entity        │
+   │ ├─ Register(Entity)     │
+   │ ├─ RegisterComponents   │
+   │ └─ AddChild 挂载        │
+   └─────────────────────────┘
+              ↓
+   ┌─────────────────────────┐
    │ EntityManager.Spawn()   │
    │ ├─ 从对象池获取         │
    │ ├─ 反射注入 Resource    │ → Data.LoadFromResource(resource)
    │ ├─ 加载 VisualScene     │
-   │ ├─ 注册 Components      │
-   │ └─ 注册 Entity          │
+   │ └─ 返回实例             │
    └─────────────────────────┘
               ↓
 
@@ -313,23 +369,26 @@ private static readonly HashSet<string> _componentWhitelist = new()
 2. **Data 是运行时数据**：存储游戏过程中的动态变化
 3. **自动注入**：EntityManager 自动将 Resource 数据复制到 Data
 4. **事件驱动**：Data 变更时自动触发监听器
+5. **注册前置**：ObjectPool 在创建时立即注册，确保 `_Ready` 时组件已初始化
 
 ---
 
 ## Component 访问 Entity 的模式
 
-### 模式 1：通过 IComponent 回调缓存 Data（推荐）
+### 标准模式：通过 IComponent 回调缓存（推荐）
 
 ```csharp
 public partial class HealthComponent : Node, IComponent
 {
-    private Data? _data;  // 缓存 Data 引用
+    private Data? _data;
+    private IEntity? _entity;
 
     public void OnComponentRegistered(Node entity)
     {
         if (entity is IEntity iEntity)
         {
             _data = iEntity.Data;
+            _entity = iEntity;
         }
     }
 
@@ -337,8 +396,8 @@ public partial class HealthComponent : Node, IComponent
     {
         if (_data == null) return;
 
-        float hp = _data.Get<float>("CurrentHp");
-        _data.Set("CurrentHp", hp - amount);
+        float hp = _data.Get<float>(DataKey.CurrentHp);
+        _data.Set(DataKey.CurrentHp, hp - amount);
     }
 }
 ```
@@ -348,57 +407,49 @@ public partial class HealthComponent : Node, IComponent
 - 性能最高（预先缓存）
 - 明确的生命周期管理
 - 符合接口语义
+- 统一命名规范
 
-### 模式 2：通过 EntityManager 查询（懒加载）
+### 需要特定类型时使用类型判断
 
 ```csharp
-public partial class VelocityComponent : Node
+public partial class VelocityComponent : Node, IComponent
 {
     private Data? _data;
+    private IEntity? _entity;
 
-    public override void _Ready()
+    public void OnComponentRegistered(Node entity)
     {
-        _data = EntityManager.GetEntityData(this);
-        if (_data != null)
+        if (entity is IEntity iEntity)
         {
-            float speed = _data.Get<float>(DataKey.Speed, 400f);
+            _data = iEntity.Data;
+            _entity = iEntity;
         }
+    }
+
+    public override void _Process(double delta)
+    {
+        // 需要 CharacterBody2D 时再转换
+        if (_entity is not CharacterBody2D body) return;
+
+        Vector2 inputDir = InputManager.GetMoveInput();
+        body.Velocity = inputDir.Normalized() * Speed;
+        body.MoveAndSlide();
     }
 }
 ```
 
 **优势**：
 
-- 兼容任意层级
-- 代码最简洁
-- 适合只需要访问 Data 的场景
-
-### 模式 3：需要完整 Entity 引用时
-
-```csharp
-public partial class MovableComponent : Node
-{
-    public void Move()
-    {
-        var entity = EntityManager.GetEntityByComponent(this);
-        if (entity is CharacterBody2D body)
-        {
-            body.MoveAndSlide();
-        }
-    }
-}
-```
-
-**优势**：
-
-- 适合需要访问父节点 Godot 特定功能（如物理移动）的场景
-- 支持反查 Entity 属性
+- 统一使用 `_entity` 引用
+- 需要时再转换具体类型
+- 代码清晰，易于维护
 
 **推荐策略**：
 
-- **优先使用模式 1**（IComponent 回调缓存 Data），性能最佳
-- **模式 2** 用于简单查询或懒加载
-- **模式 3** 仅在需要操作 Entity 节点本身（如移动、旋转）时使用
+- **优先使用标准模式**（IComponent 回调缓存），性能最佳
+- **统一使用 `_entity` 引用**，不使用 `_owner`、`_body` 等多个字段
+- **需要特定类型时使用类型判断**（`if (_entity is CharacterBody2D body)`）
+- **`_Ready` 不做验证**，ObjectPool 保证了初始化时序
 
 ---
 

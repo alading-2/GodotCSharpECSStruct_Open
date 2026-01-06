@@ -14,7 +14,7 @@ public partial class FollowComponent : Node, IComponent
     // ================= IComponent 实现 =================
 
     private Data? _data;
-    private Node2D? _owner;
+    private IEntity? _entity;
 
     public void OnComponentRegistered(Node entity)
     {
@@ -22,11 +22,7 @@ public partial class FollowComponent : Node, IComponent
         if (entity is IEntity iEntity)
         {
             _data = iEntity.Data;
-        }
-
-        if (entity is Node2D node2D)
-        {
-            _owner = node2D;
+            _entity = iEntity;
         }
     }
 
@@ -35,7 +31,7 @@ public partial class FollowComponent : Node, IComponent
         // 清理引用
         Target = null;
         _data = null;
-        _owner = null;
+        _entity = null;
     }
 
     // ================= 运行时状态 =================
@@ -59,27 +55,6 @@ public partial class FollowComponent : Node, IComponent
 
     public override void _Ready()
     {
-        // 懒加载：如果 OnComponentRegistered 未被调用
-        if (_data == null)
-        {
-            _data = EntityManager.GetEntityData(this);
-        }
-
-        if (_owner == null)
-        {
-            var entity = EntityManager.GetEntityByComponent(this);
-            if (entity is Node2D node2D)
-            {
-                _owner = node2D;
-            }
-        }
-
-        if (_data == null || _owner == null)
-        {
-            Log.Error("无法获取 Data 容器或所属实体");
-            return;
-        }
-
         Log.Debug($"就绪: 速度={FollowSpeed}, 停止距离={StopDistance}");
     }
 
@@ -87,7 +62,7 @@ public partial class FollowComponent : Node, IComponent
     {
         Target = null;
         _data = null;
-        _owner = null;
+        _entity = null;
         Log.Trace("跟随组件退出场景树");
     }
 
@@ -98,12 +73,12 @@ public partial class FollowComponent : Node, IComponent
     /// </summary>
     public Vector2 GetDirectionToTarget()
     {
-        if (!IsTargetValid() || _owner == null)
+        if (!IsTargetValid() || _entity is not Node2D owner)
         {
             return Vector2.Zero;
         }
 
-        Vector2 direction = Target!.GlobalPosition - _owner.GlobalPosition;
+        Vector2 direction = Target!.GlobalPosition - owner.GlobalPosition;
 
         if (direction.LengthSquared() < 0.0001f)
         {
@@ -118,12 +93,12 @@ public partial class FollowComponent : Node, IComponent
     /// </summary>
     public float GetDistanceToTarget()
     {
-        if (!IsTargetValid() || _owner == null)
+        if (!IsTargetValid() || _entity is not Node2D owner)
         {
             return float.MaxValue;
         }
 
-        return _owner.GlobalPosition.DistanceTo(Target!.GlobalPosition);
+        return owner.GlobalPosition.DistanceTo(Target!.GlobalPosition);
     }
 
     /// <summary>

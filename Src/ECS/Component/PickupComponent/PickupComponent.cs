@@ -15,7 +15,7 @@ public partial class PickupComponent : Area2D, IComponent
     // ================= IComponent 实现 =================
 
     private Data? _data;
-    private Node2D? _owner;
+    private IEntity? _entity;
 
     public void OnComponentRegistered(Node entity)
     {
@@ -23,11 +23,7 @@ public partial class PickupComponent : Area2D, IComponent
         if (entity is IEntity iEntity)
         {
             _data = iEntity.Data;
-        }
-
-        if (entity is Node2D node2D)
-        {
-            _owner = node2D;
+            _entity = iEntity;
         }
     }
 
@@ -37,7 +33,7 @@ public partial class PickupComponent : Area2D, IComponent
         PickedUp = null;
         Collector = null;
         _data = null;
-        _owner = null;
+        _entity = null;
     }
 
     // ================= 事件 =================
@@ -72,27 +68,6 @@ public partial class PickupComponent : Area2D, IComponent
 
     public override void _Ready()
     {
-        // 懒加载：如果 OnComponentRegistered 未被调用
-        if (_data == null)
-        {
-            _data = EntityManager.GetEntityData(this);
-        }
-
-        if (_owner == null)
-        {
-            var entity = EntityManager.GetEntityByComponent(this);
-            if (entity is Node2D node2D)
-            {
-                _owner = node2D;
-            }
-        }
-
-        if (_data == null || _owner == null)
-        {
-            Log.Error("无法获取 Data 容器或所属实体");
-            return;
-        }
-
         // 连接信号
         AreaEntered += OnAreaEntered;
         BodyEntered += OnBodyEntered;
@@ -110,7 +85,7 @@ public partial class PickupComponent : Area2D, IComponent
         PickedUp = null;
         Collector = null;
         _data = null;
-        _owner = null;
+        _entity = null;
 
         Log.Trace("拾取组件退出场景树");
     }
@@ -153,12 +128,12 @@ public partial class PickupComponent : Area2D, IComponent
     /// </summary>
     private void MoveTowardCollector(float delta)
     {
-        if (_owner == null || Collector == null)
+        if (_entity is not Node2D owner || Collector == null)
         {
             return;
         }
 
-        Vector2 direction = Collector.GlobalPosition - _owner.GlobalPosition;
+        Vector2 direction = Collector.GlobalPosition - owner.GlobalPosition;
         float distance = direction.Length();
 
         if (distance < 1f)
@@ -173,11 +148,11 @@ public partial class PickupComponent : Area2D, IComponent
         if (movement.Length() > distance)
         {
             // 防止越过目标
-            _owner.GlobalPosition = Collector.GlobalPosition;
+            owner.GlobalPosition = Collector.GlobalPosition;
         }
         else
         {
-            _owner.GlobalPosition += movement;
+            owner.GlobalPosition += movement;
         }
     }
 

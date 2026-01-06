@@ -41,19 +41,7 @@ public partial class HealthComponent : Node, IComponent
 
     public override void _Ready()
     {
-        // 懒加载：如果 OnComponentRegistered 未被调用
-        if (_data == null)
-        {
-            _data = EntityManager.GetEntityData(this);
-        }
-
-        if (_data == null)
-        {
-            _log.Error("无法获取 Data 容器");
-            return;
-        }
-
-        _log.Debug($"就绪, MaxHp: {_data.Get<float>(DataKey.MaxHp, 100f)}");
+        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.MaxHp, 100f)}");
     }
 
     public override void _ExitTree()

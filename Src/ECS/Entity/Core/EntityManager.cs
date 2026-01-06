@@ -60,58 +60,77 @@ public static class EntityManager
     // ==================== 实体生成（核心功能）====================
 
     /// <summary>
-    /// 生成 Entity（通用版本，适用于所有 Node 类型）
-    /// 自动处理：ObjectPool 获取 → Resource 数据注入 → 注册管理
-    /// 适用场景：Buff（纯 Node）、Item（可能无位置）等
+    /// 生成 Entity(通用版本,适用于所有 Node 类型)
+    /// 自动检测: 对象池获取 OR 场景实例化 → 注册到 ECS → 数据注入 → 视觉加载
+    /// 
+    /// 适用场景: 所有 Entity(Enemy, Player, Buff, Item 等)
     /// </summary>
-    /// <typeparam name="T">Entity 类型（如 Buff, Item）</typeparam>
-    /// <param name="poolName">对象池名称（必须）</param>
+    /// <typeparam name="T">Entity 类型(如 Enemy, Player)</typeparam>
+    /// <param name="poolNameOrScenePath">对象池名称 或 场景文件路径</param>
     /// <param name="resource">静态配置 Resource</param>
     /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolName, Resource resource) where T : Node, IEntity
+    public static T? Spawn<T>(string poolNameOrScenePath, Resource resource) where T : Node, IEntity
     {
-        // 1. 从 ObjectPool 获取实例（使用泛型方法，类型安全）
-        var pool = ObjectPoolManager.GetPool<T>(poolName);
-        if (pool == null)
-        {
-            _log.Error($"对象池 {poolName} 不存在，请检查 ObjectPoolInit");
-            return null;
-        }
-        // 直接调用泛型方法，无需类型转换
-        var entity = pool.Get();
+        T? entity;
 
-        // 2. 数据注入（核心：将 Resource 配置写入 Data）
-        // 使用 Data 容器内置的 LoadFromResource 方法，替代原有的 InjectResourceData
+        // 1. 先尝试从对象池获取（通过类型名称）
+        var pool = ObjectPoolManager.GetPool<T>(typeof(T).Name);
+
+        if (pool != null)
+        {
+            // 路径 1: 对象池 Entity
+            entity = pool.Get();
+            _log.Debug($"从对象池获取 Entity: {typeof(T).Name} (池: {poolNameOrScenePath})");
+        }
+        else
+        {
+            // 路径 2: 场景 Entity - 尝试作为场景路径加载
+            var scene = GD.Load<PackedScene>(poolNameOrScenePath);
+            if (scene == null)
+            {
+                _log.Error($"对象池 '{poolNameOrScenePath}' 不存在,且作为场景路径也无法加载");
+                return null;
+            }
+            entity = scene.Instantiate<T>();
+            _log.Debug($"从场景实例化 Entity: {typeof(T).Name} (场景: {poolNameOrScenePath})");
+        }
+
+        // 2. 自动注册Entity
+        string entityType = typeof(T).Name;
+        // 是否重复注册，因为对象池复用必然重复
+        bool isAlreadyRegistered = Register(entity, entityType);
+        if (!isAlreadyRegistered)
+        {
+            //不是重复注册才注册Entity 的所有 Component
+            // 3. 自动注册 Entity 的所有 Component
+            RegisterComponents(entity);
+        }
+
+        // 4. 数据注入(核心: 将 Resource 配置写入 Data)
         entity.Data.LoadFromResource(resource);
 
-        // 2.1 自动加载 VisualScene (如有)
+        // 5. 自动加载 VisualScene (如有)
         InjectVisualScene(entity, resource);
 
-        // 2.2 自动注册 Entity 的所有 Component
-        RegisterComponents(entity);
-
-        // 3. 自动注册Entity
-        string entityType = typeof(T).Name;
-        Register(entity, entityType);
-
-        _log.Debug($"生成 Entity: {entityType}");
+        _log.Debug($"生成 Entity 完成: {typeof(T).Name}");
         return entity;
     }
 
     /// <summary>
-    /// 生成 Entity（带位置参数，适用于 Node2D 及其子类）
-    /// 自动处理：ObjectPool 获取 → 位置初始化 → Resource 数据注入 → 注册管理
-    /// 适用场景：Enemy、Bullet、掉落的 Item 等需要位置的实体
+    /// 生成 Entity(带位置参数,适用于 Node2D 及其子类)
+    /// 自动处理: 对象池/场景创建 → 位置初始化 → 注册管理
+    /// 
+    /// 适用场景: Enemy、Bullet、Player 等需要位置的实体
     /// </summary>
-    /// <typeparam name="T">Entity 类型（如 Enemy, Bullet）</typeparam>
-    /// <param name="poolName">对象池名称（必须）</param>
+    /// <typeparam name="T">Entity 类型(如 Enemy, Player, Bullet)</typeparam>
+    /// <param name="poolNameOrScenePath">对象池名称 或 场景文件路径</param>
     /// <param name="resource">静态配置 Resource</param>
     /// <param name="position">初始位置</param>
     /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolName, Resource resource, Vector2 position) where T : Node2D, IEntity
+    public static T? Spawn<T>(string poolNameOrScenePath, Resource resource, Vector2 position) where T : Node2D, IEntity
     {
         // 调用通用版本
-        var entity = Spawn<T>(poolName, resource);
+        var entity = Spawn<T>(poolNameOrScenePath, resource);
 
         // 额外设置位置
         if (entity != null)
@@ -124,18 +143,18 @@ public static class EntityManager
     }
 
     /// <summary>
-    /// 生成 Entity（带位置和旋转参数，适用于需要方向的 Entity）
-    /// 适用场景：子弹、投射物等需要初始方向的实体
+    /// 生成 Entity(带位置和旋转参数,适用于需要方向的 Entity)
+    /// 适用场景: 子弹、投射物等需要初始方向的实体
     /// </summary>
-    /// <typeparam name="T">Entity 类型（如 Bullet, Projectile）</typeparam>
-    /// <param name="poolName">对象池名称（必须）</param>
+    /// <typeparam name="T">Entity 类型(如 Bullet, Projectile)</typeparam>
+    /// <param name="poolNameOrScenePath">对象池名称 或 场景文件路径</param>
     /// <param name="resource">静态配置 Resource</param>
     /// <param name="position">初始位置</param>
-    /// <param name="rotation">初始旋转角度（弧度）</param>
+    /// <param name="rotation">初始旋转角度(弧度)</param>
     /// <returns>已配置好的 Entity 实例</returns>
-    public static T? Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation) where T : Node2D, IEntity
+    public static T? Spawn<T>(string poolNameOrScenePath, Resource resource, Vector2 position, float rotation) where T : Node2D, IEntity
     {
-        var entity = Spawn<T>(poolName, resource, position);
+        var entity = Spawn<T>(poolNameOrScenePath, resource, position);
 
         if (entity != null)
         {
@@ -194,8 +213,9 @@ public static class EntityManager
     /// 自动建立 Entity-Component 关系（通过 EntityRelationshipManager）
     /// 
     /// 注意：使用 FindChildren() 递归查找，支持任意层级的 Component
+    /// 注意：此方法现在为 public，可供 ObjectPoolInit 等外部模块调用
     /// </summary>
-    private static void RegisterComponents(Node entity)
+    public static void RegisterComponents(Node entity)
     {
         int registeredCount = 0;
         string entityId = entity.GetInstanceId().ToString();
@@ -210,20 +230,9 @@ public static class EntityManager
             string componentType = child.GetType().Name;
 
             // 规则 1：实现了 IComponent 接口（优先级最高）
-            if (child is IComponent component)
+            if (child is IComponent)
             {
                 isComponent = true;
-
-                // 触发回调，让 Component 获取 Entity 引用
-                try
-                {
-                    component.OnComponentRegistered(entity);
-                    _log.Debug($"触发 IComponent 回调: {componentType}");
-                }
-                catch (Exception ex)
-                {
-                    _log.Error($"Component 回调失败: {componentType}, 错误: {ex.Message}");
-                }
             }
             // 规则 2：类名以 "Component" 结尾（兼容旧代码）
             else if (componentType.EndsWith("Component"))
@@ -241,16 +250,30 @@ public static class EntityManager
             // 注册 Component 并建立关系
             if (isComponent)
             {
-                // 注册Component
+                // 1. 注册 Component
                 Register(child, componentType);
 
-                // 建立 Entity-Component 关系
+                // 2. 建立 Entity-Component 关系（必须在回调之前）
                 string componentId = child.GetInstanceId().ToString();
                 EntityRelationshipManager.AddRelationship(
                     entityId,
                     componentId,
                     EntityRelationshipType.ENTITY_TO_COMPONENT
                 );
+
+                // 3. 触发 IComponent 回调（此时关系已建立，可安全查询）
+                if (child is IComponent component)
+                {
+                    try
+                    {
+                        component.OnComponentRegistered(entity);
+                        _log.Debug($"触发 IComponent 回调: {componentType}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error($"Component 回调失败: {componentType}, 错误: {ex.Message}");
+                    }
+                }
 
                 registeredCount++;
                 _log.Info($"已注册 Component: {componentType} 到 Entity: {entity.Name}");
@@ -273,7 +296,8 @@ public static class EntityManager
     /// </summary>
     /// <param name="node">要注册的节点（Entity 或 Component）</param>
     /// <param name="nodeType">节点类型名称（如 "Enemy", "HealthComponent"）</param>
-    public static void Register(Node node, string nodeType)
+    /// <returns>是否重复注册，true：重复注册</returns>
+    public static Boolean Register(Node node, string nodeType)
     {
         string id = node.GetInstanceId().ToString();
 
@@ -281,7 +305,7 @@ public static class EntityManager
         if (_entities.ContainsKey(id))
         {
             _log.Warn($"Entity {id} 已注册，跳过");
-            return;
+            return true;
         }
 
         _entities[id] = node;
@@ -290,6 +314,7 @@ public static class EntityManager
         if (!_entitiesByType.ContainsKey(nodeType))
             _entitiesByType[nodeType] = new HashSet<Node>();
         _entitiesByType[nodeType].Add(node);
+        return false;
     }
 
     /// <summary>

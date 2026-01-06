@@ -6,25 +6,36 @@ using Godot;
 /// 继承自 Area2D，仅负责触发 HitReceived 事件，不直接依赖 HealthComponent。
 /// 伤害转发由实体（父节点）负责协调。
 /// </summary>
-public partial class HurtboxComponent : Area2D
+public partial class HurtboxComponent : Area2D, IComponent
 {
     private static readonly Log Log = new("HurtboxComponent");
 
-    // ================= Export Properties =================
+    // ================= IComponent 实现 =================
 
-    // ================= Private State =================
+    private Data? _data;
 
-    /// <summary>
-    /// 父实体的动态数据容器。
-    /// </summary>
-    private Data _data = null!;
+    public void OnComponentRegistered(Node entity)
+    {
+        // 组件注册时缓存 Data 引用
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+        }
+    }
+
+    public void OnComponentUnregistered()
+    {
+        // 清理引用和事件
+        HitReceived = null;
+        _data = null;
+    }
 
     // ================= Runtime State =================
 
     /// <summary>
     /// 获取无敌时间。
     /// </summary>
-    public float InvincibilityTime => _data.Get<float>(DataKey.InvincibilityTime, 0f);
+    public float InvincibilityTime => _data?.Get<float>(DataKey.InvincibilityTime, 0f) ?? 0f;
 
     // ================= C# Events =================
 
@@ -51,13 +62,6 @@ public partial class HurtboxComponent : Area2D
 
     public override void _Ready()
     {
-        _data = EntityManager.GetEntityData(this)!;
-        if (_data == null)
-        {
-            Log.Error($"[HurtboxComponent] 无法通过 EntityManager 获取 Data 容器！");
-            return;
-        }
-
         // 连接 area_entered 信号
         AreaEntered += OnAreaEntered;
 

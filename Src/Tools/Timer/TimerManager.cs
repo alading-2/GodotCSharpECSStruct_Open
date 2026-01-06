@@ -23,7 +23,7 @@ public partial class TimerManager : Node
     /// 使用 ModuleInitializer 确保在程序集加载时自动完成注册，无需手动在编辑器中配置。
     /// </summary>
     [ModuleInitializer]
-    public static void Initialize() => AutoLoad.Register("TimerManager", "res://Src/Tools/Timer/TimerManager.cs", AutoLoad.Priority.System);
+    public static void Initialize() => AutoLoad.Register("TimerManager", "res://Src/Tools/Timer/TimerManager.cs", AutoLoad.Priority.Tool, "ObjectPoolInit");
 
     /// <summary> 获取全局单例实例 </summary>
     public static TimerManager Instance => _instance;

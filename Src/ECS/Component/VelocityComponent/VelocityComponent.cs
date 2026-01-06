@@ -15,7 +15,7 @@ public partial class VelocityComponent : Node, IComponent
     // ================= IComponent 实现 =================
 
     private Data? _data;
-    private CharacterBody2D? _body;
+    private IEntity? _entity;
 
     public void OnComponentRegistered(Node entity)
     {
@@ -23,11 +23,7 @@ public partial class VelocityComponent : Node, IComponent
         if (entity is IEntity iEntity)
         {
             _data = iEntity.Data;
-        }
-
-        if (entity is CharacterBody2D body)
-        {
-            _body = body;
+            _entity = iEntity;
         }
     }
 
@@ -35,7 +31,7 @@ public partial class VelocityComponent : Node, IComponent
     {
         // 清理引用
         _data = null;
-        _body = null;
+        _entity = null;
     }
 
     // ================= 运行时状态 =================
@@ -66,40 +62,19 @@ public partial class VelocityComponent : Node, IComponent
 
     public override void _Ready()
     {
-        // 懒加载：如果 OnComponentRegistered 未被调用
-        if (_data == null)
-        {
-            _data = EntityManager.GetEntityData(this);
-        }
-
-        if (_body == null)
-        {
-            var entity = EntityManager.GetEntityByComponent(this);
-            if (entity is CharacterBody2D body)
-            {
-                _body = body;
-            }
-        }
-
-        if (_data == null || _body == null)
-        {
-            Log.Error("无法获取 Data 容器或 CharacterBody2D");
-            return;
-        }
-
-        Log.Success($"就绪, Parent: {_body.Name}");
+        Log.Success($"就绪, Parent: {(_entity as Node)?.Name}");
     }
 
     public override void _ExitTree()
     {
         _data = null;
-        _body = null;
+        _entity = null;
         Log.Trace("移动组件退出场景树");
     }
 
     public override void _Process(double delta)
     {
-        if (_body == null) return;
+        if (_entity is not CharacterBody2D body) return;
 
         // 获取输入
         Vector2 inputDir = InputManager.GetMoveInput();
@@ -114,11 +89,11 @@ public partial class VelocityComponent : Node, IComponent
         ClampVelocity();
 
         // 应用位移
-        _body.Velocity = Velocity;
-        _body.MoveAndSlide();
+        body.Velocity = Velocity;
+        body.MoveAndSlide();
 
         // 同步速度（物理引擎可能会修改）
-        Velocity = _body.Velocity;
+        Velocity = body.Velocity;
     }
 
     // ================= 公开方法 =================

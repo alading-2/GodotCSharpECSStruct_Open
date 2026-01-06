@@ -24,7 +24,7 @@ public partial class ParentManager : Node
     [ModuleInitializer]
     public static void Initialize()
     {
-        AutoLoad.Register("ParentManager", "res://Src/Tools/ParentManager/ParentManager.cs", AutoLoad.Priority.Core);
+        AutoLoad.Register("ParentManager", "res://Src/Tools/ParentManager/ParentManager.cs", AutoLoad.Priority.Core - 1);
     }
 
     public override void _EnterTree()

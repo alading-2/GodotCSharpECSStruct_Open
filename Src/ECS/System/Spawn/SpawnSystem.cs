@@ -18,7 +18,7 @@ public partial class SpawnSystem : Node
     {
         // 注册到 AutoLoad，现在使用 .tscn 场景文件而非 .cs 脚本
         // 添加对 ObjectPoolInit 的依赖，确保敌人对象池先于生成系统初始化
-        AutoLoad.Register("SpawnSystem", "res://Src/ECS/System/Spawn/SpawnSystem.tscn", AutoLoad.Priority.System);
+        AutoLoad.Register("SpawnSystem", "res://Src/ECS/System/Spawn/SpawnSystem.tscn", AutoLoad.Priority.System, "TimerManager");
     }
 
     private static readonly Log _log = new Log("SpawnSystem");
@@ -139,12 +139,7 @@ public partial class SpawnSystem : Node
             return;
         }
 
-        // 检查通用对象池是否存在
-        if (ObjectPoolManager.GetPool<Enemy>(PoolNames.EnemyPool) == null)
-        {
-            _log.Error($"严重错误：未找到通用敌人对象池 '{PoolNames.EnemyPool}'!波次将无法生成敌人。");
-            // 这里不直接 return,允许计时器跑完(空波次),或者选择中断
-        }
+
 
         foreach (var rule in SpawnConfig.SpawnRules)
         {
@@ -258,7 +253,7 @@ public partial class SpawnSystem : Node
         // 使用 EntityFactory 统一处理生成逻辑 (获取实例 + 数据注入)
         foreach (var pos in positions)
         {
-            var enemy = EntityManager.Spawn<Enemy>(PoolNames.EnemyPool, enemyData, pos);
+            var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, enemyData, pos);
             if (enemy == null)
             {
                 // 如果生成失败（如池已满且策略为 discard），则跳过
@@ -295,9 +290,9 @@ public partial class SpawnSystem : Node
     /// </summary>
     public void KillAllEnemies()
     {
-        // 获取通用对象池并执行全量回收
-        var pool = ObjectPoolManager.GetPool<Enemy>(PoolNames.EnemyPool);
-        pool.ReleaseAll();
-        _log.Debug("已清理所有活跃敌人 (EnemyPool)。");
+        // 通过类型名称获取对象池并执行全量回收
+        var pool = ObjectPoolManager.GetPool<Enemy>(typeof(Enemy).Name);
+        pool?.ReleaseAll();
+        _log.Debug("已清理所有活跃敌人。");
     }
 }

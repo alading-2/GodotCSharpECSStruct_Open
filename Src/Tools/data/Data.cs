@@ -16,7 +16,7 @@ using Godot;
 /// </summary>
 public class Data
 {
-    private static readonly Log _log = new("Data");
+    private static readonly Log _log = new("Data", LogLevel.Warning);
 
     /// <summary>
     /// 内部存储基础数据的字典

@@ -11,10 +11,10 @@ using System.Runtime.CompilerServices;
 public struct PoolNames
 {
     /// <summary> 基础敌人对象池 </summary>
-    public const string EnemyPool = "EnemyPool";
+    public const string EnemyPool = "Enemy";
 
     /// <summary> 定时器对象池 </summary>
-    public const string TimerPool = "TimerPool";
+    public const string TimerPool = "Timer";
 }
 
 /// <summary>
@@ -33,7 +33,7 @@ public partial class ObjectPoolInit : Node
     public static void Initialize()
     {
         // 对象池初始化需要早一点
-        AutoLoad.Register("ObjectPoolInit", "res://Src/Tools/ObjectPool/ObjectPoolInit.cs", AutoLoad.Priority.Core);
+        AutoLoad.Register("ObjectPoolInit", "res://Src/Tools/ObjectPool/ObjectPoolInit.cs", AutoLoad.Priority.Core, "ParentManager");
     }
 
 

@@ -190,6 +190,9 @@ public class ObjectPool<T> where T : class
     {
         var result = _createFunc();
 
+        // 注意: ECS 注册逻辑已移至 EntityManager.Spawn() 中
+        // ObjectPool 只负责对象生命周期管理,不再处理 ECS 注册
+
         if (result is Node node)
         {
             // 为新生成的节点分配唯一名称，避免 Godot 默认命名导致在场景树中难以定位或冲突

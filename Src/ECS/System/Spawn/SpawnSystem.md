@@ -36,30 +36,31 @@
 
 ## 核心逻辑流
 
-1.  **系统初始化 (`_Ready`)**:
+1. **系统初始化 (`_Ready`)**:
 
-    - 系统启动时,会自动读取 `SpawnConfig`。
-    - 遍历所有 `SpawnRules`,检查是否已存在对应的对象池。
-    - 如果不存在,则根据 `EnemyData.EnemyScene` 自动创建并注册 `ObjectPool<Node>`。
-    - 确保后续生成时 `ObjectPoolManager.GetPool(name)` 始终能获取到有效的池实例。
+   - 系统启动时,会自动读取 `SpawnConfig`。
+   - 遍历所有 `SpawnRules`,检查是否已存在对应的对象池。
+   - 如果不存在,则根据 `EnemyData.EnemyScene` 自动创建并注册 `ObjectPool<Node>`。
+   - 确保后续生成时 `ObjectPoolManager.GetPool(name)` 始终能获取到有效的池实例。
 
-2.  **启动波次 (`StartWave`)**:
+2. **启动波次 (`StartWave`)**:
 
-    - 使用 `TimerManager.CreateTimer()` 创建波次主计时器 (`_waveTimer`)。
-    - 筛选当前波次 (`CurrentWaveIndex`) 激活的所有规则。
-    - 初始化运行时状态 (`RuleRuntimeState`),重置累积时间。
-    - 使用 `TimerManager.CreateLoopTimer()` 创建核心轮询计时器 (`_checkTimer`)。
+   - 使用 `TimerManager.CreateTimer()` 创建波次主计时器 (`_waveTimer`)。
+   - 筛选当前波次 (`CurrentWaveIndex`) 激活的所有规则。
+   - 初始化运行时状态 (`RuleRuntimeState`),重置累积时间。
+   - 使用 `TimerManager.CreateLoopTimer()` 创建核心轮询计时器 (`_checkTimer`)。
 
-3.  **生成的驱动 (TimerManager Architecture)**:
+3. **生成的驱动 (TimerManager Architecture)**:
 
-    - 采用 **TimerManager 统一管理** 架构,所有计时器由对象池复用,零 GC 压力。
-    - `_checkTimer` 每 0.2 秒触发一次 `OnCheckTimerTimeout` 回调。
-    - 在回调中遍历所有激活的规则,累加 `delta` 时间。
-    - 当 `AccumulatedTime >= SpawnInterval` 时,触发生成逻辑并扣除时间(支持"追赶"机制以应对卡顿)。
+   - 采用 **TimerManager 统一管理** 架构,所有计时器由对象池复用,零 GC 压力。
+   - `_checkTimer` 每 0.2 秒触发一次 `OnCheckTimerTimeout` 回调。
+   - 在回调中遍历所有激活的规则,累加 `delta` 时间。
+   - 当 `AccumulatedTime >= SpawnInterval` 时,触发生成逻辑并扣除时间(支持"追赶"机制以应对卡顿)。
 
-4.  **动态适应**:
-    - 如果某一波没有任何规则匹配(空波次),系统会发出警告,但游戏流程不会中断。
-    - 支持无限波次模式。
+4. **动态适应**:
+
+   - 如果某一波没有任何规则匹配(空波次),系统会发出警告,但游戏流程不会中断。
+   - 支持无限波次模式。
 
 ## 公开接口
 

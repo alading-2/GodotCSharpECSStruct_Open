@@ -59,9 +59,10 @@ public partial class AutoLoad : Node
     public static class Priority
     {
         public const int Core = 0;      // 核心基础（日志、事件总线）
-        public const int System = 100;  // 系统服务（音频、资源加载、生成系统）
-        public const int Game = 200;    // 游戏业务（战斗逻辑、关卡管理）
-        public const int Debug = 900;   // 调试工具
+        public const int Tool = 100;    // 工具类（如调试工具）
+        public const int System = 200;  // 系统服务（音频、资源加载、生成系统）
+        public const int Game = 300;    // 游戏业务（战斗逻辑、关卡管理）
+        public const int Debug = 400;   // 调试工具
     }
 
     /// <summary>

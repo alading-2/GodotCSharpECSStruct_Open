@@ -70,13 +70,13 @@ public partial class Enemy : CharacterBody2D, IEntity
 // 场景：SpawnSystem 生成敌人
 
 // 1. 带位置（最常用）
-var enemy = EntityManager.Spawn<Enemy>("EnemyPool", enemyResource, spawnPosition);
+var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, enemyResource, spawnPosition);
 
 // 2. 无位置（Buff、纯逻辑实体）
-var buff = EntityManager.Spawn<Buff>("BuffPool", buffResource);
+var buff = EntityManager.Spawn<Buff>(ECSIndex.Entity.BuffEntity, buffResource);
 
 // 3. 带位置和方向（子弹、投射物）
-var bullet = EntityManager.Spawn<Bullet>("BulletPool", bulletResource, position, rotation);
+var bullet = EntityManager.Spawn<Bullet>(ECSIndex.Entity.BulletEntity, bulletResource, position, rotation);
 ```
 
 **自动化操作**：
@@ -101,7 +101,8 @@ public partial class HealthComponent : Node, IComponent
 {
     private static readonly Log _log = new("HealthComponent");
 
-    // 缓存 Entity 引用
+    // ================= 标准字段 =================
+    private Data? _data;
     private IEntity? _entity;
 
     // 事件
@@ -112,45 +113,44 @@ public partial class HealthComponent : Node, IComponent
 
     public void OnComponentRegistered(Node entity)
     {
+        // 组件注册时缓存引用
         if (entity is IEntity iEntity)
         {
+            _data = iEntity.Data;
             _entity = iEntity;
-            _log.Debug($"注册到 Entity: {entity.Name}");
         }
     }
 
     public void OnComponentUnregistered()
     {
+        // 清理事件和引用
         Damaged = null;
         Died = null;
+        _data = null;
+        _entity = null;
     }
 
-    // ================= 业务逻辑 =================
+    // ================= Godot 生命周期 =================
 
     public override void _Ready()
     {
-        // 懒加载：如果 OnComponentRegistered 未被调用
-        if (_entity == null)
-        {
-            var entity = EntityManager.GetEntityByComponent(this);
-            if (entity is IEntity iEntity)
-            {
-                _entity = iEntity;
-            }
-        }
+        // ✅ 仅做日志输出，不做验证
+        // ObjectPool 和 EntityManager 保证了初始化时序
+        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.MaxHp, 100f)}");
     }
+
+    // ================= 业务逻辑 =================
 
     /// <summary>
     /// 造成伤害
     /// </summary>
     public void TakeDamage(float amount)
     {
-        if (_entity == null) return;
+        if (_data == null) return;
 
-        var data = _entity.Data;
-        float currentHp = data.Get<float>(DataKey.CurrentHp);
+        float currentHp = _data.Get<float>(DataKey.CurrentHp);
         currentHp -= amount;
-        data.Set(DataKey.CurrentHp, currentHp);
+        _data.Set(DataKey.CurrentHp, currentHp);
 
         Damaged?.Invoke(amount);
 
@@ -165,52 +165,61 @@ public partial class HealthComponent : Node, IComponent
     /// </summary>
     public void Reset()
     {
-        if (_entity == null) return;
+        if (_data == null) return;
 
-        var data = _entity.Data;
-        float maxHp = data.Get<float>(DataKey.MaxHp, 10f);
-        data.Set(DataKey.CurrentHp, maxHp);
+        float maxHp = _data.Get<float>(DataKey.MaxHp, 100f);
+        _data.Set(DataKey.CurrentHp, maxHp);
     }
 }
 ```
 
 #### 2.2 Component 访问 Entity 的方式
 
-> [!IMPORTANT] > **禁止使用 `GetParent()`** 获取 Entity！所有 Component 必须通过 EntityManager 访问 Entity。
+> [!IMPORTANT] > **禁止使用 `GetParent()`** 获取 Entity！所有 Component 必须通过 `OnComponentRegistered` 缓存引用。
+
+**标准模式**（2026-01-05 更新）：
 
 ```csharp
-// 方式 1：通过 IComponent 回调缓存 Data（推荐，性能最佳）
-private Data? _data;
-
-public void OnComponentRegistered(Node entity)
+public partial class MyComponent : Node, IComponent
 {
-    if (entity is IEntity iEntity)
+    // ✅ 标准字段：统一使用 _data 和 _entity
+    private Data? _data;
+    private IEntity? _entity;
+
+    // ✅ 在 OnComponentRegistered 中初始化
+    public void OnComponentRegistered(Node entity)
     {
-        _data = iEntity.Data;  // 缓存 Data 引用
+        if (entity is IEntity iEntity)
+        {
+            _data = iEntity.Data;
+            _entity = iEntity;
+        }
     }
-}
 
-// 方式 2：在 _Ready 中通过 EntityManager 获取（懒加载）
-public override void _Ready()
-{
-    if (_data == null)
+    // ✅ _Ready 仅做日志或信号连接，不做验证
+    public override void _Ready()
     {
-        _data = EntityManager.GetEntityData(this);
+        Log.Debug("组件就绪");
     }
-}
 
-// 方式 3：需要完整 Entity 引用时
-var entity = EntityManager.GetEntityByComponent(this);
-if (entity is IEntity iEntity)
-{
-    var data = iEntity.Data;
+    // ✅ 需要特定类型时使用类型判断
+    public override void _Process(double delta)
+    {
+        if (_entity is CharacterBody2D body)
+        {
+            // 使用 body...
+        }
+    }
 }
 ```
 
 **核心规则**：
 
 - ❌ 禁止：`GetParent()` 或 `GetParent<T>()`
-- ✅ 推荐：`EntityManager.GetEntityData(this)` 或 `IComponent.OnComponentRegistered` 缓存
+- ❌ 禁止：在 `_Ready` 中验证或懒加载
+- ❌ 禁止：使用 `_owner`、`_body` 等多个引用字段
+- ✅ 推荐：在 `OnComponentRegistered` 中缓存 `_data` 和 `_entity`
+- ✅ 推荐：需要特定类型时使用 `is` 判断转换
 - ✅ 所有数据从 `Data` 容器增删改查
 
 ### 3. Entity 访问 Component
@@ -278,7 +287,7 @@ T? Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation
 
 **参数说明**：
 
-- `poolName`：对象池名称（必须在 [`ObjectPoolInit`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Init/ObjectPoolInit.cs) 中注册）
+- `poolNameOrScenePath`：ECSIndex 中定义的场景路径常量（如 `ECSIndex.Entity.EnemyEntity`），内部会自动通过 `typeof(T).Name` 查找对应对象池
 - `resource`：静态配置 Resource（如 `EnemyResource`）
 - `position`：初始位置
 - `rotation`：初始旋转角度（弧度）
@@ -288,14 +297,14 @@ T? Spawn<T>(string poolName, Resource resource, Vector2 position, float rotation
 ```csharp
 // SpawnSystem 中生成敌人
 var enemy = EntityManager.Spawn<Enemy>(
-    "EnemyPool",
+    ECSIndex.Entity.EnemyEntity,
     enemyResource,
     new Vector2(100, 100)
 );
 
 // 生成子弹
 var bullet = EntityManager.Spawn<Bullet>(
-    "BulletPool",
+    ECSIndex.Entity.BulletEntity,
     bulletResource,
     playerPos,
     shootAngle
@@ -313,7 +322,7 @@ T? GetComponent<T>(Node entity) where T : Node
 **示例**：
 
 ```csharp
-var enemy = EntityManager.Spawn<Enemy>("EnemyPool", resource, pos);
+var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, resource, pos);
 
 // 获取 HealthComponent
 var health = EntityManager.GetComponent<HealthComponent>(enemy);
@@ -545,7 +554,7 @@ public partial class SpawnSystem : Node
     private void SpawnEnemy(Vector2 position)
     {
         // 一行代码完成生成
-        var enemy = EntityManager.Spawn<Enemy>("EnemyPool", _enemyResource, position);
+        var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, _enemyResource, position);
 
         if (enemy == null)
         {
@@ -666,8 +675,9 @@ public partial class HealthComponent : Node, IComponent
 {
     private static readonly Log _log = new("HealthComponent");
 
-    // 数据容器引用
+    // ================= 标准字段 =================
     private Data? _data;
+    private IEntity? _entity;
 
     // 事件
     public event Action<float>? Damaged;
@@ -680,6 +690,7 @@ public partial class HealthComponent : Node, IComponent
         if (entity is IEntity iEntity)
         {
             _data = iEntity.Data;
+            _entity = iEntity;
         }
     }
 
@@ -687,25 +698,23 @@ public partial class HealthComponent : Node, IComponent
     {
         Damaged = null;
         Died = null;
+        _data = null;
+        _entity = null;
     }
 
     // ================= Godot 生命周期 =================
 
     public override void _Ready()
     {
-        // 懒加载：通过 EntityManager 直接获取 Data
-        if (_data == null)
-        {
-            _data = EntityManager.GetEntityData(this);
-        }
+        // ✅ 仅做日志输出
+        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.MaxHp, 100f)}");
+    }
 
-        if (_data == null)
-        {
-            _log.Error("无法获取 Data 容器！请确保该组件挂载在 IEntity 节点下。");
-            return;
-        }
-
-        _log.Debug("HealthComponent 就绪");
+    public override void _ExitTree()
+    {
+        // 清理事件
+        Damaged = null;
+        Died = null;
     }
 
     // ================= 业务逻辑 =================
@@ -788,20 +797,20 @@ public override void _ExitTree()
 }
 ```
 
-### 5. 对象池名称规范
+### 5. 统一使用 ECSIndex 引用 Entity
 
-对象池名称建议使用常量，避免硬编码：
+**强制规范**：所有 Spawn 调用必须使用 `ECSIndex` 中定义的场景路径常量：
 
 ```csharp
-public static class PoolNames
-{
-    public const string Enemy = "EnemyPool";
-    public const string Bullet = "BulletPool";
-}
+// ✅ 正确：使用 ECSIndex
+var enemy = EntityManager.Spawn<Enemy>(ECSIndex.Entity.EnemyEntity, resource, pos);
+var bullet = EntityManager.Spawn<Bullet>(ECSIndex.Entity.BulletEntity, resource, pos);
 
-// 使用
-var enemy = EntityManager.Spawn<Enemy>(PoolNames.Enemy, resource, pos);
+// ❌ 错误：硬编码字符串
+var enemy = EntityManager.Spawn<Enemy>("EnemyPool", resource, pos);
 ```
+
+**内部机制**：EntityManager 会自动通过 `typeof(T).Name` 查找对应的对象池，无需手动传入池名称。
 
 ---
 
