@@ -5,7 +5,7 @@
 /// 用于解决“子弹造成伤害，但需要统计到玩家身上”的问题。
 /// </para>
 /// </summary>
-public interface IUnit
+public interface IUnit : IEntity
 {
     /// <summary>
     /// 阵营标识

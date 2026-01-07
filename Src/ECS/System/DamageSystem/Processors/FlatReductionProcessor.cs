@@ -2,12 +2,11 @@ using Godot;
 
 /// <summary>
 /// 固定减伤处理器
-/// <para>Priority: 320</para>
 /// <para>最后的硬减伤（如“格挡 10 点伤害”）。</para>
 /// </summary>
 public class FlatReductionProcessor : IDamageProcessor
 {
-    public int Priority => 320;
+    public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {

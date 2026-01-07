@@ -14,19 +14,39 @@ public enum DataCategory
     Health,
 
     /// <summary>
+    /// 魔法系统（魔法值、魔法恢复等）
+    /// </summary>
+    Mana,
+
+    /// <summary>
     /// 攻击系统（伤害、攻速等）
     /// </summary>
     Attack,
 
     /// <summary>
-    /// 防御系统（闪避、减伤等）
+    /// 防御系统（防御、魔抗等）
     /// </summary>
     Defense,
+
+    /// <summary>
+    /// 技能系统（技能伤害、冷却缩减等）
+    /// </summary>
+    Skill,
 
     /// <summary>
     /// 移动系统（速度）
     /// </summary>
     Movement,
+
+    /// <summary>
+    /// 闪避相关（闪避率、无视闪避等）
+    /// </summary>
+    Dodge,
+
+    /// <summary>
+    /// 暴击相关（暴击率、暴击伤害等）
+    /// </summary>
+    Crit,
 
     /// <summary>
     /// 资源系统（拾取、经验等）

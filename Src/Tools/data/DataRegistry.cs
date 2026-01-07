@@ -10,18 +10,12 @@ public static class DataRegistry
     private static readonly Log _log = new("DataRegistry");
 
     private static readonly Dictionary<string, DataMeta> _metaRegistry = new();
-    private static readonly Dictionary<string, ComputedData> _computedRegistry = new();
 
     // --- 注册接口：由 DataInit 在游戏启动时调用 ---
 
     public static void Register(DataMeta meta)
     {
         _metaRegistry[meta.Key] = meta;
-    }
-
-    public static void RegisterComputed(ComputedData computed)
-    {
-        _computedRegistry[computed.Key] = computed;
     }
 
     // === 公共查询接口 ===
@@ -35,19 +29,12 @@ public static class DataRegistry
     }
 
     /// <summary>
-    /// 获取计算数据定义
-    /// </summary>
-    public static ComputedData? GetComputed(string key)
-    {
-        return _computedRegistry.TryGetValue(key, out var computed) ? computed : null;
-    }
-
-    /// <summary>
     /// 检查是否为计算数据
     /// </summary>
     public static bool IsComputed(string key)
     {
-        return _computedRegistry.ContainsKey(key);
+        var meta = GetMeta(key);
+        return meta?.IsComputed ?? false;
     }
 
     /// <summary>
@@ -56,17 +43,18 @@ public static class DataRegistry
     public static bool SupportModifiers(string key)
     {
         var meta = GetMeta(key);
-        return meta?.ActualSupportModifiers ?? false;
+        return meta?.SupportModifiers ?? false;
     }
 
     /// <summary>
-    /// 获取依赖指定数据的所有计算数据键
+    /// 获取依赖指定数据的所有DataKey，主要用在MarkDirty
+    /// 比如最终生命值 = 基础生命值 * (1 + 生命值加成/100)，基础生命值变了，最终生命值也要重新计算，这里返回的一般是依赖里面包含基础生命值的计算属性
     /// </summary>
     public static IEnumerable<string> GetDependentComputedKeys(string baseKey)
     {
-        return _computedRegistry
-            .Where(kvp => kvp.Value.DependsOn(baseKey))
-            .Select(kvp => kvp.Key);
+        return _metaRegistry.Values
+            .Where(m => m.IsComputed && m.Dependencies != null && m.Dependencies.Contains(baseKey))
+            .Select(m => m.Key);
     }
 
     /// <summary>
@@ -90,6 +78,6 @@ public static class DataRegistry
     /// </summary>
     public static IEnumerable<string> GetAllComputedKeys()
     {
-        return _computedRegistry.Keys;
+        return _metaRegistry.Values.Where(m => m.IsComputed).Select(m => m.Key);
     }
 }

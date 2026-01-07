@@ -7,7 +7,7 @@ using Godot;
 /// 架构：与 Player 逻辑分离，通过组件（Component）复用共享行为。
 /// </para>
 /// </summary>
-public partial class Enemy : CharacterBody2D, IEntity, IPoolable, IUnit
+public partial class Enemy : CharacterBody2D, IPoolable, IUnit
 {
     private static readonly Log _log = new("Enemy", LogLevel.Info);
 

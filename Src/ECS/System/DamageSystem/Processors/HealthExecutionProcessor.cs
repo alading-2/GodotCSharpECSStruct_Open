@@ -2,12 +2,11 @@ using Godot;
 
 /// <summary>
 /// 生命值结算处理器
-/// <para>Priority: 500</para>
 /// <para>实际执行扣血逻辑。</para>
 /// </summary>
 public class HealthExecutionProcessor : IDamageProcessor
 {
-    public int Priority => 500;
+    public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {
@@ -17,7 +16,7 @@ public class HealthExecutionProcessor : IDamageProcessor
 
         if (info.IsDodged) return;
 
-        var healthComp = EntityManager.GetComponent<HealthComponent>(info.Victim);
+        var healthComp = EntityManager.GetComponent<HealthComponent>(info.Victim as Node);
         if (healthComp != null)
         {
             // 执行扣血

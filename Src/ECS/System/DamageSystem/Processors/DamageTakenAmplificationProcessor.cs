@@ -2,12 +2,11 @@ using Godot;
 
 /// <summary>
 /// 受伤增幅处理器
-/// <para>Priority: 310</para>
 /// <para>处理“受到的伤害增加/减少 %” (Damage Taken Multiplier)。</para>
 /// </summary>
 public class DamageTakenAmplificationProcessor : IDamageProcessor
 {
-    public int Priority => 310;
+    public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {

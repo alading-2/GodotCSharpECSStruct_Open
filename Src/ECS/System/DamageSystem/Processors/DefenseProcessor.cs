@@ -1,50 +1,47 @@
 using Godot;
-
+using System;
 /// <summary>
 /// 防御处理器 (护甲/减伤)
-/// <para>Priority: 300</para>
 /// <para>计算护甲减免。</para>
 /// </summary>
 public class DefenseProcessor : IDamageProcessor
 {
-    public int Priority => 300;
+    public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {
-        if (info.IsDodged || info.FinalDamage <= 0) return;
-        if (info.Type == DamageType.True) return; // 真实伤害无视护甲
+        // if (info.Type == DamageType.True) return; // 真实伤害无视护甲
+        float armor = info.Victim.Data.Get<float>(DataKey.Armor, 0);
 
-        if (info.Victim is not IEntity victimEntity) return;
-
-        float armor = victimEntity.Data.Get<float>(DataKey.Armor, 0);
-
-        // Brotato Armor Formula: Damage Reduction % = Armor / (Armor + 15)
-        // Negative Armor increases damage: Damage Increase % = 1 - 1 / (1 - Armor/20) ?? 
-        // 简化实现：只处理正护甲，或者使用标准公式
-
-        if (armor != 0)
+        // 护甲减伤公式：Damage Reduction % = Armor / (Armor + Config.ArmorCoefficient)
+        // 负护甲增伤公式：Damage Increase % = 1 - 1 / (1 - Armor/20) ?? 
+        // 减伤/增伤比例(0.0-1.0)
+        float rate = 0f;
+        float originalParams = info.FinalDamage;
+        if (armor >= 0)
         {
-            float reduction = 0f;
-            if (armor >= 0)
-            {
-                reduction = armor / (armor + 15.0f);
-            }
-            else
-            {
-                // 负护甲增加伤害，这里暂不处理复杂公式，或简单地视为易伤
-                // 假设负护甲不提供减伤，反而增加受到的伤害?
-                // Brotato Wiki: Negative armor increases damage taken.
-                // Formula: taken = damage * (2 - (1 / (1 + abs(armor)/15))) ? No, let's look it up later.
-                // For now, let's just handle positive armor.
-            }
-
+            rate = armor / (armor + Config.ArmorCoefficient);
             // 限制最大减伤? (e.g. 90%)
-            if (reduction > 0.9f) reduction = 0.9f;
-
-            float originalParams = info.FinalDamage;
-            info.FinalDamage *= (1.0f - reduction);
-
-            info.AddLog($"Armor({armor}) reduced {(int)(originalParams - info.FinalDamage)}");
+            if (rate > 0.9f) rate = 0.9f;
+            info.FinalDamage *= 1.0f - rate;
+            info.AddLog($"护甲({armor}) 减少伤害： {(int)(originalParams - info.FinalDamage)}");
         }
+        else
+        {
+            // === 负护甲：线性增伤 (无上限) ===
+            // 逻辑：每 coefficient 点负护甲，额外增加 100% 的基础伤害。
+            // 公式：Multiplier = 1 + (|Armor| / coefficient)
+            float coefficient = 30f;
+            rate = 1 + Mathf.Abs(armor) / coefficient;
+            info.FinalDamage *= 1.0f + rate;
+
+            // 备选方案
+            // 负护甲增伤公式：Damage Increase % = damage * (2 - (1 / (1 + abs(armor)/15)))
+            // rate = 2 - 1 / (1 + Math.Abs(armor) / Config.ArmorCoefficient);
+            // info.FinalDamage *= rate;
+
+            info.AddLog($"护甲({armor}) 增加伤害： {(int)(originalParams - info.FinalDamage)}");
+        }
+
     }
 }

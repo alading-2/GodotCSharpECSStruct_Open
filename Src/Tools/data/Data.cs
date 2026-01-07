@@ -113,11 +113,21 @@ public class Data
     /// </summary>
     /// <typeparam name="T">期望获取的类型</typeparam>
     /// <param name="key">键名</param>
-    /// <param name="defaultValue">默认值（若未设置则使用此值）</param>
+    /// <param name="defaultValue">默认值（可选）。如果未提供，将使用 DataMeta 中注册的默认值</param>
     /// <returns>最终计算值</returns>
-    public T Get<T>(string key, T defaultValue = default!)
+    public T Get<T>(string key, T? defaultValue = default)
     {
-        return (T)GetValue(key, typeof(T), defaultValue!);
+        // 如果用户未提供默认值，尝试从元数据获取
+        object actualDefault = defaultValue!;
+        if (defaultValue == null || defaultValue.Equals(default(T)))
+        {
+            var meta = DataRegistry.GetMeta(key);
+            if (meta != null)
+            {
+                actualDefault = meta?.DefaultValue ?? meta.GetDefaultValue();
+            }
+        }
+        return (T)GetValue(key, typeof(T), actualDefault);
     }
 
     /// <summary>
@@ -129,22 +139,24 @@ public class Data
     /// <returns>最终对象值</returns>
     private object GetValue(string key, Type type, object defaultValue)
     {
-        // 步骤 1：检查是否为计算数据（Computed Data）
+        // 步骤 1：获取元数据
+        var meta = DataRegistry.GetMeta(key);
+
+        // 步骤 2：检查是否为计算数据（Computed Data）
         // 计算数据是由其他数据派生的，具有最高优先级
-        var computedData = DataRegistry.GetComputed(key);
-        if (computedData != null)
+        if (meta != null && meta.IsComputed)
         {
-            return GetComputedValueBoxed(key, computedData, defaultValue, type);
+            return GetComputedValueBoxed(key, meta, defaultValue, type);
         }
 
-        // 步骤 2：获取基础值（Base Value）
+        // 步骤 3：获取基础值（Base Value）
         // 如果基础字典中没有该键，直接返回默认值
         if (!_data.TryGetValue(key, out var baseValue) || baseValue == null)
         {
             return defaultValue;
         }
 
-        // 步骤 3：检查是否支持修改器（Modifiers）
+        // 步骤 4：检查是否支持修改器（Modifiers）
         // 只有在 DataRegistry 中声明支持修改器的数据才会进入修改器逻辑
         if (!DataRegistry.SupportModifiers(key))
         {
@@ -152,7 +164,7 @@ public class Data
             return ConvertValueBoxed(baseValue, type, defaultValue);
         }
 
-        // 步骤 4：应用修改器并返回最终值
+        // 步骤 5：应用修改器并返回最终值
         // 该方法内部包含缓存逻辑
         return GetModifiedValueBoxed(key, baseValue, defaultValue, type);
     }
@@ -547,7 +559,7 @@ public class Data
     /// <summary>
     /// 获取计算数据的值（带缓存逻辑）
     /// </summary>
-    private object GetComputedValueBoxed(string key, ComputedData computedData, object defaultValue, Type targetType)
+    private object GetComputedValueBoxed(string key, DataMeta meta, object defaultValue, Type targetType)
     {
         // 1. 检查缓存：如果该键不是“脏”的，且缓存中存在值，则直接返回
         if (!_dirtyKeys.Contains(key) && _cachedValues.TryGetValue(key, out var cached))
@@ -557,7 +569,7 @@ public class Data
         }
 
         // 2. 缓存失效或不存在，调用计算逻辑
-        var result = computedData.Compute(this);
+        var result = meta.Compute(this);
 
         // 3. 更新缓存并移除脏标记
         _cachedValues[key] = result;

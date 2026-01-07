@@ -3,6 +3,31 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
+/// 伤害类型
+/// </summary>
+public enum DamageType
+{
+    Physical, // 物理
+    Magical,  // 魔法
+    True      // 真实（无视护甲）
+}
+
+/// <summary>
+/// 伤害标签（位掩码），用于标记伤害属性
+/// </summary>
+[Flags]
+public enum DamageTags
+{
+    None = 0,
+    Melee = 1 << 0,       // 近战
+    Ranged = 1 << 1,      // 远程（投射物）
+    Area = 1 << 2,        // 范围伤害 (AOE)
+    Persistent = 1 << 3,  // 持续伤害 (DOT)
+    Explosion = 1 << 4,   // 爆炸
+    Engineering = 1 << 5  // 工程学
+}
+
+/// <summary>
 /// 伤害上下文
 /// <para>承载单次伤害的所有信息，贯穿整个处理管道。</para>
 /// </summary>
@@ -29,7 +54,7 @@ public class DamageInfo
     /// <summary>
     /// 受击者实体
     /// </summary>
-    public Node Victim { get; set; }
+    public IUnit Victim { get; set; }
 
     // === 数值信息 ===
     /// <summary>
@@ -47,9 +72,25 @@ public class DamageInfo
     public DamageTags Tags { get; set; }
 
     // === 状态标记 ===
+    /// <summary>
+    /// 是否暴击
+    /// </summary>
     public bool IsCritical { get; set; }
+
+    /// <summary>
+    /// 是否闪避
+    /// </summary>
     public bool IsDodged { get; set; }
-    public bool IsBlocked { get; set; } // 固定减伤完全抵消
+
+    /// <summary>
+    /// 是否被格挡（固定减伤完全抵消）
+    /// </summary>
+    public bool IsBlocked { get; set; }
+
+    /// <summary>
+    /// 是否结束，闪避、免疫、0伤害直接结束
+    /// </summary>
+    public bool IsEnd { get; set; }
 
     // === 辅助数据 ===
     public List<string> Logs { get; } = new();

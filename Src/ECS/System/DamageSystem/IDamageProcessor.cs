@@ -6,7 +6,7 @@ public interface IDamageProcessor
     /// <summary>
     /// 执行优先级（越小越先执行）
     /// </summary>
-    int Priority { get; }
+    int Priority { get; set; }
 
     /// <summary>
     /// 处理伤害

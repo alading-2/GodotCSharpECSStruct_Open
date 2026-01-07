@@ -3,12 +3,11 @@ using System;
 
 /// <summary>
 /// 吸血处理器
-/// <para>Priority: 600</para>
 /// <para>处理攻击者的吸血逻辑。</para>
 /// </summary>
 public class LifestealProcessor : IDamageProcessor
 {
-    public int Priority => 600;
+    public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {

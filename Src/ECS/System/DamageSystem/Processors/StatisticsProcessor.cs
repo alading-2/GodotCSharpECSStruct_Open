@@ -2,12 +2,11 @@ using Godot;
 
 /// <summary>
 /// 统计处理器
-/// <para>Priority: 700</para>
 /// <para>记录总伤害统计。</para>
 /// </summary>
 public class StatisticsProcessor : IDamageProcessor
 {
-    public int Priority => 700;
+    public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {

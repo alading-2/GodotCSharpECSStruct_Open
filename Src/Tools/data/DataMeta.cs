@@ -78,6 +78,18 @@ public class DataMeta
     /// </summary>
     public List<string>? Options { get; init; }
 
+    // === 计算属性支持（参考 TypeScript Schema ComputedPropertyDefinition） ===
+
+    /// <summary>
+    /// 依赖的数据键列表（仅计算属性使用）
+    /// </summary>
+    public string[]? Dependencies { get; init; }
+
+    /// <summary>
+    /// 计算函数（仅计算属性使用）
+    /// </summary>
+    public Func<Data, object>? Compute { get; init; }
+
     // === 智能属性（自动计算） ===
 
     /// <summary>
@@ -121,9 +133,9 @@ public class DataMeta
     public bool IsReferenceType => !Type.IsValueType;
 
     /// <summary>
-    /// 实际是否支持修改器（智能推断）
+    /// 是否为计算属性
     /// </summary>
-    public bool ActualSupportModifiers => SupportModifiers ?? IsNumeric;
+    public bool IsComputed => Compute != null;
 
     /// <summary>
     /// 是否有选项约束

@@ -26,8 +26,7 @@ public partial class TimerManager : Node
     public static void Initialize() => AutoLoad.Register("TimerManager", "res://Src/Tools/Timer/TimerManager.cs", AutoLoad.Priority.Tool, "ObjectPoolInit");
 
     /// <summary> 获取全局单例实例 </summary>
-    public static TimerManager Instance => _instance;
-    private static TimerManager _instance;
+    public static TimerManager Instance;
 
     private static readonly Log _log = new("TimerManager");
 
@@ -42,7 +41,7 @@ public partial class TimerManager : Node
 
     public override void _EnterTree()
     {
-        _instance = this;
+        Instance = this;
         _lastTicksMsec = Time.GetTicksMsec();
 
         // 从全局管理器获取定时器对象池
@@ -63,7 +62,7 @@ public partial class TimerManager : Node
         // 场景切换或退出时清理所有定时器和池
         _timerPool?.ReleaseAll();
         _timerPool?.Destroy();
-        _instance = null;
+        Instance = null;
     }
 
     /// <summary>
