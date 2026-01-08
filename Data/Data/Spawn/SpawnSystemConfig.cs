@@ -19,14 +19,14 @@ public static class SpawnSystemConfig
     /// 所有敌人的生成规则列表。
     /// 第一次访问时会从资源路径加载对应的 .tres 文件。
     /// </summary>
-    public static List<EnemySpawnRule> SpawnRules
+    public static List<EnemySpawnConfig> SpawnRules
     {
         get
         {
-            return new List<EnemySpawnRule>
+            return new List<EnemySpawnConfig>
                 {
-                    GD.Load<EnemySpawnRule>("res://Data/Spawn/SpawnRule/豺狼人生成规则.tres"),
-                    GD.Load<EnemySpawnRule>("res://Data/Spawn/SpawnRule/鱼人生成规则.tres")
+                    GD.Load<EnemySpawnConfig>("res://Data/Data/Spawn/SpawnConfig/豺狼人生成规则.tres"),
+                    GD.Load<EnemySpawnConfig>("res://Data/Data/Spawn/SpawnConfig/鱼人生成规则.tres")
                 };
         }
     }

@@ -48,7 +48,7 @@ public partial class HealthComponent : Node, IComponent
 
     public override void _Ready()
     {
-        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.MaxHp, 100f)}");
+        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.BaseHp, 100f)}");
     }
 
     public override void _ExitTree()
@@ -99,7 +99,7 @@ public partial class HealthComponent : Node, IComponent
         if (_data == null) return;
 
         float currentHp = _data.Get<float>(DataKey.CurrentHp);
-        float maxHp = _data.Get<float>(DataKey.MaxHp, 100f);
+        float maxHp = _data.Get<float>(DataKey.BaseHp, 100f);
 
         // 应用修改
         float newHp = currentHp + amount;
@@ -120,7 +120,7 @@ public partial class HealthComponent : Node, IComponent
         if (_data == null) return;
 
         // 从 Data 获取 MaxHp 并重置 CurrentHp
-        float maxHp = _data.Get<float>(DataKey.MaxHp, 100f);
+        float maxHp = _data.Get<float>(DataKey.BaseHp, 100f);
         _data.Set(DataKey.CurrentHp, maxHp);
     }
 }

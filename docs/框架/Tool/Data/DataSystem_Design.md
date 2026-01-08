@@ -348,7 +348,7 @@ public static class DataRegistry
             Dependencies = new[] { DataKey.AttackSpeed },
             Compute = (data) =>
             {
-                float attackSpeed = data.Get<float>(DataKey.AttackSpeed, 100);
+                float attackSpeed = data.Get<float>(DataKey.AttackSpeed);
                 return 1.0f / (attackSpeed / 100f);
             }
         });
@@ -359,10 +359,10 @@ public static class DataRegistry
             Dependencies = new[] { DataKey.Damage, DataKey.AttackSpeed, DataKey.CritChance, DataKey.CritDamage },
             Compute = (data) =>
             {
-                float damage = data.Get<float>(DataKey.Damage, 10);
-                float attackSpeed = data.Get<float>(DataKey.AttackSpeed, 100) / 100f;
-                float critChance = data.Get<float>(DataKey.CritChance, 0) / 100f;
-                float critDamage = data.Get<float>(DataKey.CritDamage, 150) / 100f;
+                float damage = data.Get<float>(DataKey.Damage);
+                float attackSpeed = data.Get<float>(DataKey.AttackSpeed) / 100f;
+                float critChance = data.Get<float>(DataKey.CritChance) / 100f;
+                float critDamage = data.Get<float>(DataKey.CritDamage) / 100f;
 
                 float avgDamage = damage * (1f + critChance * (critDamage - 1f));
                 return avgDamage * attackSpeed;

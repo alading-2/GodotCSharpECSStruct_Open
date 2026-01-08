@@ -11,7 +11,7 @@ public class DefenseProcessor : IDamageProcessor
     public void Process(DamageInfo info)
     {
         // if (info.Type == DamageType.True) return; // 真实伤害无视护甲
-        float armor = info.Victim.Data.Get<float>(DataKey.Armor, 0);
+        float armor = info.Victim.Data.Get<float>(DataKey.Armor);
 
         // 护甲减伤公式：Damage Reduction % = Armor / (Armor + Config.ArmorCoefficient)
         // 负护甲增伤公式：Damage Increase % = 1 - 1 / (1 - Armor/20) ?? 

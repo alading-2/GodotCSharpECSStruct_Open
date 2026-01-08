@@ -52,7 +52,7 @@ public partial class HealthComponent : Node, IComponent
 
         // 初始化数据
         var data = entity.GetData();
-        data.Set("CurrentHp", data.Get<float>("MaxHp", 100f));
+        data.Set("CurrentHp", data.Get<float>("MaxHp"));
 
         _log.Debug($"Component 已注册到 Entity: {entity.Name}");
     }

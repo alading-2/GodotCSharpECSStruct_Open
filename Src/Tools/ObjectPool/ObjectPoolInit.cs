@@ -33,7 +33,13 @@ public partial class ObjectPoolInit : Node
     public static void Initialize()
     {
         // 对象池初始化需要早一点
-        AutoLoad.Register("ObjectPoolInit", "res://Src/Tools/ObjectPool/ObjectPoolInit.cs", AutoLoad.Priority.Core, "ParentManager");
+        AutoLoad.Register(new AutoLoad.AutoLoadConfig
+        {
+            Name = "ObjectPoolInit",
+            Path = "res://Src/Tools/ObjectPool/ObjectPoolInit.cs",
+            Priority = AutoLoad.Priority.Core,
+
+        });
     }
 
 

@@ -112,7 +112,7 @@ public partial class ECSTest : Node
 
         var data = new Data();
         // Use a registered key that supports modifiers
-        string keyHp = DataKey.MaxHp;
+        string keyHp = DataKey.BaseHp;
 
         // 1. Basic Set/Get
         data.Set(keyHp, 100f);

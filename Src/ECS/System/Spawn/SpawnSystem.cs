@@ -18,7 +18,13 @@ public partial class SpawnSystem : Node
     {
         // 注册到 AutoLoad，现在使用 .tscn 场景文件而非 .cs 脚本
         // 添加对 ObjectPoolInit 的依赖，确保敌人对象池先于生成系统初始化
-        AutoLoad.Register("SpawnSystem", "res://Src/ECS/System/Spawn/SpawnSystem.tscn", AutoLoad.Priority.System, "TimerManager");
+        AutoLoad.Register(new AutoLoad.AutoLoadConfig
+        {
+            Name = "SpawnSystem",
+            Path = "res://Src/ECS/System/Spawn/SpawnSystem.tscn",
+            Priority = AutoLoad.Priority.System,
+            Dependencies = ["TimerManager"]
+        });
     }
 
     private static readonly Log _log = new Log("SpawnSystem");
@@ -43,7 +49,7 @@ public partial class SpawnSystem : Node
     // 运行时状态跟踪 - 使用 struct 避免每波生成大量状态对象导致的 GC 压力
     private struct RuleRuntimeState
     {
-        public EnemySpawnRule Rule;
+        public EnemySpawnConfig Rule;
         public float AccumulatedTime; // 累积时间
     }
     private List<RuleRuntimeState> _activeStates = new();
@@ -281,7 +287,7 @@ public partial class SpawnSystem : Node
     /// <param name="rule">生成规则配置</param>
     /// <param name="waveIndex">当前波次索引 (1-based)</param>
     /// <returns>如果当前波次在规则设定的 [MinWave, MaxWave] 范围内且数据合法，则返回 true</returns>
-    private bool IsRuleActiveForWave(EnemySpawnRule rule, int waveIndex)
+    private bool IsRuleActiveForWave(EnemySpawnConfig rule, int waveIndex)
     {
         // 基础安全性检查：规则或关联的敌人数据不能为空
         if (rule?.EnemyData == null) return false;

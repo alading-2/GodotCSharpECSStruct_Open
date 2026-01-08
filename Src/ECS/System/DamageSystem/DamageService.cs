@@ -18,7 +18,12 @@ public partial class DamageService : Node
     [ModuleInitializer]
     public static void Initialize()
     {
-        AutoLoad.Register("DamageService", "res://Src/ECS/System/DamageSystem/DamageService.cs", AutoLoad.Priority.System);
+        AutoLoad.Register(new AutoLoad.AutoLoadConfig
+        {
+            Name = "DamageService",
+            Path = "res://Src/ECS/System/DamageSystem/DamageService.cs",
+            Priority = AutoLoad.Priority.System
+        });
     }
 
     /// <summary> 获取全局单例实例 </summary>
@@ -57,8 +62,6 @@ public partial class DamageService : Node
     private void DamageServiceRegister()
     {
         // 注册默认处理器（按计算逻辑顺序）
-        // TODO: 后续通过反射或依赖注入自动注册
-
         // 1. 基础伤害计算（获取攻击者基础属性）
         RegisterProcessor(new BaseDamageProcessor(), 100);
         // 2. 暴击判定与计算

@@ -348,7 +348,8 @@ public static class DataRegistry
             Dependencies = new[] { DataKey.AttackSpeed },
             Compute = (data) =>
             {
-                float attackSpeed = data.Get<float>(DataKey.AttackSpeed, 100);
+                // 对于已注册的数据键，无需传入默认值
+                float attackSpeed = data.Get<float>(DataKey.AttackSpeed);
                 return 1.0f / (attackSpeed / 100f);
             }
         });
@@ -359,10 +360,11 @@ public static class DataRegistry
             Dependencies = new[] { DataKey.Damage, DataKey.AttackSpeed, DataKey.CritChance, DataKey.CritDamage },
             Compute = (data) =>
             {
-                float damage = data.Get<float>(DataKey.Damage, 10);
-                float attackSpeed = data.Get<float>(DataKey.AttackSpeed, 100) / 100f;
-                float critChance = data.Get<float>(DataKey.CritChance, 0) / 100f;
-                float critDamage = data.Get<float>(DataKey.CritDamage, 150) / 100f;
+                // 所有已注册的数据键都会自动使用 DataRegistry 中的默认值
+                float damage = data.Get<float>(DataKey.Damage);
+                float attackSpeed = data.Get<float>(DataKey.AttackSpeed) / 100f;
+                float critChance = data.Get<float>(DataKey.CritChance) / 100f;
+                float critDamage = data.Get<float>(DataKey.CritDamage) / 100f;
 
                 float avgDamage = damage * (1f + critChance * (critDamage - 1f));
                 return avgDamage * attackSpeed;
@@ -651,7 +653,7 @@ public partial class Player : Entity
 
     public override void _Ready()
     {
-        // ✅ 获取数据（两种方式效果一致）
+        // ✅ 获取数据（已注册的键无需默认值）
         int level = Data.Get<int>(DataKey.Level);     // 显式指定类型
         var speed = Data.Get(DataKey.Speed);          // 自动推断类型 (var)
         var damage = Data.Get(DataKey.Damage);
@@ -663,7 +665,7 @@ public partial class Player : Entity
            id: "Weapon_Sword"
        ));
 
-       // ✅ 计算数据（自动计算）
+       // ✅ 计算数据（自动计算，无需默认值）
        float dps = Data.Get<float>(DataKey.DPS);
        float attackInterval = Data.Get<float>(DataKey.AttackInterval);
 
@@ -708,9 +710,12 @@ float speed = _attr.Get("Speed", "BaseSpeed");
 **新代码（类型安全，Entity 中使用）**:
 
 ```csharp
-// Entity 中直接使用 Data 属性
+// Entity 中直接使用 Data 属性（已注册的键无需默认值）
 float damage = Data.Get<float>(DataKey.Damage);
 float speed = Data.Get<float>(DataKey.Speed);
+
+// DataRegistry 会自动提供默认值
+// 如果数据不存在，返回在 DataMeta 中注册的默认值
 ```
 
 ---
@@ -737,8 +742,8 @@ float speed = Data.Get<float>(DataKey.Speed);
 
 ---
 
-**文档版本**: v2.1  
+**文档版本**: v2.3  
 **创建日期**: 2025-01-01  
-**最后更新**: 2025-01-03  
+**最后更新**: 2025-01-08  
 **作者**: Kiro AI Assistant  
-**状态**: ✅ 已实施 (v2.1: 引入 Type 替代枚举，支持自动推断和选项限制)
+**状态**: ✅ 已实施 (v2.3: 改进默认值处理，无需为已注册键传入默认值)

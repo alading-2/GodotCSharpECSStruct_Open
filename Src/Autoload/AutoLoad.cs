@@ -18,7 +18,12 @@ using System.Runtime.CompilerServices;
 /// [ModuleInitializer]
 /// public static void Initialize()
 /// {
-///     AutoLoad.Register("AudioManager", "res://Src/Managers/AudioManager.tscn", AutoLoad.Priority.System);
+///     AutoLoad.Register(new AutoLoad.AutoLoadConfig 
+///     {
+///         Name = "AudioManager",
+///         Path = "res://Src/Managers/AudioManager.tscn",
+///         Priority = AutoLoad.Priority.System
+///     });
 /// }
 /// </code>
 /// </example>
@@ -34,24 +39,33 @@ public partial class AutoLoad : Node
     public static AutoLoad Instance { get; private set; } = default!;
 
     /// <summary>
-    /// 内部配置结构，存储单例的元数据。
+    /// AutoLoad 配置对象
     /// </summary>
-    internal record ManagerConfig(string Name, string Path, int Priority, string[] Dependencies);
+    public record AutoLoadConfig
+    {
+        /// <summary> 全局唯一标识名（建议与类名一致） </summary>
+        public required string Name { get; init; }
+        /// <summary> 资源路径 (.tscn 或 .cs) </summary>
+        public required string Path { get; init; }
+        /// <summary> 加载优先级 (Priority 常量) </summary>
+        public required int Priority { get; init; }
+        /// <summary> 父节点路径 (例如 "AutoLoad/DataRegistry")，默认为 "AutoLoad" </summary>
+        public string ParentPath { get; init; } = "AutoLoad";
+        /// <summary> 依赖项的名称列表 </summary>
+        public string[] Dependencies { get; init; } = Array.Empty<string>();
+    }
 
     /// <summary>
     /// 存储通过静态方式预注册的配置。
     /// </summary>
-    private static readonly List<ManagerConfig> _staticConfigs = new();
+    private static readonly List<AutoLoadConfig> _staticConfigs = new();
 
     /// <summary>
     /// 运行时容器，存储已实例化的单例节点引用。
     /// </summary>
     private readonly Dictionary<string, Node> _singletons = new();
 
-    /// <summary>
-    /// 当前待加载的配置队列。
-    /// </summary>
-    private readonly List<ManagerConfig> _configs = new();
+
 
     /// <summary>
     /// 优先级常量定义。数值越小，加载越早。
@@ -72,15 +86,17 @@ public partial class AutoLoad : Node
     {
         // 初始化单例静态引用
         Instance = this;
+
+        // 初始化 ParentManager (注入 Root)
+        ParentManager.Init(GetTree().Root);
+
         _log.Info("🚀 游戏启动序列开始...");
 
-        // 1. 合并所有预注册的静态配置
-        _configs.AddRange(_staticConfigs);
 
-        // 2. 执行遗留的显式配置（不推荐）
+        // 1. 执行遗留的显式配置（不推荐）
         Configure();
 
-        // 3. 执行加载流程
+        // 2. 执行加载流程
         LoadAll();
     }
 
@@ -98,25 +114,20 @@ public partial class AutoLoad : Node
     /// 静态注册接口：允许任何类在任何地方向 AutoLoad 注册。
     /// 推荐在各自类的 [ModuleInitializer] 中调用。
     /// </summary>
-    /// <param name="name">全局唯一标识名（建议与类名一致）</param>
-    /// <param name="path">资源路径 (.tscn 或 .cs)</param>
-    /// <param name="priority">加载优先级 (Priority 常量)</param>
-    /// <param name="dependsOn">依赖项的名称列表</param>
-    public static void Register(string name, string path, int priority, params string[] dependsOn)
+    /// <param name="config">注册配置对象</param>
+    public static void Register(AutoLoadConfig config)
     {
-        var config = new ManagerConfig(name, path, priority, dependsOn);
-
         if (Instance != null)
         {
-            // 如果引导器已在运行，则动态注入并立即加载
-            Instance._configs.Add(config);
-            Instance.LoadOne(config);
+            _log.Error($"[AutoLoad] 错过初始化阶段! 无法注册模块 '{config.Name}'。\n" +
+                       $"AutoLoad 仅用于游戏启动前的系统引导。如需运行时动态创建系统，请直接实例化 Node 并挂载到 ParentManager。");
+            return;
         }
-        else
-        {
-            // 否则加入待处理队列，等待 _Ready 统一处理
-            _staticConfigs.Add(config);
-        }
+
+        // [ModuleInitializer]（模块初始化器）：是在 程序集（DLL）被加载时 立即执行的。这是一个非常早期的阶段，发生在 Godot 引擎完全初始化场景树之前。
+        // _Ready：是在节点（Node）进入场景树后 才执行的。
+        // 正常注册流程（_Ready 执行前）
+        _staticConfigs.Add(config);
     }
 
     /// <summary>
@@ -124,12 +135,15 @@ public partial class AutoLoad : Node
     /// </summary>
     private void LoadAll()
     {
-        _configs.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+        _staticConfigs.Sort((a, b) => a.Priority.CompareTo(b.Priority));
 
-        foreach (var config in _configs)
+        foreach (var config in _staticConfigs)
         {
             LoadOne(config);
         }
+
+        // 加载完成后清空静态配置，释放引用
+        _staticConfigs.Clear();
 
         _log.Success($"✅ 初始化序列完成! 共激活 {_singletons.Count} 个全局模块。");
     }
@@ -137,17 +151,20 @@ public partial class AutoLoad : Node
     /// <summary>
     /// 实例化并挂载单个模块。
     /// </summary>
-    private void LoadOne(ManagerConfig config)
+    private void LoadOne(AutoLoadConfig config)
     {
         if (_singletons.ContainsKey(config.Name)) return;
 
         // 依赖检查
-        foreach (var dep in config.Dependencies)
+        if (config.Dependencies != null)
         {
-            if (!_singletons.ContainsKey(dep))
+            foreach (var dep in config.Dependencies)
             {
-                _log.Error($"💥 [{config.Name}] 加载失败: 依赖项 [{dep}] 未就绪。");
-                return;
+                if (!_singletons.ContainsKey(dep))
+                {
+                    _log.Error($"💥 [{config.Name}] 加载失败: 依赖项 [{dep}] 未就绪。");
+                    return;
+                }
             }
         }
 
@@ -159,27 +176,41 @@ public partial class AutoLoad : Node
 
         try
         {
+            // 1. 加载资源 (支持 .tscn 场景或 .cs 脚本)
             var res = GD.Load(config.Path);
+
+            // 2. 根据资源类型进行实例化
             Node? instance = res switch
             {
+                // 如果是场景文件，直接实例化节点树
                 PackedScene scene => scene.Instantiate(),
+                // 如果是纯 C# 脚本，创建脚本对象并转换为 Node（要求该类必须继承自 Node）
                 CSharpScript script => script.New().As<Node>(),
                 _ => null
             };
 
-            if (instance == null) throw new Exception("无法创建节点实例。");
+            if (instance == null) throw new Exception("无法创建节点实例。类型不符合要求或实例化失败。");
 
+            // 3. 设置节点名称（在场景树中显示的唯一标识）
             instance.Name = config.Name;
-            AddChild(instance);
+
+            // 处理挂载点
+            Node parent = this; // 默认挂载到 AutoLoad
+
+            parent = ParentManager.EnsurePath(this, config.ParentPath ?? "AutoLoad");
+
+            parent.AddChild(instance);
             _singletons[config.Name] = instance;
 
-            _log.Info($"📦 [Loaded] {config.Name}");
+            _log.Info($"📦 [Loaded] {config.Name} 注册成功，Priority：{config.Priority}");
         }
         catch (Exception e)
         {
             _log.Error($"❌ 模块 [{config.Name}] 实例化异常: {e.Message}");
         }
     }
+
+
 
     /// <summary>
     /// 获取指定的单例实例。

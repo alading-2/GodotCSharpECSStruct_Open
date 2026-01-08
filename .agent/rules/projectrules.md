@@ -30,7 +30,7 @@ Log.SetLevel("ClassName", LogLevel.Debug);  // 针对特定类调试
 // Node 扩展方法，自动管理生命周期
 var data = node.GetData();
 data.Set("HP", 100);
-int hp = data.Get<int>("HP", 0);
+int hp = data.Get<int>("HP");
 data.Add("Score", 10);  // 累加
 data.Multiply("Damage", 1.5f);  // 乘法
 

@@ -91,82 +91,56 @@ public class Data
     }
 
     /// <summary>
-    /// 获取最终值（自动推断类型）
-    /// 逻辑：优先从注册表获取元数据，根据元数据定义的类型和默认值进行获取
-    /// </summary>
-    public object Get(string key)
-    {
-        var meta = DataRegistry.GetMeta(key);
-        if (meta == null)
-        {
-            // 如果未注册，尝试直接从基础数据字典获取
-            if (_data.TryGetValue(key, out var val)) return val;
-            _log.Warn($"未注册的数据键: {key}");
-            return null!;
-        }
-        // 使用元数据定义的类型进行统一获取流程
-        return GetValue(key, meta.Type, meta.GetDefaultValue());
-    }
-
-    /// <summary>
     /// 获取最终值（泛型访问，编译期类型安全）
+    /// 核心逻辑：统一处理计算数据、修改器和基础值
     /// </summary>
     /// <typeparam name="T">期望获取的类型</typeparam>
     /// <param name="key">键名</param>
     /// <param name="defaultValue">默认值（可选）。如果未提供，将使用 DataMeta 中注册的默认值</param>
     /// <returns>最终计算值</returns>
-    public T Get<T>(string key, T? defaultValue = default)
-    {
-        // 如果用户未提供默认值，尝试从元数据获取
-        object actualDefault = defaultValue!;
-        if (defaultValue == null || defaultValue.Equals(default(T)))
-        {
-            var meta = DataRegistry.GetMeta(key);
-            if (meta != null)
-            {
-                actualDefault = meta?.DefaultValue ?? meta.GetDefaultValue();
-            }
-        }
-        return (T)GetValue(key, typeof(T), actualDefault);
-    }
-
-    /// <summary>
-    /// 核心获取流程（统一处理计算数据、修改器和基础值）
-    /// </summary>
-    /// <param name="key">键名</param>
-    /// <param name="type">目标类型</param>
-    /// <param name="defaultValue">默认值</param>
-    /// <returns>最终对象值</returns>
-    private object GetValue(string key, Type type, object defaultValue)
+    public T Get<T>(string key, object? defaultValue = null)
     {
         // 步骤 1：获取元数据
         var meta = DataRegistry.GetMeta(key);
 
-        // 步骤 2：检查是否为计算数据（Computed Data）
+        // 步骤 2：确定默认值（优先级：用户提供 > meta 默认值 > 类型推断）
+        if (defaultValue == null)
+        {
+            if (meta != null)
+            {
+                defaultValue = meta.GetDefaultValue();
+            }
+            else
+            {
+                defaultValue = DataMeta.GetTypeDefaultValue(typeof(T));
+            }
+        }
+
+        // 步骤 3：检查是否为计算数据（Computed Data）
         // 计算数据是由其他数据派生的，具有最高优先级
         if (meta != null && meta.IsComputed)
         {
-            return GetComputedValueBoxed(key, meta, defaultValue, type);
+            return (T)GetComputedValueBoxed(key, meta, defaultValue, typeof(T));
         }
 
-        // 步骤 3：获取基础值（Base Value）
+        // 步骤 4：获取基础值（Base Value）
         // 如果基础字典中没有该键，直接返回默认值
         if (!_data.TryGetValue(key, out var baseValue) || baseValue == null)
         {
-            return defaultValue;
+            return (T)defaultValue;
         }
 
-        // 步骤 4：检查是否支持修改器（Modifiers）
+        // 步骤 5：检查是否支持修改器（Modifiers）
         // 只有在 DataRegistry 中声明支持修改器的数据才会进入修改器逻辑
         if (!DataRegistry.SupportModifiers(key))
         {
             // 不支持修改器，直接进行类型转换后返回
-            return ConvertValueBoxed(baseValue, type, defaultValue);
+            return (T)ConvertValueBoxed(baseValue, typeof(T), defaultValue);
         }
 
-        // 步骤 5：应用修改器并返回最终值
+        // 步骤 6：应用修改器并返回最终值
         // 该方法内部包含缓存逻辑
-        return GetModifiedValueBoxed(key, baseValue, defaultValue, type);
+        return (T)GetModifiedValueBoxed(key, baseValue, defaultValue, typeof(T));
     }
 
     /// <summary>

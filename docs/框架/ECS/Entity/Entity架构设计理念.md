@@ -249,7 +249,7 @@ EntityManager.Spawn 注入数据
 
 ```csharp
 // 读取数据
-float hp = entity.Data.Get<float>(DataKey.CurrentHp, 100f);
+float hp = entity.Data.Get<float>(DataKey.CurrentHp);
 
 // 写入数据
 entity.Data.Set(DataKey.CurrentHp, 80f);

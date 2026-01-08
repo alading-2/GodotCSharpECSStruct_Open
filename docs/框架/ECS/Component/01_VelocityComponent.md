@@ -253,7 +253,7 @@ public void ApplySlowEffect(Node target, float duration)
     var data = target.GetData();
 
     // 保存原始速度
-    float originalSpeed = data.Get<float>("Speed", 400f);
+    float originalSpeed = data.Get<float>("Speed");
 
     // 减速 50%
     data.Multiply("Speed", 0.5f);

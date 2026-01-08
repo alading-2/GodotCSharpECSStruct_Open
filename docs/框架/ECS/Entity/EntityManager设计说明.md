@@ -506,7 +506,7 @@ public override void _Ready()
     var data = EntityManager.GetEntityData(this);
     if (data != null)
     {
-        float speed = data.Get<float>(DataKey.Speed, 400f);
+        float speed = data.Get<float>(DataKey.Speed);
     }
 }
 ```

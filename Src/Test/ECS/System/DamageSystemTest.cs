@@ -39,7 +39,7 @@ public partial class DamageSystemTest : Node
         EntityManager.AddComponent(victim, healthComp);
 
         // Init Data
-        victim.Data.Set(DataKey.MaxHp, 100f);
+        victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
 
         // Prepare DamageInfo
@@ -75,7 +75,7 @@ public partial class DamageSystemTest : Node
         var healthComp = new HealthComponent();
         EntityManager.AddComponent(victim, healthComp);
 
-        victim.Data.Set(DataKey.MaxHp, 100f);
+        victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
 
         // Armor = 15 -> 50% reduction
@@ -106,7 +106,7 @@ public partial class DamageSystemTest : Node
         var healthComp = new HealthComponent();
         EntityManager.AddComponent(victim, healthComp);
 
-        victim.Data.Set(DataKey.MaxHp, 100f);
+        victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
         victim.Data.Set(DataKey.Shield, 20f); // 20 Shield
 
@@ -140,7 +140,7 @@ public partial class DamageSystemTest : Node
         var healthComp = new HealthComponent();
         EntityManager.AddComponent(victim, healthComp);
 
-        victim.Data.Set(DataKey.MaxHp, 100f);
+        victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
         victim.Data.Set(DataKey.DodgeChance, 110f); // 100% Dodge (Assuming Cap > 100 for test, or processor caps it?)
                                                     // Processor caps at 60%. So we can't guarantee dodge.
@@ -161,9 +161,8 @@ public partial class DamageSystemTest : Node
         var healthComp = new HealthComponent();
         EntityManager.AddComponent(victim, healthComp);
 
-        attacker.Data.Set(DataKey.Damage, 50f); // +50% Damage (assuming Damage is %)
-
-        victim.Data.Set(DataKey.MaxHp, 100f);
+        attacker.Data.Set(DataKey.BaseAttack, 50f); // +50% Damage (assuming Damage is %)
+        victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
 
         var info = new DamageInfo

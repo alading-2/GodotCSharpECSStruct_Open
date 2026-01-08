@@ -148,19 +148,28 @@ public class DataMeta
     public object GetDefaultValue()
     {
         if (DefaultValue != null) return DefaultValue;
+        return GetTypeDefaultValue(Type);
+    }
 
+    /// <summary>
+    /// 根据类型推断默认值（静态方法，无需 DataMeta 实例）
+    /// </summary>
+    /// <param name="type">目标类型</param>
+    /// <returns>该类型的默认值</returns>
+    public static object GetTypeDefaultValue(Type type)
+    {
         // 根据类型推断默认值
-        if (Type == typeof(int)) return 0;
-        if (Type == typeof(float)) return 0f;
-        if (Type == typeof(double)) return 0.0;
-        if (Type == typeof(bool)) return false;
-        if (Type == typeof(string)) return "";
-        if (Type.IsEnum) return Enum.GetValues(Type).GetValue(0)!;
+        if (type == typeof(int)) return 0;
+        if (type == typeof(float)) return 0f;
+        if (type == typeof(double)) return 0.0;
+        if (type == typeof(bool)) return false;
+        if (type == typeof(string)) return "";
+        if (type.IsEnum) return Enum.GetValues(type).GetValue(0)!;
 
         // 如果是值类型，返回其默认实例
-        if (Type.IsValueType)
+        if (type.IsValueType)
         {
-            return Activator.CreateInstance(Type)!;
+            return Activator.CreateInstance(type)!;
         }
 
         return null!;

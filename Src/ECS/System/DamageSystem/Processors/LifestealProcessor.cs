@@ -22,7 +22,7 @@ public class LifestealProcessor : IDamageProcessor
 
         if (info.Instigator is IEntity instigatorEntity)
         {
-            float lifestealChance = instigatorEntity.Data.Get<float>(DataKey.LifeSteal, 0);
+            float lifestealChance = instigatorEntity.Data.Get<float>(DataKey.LifeSteal);
 
             // Brotato 逻辑：LifeSteal 是触发回血 1 点的概率？还是百分比吸血？
             // Brotato Wiki: Life Steal is a chance to heal 1 HP when damaging an enemy. Max 10HP/wave cap usually?

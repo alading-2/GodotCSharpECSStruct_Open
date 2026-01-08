@@ -19,16 +19,14 @@ public class CritProcessor : IDamageProcessor
 
         // 从攻击者数据中获取暴击率 (0-100)
         // 使用 DataKey.CritChance 确保键名统一
-        float critChance = instigatorEntity.Data.Get<float>(DataKey.CritChance, 0);
+        float critChance = instigatorEntity.Data.Get<float>(DataKey.CritRate);
 
         // 执行随机判定：如果随机数 (0.0-1.0) * 100 小于暴击率，则触发暴击
         if (GD.Randf() * 100 <= critChance)
         {
-            // 获取暴击倍率
-            // Brotato 中默认暴击倍率通常在 1.5x 到 2.0x 之间，取决于武器类型
-            // 从实体数据中获取，如果没有设置，默认为 1.5 倍
-            float critMultiplier = instigatorEntity.Data.Get<float>(DataKey.CritDamage, 1f);
-
+            // 获取暴击伤害
+            float critMultiplier = instigatorEntity.Data.Get<float>(DataKey.CritDamage, 1.5f);
+            critMultiplier /= 100f; //暴击伤害采用百分比
             // 标记此伤害为暴击（UI 可能会根据此标志显示大字或特殊特效）
             info.IsCritical = true;
 

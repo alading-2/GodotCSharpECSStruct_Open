@@ -424,8 +424,8 @@ private static void RegisterComputedData()
         Dependencies = new[] { DataKey.MaxMana, DataKey.ManaRegen },
         Compute = (data) =>
         {
-            float maxMana = data.Get<float>(DataKey.MaxMana, 100f);
-            float manaRegen = data.Get<float>(DataKey.ManaRegen, 0f);
+            float maxMana = data.Get<float>(DataKey.MaxMana);
+            float manaRegen = data.Get<float>(DataKey.ManaRegen);
             return maxMana + manaRegen * 10f; // 示例公式
         }
     });
@@ -502,6 +502,35 @@ float unknown = Data.Get<float>("UnknownKey", 0f);
 // 数据为 null，返回默认值
 Data.Set(DataKey.Damage, null);
 float damage = Data.Get<float>(DataKey.Damage, 10f); // 返回 10
+```
+
+### 6. 默认值的智能处理
+
+Data 系统会自动处理默认值，优先级如下：
+
+```csharp
+// 优先级 1: 用户传入的默认值（可选参数）
+float damage = Data.Get<float>(DataKey.Damage, 999f);  // 如果不存在，返回 999f
+
+// 优先级 2: DataRegistry 中注册的默认值
+float damage = Data.Get<float>(DataKey.Damage);  // 如果不存在，返回 DataMeta 中定义的默认值
+
+// 优先级 3: 类型推断的默认值
+float unknownValue = Data.Get<float>("UnknownKey");  // 如果不存在且未注册，返回 0f (float 的默认值)
+```
+
+**最佳实践**：
+
+```csharp
+// ✅ 推荐：对于已注册的数据键，无需传入默认值参数
+float armor = Data.Get<float>(DataKey.Armor);
+float critChance = Data.Get<float>(DataKey.CritRate);
+
+// ✅ 可选：对于未注册但需要特定默认值的情况，传入默认值参数
+float customValue = Data.Get<float>("CustomKey", 100f);
+
+// ❌ 不推荐：对已注册的数据键传入与 DataMeta 定义不同的默认值
+float damage = Data.Get<float>(DataKey.Damage, 999f);  // 可能导致行为不一致
 ```
 
 ## 🎯 最佳实践
@@ -586,6 +615,12 @@ public override void _Process(double delta)
 
 ## 🔄 版本历史
 
+- **v2.3** (2025-01-08)
+  - 改进 `Data.Get` 方法的默认值处理
+  - 无需为已注册的数据键传入默认值参数
+  - 自动使用 `DataRegistry` 中定义的默认值
+  - 更新所有 Damage System Processor 代码以遵循新的最佳实践
+
 - **v2.2** (2025-01-03) - `DataModifier` 新增 `Source` 属性，支持按来源追踪 - 新增 `RemoveModifiersBySource`，优化装备/Buff 移除逻辑 - 新增 `ApplyDataAsModifiers`，支持将 Data 转换为修改器 - 新增 `LoadFromResource`，统一 Resource 注入逻辑（原 `EntityManager.InjectResourceData`）
 
   - **v2.1** (2025-01-03)
@@ -606,4 +641,4 @@ public override void _Process(double delta)
 ---
 
 **维护者**: Trae AI
-**最后更新**: 2025-01-03
+**最后更新**: 2025-01-08

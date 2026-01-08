@@ -33,7 +33,7 @@ public partial class HitboxComponent : Area2D, IComponent
     /// <summary>
     /// 获取伤害值。
     /// </summary>
-    public float Damage => _data?.Get<float>(DataKey.Damage, 10f) ?? 10f;
+    public float Damage => _data?.Get<float>(DataKey.BaseAttack, 10f) ?? 10f;
 
     /// <summary>
     /// 获取击退力。

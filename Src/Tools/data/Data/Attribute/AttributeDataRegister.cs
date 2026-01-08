@@ -1,16 +1,53 @@
 
+using Godot;
+using System.Runtime.CompilerServices;
+
 // 说明：百分比存的是1-100，需要除以100再使用
-public static class AttributeDataRegister
+public partial class AttributeDataRegister : Node
 {
-    public static void Register()
+    private static readonly Log _log = new Log("AttributeDataRegister");
+
+    [ModuleInitializer]
+    public static void Initialize()
     {
+        AutoLoad.Register(new AutoLoad.AutoLoadConfig
+        {
+            Name = "AttributeDataRegister",
+            Path = "res://Src/Tools/Data/Data/Attribute/AttributeDataRegister.cs",
+            Priority = AutoLoad.Priority.Core,
+            ParentPath = "AutoLoad/DataRegistry"
+        });
+    }
+
+    public override void _Ready()
+    {
+        _log.Info("AttributeDataRegister注册属性数据...");
         // ========================================
         // 生命相关 (Health)
         // ========================================
         // 基础生命值
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseHp, DisplayName = "基础生命值", Description = "基础生命值", Category = DataCategory.Health, Type = typeof(float), DefaultValue = 10f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseHp,
+            DisplayName = "基础生命值",
+            Description = "基础生命值",
+            Category = DataCategory.Health,
+            Type = typeof(float),
+            DefaultValue = 10f,
+            MinValue = 0
+        });
         // 生命值加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.HpBonus, DisplayName = "生命值加成", Description = "生命值百分比加成", Category = DataCategory.Health, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.HpBonus,
+            DisplayName = "生命值加成",
+            Description = "生命值百分比加成",
+            Category = DataCategory.Health,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 最终生命值
         DataRegistry.Register(new DataMeta
         {
@@ -30,11 +67,40 @@ public static class AttributeDataRegister
             }
         });
         // 基础生命恢复
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseHpRegen, DisplayName = "基础生命恢复", Description = "每秒恢复的基础生命值", Category = DataCategory.Health, Type = typeof(float), DefaultValue = 0f });// 恢复可为负
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseHpRegen,
+            DisplayName = "基础生命恢复",
+            Description = "每秒恢复的基础生命值",
+            Category = DataCategory.Health,
+            Type = typeof(float),
+            DefaultValue = 0f
+        }); // 恢复可为负
         // 生命恢复加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.HpRegenBonus, DisplayName = "生命恢复加成", Description = "生命恢复百分比加成", Category = DataCategory.Health, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.HpRegenBonus,
+            DisplayName = "生命恢复加成",
+            Description = "生命恢复百分比加成",
+            Category = DataCategory.Health,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 百分比生命恢复
-        DataRegistry.Register(new DataMeta { Key = DataKey.PercentHpRegen, DisplayName = "百分比生命恢复", Description = "每秒基于最大生命值的百分比恢复", Category = DataCategory.Health, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = Config.MaxPercentRegen, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.PercentHpRegen,
+            DisplayName = "百分比生命恢复",
+            Description = "每秒基于最大生命值的百分比恢复",
+            Category = DataCategory.Health,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = Config.MaxPercentRegen,
+            IsPercentage = true
+        });
         // 最终生命恢复
         DataRegistry.Register(new DataMeta
         {
@@ -58,14 +124,43 @@ public static class AttributeDataRegister
             }
         });
         // 吸血百分比
-        DataRegistry.Register(new DataMeta { Key = DataKey.LifeSteal, DisplayName = "吸血百分比", Description = "吸血百分比", Category = DataCategory.Health, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.LifeSteal,
+            DisplayName = "吸血百分比",
+            Description = "吸血百分比",
+            Category = DataCategory.Health,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // ========================================
         // 魔法相关 (Mana)
         // ========================================
         // 基础魔法值
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseMana, DisplayName = "基础魔法值", Description = "基础魔法值", Category = DataCategory.Mana, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseMana,
+            DisplayName = "基础魔法值",
+            Description = "基础魔法值",
+            Category = DataCategory.Mana,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0
+        });
         // 魔法加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.ManaBonus, DisplayName = "魔法加成", Description = "魔法值百分比加成", Category = DataCategory.Mana, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.ManaBonus,
+            DisplayName = "魔法加成",
+            Description = "魔法值百分比加成",
+            Category = DataCategory.Mana,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 最终魔法值
         DataRegistry.Register(new DataMeta
         {
@@ -85,11 +180,40 @@ public static class AttributeDataRegister
             }
         });
         // 基础魔法恢复
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseManaRegen, DisplayName = "基础魔法恢复", Description = "每秒恢复的基础魔法值", Category = DataCategory.Mana, Type = typeof(float), DefaultValue = 0f });// 恢复可为负
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseManaRegen,
+            DisplayName = "基础魔法恢复",
+            Description = "每秒恢复的基础魔法值",
+            Category = DataCategory.Mana,
+            Type = typeof(float),
+            DefaultValue = 0f
+        }); // 恢复可为负
         // 魔法恢复加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.ManaRegenBonus, DisplayName = "魔法恢复加成", Description = "魔法恢复百分比加成", Category = DataCategory.Mana, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.ManaRegenBonus,
+            DisplayName = "魔法恢复加成",
+            Description = "魔法恢复百分比加成",
+            Category = DataCategory.Mana,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 百分比魔法恢复
-        DataRegistry.Register(new DataMeta { Key = DataKey.PercentManaRegen, DisplayName = "百分比魔法恢复", Description = "基于最大魔法值的百分比恢复", Category = DataCategory.Mana, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = Config.MaxPercentRegen, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.PercentManaRegen,
+            DisplayName = "百分比魔法恢复",
+            Description = "基于最大魔法值的百分比恢复",
+            Category = DataCategory.Mana,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = Config.MaxPercentRegen,
+            IsPercentage = true
+        });
         // 最终魔法恢复
         DataRegistry.Register(new DataMeta
         {
@@ -116,9 +240,28 @@ public static class AttributeDataRegister
         // 攻击相关 (Attack)
         // ========================================
         // 基础攻击力
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseAttack, DisplayName = "基础攻击力", Description = "基础攻击力", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseAttack,
+            DisplayName = "基础攻击力",
+            Description = "基础攻击力",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0
+        });
         // 攻击力加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.AttackBonus, DisplayName = "攻击力加成", Description = "攻击力百分比加成", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.AttackBonus,
+            DisplayName = "攻击力加成",
+            Description = "攻击力百分比加成",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 最终攻击力
         DataRegistry.Register(new DataMeta
         {
@@ -137,15 +280,33 @@ public static class AttributeDataRegister
                 return MyMath.AttributeBonusCalculation(baseAttack, bonus);
             }
         });
-
         // ========================================
         // 攻速相关 (AttackSpeed)
         // ========================================
         // 基础攻速
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseAttackSpeed, DisplayName = "基础攻速", Description = "基础攻击速度", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 100f, MinValue = 0, MaxValue = 1000 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseAttackSpeed,
+            DisplayName = "基础攻速",
+            Description = "基础攻击速度",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 100f,
+            MinValue = 0,
+            MaxValue = 1000
+        });
         // 攻速加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.AttackSpeedBonus, DisplayName = "攻速加成", Description = "攻击速度百分比加成", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
-
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.AttackSpeedBonus,
+            DisplayName = "攻速加成",
+            Description = "攻击速度百分比加成",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 最终攻速
         DataRegistry.Register(new DataMeta
         {
@@ -182,22 +343,79 @@ public static class AttributeDataRegister
             }
         });
         // 伤害增幅
-        DataRegistry.Register(new DataMeta { Key = DataKey.DamageAmplification, DisplayName = "伤害增幅", Description = "伤害增幅百分比", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.DamageAmplification,
+            DisplayName = "伤害增幅",
+            Description = "伤害增幅百分比",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 护甲穿透
-        DataRegistry.Register(new DataMeta { Key = DataKey.Penetration, DisplayName = "护甲穿透", Description = "护甲穿透值", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.Penetration,
+            DisplayName = "护甲穿透",
+            Description = "护甲穿透值",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0
+        });
         // 攻击范围
-        DataRegistry.Register(new DataMeta { Key = DataKey.Range, DisplayName = "攻击范围", Description = "攻击范围", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 100f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.Range,
+            DisplayName = "攻击范围",
+            Description = "攻击范围",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 100f,
+            MinValue = 0
+        });
         // 击退
-        DataRegistry.Register(new DataMeta { Key = DataKey.Knockback, DisplayName = "击退", Description = "击退敌人的距离", Category = DataCategory.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = 1000 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.Knockback,
+            DisplayName = "击退",
+            Description = "击退敌人的距离",
+            Category = DataCategory.Attack,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = 1000
+        });
 
 
         // ========================================
         // 防御相关 (Defense)
         // ========================================
         // 基础防御
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseDefense, DisplayName = "基础防御", Description = "基础防御力", Category = DataCategory.Defense, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseDefense,
+            DisplayName = "基础防御",
+            Description = "基础防御力",
+            Category = DataCategory.Defense,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0
+        });
         // 防御加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.DefenseBonus, DisplayName = "防御加成", Description = "防御力百分比加成", Category = DataCategory.Defense, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.DefenseBonus,
+            DisplayName = "防御加成",
+            Description = "防御力百分比加成",
+            Category = DataCategory.Defense,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 最终防御
         DataRegistry.Register(new DataMeta
         {
@@ -217,19 +435,68 @@ public static class AttributeDataRegister
             }
         });
         // 伤害减免
-        DataRegistry.Register(new DataMeta { Key = DataKey.DamageReduction, DisplayName = "伤害减免", Description = "伤害减免百分比", Category = DataCategory.Defense, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = Config.MaxDamageReduction, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.DamageReduction,
+            DisplayName = "伤害减免",
+            Description = "伤害减免百分比",
+            Category = DataCategory.Defense,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = Config.MaxDamageReduction,
+            IsPercentage = true
+        });
         // 护盾
-        DataRegistry.Register(new DataMeta { Key = DataKey.Shield, DisplayName = "护盾", Description = "护盾值", Category = DataCategory.Defense, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.Shield,
+            DisplayName = "护盾",
+            Description = "护盾值",
+            Category = DataCategory.Defense,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0
+        });
         // 反伤
-        DataRegistry.Register(new DataMeta { Key = DataKey.Thorns, DisplayName = "反伤", Description = "反弹受到伤害的百分比", Category = DataCategory.Defense, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = 500, IsPercentage = true });
-
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.Thorns,
+            DisplayName = "反伤",
+            Description = "反弹受到伤害的百分比",
+            Category = DataCategory.Defense,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = 500,
+            IsPercentage = true
+        });
         // ========================================
         // 技能相关 (Skill)
         // ========================================
         // 基础技能伤害
-        DataRegistry.Register(new DataMeta { Key = DataKey.BaseSkillDamage, DisplayName = "基础技能伤害", Description = "基础技能伤害百分比", Category = DataCategory.Skill, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.BaseSkillDamage,
+            DisplayName = "基础技能伤害",
+            Description = "基础技能伤害百分比",
+            Category = DataCategory.Skill,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0
+        });
         // 技能伤害加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.SkillDamageBonus, DisplayName = "技能伤害加成", Description = "技能伤害百分比加成", Category = DataCategory.Skill, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.SkillDamageBonus,
+            DisplayName = "技能伤害加成",
+            Description = "技能伤害百分比加成",
+            Category = DataCategory.Skill,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 最终技能伤害
         DataRegistry.Register(new DataMeta
         {
@@ -250,15 +517,45 @@ public static class AttributeDataRegister
             }
         });
         // 技能冷却缩减
-        DataRegistry.Register(new DataMeta { Key = DataKey.CooldownReduction, DisplayName = "技能冷却缩减", Description = "技能冷却缩减百分比", Category = DataCategory.Skill, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = Config.MaxCooldownReduction, IsPercentage = true });
-
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.CooldownReduction,
+            DisplayName = "技能冷却缩减",
+            Description = "技能冷却缩减百分比",
+            Category = DataCategory.Skill,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = Config.MaxCooldownReduction,
+            IsPercentage = true
+        });
         // ========================================
         // 移动相关 (Movement)
         // ========================================
         // 移动速度
-        DataRegistry.Register(new DataMeta { Key = DataKey.MoveSpeed, DisplayName = "移动速度", Description = "移动速度", Category = DataCategory.Movement, Type = typeof(float), DefaultValue = 100f, MinValue = 0, MaxValue = Config.MaxMoveSpeed });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.MoveSpeed,
+            DisplayName = "移动速度",
+            Description = "移动速度",
+            Category = DataCategory.Movement,
+            Type = typeof(float),
+            DefaultValue = 100f,
+            MinValue = 0,
+            MaxValue = Config.MaxMoveSpeed
+        });
         // 移动速度加成
-        DataRegistry.Register(new DataMeta { Key = DataKey.MoveSpeedBonus, DisplayName = "移动速度加成", Description = "移动速度百分比加成", Category = DataCategory.Movement, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.MoveSpeedBonus,
+            DisplayName = "移动速度加成",
+            Description = "移动速度百分比加成",
+            Category = DataCategory.Movement,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            IsPercentage = true
+        });
         // 最终移动速度
         DataRegistry.Register(new DataMeta
         {
@@ -281,14 +578,45 @@ public static class AttributeDataRegister
         // 闪避相关 (Dodge)
         // ========================================
         // 闪避几率
-        DataRegistry.Register(new DataMeta { Key = DataKey.DodgeChance, DisplayName = "闪避几率", Description = "闪避几率", Category = DataCategory.Dodge, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = Config.MaxDodgeChance, IsPercentage = true });
-
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.DodgeChance,
+            DisplayName = "闪避几率",
+            Description = "闪避几率",
+            Category = DataCategory.Dodge,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = Config.MaxDodgeChance,
+            IsPercentage = true
+        });
         // ========================================
         // 暴击相关 (Crit)
         // ========================================
         // 暴击率
-        DataRegistry.Register(new DataMeta { Key = DataKey.CritRate, DisplayName = "暴击率", Description = "暴击率", Category = DataCategory.Crit, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = Config.MaxCritRate, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.CritRate,
+            DisplayName = "暴击率",
+            Description = "暴击率",
+            Category = DataCategory.Crit,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            MaxValue = Config.MaxCritRate,
+            IsPercentage = true
+        });
         // 暴击伤害
-        DataRegistry.Register(new DataMeta { Key = DataKey.CritDamage, DisplayName = "暴击伤害", Description = "暴击伤害百分比", Category = DataCategory.Crit, Type = typeof(float), DefaultValue = 100f, MinValue = 0, IsPercentage = true });
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.CritDamage,
+            DisplayName = "暴击伤害",
+            Description = "暴击伤害百分比",
+            Category = DataCategory.Crit,
+            Type = typeof(float),
+            DefaultValue = 100f,    //默认100%
+            MinValue = 0,
+            IsPercentage = true
+        });
     }
 }

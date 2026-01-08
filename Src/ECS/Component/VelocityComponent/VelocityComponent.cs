@@ -14,8 +14,8 @@ public partial class VelocityComponent : Node, IComponent
 
     // ================= IComponent 实现 =================
 
-    private Data? _data;
-    private IEntity? _entity;
+    private Data _data;
+    private IEntity _entity;
 
     public void OnComponentRegistered(Node entity)
     {
@@ -44,19 +44,14 @@ public partial class VelocityComponent : Node, IComponent
     /// <summary>
     /// 获取速度
     /// </summary>
-    public float Speed => _data?.Get<float>(DataKey.Speed, 400f) ?? 400f;
-
-    /// <summary>
-    /// 获取最大速度
-    /// </summary>
-    public float MaxSpeed => _data?.Get<float>(DataKey.MaxSpeed, 1000f) ?? 1000f;
+    public float Speed => _data.Get<float>(DataKey.MoveSpeed);
 
     /// <summary>
     /// 加速度因子
     /// <para>值越大，加速越快。</para>
     /// <para>典型值: 10.0 (正常) ~ 20.0 (快速)。</para>
     /// </summary>
-    public float Acceleration => _data?.Get<float>(DataKey.Acceleration, 10.0f) ?? 10.0f;
+    public float Acceleration => _data.Get<float>(DataKey.Acceleration);
 
     // ================= Godot 生命周期 =================
 
@@ -85,9 +80,6 @@ public partial class VelocityComponent : Node, IComponent
         // 平滑插值
         Velocity = Velocity.Lerp(targetVelocity, 1.0f - Mathf.Exp(-Acceleration * (float)delta));
 
-        // 确保不超过最大速度
-        ClampVelocity();
-
         // 应用位移
         body.Velocity = Velocity;
         body.MoveAndSlide();
@@ -113,7 +105,6 @@ public partial class VelocityComponent : Node, IComponent
     public void SetVelocity(Vector2 velocity)
     {
         Velocity = velocity;
-        ClampVelocity();
         Log.Trace($"设置速度: {Velocity}");
     }
 
@@ -135,14 +126,4 @@ public partial class VelocityComponent : Node, IComponent
 
     // ================= 私有方法 =================
 
-    /// <summary>
-    /// 将速度限制在 MaxSpeed 内
-    /// </summary>
-    private void ClampVelocity()
-    {
-        if (Velocity.Length() > MaxSpeed)
-        {
-            Velocity = Velocity.Normalized() * MaxSpeed;
-        }
-    }
 }

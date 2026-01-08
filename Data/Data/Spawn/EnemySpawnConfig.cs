@@ -1,10 +1,10 @@
 using Godot;
 
 /// <summary>
-/// 敌人生成规则 - 定义某种敌人出现的波次范围和生成逻辑
+/// 敌人生成设置 - 定义某种敌人出现的波次范围和生成逻辑
 /// </summary>
 [GlobalClass]
-public partial class EnemySpawnRule : Resource
+public partial class EnemySpawnConfig : Resource
 {
     /// <summary> 需要生成的敌人数据 </summary>
     [Export] public EnemyResource EnemyData { get; set; }
@@ -42,5 +42,5 @@ public partial class EnemySpawnRule : Resource
     /// </summary>
     [Export] public int Weight { get; set; } = 10;
 
-    public EnemySpawnRule() { }
+    public EnemySpawnConfig() { }
 }
