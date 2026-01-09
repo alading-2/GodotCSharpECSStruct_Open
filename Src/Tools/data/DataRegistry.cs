@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-
+using System;
 /// <summary>
 /// 数据注册表 - 管理所有数据的元数据和计算规则
 /// 仅作为元数据存储库，由 DataInit 驱动初始化
@@ -60,7 +60,7 @@ public static class DataRegistry
     /// <summary>
     /// 获取指定分类的所有数据元数据
     /// </summary>
-    public static IEnumerable<DataMeta> GetMetaByCategory(DataCategory category)
+    public static IEnumerable<DataMeta> GetMetaByCategory(Enum category)
     {
         return _metaRegistry.Values.Where(m => m.Category == category);
     }

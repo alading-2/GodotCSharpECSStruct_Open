@@ -28,7 +28,7 @@ public partial class BaseDataRegister : Node
             Key = DataKey.Name,
             DisplayName = "名称",
             Description = "实体的名称",
-            Category = DataCategory.Basic,
+            Category = BaseCategory.Basic,
             Type = typeof(string),
             DefaultValue = ""
         });
@@ -38,7 +38,7 @@ public partial class BaseDataRegister : Node
             Key = DataKey.Level,
             DisplayName = "等级",
             Description = "实体的等级",
-            Category = DataCategory.Basic,
+            Category = BaseCategory.Basic,
             Type = typeof(int),
             DefaultValue = 1,
             MinValue = 1,

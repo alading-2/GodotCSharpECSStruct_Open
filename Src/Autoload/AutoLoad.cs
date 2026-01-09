@@ -16,15 +16,24 @@ using System.Runtime.CompilerServices;
 /// 推荐的系统注册方式（在各自系统中实现）：
 /// <code>
 /// [ModuleInitializer]
-/// public static void Initialize()
+/// using System.Runtime.CompilerServices;
+/// public partial class MySystem : Node
 /// {
-///     AutoLoad.Register(new AutoLoad.AutoLoadConfig 
+///     [ModuleInitializer]
+///     public static void Initialize()
 ///     {
-///         Name = "AudioManager",
-///         Path = "res://Src/Managers/AudioManager.tscn",
-///         Priority = AutoLoad.Priority.System
-///     });
-/// }
+///         AutoLoad.Register(new AutoLoad.AutoLoadConfig
+///         {
+///             Name = nameof(MySystem),
+///             Path = "res://Src/Systems/MySystem.cs", // 或 .tscn 路径
+///             Priority = AutoLoad.Priority.System,
+///             // 可选：指定挂载父节点，默认为 "AutoLoad"
+///             ParentPath = "AutoLoad/MySystems",
+///             // 可选：指定依赖项，确保依赖模块先加载
+///             Dependencies = new[] { "OtherSystem" }
+//         });
+//     }
+// }
 /// </code>
 /// </example>
 public partial class AutoLoad : Node
@@ -209,8 +218,6 @@ public partial class AutoLoad : Node
             _log.Error($"❌ 模块 [{config.Name}] 实例化异常: {e.Message}");
         }
     }
-
-
 
     /// <summary>
     /// 获取指定的单例实例。

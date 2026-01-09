@@ -26,3 +26,5 @@ Mandatory User Confirmation: A user confirmation process must be triggered befor
 Display Details: Clearly list the file or folder paths to be deleted.
 
 Wait for Instruction: The system must wait for an explicit confirmation command from the user (e.g., "Confirm" or "Y") before performing physical deletion.
+
+3.以资深游戏开发者集合现代游戏设计框架深度思考

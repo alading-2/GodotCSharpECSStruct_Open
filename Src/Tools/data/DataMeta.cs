@@ -35,7 +35,7 @@ public class DataMeta
     /// <summary>
     /// 数据分类（可选，默认 Basic）
     /// </summary>
-    public DataCategory Category { get; init; } = DataCategory.Basic;
+    public Enum Category { get; init; }
 
     /// <summary>
     /// 默认值（可选，根据 Type 自动推断）

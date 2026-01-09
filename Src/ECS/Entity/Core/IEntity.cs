@@ -23,4 +23,10 @@ public interface IEntity
     /// 通常使用 GetInstanceId().ToString()
     /// </summary>
     string EntityId { get; }
+
+    /// <summary>
+    /// 实体局部事件总线
+    /// 用于组件间通信 (Component <-> Component) 或 (Component <-> Entity)
+    /// </summary>
+    EventBus Events { get; }
 }

@@ -14,6 +14,7 @@ public enum DamageType
 
 /// <summary>
 /// 伤害标签（位掩码），用于标记伤害属性
+/// 用位运算最核心的原因：支持多重属性叠加，一个伤害可能同时具有多种标签。比如近战范围伤害、远程爆炸效果。
 /// </summary>
 [Flags]
 public enum DamageTags

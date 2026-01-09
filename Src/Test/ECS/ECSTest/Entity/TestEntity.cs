@@ -6,7 +6,10 @@ namespace BrotatoMy.Test
     public partial class TestEntity : Node2D, IEntity, IPoolable
     {
         private static readonly Log _log = new Log("TestEntity");
-
+        /// <summary>
+        /// 实体局部事件总线
+        /// </summary>
+        public EventBus Events { get; } = new EventBus();
         // IEntity Implementation
         public Data Data { get; private set; } = new Data();
         public string EntityId { get; private set; } = string.Empty;

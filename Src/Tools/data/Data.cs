@@ -18,6 +18,13 @@ public class Data
 {
     private static readonly Log _log = new("Data", LogLevel.Warning);
 
+    private readonly IEntity? _owner;
+
+    public Data(IEntity? owner = null)
+    {
+        _owner = owner;
+    }
+
     /// <summary>
     /// 内部存储基础数据的字典
     /// </summary>
@@ -42,12 +49,8 @@ public class Data
     /// 当任何数据发生变化时触发的全局事件
     /// 参数依次为：键名 (Key), 旧值 (OldValue), 新值 (NewValue)
     /// </summary>
-    public event Action<string, object?, object?>? OnValueChanged;
+    // 事件监听移交给 Entity.Events
 
-    /// <summary>
-    /// 特定键名的监听器字典
-    /// </summary>
-    private readonly Dictionary<string, Action<object?, object?>> _listeners = new();
 
     // ================= 基础数据操作 =================
 
@@ -405,41 +408,10 @@ public class Data
         _modifiers.Clear();
     }
 
-    // ================= 事件监听 =================
+    // ================= 事件监听 (已移除) =================
+    // 请使用 Entity.Events.On(GameEventType.Data.PropertyChanged, ...)
+    // 数据变更事件负载类型: (string Key, object? OldValue, object? NewValue)
 
-    /// <summary>
-    /// 注册特定数据项的变更监听器
-    /// </summary>
-    public void On(string key, Action<object?, object?> callback)
-    {
-        if (!_listeners.ContainsKey(key))
-        {
-            _listeners[key] = callback;
-        }
-        else
-        {
-            _listeners[key] += callback;
-        }
-    }
-
-    /// <summary>
-    /// 注销特定数据项的变更监听器
-    /// </summary>
-    public void Off(string key, Action<object?, object?> callback)
-    {
-        if (_listeners.TryGetValue(key, out var listener))
-        {
-            listener -= callback;
-            if (listener == null)
-            {
-                _listeners.Remove(key);
-            }
-            else
-            {
-                _listeners[key] = listener;
-            }
-        }
-    }
 
     // ================= 工具方法 =================
 
@@ -644,11 +616,12 @@ public class Data
     /// </summary>
     private void NotifyChanged(string key, object? oldValue, object? newValue)
     {
-        OnValueChanged?.Invoke(key, oldValue, newValue);
-
-        if (_listeners.TryGetValue(key, out var listener))
+        if (_owner != null)
         {
-            listener.Invoke(oldValue, newValue);
+            // 通过 Entity 事件总线广播数据变更
+            // 下游监听示例: 
+            // entity.Events.On<GameEventType.Data.PropertyChangedEvent>(GameEventType.Data.PropertyChanged, evt => ...);
+            _owner.Events.Emit(GameEventType.Data.PropertyChanged, new GameEventType.Data.PropertyChangedEventData(key, oldValue, newValue));
         }
     }
 

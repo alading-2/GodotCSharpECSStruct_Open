@@ -62,8 +62,8 @@ public partial class SpawnSystem : Node
         Instance = this;
 
         // 监听游戏事件
-        EventBus.GameStart += OnGameStart;
-        EventBus.GameOver += OnGameOver;
+        GlobalEventBus.Global.On(GameEventType.Global.GameStart, OnGameStart);
+        GlobalEventBus.Global.On<GameEventType.Global.GameOverEventData>(GameEventType.Global.GameOver, OnGameOver);
         _log.Info("SpawnSystem (TimerManager Architecture) 初始化完成");
     }
 
@@ -73,8 +73,8 @@ public partial class SpawnSystem : Node
     public override void _ExitTree()
     {
         // 解绑 EventBus 事件
-        EventBus.GameStart -= OnGameStart;
-        EventBus.GameOver -= OnGameOver;
+        GlobalEventBus.Global.Off(GameEventType.Global.GameStart, OnGameStart);
+        GlobalEventBus.Global.Off<GameEventType.Global.GameOverEventData>(GameEventType.Global.GameOver, OnGameOver);
 
         // 清理单例引用
         if (Instance == this)
@@ -102,8 +102,11 @@ public partial class SpawnSystem : Node
     /// <summary>
     /// 响应游戏结束事件，清理系统状态。
     /// </summary>
-    /// <param name="isVictory">是否胜利</param>
-    public void OnGameOver(bool isVictory)
+    /// <summary>
+    /// 响应游戏结束事件，清理系统状态。
+    /// </summary>
+    /// <param name="evt">游戏结束数据</param>
+    public void OnGameOver(GameEventType.Global.GameOverEventData evt)
     {
         IsWaveActive = false;
         _waveTimer?.Cancel();
@@ -123,7 +126,7 @@ public partial class SpawnSystem : Node
         if (SpawnSystemConfig.MaxWaves > 0 && waveIndex > SpawnSystemConfig.MaxWaves)
         {
             _log.Info("已通过最大波次，触发游戏结束");
-            EventBus.TriggerGameOver(true);
+            GlobalEventBus.Global.Emit(GameEventType.Global.GameOver, new GameEventType.Global.GameOverEventData(true));
             return;
         }
 
@@ -167,7 +170,7 @@ public partial class SpawnSystem : Node
 
         _log.Info($"波次 {waveIndex} 开始! 持续时间: {SpawnSystemConfig.WaveDuration}s, 激活规则数: {_activeStates.Count}");
         // 通过事件总线通知 UI 和其他系统
-        EventBus.TriggerWaveStarted(waveIndex);
+        GlobalEventBus.Global.Emit(GameEventType.Global.WaveStarted, new GameEventType.Global.WaveStartedEventData(waveIndex));
     }
 
     /// <summary>
@@ -184,7 +187,7 @@ public partial class SpawnSystem : Node
 
         _log.Info($"第 {CurrentWaveIndex}波进攻结束!");
         // 触发波次完成事件,通常用于开启商店界面或奖励选择
-        EventBus.TriggerWaveCompleted(CurrentWaveIndex);
+        GlobalEventBus.Global.Emit(GameEventType.Global.WaveCompleted, new GameEventType.Global.WaveCompletedEventData(CurrentWaveIndex));
     }
 
     // ========================================

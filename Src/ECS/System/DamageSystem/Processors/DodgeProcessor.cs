@@ -15,7 +15,7 @@ public class DodgeProcessor : IDamageProcessor
         // 目前简化为：所有伤害都进行闪避判定。
         float dodgeChance = info.Victim!.Data.Get<float>(DataKey.DodgeChance);
 
-        if (GD.Randf() * 100 < dodgeChance)
+        if (dodgeChance > 0 && GD.Randf() * 100 < dodgeChance)
         {
             // 闪避成功，伤害归零，结束伤害流程
             info.IsDodged = true;

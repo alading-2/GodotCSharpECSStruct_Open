@@ -7,13 +7,13 @@ using System.Linq;
 /// Entity 生成配置参数
 /// 类似 TypeScript 的接口对象，支持命名参数初始化
 /// </summary>
-public record EntitySpawnConfig
+public readonly record struct EntitySpawnConfig
 {
     /// <summary>Resource 配置数据（必填）</summary>
     public required Resource Resource { get; init; }
 
     /// <summary>是否使用对象池（默认 false）</summary>
-    public bool UsingObjectPool { get; init; } = false;
+    public bool UsingObjectPool { get; init; }
 
     /// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
     public string? PoolName { get; init; }

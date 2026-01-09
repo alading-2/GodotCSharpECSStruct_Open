@@ -16,7 +16,17 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     /// <summary>
     /// 动态数据容器
     /// </summary>
-    public Data Data { get; private set; } = new Data();
+    public Data Data { get; private set; }
+
+    public Enemy()
+    {
+        Data = new Data(this);
+    }
+
+    /// <summary>
+    /// 实体局部事件总线
+    /// </summary>
+    public EventBus Events { get; } = new EventBus();
 
     /// <summary>
     /// Entity唯一标识符
@@ -32,17 +42,13 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     {
         base._Ready();
         EntityId = GetInstanceId().ToString();
+
         _log.Debug($"敌人 {Name} 初始化完成。");
     }
 
     public override void _ExitTree()
     {
-        // 确保解绑事件
-        var health = EntityManager.GetComponent<HealthComponent>(this);
-        if (health != null)
-        {
-            health.Died -= OnDied;
-        }
+        Events.Clear();
         base._ExitTree();
     }
 
@@ -51,12 +57,12 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     /// <summary>
     /// 当敌人死亡时触发。
     /// </summary>
-    private void OnDied()
+    private void OnDied(GameEventType.Unit.DeadEventData evt)
     {
         _log.Info($"{Name} 死亡。归还对象池。");
 
         // 触发全局事件 (掉落、统计等)
-        EventBus.TriggerEnemyDied(this, GlobalPosition);
+        GlobalEventBus.TriggerEnemyDied(this, GlobalPosition);
 
         // 归还对象池
         ObjectPoolManager.ReturnToPool(this);
@@ -68,31 +74,20 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     /// </summary>
     public void OnSpawn(EnemyResource resource)
     {
-        // 确保核心组件已挂载
-        var health = EntityManager.GetComponent<HealthComponent>(this);
-        if (health != null)
-        {
-            // 防止重复绑定
-            health.Died -= OnDied;
-            health.Died += OnDied;
-        }
+        // OnSpawn 不需要订阅事件，OnPoolAcquire 已统一处理
     }
 
     // ================= IPoolable 接口实现 =================
 
     /// <summary>
     /// [IPoolable] 当从池中取出时调用 (Active)。
+    /// 统一在此处订阅事件，确保对象池复用时事件正确绑定。
     /// </summary>
     public void OnPoolAcquire()
     {
-        // 重新激活组件
-        var health = EntityManager.GetComponent<HealthComponent>(this);
-        if (health != null)
-        {
-            // 确保事件绑定
-            health.Died -= OnDied;
-            health.Died += OnDied;
-        }
+        // 先解绑再订阅，避免重复订阅
+        Events.Off<GameEventType.Unit.DeadEventData>(GameEventType.Unit.Dead, OnDied);
+        Events.On<GameEventType.Unit.DeadEventData>(GameEventType.Unit.Dead, OnDied);
     }
 
     /// <summary>
@@ -101,13 +96,16 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     /// </summary>
     public void OnPoolRelease()
     {
-        // 1. 级联重置子组件 (Cascading Reset)
+        // 1. 清理事件
+        Events.Clear();
+
+        // 2. 级联重置子组件 (Cascading Reset)
         EntityManager.GetComponent<HealthComponent>(this)?.Reset();
 
-        // 2. 重置自身状态
+        // 3. 重置自身状态
         Velocity = Vector2.Zero;
 
-        // 3. 清空 Data
+        // 4. 清空 Data
         Data.Clear();
     }
 

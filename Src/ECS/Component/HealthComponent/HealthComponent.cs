@@ -14,102 +14,56 @@ public partial class HealthComponent : Node, IComponent
 
     // ================= IComponent 实现 =================
 
+    private IEntity? _entity;
     private Data? _data;
-
 
     public void OnComponentRegistered(Node entity)
     {
-        // 组件注册时缓存 Data 引用
         if (entity is IEntity iEntity)
         {
+            _entity = iEntity;
             _data = iEntity.Data;
-            _data.On(DataKey.CurrentHp, OnCurrentHpChanged);
         }
     }
 
     public void OnComponentUnregistered()
     {
-        if (_data != null)
-        {
-            _data.Off(DataKey.CurrentHp, OnCurrentHpChanged);
-        }
-
-        // 清理事件
-        Damaged = null;
-        Died = null;
+        _entity = null;
+        _data = null;
     }
-
-    // ================= 事件 =================
-
-    public event Action<float>? Damaged;
-    public event Action? Died;
 
     // ================= Godot 生命周期 =================
 
     public override void _Ready()
     {
-        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.BaseHp, 100f)}");
-    }
-
-    public override void _ExitTree()
-    {
-        if (_data != null)
-        {
-            _data.Off(DataKey.CurrentHp, OnCurrentHpChanged);
-        }
-
-        // 清理事件
-        Damaged = null;
-        Died = null;
+        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.BaseHp)}");
     }
 
     // ================= 业务逻辑 =================
 
-    /// <summary>
-    /// 监听血量变化
-    /// </summary>
-    private void OnCurrentHpChanged(object? oldValueObj, object? newValueObj)
-    {
-        float oldValue = Convert.ToSingle(oldValueObj);
-        float newValue = Convert.ToSingle(newValueObj);
-        float delta = newValue - oldValue;
-
-        if (delta < 0)
-        {
-            Damaged?.Invoke(Mathf.Abs(delta));
-        }
-        // else if (delta > 0) { Healed?.Invoke(delta); }
-
-        // 死亡判定：从有血变成没血
-        if (newValue <= 0 && oldValue > 0)
-        {
-            Died?.Invoke();
-        }
-    }
-
-    /// <summary>
-    /// 造成伤害
-    /// </summary>
     /// <summary>
     /// 修改生命值
     /// <param name="amount">正数回血，负数扣血</param>
     /// </summary>
     public void ModifyHealth(float amount)
     {
-        if (_data == null) return;
+        if (_data == null || _entity == null) return;
 
         float currentHp = _data.Get<float>(DataKey.CurrentHp);
         float maxHp = _data.Get<float>(DataKey.BaseHp, 100f);
+        float oldHp = currentHp;
 
-        // 应用修改
-        float newHp = currentHp + amount;
+        // 计算新值
+        float newHp = Mathf.Clamp(currentHp + amount, 0, maxHp);
 
-        // 限制范围
-        if (newHp > maxHp) newHp = maxHp;
-        if (newHp < 0) newHp = 0;
+        // 如果数值没变，直接返回
+        if (Mathf.IsEqualApprox(newHp, oldHp)) return;
 
+        // 应用数据
         _data.Set(DataKey.CurrentHp, newHp);
-        // 事件触发移交给了 OnCurrentHpChanged
+
+        // 触发变更逻辑
+        OnHpChanged(oldHp, newHp);
     }
 
     /// <summary>
@@ -119,8 +73,43 @@ public partial class HealthComponent : Node, IComponent
     {
         if (_data == null) return;
 
-        // 从 Data 获取 MaxHp 并重置 CurrentHp
+        float currentHp = _data.Get<float>(DataKey.CurrentHp);
         float maxHp = _data.Get<float>(DataKey.BaseHp, 100f);
-        _data.Set(DataKey.CurrentHp, maxHp);
+
+        if (!Mathf.IsEqualApprox(currentHp, maxHp))
+        {
+            _data.Set(DataKey.CurrentHp, maxHp);
+            OnHpChanged(currentHp, maxHp);
+        }
+    }
+
+    /// <summary>
+    /// 处理血量变更事件分发
+    /// </summary>
+    private void OnHpChanged(float oldHp, float newHp)
+    {
+        if (_entity == null) return;
+
+        float delta = newHp - oldHp;
+
+        // 1. 分发具体事件
+        if (delta < 0)
+        {
+            float damage = Mathf.Abs(delta);
+            _entity.Events.Emit(GameEventType.Unit.Damaged, new GameEventType.Unit.DamagedEventData(damage));
+        }
+        else if (delta > 0)
+        {
+            _entity.Events.Emit(GameEventType.Unit.Healed, new GameEventType.Unit.HealedEventData(delta));
+        }
+
+        // 2. 分发统一变更事件 (可选，UI使用)
+        // _entity.Events.Emit("HpChanged", newHp);
+
+        // 3. 死亡判定
+        if (newHp <= 0 && oldHp > 0)
+        {
+            _entity.Events.Emit(GameEventType.Unit.Dead, new GameEventType.Unit.DeadEventData());
+        }
     }
 }

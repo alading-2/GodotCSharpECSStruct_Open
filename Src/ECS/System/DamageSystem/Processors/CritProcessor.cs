@@ -22,10 +22,10 @@ public class CritProcessor : IDamageProcessor
         float critChance = instigatorEntity.Data.Get<float>(DataKey.CritRate);
 
         // 执行随机判定：如果随机数 (0.0-1.0) * 100 小于暴击率，则触发暴击
-        if (GD.Randf() * 100 <= critChance)
+        if (critChance > 0 && GD.Randf() * 100 <= critChance)
         {
             // 获取暴击伤害
-            float critMultiplier = instigatorEntity.Data.Get<float>(DataKey.CritDamage, 1.5f);
+            float critMultiplier = instigatorEntity.Data.Get<float>(DataKey.CritDamage);
             critMultiplier /= 100f; //暴击伤害采用百分比
             // 标记此伤害为暴击（UI 可能会根据此标志显示大字或特殊特效）
             info.IsCritical = true;

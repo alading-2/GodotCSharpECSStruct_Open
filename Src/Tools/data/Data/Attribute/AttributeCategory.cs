@@ -1,7 +1,7 @@
 /// <summary>
-/// 数据分类枚举 - 用于 UI 展示和数据组织
+/// 属性分类枚举 - 用于 UI 展示和数据组织
 /// </summary>
-public enum DataCategory
+public enum AttributeCategory
 {
     /// <summary>
     /// 基础信息（名称、等级等）

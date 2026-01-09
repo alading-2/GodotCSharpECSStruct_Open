@@ -72,14 +72,14 @@ public partial class DamageService : Node
         RegisterProcessor(new ShieldProcessor(), 400);
         // 5. 防御力/护甲减伤
         RegisterProcessor(new DefenseProcessor(), 500);
-        // 6. 受伤加成（受击者易伤等效果）
-        RegisterProcessor(new DamageTakenAmplificationProcessor(), 600);
-        // 7. 固定值减伤
-        RegisterProcessor(new FlatReductionProcessor(), 700);
-        // 8. 生命百分比斩杀逻辑
-        RegisterProcessor(new HealthExecutionProcessor(), 800);
-        // 9. 吸血逻辑（基于最终造成的伤害）
-        RegisterProcessor(new LifestealProcessor(), 900);
+        // 6. 吸血逻辑（基于最终造成的伤害恢复生命值）
+        RegisterProcessor(new LifestealProcessor(), 600);
+        // 7. 受伤加成（受击者易伤等效果）
+        RegisterProcessor(new DamageTakenAmplificationProcessor(), 700);
+        // 8. 固定值减伤
+        RegisterProcessor(new FlatReductionProcessor(), 800);
+        // 9. 生命百分比斩杀逻辑
+        RegisterProcessor(new HealthExecutionProcessor(), 900);
         // 10. 数据统计（记录总伤害、DPS等）
         RegisterProcessor(new StatisticsProcessor(), 1000);
 

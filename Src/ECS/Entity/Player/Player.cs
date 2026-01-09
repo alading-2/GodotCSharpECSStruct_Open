@@ -16,7 +16,20 @@ public partial class Player : CharacterBody2D, IUnit
     /// <summary>
     /// 动态数据容器
     /// </summary>
-    public Data Data { get; private set; } = new Data();
+    /// <summary>
+    /// 动态数据容器
+    /// </summary>
+    public Data Data { get; private set; }
+
+    public Player()
+    {
+        Data = new Data(this);
+    }
+
+    /// <summary>
+    /// 实体局部事件总线
+    /// </summary>
+    public EventBus Events { get; } = new EventBus();
 
     /// <summary>
     /// Entity唯一标识符
@@ -39,10 +52,13 @@ public partial class Player : CharacterBody2D, IUnit
 
     public override void _ExitTree()
     {
-        // 注销
+        // 1. 清理事件总线
+        Events.Clear();
+
+        // 2. 注销
         EntityManager.UnregisterEntity(this);
 
-        // 清空Data
+        // 3. 清空Data
         Data.Clear();
 
         base._ExitTree();

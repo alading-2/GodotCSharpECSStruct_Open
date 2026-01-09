@@ -2,6 +2,8 @@ public static partial class Config
 {
     /// <summary> 护甲系数 </summary>
     public const float ArmorCoefficient = 15f;
+    /// <summary> 最大护甲减伤 </summary>
+    public const float MaxArmorReduction = 80f;
     /// <summary> 最大移速 </summary>
     public const float MaxMoveSpeed = 2000f;
     /// <summary> 最大百分比恢复 </summary>
