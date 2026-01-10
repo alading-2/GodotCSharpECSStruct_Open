@@ -3,24 +3,31 @@ using System.Runtime.CompilerServices;
 using Godot;
 
 /// <summary>
-/// 全局定时器管理器
+/// 全局定时器管理器 (TimerManager)
 /// 
-/// 用法：
-/// TimerManager.Instance.CreateTimer(...)
+/// 核心职责：
+/// 1. 统一驱动游戏内所有的非物理计时逻辑。
+/// 2. 提供高性能的对象池化定时器 (GameTimer)，降低 GC 分配压力。
+/// 3. 支持游戏时间 (Scaled) 与真实时间 (Unscaled) 的双重计时模式。
+/// 4. 提供便捷的链式 API 用于配置回调、标签和生命周期。
 /// 
-/// 特性：
-/// - 支持受 TimeScale 影响的游戏时间
-/// - 支持不受 TimeScale 影响的真实时间 (UI动画等)
-/// - 支持循环定时器
-/// - 支持标签管理 (批量暂停/取消)
-/// - 自动生命周期绑定 (Node 销毁时自动清理)
-/// - 集成项目统一对象池系统 (零 GC 压力)
+/// 用法示例：
+/// // 1. 简单延迟
+/// TimerManager.Instance.Delay(2.0f).OnComplete(() => GD.Print("完成"));
+/// 
+/// // 2. 循环触发并带标签
+/// TimerManager.Instance.Loop(1.0f).WithTag("Buff").OnLoop(() => ApplyBuffEffect());
+/// 
+/// // 3. 倒计时模式 (带进度回调)
+/// TimerManager.Instance.Countdown(10.0f, 0.5f)
+///     .Countdown((elapsed, progress) => UpdateUI(progress))
+///     .OnComplete(() => OnTimeUp());
 /// </summary>
 public partial class TimerManager : Node
 {
     /// <summary>
-    /// 自动注册到引导器 (AutoLoad)
-    /// 使用 ModuleInitializer 确保在程序集加载时自动完成注册，无需手动在编辑器中配置。
+    /// 模块初始化器：利用 C# 属性在模块加载时自动将 TimerManager 注册到 AutoLoad 系统。
+    /// 这样可以确保它在游戏启动时作为单例存在。
     /// </summary>
     [ModuleInitializer]
     public static void Initialize()
@@ -30,53 +37,65 @@ public partial class TimerManager : Node
             Name = "TimerManager",
             Path = "res://Src/Tools/Timer/TimerManager.cs",
             Priority = AutoLoad.Priority.Tool,
-            Dependencies = ["ObjectPoolInit"]
+            Dependencies = ["ObjectPoolInit"] // 依赖对象池初始化
         });
     }
 
-    /// <summary> 获取全局单例实例 </summary>
+    /// <summary> 全局唯一单例访问点 </summary>
     public static TimerManager Instance;
 
     private static readonly Log _log = new("TimerManager");
 
-    /// <summary> 定时器对象池，减少频繁创建销毁带来的 GC 压力 </summary>
+    /// <summary> 
+    /// 内部维护的 GameTimer 对象池。
+    /// 通过 ForEachActive 遍历所有正在运行的定时器，确保高性能。
+    /// </summary>
     private ObjectPool<GameTimer> _timerPool;
 
-    /// <summary> 上一帧的时间戳（毫秒），用于计算真实时间流逝 </summary>
+    /// <summary> 用于手动计算 UnscaledDeltaTime 的时间戳（毫秒） </summary>
     private ulong _lastTicksMsec;
 
-    /// <summary> 真实时间增量（不受 Engine.TimeScale 影响） </summary>
+    /// <summary> 
+    /// 真实时间增量 (秒)。
+    /// 即使 Engine.TimeScale 为 0，该值依然能反映真实的物理流逝时间。
+    /// </summary>
     private float _unscaledDeltaTime;
 
+    /// <summary>
+    /// Node 进入场景树时的初始化逻辑。
+    /// </summary>
     public override void _EnterTree()
     {
         Instance = this;
         _lastTicksMsec = Time.GetTicksMsec();
 
-        // 从全局管理器获取定时器对象池
+        // 从全局管理器获取专门为 GameTimer 准备的对象池
         _timerPool = ObjectPoolManager.GetPool<GameTimer>(ObjectPoolNames.TimerPool);
 
         if (_timerPool == null)
         {
-            _log.Error("无法获取 TimerPool，请确保 ObjectPoolInit 已正确初始化");
+            _log.Error("无法获取 TimerPool，请确保 ObjectPoolNames.TimerPool 已在 ObjectPoolInit 中注册");
             return;
         }
 
-        // 绑定场景树的 ProcessFrame 信号，确保在每帧开始时计算真实时间
+        // 绑定每一帧的原始处理开始信号，用于更新基础时间戳
         GetTree().Connect(SceneTree.SignalName.ProcessFrame, Callable.From(OnProcessFrame));
     }
 
+    /// <summary>
+    /// Node 退出时的清理逻辑。
+    /// 确保回收池中资源并断开单例，防止内存泄漏。
+    /// </summary>
     public override void _ExitTree()
     {
-        // 场景切换或退出时清理所有定时器和池
         _timerPool?.ReleaseAll();
         _timerPool?.Destroy();
         Instance = null;
     }
 
     /// <summary>
-    /// 每帧执行一次，计算两次调用之间真实经过的时间。
-    /// 这种方式比使用 delta 转换更准确，因为它直接读取系统时钟。
+    /// 手动计算真实的 DeltaTime。
+    /// Godot 默认的 _Process(delta) 会受 TimeScale 影响，因此需要通过 Time.GetTicksMsec 自行计算。
     /// </summary>
     private void OnProcessFrame()
     {
@@ -85,78 +104,114 @@ public partial class TimerManager : Node
         _lastTicksMsec = currentTicks;
     }
 
+    /// <summary>
+    /// 每一帧的计时器驱动。
+    /// 将 Process 逻辑转发给 ProcessTimers 处理，统一区分缩放/非缩放时间。
+    /// </summary>
     public override void _Process(double delta)
     {
         ProcessTimers(delta);
     }
 
     /// <summary>
-    /// 核心更新逻辑：遍历所有活跃定时器并更新它们的状态。
+    /// 核心更新逻辑：遍历所有活跃的定时器并分发时间增量。
     /// </summary>
-    /// <param name="delta">Godot 传入的每帧增量时间（受 TimeScale 影响）</param>
     private void ProcessTimers(double delta)
     {
         float scaledDelta = (float)delta;
         float unscaledDelta = _unscaledDeltaTime;
 
-        // 使用 ObjectPool 的 ForEachActive 遍历所有当前正在使用的定时器
+        // 调用对象池的内部高效遍历方法
         _timerPool.ForEachActive(timer =>
         {
-            // 1. 检查是否已完成。如果是，则将其归还到对象池。
+            // 延迟回收：在下一帧开始时回收上一帧已完成的定时器
             if (timer.IsDone)
             {
                 _timerPool.Release(timer);
                 return;
             }
 
-            // 2. 检查是否已暂停。
+            // 暂停逻辑：直接跳过更新
             if (timer.IsPaused) return;
 
-            // 3. 根据定时器配置，选择使用“游戏时间”或“真实时间”进行更新。
+            // 分发增量：根据定时器配置选择使用 scaled 还是 unscaled 时间
             float dt = timer.UseUnscaledTime ? unscaledDelta : scaledDelta;
             timer.Update(dt);
         });
     }
 
+    // ============ 工厂方法 (Factory Methods) ============
+
     /// <summary>
-    /// 创建一个单次定时器
+    /// 创建【延迟定时器】：并在指定时间到达后触发回调。
+    /// 适合：爆炸倒计时、一次性 UI 延时。
     /// </summary>
-    /// <param name="duration">持续时间（秒）</param>
-    /// <param name="onComplete">完成后的回调</param>
-    /// <param name="useUnscaledTime">是否使用真实时间（默认为 false，受游戏倍速影响）</param>
-    /// <returns>返回创建好的定时器对象，调用者需要在 _ExitTree 中手动 Cancel 归还对象池</returns>
-    public GameTimer CreateTimer(float duration, Action onComplete = null, bool useUnscaledTime = false)
+    /// <param name="duration">持续时间 (秒)</param>
+    /// <param name="useUnscaledTime">是否无视游戏暂停/缩放 (默认 false)</param>
+    /// <returns>GameTimer 实例，建议后续追加 .OnComplete() 配置</returns>
+    public GameTimer Delay(float duration, bool useUnscaledTime = false)
     {
         var timer = _timerPool.Get();
         timer.Configure(duration, false, useUnscaledTime);
-        timer.Id = Guid.NewGuid().ToString(); // 分配唯一ID以便于精确控制
-
-        if (onComplete != null) timer.OnComplete += onComplete;
-
+        timer.Id = Guid.NewGuid().ToString();
         return timer;
     }
 
     /// <summary>
-    /// 创建一个循环定时器
+    /// 创建【无限循环定时器】：每隔一段时间触发一次回调，永不停止直到手动取消。
+    /// 适合：周期性伤血、自动回魔、每秒更新界面。
     /// </summary>
-    /// <param name="interval">循环间隔时间（秒）</param>
-    /// <param name="onLoop">每次循环结束时的回调</param>
-    /// <param name="useUnscaledTime">是否使用真实时间</param>
-    /// <returns>返回创建好的定时器对象，调用者需要在 _ExitTree 中手动 Cancel 归还对象池</returns>
-    public GameTimer CreateLoopTimer(float interval, Action onLoop, bool useUnscaledTime = false)
+    /// <param name="interval">循环间隔 (秒)</param>
+    /// <param name="useUnscaledTime">是否无视游戏暂停/缩放 (默认 false)</param>
+    /// <returns>GameTimer 实例，建议后续追加 .OnLoop() 配置</returns>
+    public GameTimer Loop(float interval, bool useUnscaledTime = false)
     {
         var timer = _timerPool.Get();
-        timer.Configure(interval, true, useUnscaledTime);
+        timer.Configure(interval, true, useUnscaledTime, repeatCount: -1);
         timer.Id = Guid.NewGuid().ToString();
-
-        if (onLoop != null) timer.OnLoop += onLoop;
-
         return timer;
     }
 
     /// <summary>
-    /// 根据唯一 ID 手动取消特定的定时器，TimerManager 会将其收回池中，且不会触发 OnComplete 回调。
+    /// 创建【有限重复定时器】：每隔一段时间触发一次回调，直到达到执行次数。
+    /// 适合：连发技能（如点击三连击）、分段任务提示。
     /// </summary>
+    /// <param name="interval">执行间隔 (秒)</param>
+    /// <param name="count">总执行次数</param>
+    /// <param name="immediate">是否在创建后立即执行第一次回调 (默认 false)</param>
+    /// <param name="useUnscaledTime">是否无视游戏暂停/缩放 (默认 false)</param>
+    /// <returns>GameTimer 实例，建议后续追加 .OnRepeat() 配置</returns>
+    public GameTimer Repeat(float interval, int count, bool immediate = false, bool useUnscaledTime = false)
+    {
+        var timer = _timerPool.Get();
+        timer.Configure(interval, true, useUnscaledTime, repeatCount: count, immediate: immediate);
+        timer.Id = Guid.NewGuid().ToString();
+        return timer;
+    }
+
+    /// <summary>
+    /// 创建【倒计时定时器】：在总时间内以指定频率触发回调，并在最后停止。
+    /// 适合：副本结束倒计时、技能持续时间读条。
+    /// </summary>
+    /// <param name="duration">总持续总时长 (秒)</param>
+    /// <param name="interval">每次回调（Tick）的触发频率 (秒)</param>
+    /// <param name="useUnscaledTime">是否无视游戏暂停/缩放 (默认 false)</param>
+    /// <returns>GameTimer 实例，建议后续追加 .Countdown() 配置进度回调</returns>
+    public GameTimer Countdown(float duration, float interval, bool useUnscaledTime = false)
+    {
+        var timer = _timerPool.Get();
+        // 倒计时本质上是一个带总量限制的循环定时器
+        timer.Configure(interval, true, useUnscaledTime, repeatCount: -1, totalDuration: duration);
+        timer.Id = Guid.NewGuid().ToString();
+        return timer;
+    }
+
+    // ============ 批量管理 (Batch Management) ============
+
+    /// <summary>
+    /// 通过分配的唯一 ID 精确取消某个定时器。
+    /// </summary>
+    /// <param name="id">Guid 字符串</param>
     public void Cancel(string id)
     {
         _timerPool.ForEachActive(timer =>
@@ -166,9 +221,10 @@ public partial class TimerManager : Node
     }
 
     /// <summary>
-    /// 根据标签批量取消定时器
+    /// 通过标签 (Tag) 批量取消一组定时器。
+    /// 典型应用：单位死亡时，取消该单位身上所有正在计时的 Buff。
     /// </summary>
-    /// <param name="tag">目标标签</param>
+    /// <param name="tag">标签字符串 (如："Buff", "Skill")</param>
     public void CancelByTag(string tag)
     {
         _timerPool.ForEachActive(timer =>
@@ -178,7 +234,8 @@ public partial class TimerManager : Node
     }
 
     /// <summary>
-    /// 批量设置所有活跃定时器的暂停状态
+    /// 批量切换所有活跃定时器的暂停状态。
+    /// 通常用于全局游戏逻辑暂停（非引擎物理暂停）。
     /// </summary>
     public void SetAllTimerPaused(bool paused)
     {
@@ -189,7 +246,8 @@ public partial class TimerManager : Node
     }
 
     /// <summary>
-    /// 根据标签批量设置暂停状态
+    /// 根据标签批量切换暂停状态。
+    /// 适合：暂停特定类别的业务（如：暂停所有怪物 AI 计时，但保留玩家计时）。
     /// </summary>
     public void SetAllTimerPausedByTag(string tag, bool paused)
     {
@@ -199,10 +257,16 @@ public partial class TimerManager : Node
         });
     }
 
-    /// <summary> 获取当前正在运行的定时器总数 </summary>
+    /// <summary> 
+    /// 获取当前正在内存中运行（活跃）的定时器总数。
+    /// 通常用于性能分析或调试监控。
+    /// </summary>
     public int GetActiveTimerCount() => _timerPool.ActiveCount;
 
-    /// <summary> 获取对象池统计信息 (活跃数, 总池容量) </summary>
+    /// <summary> 
+    /// 获取对象池的即时统计状态。
+    /// 返回值：Active (活跃数), Pooled (池内闲置数)
+    /// </summary>
     public (int Active, int Pooled) GetStats()
     {
         var stats = _timerPool.GetStats();

@@ -46,32 +46,128 @@ public class GameTimer : IPoolable
     /// </summary>
     public string? Tag { get; set; }
 
-    // --- 回调事件 ---
+    /// <summary>
+    /// 剩余重复次数。
+    /// -1 表示无限循环（需配合 IsLoop = true）
+    /// 0 表示单次定时器
+    /// >0 表示剩余重复次数
+    /// </summary>
+    public int RepeatCount { get; internal set; }
 
-    /// <summary> 定时器自然结束时触发的回调 </summary>
-    public event Action? OnComplete;
+    /// <summary>
+    /// 总持续时间（倒计时模式使用）。
+    /// 当设置此值时，定时器在 TotalElapsed >= TotalDuration 时自动停止。
+    /// 0 表示不启用倒计时模式。
+    /// </summary>
+    public float TotalDuration { get; set; }
 
-    /// <summary> 循环定时器每完成一轮时触发的回调 </summary>
-    public event Action? OnLoop;
+    /// <summary>
+    /// 总计已流逝时间（倒计时模式使用，累计跨周期）
+    /// </summary>
+    public float TotalElapsed { get; private set; }
 
-    /// <summary> 每帧更新时触发的回调，参数为当前进度 (0.0 - 1.0) </summary>
-    public event Action<float>? OnUpdate;
+    /// <summary>
+    /// 倒计时剩余时间（秒）
+    /// </summary>
+    public float TotalRemaining => TotalDuration > 0 ? Math.Max(0, TotalDuration - TotalElapsed) : 0;
+
+    /// <summary>
+    /// 倒计时总进度 (0.0 - 1.0)
+    /// </summary>
+    public float TotalProgress => TotalDuration > 0 ? Math.Clamp(TotalElapsed / TotalDuration, 0f, 1f) : 0f;
+
+    // ============ 私有回调委托（单一委托，非 event） ============
+
+    private Action? _onComplete;
+    private Action? _onLoop;
+    private Action<int>? _onRepeat;
+    private Action<float, float>? _onCountdown;
+    private Action<float>? _onUpdate;
+
+    /// <summary>
+    /// 是否需要在第一帧立即触发回调（用于 Repeat 的 immediate 模式）
+    /// </summary>
+    private bool _shouldTriggerImmediately;
+
+    // ============ 链式 API ============
+
+    /// <summary>
+    /// 设置完成回调（链式调用）
+    /// </summary>
+    public GameTimer OnComplete(Action callback)
+    {
+        _onComplete = callback;
+        return this;
+    }
+
+    /// <summary>
+    /// 设置循环回调（链式调用）
+    /// </summary>
+    public GameTimer OnLoop(Action callback)
+    {
+        _onLoop = callback;
+        return this;
+    }
+
+    /// <summary>
+    /// 设置重复回调（链式调用），参数为当前第几次执行（从 1 开始）
+    /// </summary>
+    public GameTimer OnRepeat(Action<int> callback)
+    {
+        _onRepeat = callback;
+        return this;
+    }
+
+    /// <summary>
+    /// 设置倒计时回调（链式调用），参数为 (已流逝时间, 进度 0-1)
+    /// </summary>
+    public GameTimer OnCountdown(Action<float, float> callback)
+    {
+        _onCountdown = callback;
+        return this;
+    }
+
+    /// <summary>
+    /// 设置进度更新回调（链式调用），参数为当前进度 (0.0 - 1.0)
+    /// </summary>
+    public GameTimer OnUpdate(Action<float> callback)
+    {
+        _onUpdate = callback;
+        return this;
+    }
+
+    /// <summary>
+    /// 设置标签（链式调用）
+    /// </summary>
+    public GameTimer WithTag(string tag)
+    {
+        Tag = tag;
+        return this;
+    }
+
+    /// <summary>
+    /// 设置立即执行模式（链式调用）：在第一帧立即触发一次回调
+    /// </summary>
+    public GameTimer Immediate()
+    {
+        _shouldTriggerImmediately = true;
+        return this;
+    }
+
+    // ============ 构造与配置 ============
 
     /// <summary>
     /// 构造函数（仅供对象池使用）
+    /// </summary>
     public GameTimer()
     {
         Reset();
     }
 
     /// <summary>
-    /// 配置定时器参数（业务层调用）
-    /// 从对象池取出后，通过此方法设置定时器的运行参数
+    /// 配置定时器参数（内部使用）
     /// </summary>
-    /// <param name="duration">持续时间</param>
-    /// <param name="isLoop">是否循环</param>
-    /// <param name="useUnscaledTime">是否使用真实时间</param>
-    internal void Configure(float duration, bool isLoop, bool useUnscaledTime)
+    internal void Configure(float duration, bool isLoop, bool useUnscaledTime, int repeatCount = -1, float totalDuration = 0, bool immediate = false)
     {
         Duration = duration;
         IsLoop = isLoop;
@@ -80,11 +176,13 @@ public class GameTimer : IPoolable
         IsDone = false;
         IsPaused = false;
         IsCancelled = false;
+        RepeatCount = isLoop ? repeatCount : 0;
+        TotalDuration = totalDuration;
+        TotalElapsed = 0;
+        _shouldTriggerImmediately = immediate;
     }
 
-    // ============================================================
-    // IPoolable 接口实现
-    // ============================================================
+    // ============ IPoolable 接口实现 ============
 
     /// <summary>
     /// [IPoolable] 从池中取出时调用
@@ -95,13 +193,15 @@ public class GameTimer : IPoolable
     }
 
     /// <summary>
-    /// [IPoolable] 归还到池中时调用 - 清理事件订阅，防止内存泄漏
+    /// [IPoolable] 归还到池中时调用 - 清理回调，防止内存泄漏
     /// </summary>
     public void OnPoolRelease()
     {
-        OnComplete = null;
-        OnLoop = null;
-        OnUpdate = null;
+        _onComplete = null;
+        _onLoop = null;
+        _onUpdate = null;
+        _onRepeat = null;
+        _onCountdown = null;
     }
 
     /// <summary>
@@ -129,6 +229,17 @@ public class GameTimer : IPoolable
         IsPaused = false;
         IsDone = false;
         IsCancelled = false;
+        RepeatCount = 0;
+        TotalDuration = 0;
+        TotalElapsed = 0;
+        _shouldTriggerImmediately = false;
+
+        // 清理回调
+        _onComplete = null;
+        _onLoop = null;
+        _onUpdate = null;
+        _onRepeat = null;
+        _onCountdown = null;
     }
 
     /// <summary>
@@ -164,41 +275,98 @@ public class GameTimer : IPoolable
 
         if (triggerCallback)
         {
-            OnComplete?.Invoke();
+            _onComplete?.Invoke();
         }
     }
 
     /// <summary>
-    /// 内部更新逻辑，由 TimerManager 每帧调用
+    /// 核心更新逻辑：由 TimerManager 驱动
+    /// 处理时间累积、回调分发、循环重置及生命周期状态变更。
     /// </summary>
-    /// <param name="delta">本帧流逝的时间（由 TimerManager 根据 UseUnscaledTime 传入对应的 delta）</param>
+    /// <param name="delta">当前帧的时间增量 (Scaled 或 Unscaled)</param>
     internal void Update(float delta)
     {
-        // 如果已完成、已取消或已暂停，则停止更新
+        // 状态检查：已完成或暂停的计时器不进行任何处理
         if (IsDone || IsPaused) return;
 
-        // 累加时间
+        // 0. 立即执行模式：在第一帧立即触发一次回调（参考 TypeScript CycleTimer 的 immediate 参数）
+        if (_shouldTriggerImmediately)
+        {
+            _shouldTriggerImmediately = false;  // 只执行一次
+
+            // 触发循环回调
+            _onLoop?.Invoke();
+
+            // 指定次数模式：立即消耗一次
+            if (RepeatCount > 0)
+            {
+                RepeatCount--;
+                _onRepeat?.Invoke(RepeatCount);
+
+                if (RepeatCount <= 0)
+                {
+                    IsDone = true;
+                    _onComplete?.Invoke();
+                    return;
+                }
+            }
+        }
+
+        // 1. 累加流逝时间
         Elapsed += delta;
 
-        // 触发每帧进度更新回调
-        OnUpdate?.Invoke(Progress);
+        // 进度更新回调：每帧触发，适用于读条、进度条展示等平滑 UI 更新
+        _onUpdate?.Invoke(Progress);
 
-        // 检查是否达到或超过目标时长
+        // 2. 检查当前周期是否达到设定时长
         if (Elapsed >= Duration)
         {
             if (IsLoop)
             {
-                // --- 循环模式计时精度优化 ---
-                // 1. 减去一个周期，而不是直接归零。
-                // 这样可以保留超出 Duration 的那部分时间（Elapsed % Duration），
-                // 确保在长时间运行或帧率波动时，定时器的总触发次数是准确的。
+                // --- 循环计时模式 ---
+
+                // 精度补偿：减去 Duration 而非设为 0，确保在帧率波动时不会丢失剩余碎时间
                 Elapsed -= Duration;
 
-                // 2. 触发循环回调
-                OnLoop?.Invoke();
+                // 累计全局流逝时间 (仅在循环模式下有意义)
+                TotalElapsed += Duration;
 
-                // 3. 极端情况防护：如果单帧 delta 极大（如严重掉帧），导致减去一个周期后
-                // 仍然大于 Duration，则强制归零，防止在一帧内产生过多的逻辑堆积。
+                // 触发循环事件：每完成一个固定周期调用一次
+                _onLoop?.Invoke();
+
+                // A. 指定次数重复逻辑 (RepeatCount > 0)
+                if (RepeatCount > 0)
+                {
+                    RepeatCount--;
+                    // 回传当前剩余执行次数，方便业务层追踪进度
+                    _onRepeat?.Invoke(RepeatCount);
+
+                    // 达到预设次数后，状态设为完成并触发最终回调
+                    if (RepeatCount <= 0)
+                    {
+                        IsDone = true;
+                        _onComplete?.Invoke();
+                        return;
+                    }
+                }
+
+                // B. 倒计时总时间限制逻辑 (TotalDuration > 0)
+                if (TotalDuration > 0)
+                {
+                    // 触发倒计时 Tick 回调，传递累计时间与总完成度
+                    _onCountdown?.Invoke(TotalElapsed, TotalProgress);
+
+                    // 检查是否达到最终终止时间（跨越多个循环周期后的最终终点）
+                    if (TotalElapsed >= TotalDuration)
+                    {
+                        IsDone = true;
+                        _onComplete?.Invoke();
+                        return;
+                    }
+                }
+
+                // 防护机制：如果 delta 极大（卡顿等原因）导致越过多个周期，
+                // 在单帧内仅处理一个周期逻辑后将 Elapsed 归零，防止陷入死循环或逻辑混乱。
                 if (Elapsed >= Duration)
                 {
                     Elapsed = 0;
@@ -206,19 +374,15 @@ public class GameTimer : IPoolable
             }
             else
             {
-                // --- 单次模式 ---
+                // --- 单次计时模式 (One-shot) ---
+
+                // 确保数据对齐
                 Elapsed = Duration;
+                // 标记生命周期结束，下一帧会被管理器回收进池
                 IsDone = true;
-                OnComplete?.Invoke();
+                // 触发唯一的完成回调
+                _onComplete?.Invoke();
             }
         }
-    }
-
-    /// <summary>
-    /// 内部便捷方法：添加完成回调
-    /// </summary>
-    internal void AddCompleteCallback(Action callback)
-    {
-        OnComplete += callback;
     }
 }

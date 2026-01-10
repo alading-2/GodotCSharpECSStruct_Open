@@ -34,9 +34,10 @@ public partial class DamageSystemTest : Node
         var victim = new Enemy();
         victim.Name = "TestVictim";
 
-        // Add Health Component to Victim
-        var healthComp = new HealthComponent();
-        EntityManager.AddComponent(victim, healthComp);
+        // Add Components to Victim
+        EntityManager.AddComponent(victim, new UnitStateComponent());
+        EntityManager.AddComponent(victim, new HealthComponent());
+        EntityManager.AddComponent(victim, new LifecycleComponent());
 
         // Init Data
         victim.Data.Set(DataKey.BaseHp, 100f);
@@ -63,17 +64,16 @@ public partial class DamageSystemTest : Node
 
         // Cleanup
         EntityManager.Destroy(attacker);
-        EntityManager.Destroy(victim); // This cleans up components too? usually yes if they are children
-        healthComp.QueueFree(); // Components added via AddComponent are addChild? Confirm logic.
-        // EntityManager.AddComponent usually adds as child. Destroy entity queues free entity.
+        EntityManager.Destroy(victim);
     }
 
     private void TestDefense_Armor()
     {
         var attacker = new Player();
         var victim = new Enemy();
-        var healthComp = new HealthComponent();
-        EntityManager.AddComponent(victim, healthComp);
+        EntityManager.AddComponent(victim, new UnitStateComponent());
+        EntityManager.AddComponent(victim, new HealthComponent());
+        EntityManager.AddComponent(victim, new LifecycleComponent());
 
         victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
@@ -103,8 +103,9 @@ public partial class DamageSystemTest : Node
     {
         var attacker = new Player();
         var victim = new Enemy();
-        var healthComp = new HealthComponent();
-        EntityManager.AddComponent(victim, healthComp);
+        EntityManager.AddComponent(victim, new UnitStateComponent());
+        EntityManager.AddComponent(victim, new HealthComponent());
+        EntityManager.AddComponent(victim, new LifecycleComponent());
 
         victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
@@ -137,16 +138,13 @@ public partial class DamageSystemTest : Node
     {
         var attacker = new Player();
         var victim = new Enemy();
-        var healthComp = new HealthComponent();
-        EntityManager.AddComponent(victim, healthComp);
+        EntityManager.AddComponent(victim, new UnitStateComponent());
+        EntityManager.AddComponent(victim, new HealthComponent());
+        EntityManager.AddComponent(victim, new LifecycleComponent());
 
         victim.Data.Set(DataKey.BaseHp, 100f);
         victim.Data.Set(DataKey.CurrentHp, 100f);
-        victim.Data.Set(DataKey.DodgeChance, 110f); // 100% Dodge (Assuming Cap > 100 for test, or processor caps it?)
-                                                    // Processor caps at 60%. So we can't guarantee dodge.
-                                                    // Let's modify processor for test or mock random?
-                                                    // Hard to test random without dependency injection or Seed.
-                                                    // Skip deterministic dodge test or just log it.
+        victim.Data.Set(DataKey.DodgeChance, 110f);
 
         _log.Warn("Skipping deterministic Dodge test due to RNG.");
 
@@ -158,8 +156,9 @@ public partial class DamageSystemTest : Node
     {
         var attacker = new Player();
         var victim = new Enemy();
-        var healthComp = new HealthComponent();
-        EntityManager.AddComponent(victim, healthComp);
+        EntityManager.AddComponent(victim, new UnitStateComponent());
+        EntityManager.AddComponent(victim, new HealthComponent());
+        EntityManager.AddComponent(victim, new LifecycleComponent());
 
         attacker.Data.Set(DataKey.BaseAttack, 50f); // +50% Damage (assuming Damage is %)
         victim.Data.Set(DataKey.BaseHp, 100f);

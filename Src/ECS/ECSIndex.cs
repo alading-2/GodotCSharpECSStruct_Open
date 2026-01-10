@@ -25,19 +25,25 @@ public static class ECSIndex
         public const string HurtboxComponent = "HurtboxComponent";
         public const string FollowComponent = "FollowComponent";
         public const string PickupComponent = "PickupComponent";
+        public const string UnitStateComponent = "UnitStateComponent";
+        public const string LifecycleComponent = "LifecycleComponent";
+        public const string RecoveryComponent = "RecoveryComponent";
     }
 
     private static readonly Dictionary<string, string> _nameToPathMap = new()
     {
-        { Component.HealthComponent, "res://Src/ECS/Component/HealthComponent/HealthComponent.tscn" },
-        { Component.VelocityComponent, "res://Src/ECS/Component/VelocityComponent/VelocityComponent.tscn" },
-        { Component.HitboxComponent, "res://Src/ECS/Component/HitboxComponent/HitboxComponent.tscn" },
-        { Component.HurtboxComponent, "res://Src/ECS/Component/HurtboxComponent/HurtboxComponent.tscn" },
-        { Component.FollowComponent, "res://Src/ECS/Component/FollowComponent/FollowComponent.tscn" },
-        { Component.PickupComponent, "res://Src/ECS/Component/PickupComponent/PickupComponent.tscn" },
+        { Component.HealthComponent, "res://Src/ECS/Component/Unit/HealthComponent/HealthComponent.tscn" },
+        { Component.VelocityComponent, "res://Src/ECS/Component/Unit/VelocityComponent/VelocityComponent.tscn" },
+        { Component.HitboxComponent, "res://Src/ECS/Component/Unit/HitboxComponent/HitboxComponent.tscn" },
+        { Component.HurtboxComponent, "res://Src/ECS/Component/Unit/HurtboxComponent/HurtboxComponent.tscn" },
+        { Component.FollowComponent, "res://Src/ECS/Component/Unit/FollowComponent/FollowComponent.tscn" },
+        { Component.PickupComponent, "res://Src/ECS/Component/Unit/PickupComponent/PickupComponent.tscn" },
+        { Component.UnitStateComponent, "res://Src/ECS/Component/Unit/UnitStateComponent/UnitStateComponent.tscn" },
+        { Component.LifecycleComponent, "res://Src/ECS/Component/Unit/LifecycleComponent/LifecycleComponent.tscn" },
+        { Component.RecoveryComponent, "res://Src/ECS/Component/Unit/RecoveryComponent/RecoveryComponent.tscn" },
 
-        { Entity.PlayerEntity, "res://Src/ECS/Entity/Player/Player.tscn" },
-        { Entity.EnemyEntity, "res://Src/ECS/Entity/Enemy/Enemy.tscn" }
+        { Entity.PlayerEntity, "res://Src/ECS/Entity/Unit/Player/Player.tscn" },
+        { Entity.EnemyEntity, "res://Src/ECS/Entity/Unit/Enemy/Enemy.tscn" }
     };
 
     // ================= Component 类型识别（白名单）=================

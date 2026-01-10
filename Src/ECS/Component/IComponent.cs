@@ -44,5 +44,10 @@ public interface IComponent
     /// 可用于清理资源等
     /// </summary>
     void OnComponentUnregistered();
+
+    /// <summary>
+    /// Entity OnPoolRelease 归还池时调用
+    /// </summary>
+    void OnComponentReset() { }
 }
 

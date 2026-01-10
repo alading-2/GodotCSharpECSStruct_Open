@@ -156,7 +156,7 @@ public partial class ECSTest : Node
         // Note: This is an async test in a sync method, so we can't easily wait for it without coroutine.
         // For this simple test, we will just verify creation and cancellation API.
 
-        var timer = TimerManager.Instance.CreateTimer(0.1f, () => { timerCalled = true; });
+        var timer = TimerManager.Instance.Delay(0.1f).OnComplete(() => { timerCalled = true; });
         Assert(timer != null, "Timer Creation");
         Assert(!timer.IsDone, "Timer Initial State");
 

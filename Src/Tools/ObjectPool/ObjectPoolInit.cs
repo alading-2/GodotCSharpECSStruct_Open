@@ -63,7 +63,7 @@ public partial class ObjectPoolInit : Node
             {
                 Name = ObjectPoolNames.TimerPool,
                 InitialSize = 50,
-                MaxSize = 200,
+                MaxSize = 300,
                 ParentPath = "Tool/GameTimer"
             }
         );

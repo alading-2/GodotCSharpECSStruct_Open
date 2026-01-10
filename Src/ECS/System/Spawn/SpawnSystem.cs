@@ -135,8 +135,9 @@ public partial class SpawnSystem : Node
 
         // 1. 创建波次总时长计时器
         _waveTimer?.Cancel(); // 取消旧计时器
-        _waveTimer = TimerManager.Instance.CreateTimer(SpawnSystemConfig.WaveDuration, OnWaveTimeout);
-        _waveTimer.Tag = "SpawnSystem";
+        _waveTimer = TimerManager.Instance.Delay(SpawnSystemConfig.WaveDuration)
+            .WithTag("SpawnSystem")
+            .OnComplete(OnWaveTimeout);
 
         // 2. 初始化规则状态
         _activeStates.Clear();
@@ -165,8 +166,9 @@ public partial class SpawnSystem : Node
 
         // 创建核心检查循环计时器 (0.2s 循环)
         _checkTimer?.Cancel(); // 取消旧计时器
-        _checkTimer = TimerManager.Instance.CreateLoopTimer(0.2f, OnCheckTimerTimeout);
-        _checkTimer.Tag = "SpawnSystem";
+        _checkTimer = TimerManager.Instance.Loop(0.2f)
+            .WithTag("SpawnSystem")
+            .OnLoop(OnCheckTimerTimeout);
 
         _log.Info($"波次 {waveIndex} 开始! 持续时间: {SpawnSystemConfig.WaveDuration}s, 激活规则数: {_activeStates.Count}");
         // 通过事件总线通知 UI 和其他系统

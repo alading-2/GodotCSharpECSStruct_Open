@@ -388,6 +388,7 @@ public partial class HealthComponent : Node, IComponent
             _data = EntityManager.GetEntityData(this);
     }
 }
+}
 ```
 
 ### 4. UnregisterEntity() - 注销 Entity
@@ -404,39 +405,79 @@ public static void UnregisterEntity(Node entity)
     string id = entity.GetInstanceId().ToString();
 
     // 1. 从注册表移除
-    if (!_entities.Remove(id))
+    if (!_entities.Remove(id)) return;
+
+    // 2. 统一清理 IEntity 资源
+    if (entity is IEntity iEntity)
     {
-        _log.Warn($"Entity {id} 未注册，无法注销");
-        return;
+        iEntity.Events.Clear();
+        iEntity.Data.Clear();
     }
 
-    // 2. 从类型索引中移除
+    // 3. 从类型索引中移除
     foreach (var set in _entitiesByType.Values)
         set.Remove(entity);
 
-    // 3. 注销所有 Component
+    // 4. 注销所有 Component（触发 OnComponentReset + OnComponentUnregistered）
     UnregisterComponents(entity);
 
-    // 4. 清理所有关系
+    // 5. 清理所有 Entity-Component 关系
     EntityRelationshipManager.RemoveAllRelationships(id);
+}
+```
+
+#### 关系管理策略 (2026-01-11 更新)
+
+> [!IMPORTANT]
+> **核心设计决策**：每次 `Destroy` 会移除所有 Entity-Component 关系，每次 `Spawn` 会重新注册。
+
+```
+Spawn 流程:
+  ObjectPool.Get() → Register() + RegisterComponents() → 建立关系
+
+Destroy 流程:
+  UnregisterEntity() → UnregisterComponents() → 移除关系 → ObjectPool.Return()
+```
+
+**设计优势**：
+- ✅ 简单直接，无需维护复杂的关系状态
+- ✅ 每次 Spawn 都是干净的状态
+- ✅ 代码中的"防止重复注册"检查是安全保障（正常流程不触发）
+
+**关于"防止重复注册"**：
+- 代码 `if (!_entities.ContainsKey(id))` 是一道安全防线
+- 正常流程下 `Destroy` 已移除所有关系，不会触发此检查
+- 仅在异常场景（如 Entity 未正确销毁就复用）时生效
+
+#### Component 回调顺序
+
+```csharp
+// UnregisterComponents 内部流程
+foreach (var component in components)
+{
+    // 1. 先重置组件状态
+    icomp.OnComponentReset();
+    
+    // 2. 再触发注销回调
+    icomp.OnComponentUnregistered();
 }
 ```
 
 #### 使用示例
 
 ```csharp
-// Enemy.cs
+// Player.cs - 非对象池 Entity
 public override void _ExitTree()
 {
-    // 必须：注销自己
+    // 统一注销（自动清理 Data/Events/关系）
     EntityManager.UnregisterEntity(this);
-
-    // 清理 Data
-    Data.Clear();
-
-    base._ExitTree();
 }
+
+// Enemy.cs - 对象池 Entity（通过 EntityManager.Destroy）
+// 死亡时调用 EntityManager.Destroy(this)
+// 内部自动处理: UnregisterEntity() → ObjectPool.Return()
 ```
+
 
 ### 5. GetComponent<T>() - 获取 Component
 
@@ -600,8 +641,10 @@ var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
     Position = pos
 });
 
-// 归还对象池
-EntityManager.Destroy(enemy);  // 内部调用 ObjectPoolManager.ReturnToPool()
+// 销毁 Entity（兼容对象池和非对象池）
+EntityManager.Destroy(enemy);
+// - IPoolable Entity → ObjectPoolManager.ReturnToPool()
+// - 非 IPoolable Entity → QueueFree()
 ```
 
 ### 与 Data 容器协作
@@ -731,10 +774,8 @@ public partial class MyEntity : CharacterBody2D, IEntity, IPoolable
 
     public override void _ExitTree()
     {
-        // 必须：注销和清理
+        // 统一注销 (自动处理 Data/Events 清理)
         EntityManager.UnregisterEntity(this);
-        Data.Clear();
-        base._ExitTree();
     }
 
     // ================= IPoolable 实现 =================
@@ -742,12 +783,13 @@ public partial class MyEntity : CharacterBody2D, IEntity, IPoolable
     public void OnPoolAcquire()
     {
         // 从池中取出时重新激活
+        // 注意：Events 需在此处重新订阅 (因为 OnPoolRelease/UnregisterEntity 已清空)
     }
 
     public void OnPoolRelease()
     {
-        // 归还池时重置状态
-        Data.Clear();
+        // 归还池时仅需重置非 Data/Component 管理的状态
+        // Data.Clear() 和 Events.Clear() 已由 EntityManager.Destroy() 统一处理
     }
 
     public void OnPoolReset() { }
@@ -786,16 +828,8 @@ public partial class MyComponent : Node, IComponent
 
     public override void _Ready()
     {
-        // 懒加载（如果 OnComponentRegistered 未被调用）
-        if (_data == null)
-        {
-            _data = EntityManager.GetEntityData(this);
-        }
-
-        if (_data == null)
-        {
-            _log.Error("无法获取 Data 容器！");
-        }
+        // ✅ 仅做日志或 Godot 内置信号连接
+        // ❌ 不要在此处订阅 Data 或 Entity.Events 事件（应在 OnComponentRegistered）
     }
 
     // ================= 业务逻辑 =================

@@ -62,6 +62,9 @@ public class EventBus
     private int _emittingCount = 0;
     private readonly List<Subscription> _pendingRemovals = new();
 
+    // ✅ 重入保护：追踪正在执行的事件类型，防止同类型事件递归触发
+    private readonly HashSet<string> _emittingEvents = new();
+
     // ==================== 订阅 (Subscribe) ====================
 
     /// <summary>
@@ -203,11 +206,19 @@ public class EventBus
 
     private void Trigger<T>(string eventName, T data)
     {
+        // ✅ 重入检测：阻止同类型事件递归触发（防止死循环）
+        if (_emittingEvents.Contains(eventName))
+        {
+            _log.Warn($"检测到事件重入，已阻止: [{eventName}]");
+            return;
+        }
+
         if (!_subscriptions.TryGetValue(eventName, out var list) || list.Count == 0)
         {
             return;
         }
 
+        _emittingEvents.Add(eventName);  // 标记事件开始执行
         _emittingCount++;
         try
         {
@@ -262,6 +273,7 @@ public class EventBus
         finally
         {
             _emittingCount--;
+            _emittingEvents.Remove(eventName);  // 标记事件执行结束
             // 如果所有嵌套的 Emit 都结束了，处理延迟移除
             if (_emittingCount <= 0)
             {

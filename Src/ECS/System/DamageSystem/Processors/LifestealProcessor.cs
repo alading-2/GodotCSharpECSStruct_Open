@@ -32,16 +32,10 @@ public class LifestealProcessor : IDamageProcessor
             {
                 if (GD.Randf() * 100 < lifestealChance)
                 {
-                    // 回血 1 点
-                    if (instigatorEntity is Node entityNode)
-                    {
-                        var health = EntityManager.GetComponent<HealthComponent>(entityNode);
-                        if (health != null)
-                        {
-                            health.ModifyHealth(1);
-                            info.AddLog("Lifesteal triggered (+1 HP)");
-                        }
-                    }
+                    // ✅ 发送治疗请求事件，解耦 Processor 与 HealthComponent
+                    instigatorEntity.Events.Emit(GameEventType.Unit.HealRequest,
+                        new GameEventType.Unit.HealRequestEventData(1, HealSource.Lifesteal));
+                    info.AddLog("Lifesteal triggered (+1 HP)");
                 }
             }
         }

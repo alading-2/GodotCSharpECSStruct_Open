@@ -371,14 +371,24 @@ public static class EntityManager
             return;
         }
 
-        // 从类型索引中移除
+        // 1. 注销所有 Component（包括清理关系）
+        // 必须先于 Data/Events 清理，以便 Component 在 OnComponentUnregistered/OnComponentReset 中仍能访问 Entity 数据
+        UnregisterComponents(entity);
+
+        // 2. 统一清理 IEntity 资源
+        if (entity is IEntity iEntity)
+        {
+            // 清空事件
+            iEntity.Events.Clear();
+            // 清空数据
+            iEntity.Data.Clear();
+        }
+
+        // 3. 从类型索引中移除
         foreach (var set in _entitiesByType.Values)
             set.Remove(entity);
 
-        // 注销所有 Component（包括清理关系）
-        UnregisterComponents(entity);
-
-        // 清理 Entity 自身的所有关系（作为父或子）
+        // 4. 清理 Entity 自身的所有关系（作为父或子）
         EntityRelationshipManager.RemoveAllRelationships(id);
     }
 
@@ -431,12 +441,15 @@ public static class EntityManager
                 {
                     try
                     {
+                        // 先重置组件状态（对象池复用前的清理）
+                        icomp.OnComponentReset();
+                        // 再触发注销回调
                         icomp.OnComponentUnregistered();
-                        _log.Debug($"触发 IComponent 注销回调: {component.GetType().Name}");
+                        _log.Debug($"触发 IComponent 回调: {component.GetType().Name}");
                     }
                     catch (Exception ex)
                     {
-                        _log.Error($"Component 注销回调失败: {component.GetType().Name}, 错误: {ex.Message}");
+                        _log.Error($"Component 回调失败: {component.GetType().Name}, 错误: {ex.Message}");
                     }
                 }
 
@@ -729,16 +742,26 @@ public static class EntityManager
     // ==================== 生命周期管理 ====================
 
     /// <summary>
-    /// 回收 Entity（归还到对象池）
-    /// 注意：Unregister 内部已处理关系清理，无需重复调用
+    /// 销毁 Entity（兼容对象池和非对象池）
+    /// - 对象池 Entity：归还到对象池
+    /// - 非对象池 Entity：调用 QueueFree 销毁
     /// </summary>
     public static void Destroy(Node entity)
     {
-        // 1. 注销（内部已清理 Component 和关系）
+        // 1. 注销（内部已清理 Component、关系、Data、Events）
         UnregisterEntity(entity);
 
-        // 2. 归还到对象池
-        ObjectPoolManager.ReturnToPool(entity);
+        // 2. 根据类型决定销毁方式
+        if (entity is IPoolable)
+        {
+            // 对象池 Entity：归还到池中
+            ObjectPoolManager.ReturnToPool(entity);
+        }
+        else
+        {
+            // 非对象池 Entity：直接销毁
+            entity.QueueFree();
+        }
     }
 
     /// <summary>

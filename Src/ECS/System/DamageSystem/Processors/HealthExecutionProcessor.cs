@@ -2,7 +2,7 @@ using Godot;
 
 /// <summary>
 /// 生命值结算处理器
-/// <para>实际执行扣血逻辑。</para>
+/// <para>实际执行扣血逻辑，并触发死亡检测。</para>
 /// </summary>
 public class HealthExecutionProcessor : IDamageProcessor
 {
@@ -10,31 +10,34 @@ public class HealthExecutionProcessor : IDamageProcessor
 
     public void Process(DamageInfo info)
     {
-        // 即使 FinalDamage 为 0，如果伤害被闪避了，就不会走到这里 (因为 IsDodged 检查)
-        // 但如果是被护盾完全吸收，FinalDamage = 0，此时不应扣血，但可能需要触发 "0 伤害" 事件?
-        // 根据逻辑，ModifyHealth(0) 应该也没问题。
-
         if (info.IsDodged) return;
+        if (info.FinalDamage <= 0) return;
 
-        var healthComp = EntityManager.GetComponent<HealthComponent>(info.Victim as Node);
-        if (healthComp != null)
+        var victim = info.Victim as Node;
+        if (victim == null) return;
+
+        // 获取 Entity 的 Data
+        var data = EntityManager.GetEntityData(victim);
+        if (data == null)
         {
-            // 执行扣血
-            // 注意：HealthComponent.ModifyHealth 接受负数表示伤害? 
-            // 通常 ModifyHealth(float amount) -> amount > 0 heal, amount < 0 damage?
-            // 或者 ModifyHealth(float delta) -> current += delta.
-            // 所以伤害应该是负数。
+            info.AddLog("No Data on Victim");
+            return;
+        }
 
-            if (info.FinalDamage > 0)
-            {
-                healthComp.ModifyHealth(-info.FinalDamage);
-                info.AddLog($"Health Executed: -{info.FinalDamage}");
-            }
+        // 获取 HealthComponent
+        var health = EntityManager.GetComponent<HealthComponent>(victim);
+        if (health != null)
+        {
+            health.ApplyDamage(info.FinalDamage, info.Attacker as IEntity, info.Type);
+            info.AddLog($"Health Executed via HealthComponent: -{info.FinalDamage}");
         }
         else
         {
-            // Victim 没有生命组件，无法扣血
-            info.AddLog("No HealthComponent on Victim");
+            info.AddLog("Victim has no HealthComponent");
+
+            // 回退逻辑：如果没 HealthComponent 但有 Data，尝试手动修改（可选，建议强制要求 HealthComponent）
+            float currentHp = data.Get<float>(DataKey.CurrentHp);
+            data.Set(DataKey.CurrentHp, Mathf.Max(0, currentHp - info.FinalDamage));
         }
     }
 }
