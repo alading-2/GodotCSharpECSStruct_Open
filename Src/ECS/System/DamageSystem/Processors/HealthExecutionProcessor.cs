@@ -24,20 +24,21 @@ public class HealthExecutionProcessor : IDamageProcessor
             return;
         }
 
-        // 获取 HealthComponent
-        var health = EntityManager.GetComponent<HealthComponent>(victim);
-        if (health != null)
+        // ✅ 获取 DamageComponent（由其负责扣血和致死判定）
+        var damage = EntityManager.GetComponent<DamageComponent>(victim);
+        if (damage != null)
         {
-            health.ApplyDamage(info.FinalDamage, info.Attacker as IEntity, info.Type);
-            info.AddLog($"Health Executed via HealthComponent: -{info.FinalDamage}");
+            damage.TakeDamage(info);
+            info.AddLog($"Damage Executed via DamageComponent: -{info.FinalDamage}");
         }
         else
         {
-            info.AddLog("Victim has no HealthComponent");
+            info.AddLog("Victim has no DamageComponent");
 
-            // 回退逻辑：如果没 HealthComponent 但有 Data，尝试手动修改（可选，建议强制要求 HealthComponent）
+            // 回退逻辑：如果没 DamageComponent 但有 Data，尝试手动修改
             float currentHp = data.Get<float>(DataKey.CurrentHp);
             data.Set(DataKey.CurrentHp, Mathf.Max(0, currentHp - info.FinalDamage));
         }
     }
 }
+

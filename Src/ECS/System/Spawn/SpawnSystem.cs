@@ -45,11 +45,12 @@ public partial class SpawnSystem : Node
     // === 内部组件 ===
     private GameTimer? _waveTimer;       // 控制波次总时长
     private GameTimer? _checkTimer;      // 核心轮询计时器(替代大量独立的 Rule Timer)）
-
+    private const float CheckInterval = 0.1f;
     // 运行时状态跟踪 - 使用 struct 避免每波生成大量状态对象导致的 GC 压力
     private struct RuleRuntimeState
     {
-        public EnemySpawnConfig Rule;
+        public Dictionary<string, object> Data;  // EnemyData
+        public SpawnRule Rule;     // 生成规则
         public float AccumulatedTime; // 累积时间
     }
     private List<RuleRuntimeState> _activeStates = new();
@@ -139,24 +140,18 @@ public partial class SpawnSystem : Node
             .WithTag("SpawnSystem")
             .OnComplete(OnWaveTimeout);
 
-        // 2. 初始化规则状态
+        // 2. 初始化规则状态 - 从 EnemyData 中提取生成规则
         _activeStates.Clear();
 
-        // 安全检查：防止 SpawnRules 为 null
-        if (SpawnSystemConfig.SpawnRules == null)
+        // 遍历所有敌人配置，提取激活的生成规则
+        foreach (var data in EnemyData.Configs.Values)
         {
-            _log.Error("SpawnSystemConfig 中的 SpawnRules 列表为空(null)!");
-            return;
-        }
-
-
-
-        foreach (var rule in SpawnSystemConfig.SpawnRules)
-        {
-            if (IsRuleActiveForWave(rule, waveIndex))
+            var rule = data.TryGetValue(DataKey.SpawnRule, out var r) ? r as SpawnRule : null;
+            if (rule != null && IsRuleActiveForWave(rule, waveIndex))
             {
                 _activeStates.Add(new RuleRuntimeState
                 {
+                    Data = data,
                     Rule = rule,
                     // 首个敌人生成的延迟时间
                     AccumulatedTime = rule.StartDelay > 0 ? -rule.StartDelay : 0
@@ -164,9 +159,9 @@ public partial class SpawnSystem : Node
             }
         }
 
-        // 创建核心检查循环计时器 (0.2s 循环)
+        // 创建核心检查循环计时器 (CheckInterval 循环)
         _checkTimer?.Cancel(); // 取消旧计时器
-        _checkTimer = TimerManager.Instance.Loop(0.2f)
+        _checkTimer = TimerManager.Instance.Loop(CheckInterval)
             .WithTag("SpawnSystem")
             .OnLoop(OnCheckTimerTimeout);
 
@@ -200,9 +195,6 @@ public partial class SpawnSystem : Node
     {
         if (!IsWaveActive) return;
 
-        // 使用固定的检查间隔
-        float delta = 0.2f;
-
         // 使用 for 循环配合索引访问，因为 RuleRuntimeState 现在是 struct
         // struct 在 List 中是值存储，foreach 会产生副本，修改副本不会同步回 List
         for (int i = 0; i < _activeStates.Count; i++)
@@ -210,7 +202,7 @@ public partial class SpawnSystem : Node
             var state = _activeStates[i];
 
             // 累积时间
-            state.AccumulatedTime += delta;
+            state.AccumulatedTime += CheckInterval;
 
             // 检查是否达到生成间隔
             // 追赶机制：如果卡顿导致时间跳跃，会一次性补足（但限制单帧最大次数以防卡死）
@@ -230,7 +222,8 @@ public partial class SpawnSystem : Node
 
                 if (count > 0)
                 {
-                    SpawnBatch(count, state.Rule.EnemyData);
+                    // 直接使用 state 中的 Config 配置和 Rule 中的策略
+                    SpawnBatch(count, state.Data, state.Rule.Strategy);
                 }
             }
 
@@ -247,8 +240,9 @@ public partial class SpawnSystem : Node
     /// 手动批量生成敌人（用于测试或特殊事件）
     /// </summary>
     /// <param name="count">数量</param>
-    /// <param name="enemyData">敌人资源配置</param>
-    public void SpawnBatch(int count, EnemyResource enemyData)
+    /// <param name="enemyConfig">敌人配置字典</param>
+    /// <param name="strategy">生成策略</param>
+    public void SpawnBatch(int count, Dictionary<string, object> enemyConfig, SpawnPositionStrategy strategy)
     {
         // 1. 计算位置
         // 获取当前视口（Viewport），用于确定屏幕边界和相机位置，确保敌人能正确生成在玩家视野外
@@ -258,17 +252,16 @@ public partial class SpawnSystem : Node
         // SpawnPositionParams 是 struct，分配在栈上，无 GC 压力
         var spawnParams = new SpawnPositionParams();
 
-        var positions = SpawnPositionCalculator.GetSpawnPositions(enemyData.DefaultStrategy, count, spawnParams, viewport);
+        var positions = SpawnPositionCalculator.GetSpawnPositions(strategy, count, spawnParams, viewport);
 
         // 2. 循环生成
-        // 使用 EntityFactory 统一处理生成逻辑 (获取实例 + 数据注入)
+        // 使用 EntityManager.Spawn 统一处理生成逻辑
         foreach (var pos in positions)
         {
             // 使用新的 EntitySpawnConfig 参数对象方式
-            // 注意：这里使用场景路径而非对象池，因为需要动态生成不同类型的敌人
             var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
             {
-                Resource = enemyData,
+                Config = enemyConfig,
                 UsingObjectPool = true,
                 PoolName = ObjectPoolNames.EnemyPool,
                 Position = pos
@@ -292,10 +285,10 @@ public partial class SpawnSystem : Node
     /// <param name="rule">生成规则配置</param>
     /// <param name="waveIndex">当前波次索引 (1-based)</param>
     /// <returns>如果当前波次在规则设定的 [MinWave, MaxWave] 范围内且数据合法，则返回 true</returns>
-    private bool IsRuleActiveForWave(EnemySpawnConfig rule, int waveIndex)
+    private bool IsRuleActiveForWave(SpawnRule rule, int waveIndex)
     {
-        // 基础安全性检查：规则或关联的敌人数据不能为空
-        if (rule?.EnemyData == null) return false;
+        // 基础安全性检查
+        if (rule == null) return false;
 
         // 逻辑判断：
         // 1. waveIndex >= rule.MinWave: 当前波次必须达到规则要求的起始波次

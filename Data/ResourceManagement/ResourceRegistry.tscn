@@ -1,0 +1,124 @@
+[gd_scene load_steps=37 format=3 uid="uid://dpaa82ggxeqa3"]
+
+[ext_resource type="Script" uid="uid://joghfrdjf2sr" path="res://Data/ResourceManagement/ResourceRegistry.cs" id="1_script"]
+[ext_resource type="Script" uid="uid://csg055em5kn2s" path="res://Data/ResourceManagement/ResourceEntry.cs" id="2_entry"]
+[ext_resource type="Resource" uid="uid://daw5s8n3o6q2y" path="res://Data/Resources/Unit/Enemy/豺狼人.tres" id="3_unit_gnoll"]
+[ext_resource type="Resource" uid="uid://b8v4r7m2n5p1x" path="res://Data/Resources/Unit/Enemy/鱼人.tres" id="4_unit_murloc"]
+[ext_resource type="Resource" uid="uid://c8v5r8m3n6p2y" path="res://Data/Resources/Unit/Player/DefaultPlayer.tres" id="5_unit_player"]
+[ext_resource type="Resource" uid="uid://bh3wdyv6cnv6i" path="res://Data/Config/Spawn/SpawnConfig/豺狼人生成规则.tres" id="6_rule_gnoll"]
+[ext_resource type="Resource" path="res://Data/Config/Spawn/SpawnConfig/鱼人生成规则.tres" id="7_rule_murloc"]
+[ext_resource type="PackedScene" uid="uid://bqu6n71cx1env" path="res://Src/ECS/Entity/Unit/Player/Player.tscn" id="8_ent_player"]
+[ext_resource type="PackedScene" uid="uid://c7a7uoxm8i6t8" path="res://Src/ECS/Entity/Unit/Enemy/Enemy.tscn" id="9_ent_enemy"]
+[ext_resource type="PackedScene" uid="uid://cj8x2k5dpm7nq" path="res://Src/ECS/Component/Unit/DamageComponent/DamageComponent.tscn" id="10_cmp_damage"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/FollowComponent/FollowComponent.tscn" id="11_cmp_follow"]
+[ext_resource type="PackedScene" uid="uid://cfvwgjvdxn0af" path="res://Src/ECS/Component/Unit/HealthComponent/HealthComponent.tscn" id="12_cmp_health"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/HitboxComponent/HitboxComponent.tscn" id="13_cmp_hitbox"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/HurtboxComponent/HurtboxComponent.tscn" id="14_cmp_hurtbox"]
+[ext_resource type="PackedScene" uid="uid://bl7rk0v5m2t0p" path="res://Src/ECS/Component/Unit/LifecycleComponent/LifecycleComponent.tscn" id="15_cmp_life"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/PickupComponent/PickupComponent.tscn" id="16_cmp_pickup"]
+[ext_resource type="PackedScene" uid="uid://dq8m5nvk2r7wp" path="res://Src/ECS/Component/Unit/RecoveryComponent/RecoveryComponent.tscn" id="17_cmp_recov"]
+[ext_resource type="PackedScene" uid="uid://bpd8k5x3qcfmr" path="res://Src/ECS/Component/Unit/UnitStateComponent/UnitStateComponent.tscn" id="18_cmp_state"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/VelocityComponent/VelocityComponent.tscn" id="19_cmp_vel"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_entry")
+Name = "豺狼人"
+Data = ExtResource("3_unit_gnoll")
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_entry")
+Name = "鱼人"
+Data = ExtResource("4_unit_murloc")
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("2_entry")
+Name = "Player"
+Data = ExtResource("5_unit_player")
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("2_entry")
+Name = "豺狼人生成规则"
+Category = 1
+Data = ExtResource("6_rule_gnoll")
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("2_entry")
+Name = "鱼人生成规则"
+Category = 1
+Data = ExtResource("7_rule_murloc")
+
+[sub_resource type="Resource" id="Resource_6"]
+script = ExtResource("2_entry")
+Name = "PlayerEntity"
+Category = 4
+Data = ExtResource("8_ent_player")
+
+[sub_resource type="Resource" id="Resource_7"]
+script = ExtResource("2_entry")
+Name = "EnemyEntity"
+Category = 4
+Data = ExtResource("9_ent_enemy")
+
+[sub_resource type="Resource" id="Resource_8"]
+script = ExtResource("2_entry")
+Name = "DamageComponent"
+Category = 5
+Data = ExtResource("10_cmp_damage")
+
+[sub_resource type="Resource" id="Resource_9"]
+script = ExtResource("2_entry")
+Name = "FollowComponent"
+Category = 5
+Data = ExtResource("11_cmp_follow")
+
+[sub_resource type="Resource" id="Resource_10"]
+script = ExtResource("2_entry")
+Name = "HealthComponent"
+Category = 5
+Data = ExtResource("12_cmp_health")
+
+[sub_resource type="Resource" id="Resource_11"]
+script = ExtResource("2_entry")
+Name = "HitboxComponent"
+Category = 5
+Data = ExtResource("13_cmp_hitbox")
+
+[sub_resource type="Resource" id="Resource_12"]
+script = ExtResource("2_entry")
+Name = "HurtboxComponent"
+Category = 5
+Data = ExtResource("14_cmp_hurtbox")
+
+[sub_resource type="Resource" id="Resource_13"]
+script = ExtResource("2_entry")
+Name = "LifecycleComponent"
+Category = 5
+Data = ExtResource("15_cmp_life")
+
+[sub_resource type="Resource" id="Resource_14"]
+script = ExtResource("2_entry")
+Name = "PickupComponent"
+Category = 5
+Data = ExtResource("16_cmp_pickup")
+
+[sub_resource type="Resource" id="Resource_15"]
+script = ExtResource("2_entry")
+Name = "RecoveryComponent"
+Category = 5
+Data = ExtResource("17_cmp_recov")
+
+[sub_resource type="Resource" id="Resource_16"]
+script = ExtResource("2_entry")
+Name = "UnitStateComponent"
+Category = 5
+Data = ExtResource("18_cmp_state")
+
+[sub_resource type="Resource" id="Resource_17"]
+script = ExtResource("2_entry")
+Name = "VelocityComponent"
+Category = 5
+Data = ExtResource("19_cmp_vel")
+
+[node name="ResourceRegistry" type="Node"]
+script = ExtResource("1_script")
+Resources = Array[ExtResource("2_entry")]([SubResource("Resource_1"), SubResource("Resource_2"), SubResource("Resource_3"), SubResource("Resource_4"), SubResource("Resource_5"), SubResource("Resource_6"), SubResource("Resource_7"), SubResource("Resource_8"), SubResource("Resource_9"), SubResource("Resource_10"), SubResource("Resource_11"), SubResource("Resource_12"), SubResource("Resource_13"), SubResource("Resource_14"), SubResource("Resource_15"), SubResource("Resource_16"), SubResource("Resource_17")])

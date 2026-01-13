@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://c7a7uoxm8i6t8"]
 
-[ext_resource type="Script" uid="uid://pj3op0qfykmq" path="res://Src/ECS/Entity/Enemy/Enemy.cs" id="1_id0n2"]
+[ext_resource type="Script" uid="uid://pj3op0qfykmq" path="res://Src/ECS/Entity/Unit/Enemy/Enemy.cs" id="1_id0n2"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_vqy82"]
 radius = 25.0

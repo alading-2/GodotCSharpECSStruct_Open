@@ -307,7 +307,6 @@ public partial class EnemyResource : Resource
 
 1. **实现 IComponent 接口**（推荐）
 2. **类名以 "Component" 结尾**（兼容旧代码）
-3. **在 ECSIndex 白名单中**（特殊情况）
 
 #### 流程
 
@@ -335,11 +334,6 @@ private static void RegisterComponents(Node entity)
         }
         // 规则 2：命名约定
         else if (componentType.EndsWith("Component"))
-        {
-            isComponent = true;
-        }
-        // 规则 3：白名单
-        else if (ECSIndex.IsComponentWhitelist(componentType))
         {
             isComponent = true;
         }
@@ -918,7 +912,7 @@ EntityManager 实现了以下目标：
 2. **自动化流程**：Spawn() 自动完成获取、注入、注册等步骤
 3. **零配置扩展**：新增 Entity 类型无需修改框架代码
 4. **反射注入**：自动处理所有 Resource 属性
-5. **自动识别**：Component 通过接口/命名/白名单自动注册
+5. **自动识别**：Component 通过接口/命名自动注册
 6. **关系管理**：集成 EntityRelationshipManager，支持复杂查询
 7. **高性能**：基于索引查询（O(1)）+ 对象池集成
 

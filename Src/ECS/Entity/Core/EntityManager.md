@@ -766,7 +766,6 @@ public override void _ExitTree()
 
 1. **实现 IComponent 接口**（推荐）
 2. **类名以 "Component" 结尾**（命名约定）
-3. **在 ECSIndex 白名单中**（特殊情况）
 
 ### 4. 事件绑定和解绑
 

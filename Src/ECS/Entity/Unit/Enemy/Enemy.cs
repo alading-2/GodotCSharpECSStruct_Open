@@ -53,14 +53,7 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
 
     // ================= 业务逻辑 =================
 
-    /// <summary>
-    /// [EntityFactory 回调] 当实体被生成并注入数据后调用。
-    /// 可用于执行某些依赖于 Data 的立即初始化逻辑。
-    /// </summary>
-    public void OnSpawn(EnemyResource resource)
-    {
-        // OnSpawn 不需要订阅事件，OnPoolAcquire 已统一处理
-    }
+    // OnSpawn 方法已移除，配置数据通过 EntityManager.Spawn 时的 UnitConfig 直接注入
 
     // ================= IPoolable 接口实现 =================
 

@@ -66,10 +66,10 @@ public partial class LifecycleComponent : Node, IComponent
     // ================= 配置 =================
 
     /// <summary> 复活所需时间（秒） </summary>
-    public float ReviveDuration { get; set; } = Config.HeroReviveTime;
+    public float ReviveDuration { get; set; } = GlobalConfig.HeroReviveTime;
 
     /// <summary> 复活后无敌时间（秒） </summary>
-    public float ReviveInvulnerabilityDuration { get; set; } = Config.ReviveinvulnerableTime;
+    public float ReviveInvulnerabilityDuration { get; set; } = GlobalConfig.ReviveinvulnerableTime;
 
     // ================= 组件依赖 =================
 
@@ -96,13 +96,10 @@ public partial class LifecycleComponent : Node, IComponent
             _data = iEntity.Data;
         }
 
-        // 监听 HP 变化：当血量降至 0 时自动触发死亡判定
-        _entity?.Events.On<GameEventType.Data.HealthChangedEventData>(
-            GameEventType.Data.HealthChanged, IsUnitDeath);
+        // ✅ 监听致死伤害事件（由 DamageComponent 判定 HP<=0 后发送）
+        _entity?.Events.On<GameEventType.Unit.KillEventData>(
+            GameEventType.Unit.Kill, OnUnitKilled);
 
-        // 监听死亡事件：处理销毁逻辑
-        // _entity?.Events.On<GameEventType.Unit.DeadEventData>(
-        //     GameEventType.Unit.Dead, OnUnitDead);
 
         // 初始化状态为 Alive，确保单位生成后立即可用
         ChangeState(LifecycleState.Alive);
@@ -133,23 +130,10 @@ public partial class LifecycleComponent : Node, IComponent
     }
 
     /// <summary>
-    /// 重置组件状态（主要用于对象池复用时）。
-    /// 将状态恢复为初始值并重新启动必要的计时器。
+    /// Entity OnPoolRelease 归还池时调用
     /// </summary>
     public void OnComponentReset()
     {
-        // 清理旧的计时器，防止复用后产生冲突
-        _reviveTimer?.Cancel();
-        _lifeTimer?.Cancel();
-        _reviveTimer = null;
-        _lifeTimer = null;
-
-        // 重新启动生命计时器（如果是召唤物）
-        if (MaxLifeTime > 0)
-        {
-            _lifeTimer = TimerManager.Instance?.Delay(MaxLifeTime)
-                .OnComplete(() => Kill(DeathType.Summon));
-        }
     }
 
     // ================= 状态查询 =================
@@ -173,16 +157,15 @@ public partial class LifecycleComponent : Node, IComponent
 
 
 
-    // ================= HP 变化监听 =================
+    // ================= 单位被击杀事件监听 =================
 
     /// <summary>
-    /// 当 HealthComponent 的 HP 发生变化时的回调。
-    /// 用于检测血量是否耗尽并触发死亡逻辑。
+    /// 当 DamageComponent 判定 HP<=0 后的回调。
+    /// 执行死亡流程。
     /// </summary>
-    private void IsUnitDeath(GameEventType.Data.HealthChangedEventData data)
+    private void OnUnitKilled(GameEventType.Unit.KillEventData data)
     {
-        // 如果 HP 降到 0 或以下且当前仍被视为存活，则触发 Kill
-        if (data.NewHp <= 0 && StateIsAlive())
+        if (StateIsAlive())
         {
             Kill(DeathType);
         }
@@ -281,15 +264,6 @@ public partial class LifecycleComponent : Node, IComponent
             EntityManager.Destroy(entityNode);
             _log.Debug($"实体已销毁，死亡类型：{DeathType}");
         }
-    }
-
-    /// <summary>
-    /// 处理单位死亡事件。
-    /// 根据死亡类型决定是进入复活流程还是直接销毁 Entity。
-    /// </summary>
-    private void OnUnitDead(GameEventType.Unit.DeadEventData data)
-    {
-
     }
 
     /// <summary>

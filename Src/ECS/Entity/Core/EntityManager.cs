@@ -9,8 +9,8 @@ using System.Linq;
 /// </summary>
 public readonly record struct EntitySpawnConfig
 {
-    /// <summary>Resource 配置数据（必填）</summary>
-    public required Resource Resource { get; init; }
+    /// <summary>单位配置数据（必填）</summary>
+    public required Dictionary<string, object> Config { get; init; }
 
     /// <summary>是否使用对象池（默认 false）</summary>
     public bool UsingObjectPool { get; init; }
@@ -180,11 +180,11 @@ public static class EntityManager
             RegisterComponents(entity);
         }
 
-        // 3. 数据注入（核心: 将 Resource 配置写入 Data）
-        entity.Data.LoadFromResource(config.Resource);
+        // 3. 数据注入（核心: 将配置字典写入 Data）
+        entity.Data.LoadFromConfig(config.Config);
 
         // 4. 自动加载 VisualScene (如有)
-        InjectVisualScene(entity, config.Resource);
+        InjectVisualScene(entity, config.Config);
 
         // 5. 设置位置和旋转（仅对 Node2D 生效）
         if (entity is Node2D entity2D)
@@ -209,18 +209,28 @@ public static class EntityManager
 
     /// <summary>
     /// 自动加载 VisualScene (AnimatedSprite2D)
-    /// 从 Resource 中读取 VisualScene 属性，实例化并挂载到 Entity 下
+    /// 从配置字典中读取 VisualScenePath，加载并挂载到 Entity 下
     /// 统一设置 ZIndex 以保证显示层级
     /// </summary>
-    private static void InjectVisualScene(Node entity, Resource resource)
+    private static void InjectVisualScene(Node entity, Dictionary<string, object> config)
     {
-        // 尝试获取 VisualScene 属性 (兼容 UnitResource, ItemResource 等)
-        // 使用反射以支持任意 Resource 类型
-        var prop = resource.GetType().GetProperty("VisualScene");
-        if (prop == null) return;
+        // 检查 VisualScenePath 是否存在
+        var visualPath = config.TryGetValue("VisualScenePath", out var v) ? v as string : null;
+        var name = config.TryGetValue("Name", out var n) ? n as string : "Unknown";
 
-        var scene = prop.GetValue(resource) as PackedScene;
-        if (scene == null) return;
+        if (string.IsNullOrEmpty(visualPath))
+        {
+            _log.Warn($"配置 {name} 未设置 VisualScenePath，跳过加载视觉场景");
+            return;
+        }
+
+        // 加载场景
+        var scene = GD.Load<PackedScene>(visualPath);
+        if (scene == null)
+        {
+            _log.Error($"无法加载 VisualScene: {visualPath}");
+            return;
+        }
 
         // 1. 清理旧的 VisualRoot (对象池复用时)
         // 使用 Free() 立即释放，防止同帧内命名冲突
@@ -242,7 +252,7 @@ public static class EntityManager
             visual2D.ZIndex = 10;
         }
 
-        _log.Debug($"已加载 VisualScene: {scene.ResourcePath}");
+        _log.Debug($"已加载 VisualScene: {visualPath}");
     }
 
     /// <summary>
@@ -250,7 +260,6 @@ public static class EntityManager
     /// 识别规则（按优先级）：
     /// 1. 实现了 IComponent 接口（最高优先级）
     /// 2. 类名以 "Component" 结尾（命名约定）
-    /// 3. 在 ECSIndex 白名单中（特殊情况）
     /// 
     /// 自动建立 Entity-Component 关系（通过 EntityRelationshipManager）
     /// 
@@ -281,12 +290,6 @@ public static class EntityManager
             {
                 isComponent = true;
                 _log.Debug($"通过命名约定识别 Component: {componentType}");
-            }
-            // 规则 3：在 ECSIndex 白名单中（特殊情况）
-            else if (ECSIndex.IsComponentWhitelist(componentType))
-            {
-                isComponent = true;
-                _log.Debug($"通过白名单识别 Component: {componentType}");
             }
 
             // 注册 Component 并建立关系

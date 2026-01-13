@@ -70,7 +70,7 @@ public partial class ObjectPoolInit : Node
 
         // 2. 初始化 EnemyPool (Node 对象池)
         // 注意：必须使用 ObjectPool<Enemy> 而不是 ObjectPool<Node>，否则 SpawnSystem 无法通过 GetPool<Enemy> 获取
-        var scene = GD.Load<PackedScene>("res://Src/ECS/Entity/Enemy/Enemy.tscn");
+        var scene = GD.Load<PackedScene>("res://Src/ECS/Entity/Unit/Enemy/Enemy.tscn");
         new ObjectPool<Enemy>(
             () => (Enemy)scene.Instantiate(),
             new ObjectPoolConfig

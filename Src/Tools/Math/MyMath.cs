@@ -25,9 +25,9 @@ public static class MyMath
         if (armor >= 0)
         {
             // 护甲减伤公式：Damage Reduction % = Armor / (Armor + Config.ArmorCoefficient)
-            float reductionRate = armor / (armor + Config.ArmorCoefficient);
+            float reductionRate = armor / (armor + GlobalConfig.ArmorCoefficient);
             // 限制最大减伤
-            reductionRate = Mathf.Clamp(reductionRate, 0f, Config.MaxArmorReduction / 100f);
+            reductionRate = Mathf.Clamp(reductionRate, 0f, GlobalConfig.MaxArmorReduction / 100f);
             return 1.0f - reductionRate;
         }
         else

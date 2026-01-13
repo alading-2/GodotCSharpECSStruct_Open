@@ -24,7 +24,6 @@ EntityManager 通过以下 3 种方式识别 Component（按优先级）：
 | ---------- | ------------------- | --------------------------------------------------------- | -------------------- |
 | ⭐⭐⭐⭐⭐ | **IComponent 接口** | `public partial class HealthComponent : Node, IComponent` | 新 Component（推荐） |
 | ⭐⭐⭐⭐   | **命名约定**        | `public partial class VelocityComponent : Node`           | 旧 Component（兼容） |
-| ⭐⭐⭐     | **白名单**          | `ECSIndex.RegisterComponentType("Hitbox")`                | 特殊 Component       |
 
 ---
 
@@ -142,20 +141,6 @@ public partial class Velocity : Node { }
 
 ---
 
-### 方式 3：白名单（特殊情况）
-
-```csharp
-// 在 ECSIndex.cs 中添加
-private static readonly HashSet<string> _componentWhitelist = new()
-{
-    "Hitbox",
-    "Hurtbox",
-};
-
-// 或运行时动态添加
-ECSIndex.RegisterComponentType("CustomComponent");
-```
-
 **适用场景**：
 
 - Hitbox/Hurtbox（不符合命名约定）
@@ -213,7 +198,6 @@ EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 RegisterComponents(entity)  // 自动识别所有 Component
     ├─ 检查 IComponent 接口
     ├─ 检查命名约定
-    ├─ 检查白名单
     ├─ Register(component)
     └─ 触发 OnComponentRegistered(entity)
 ```

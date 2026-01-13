@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dq8m5nvk2r7wp"]
 
-[ext_resource type="Script" path="res://Src/ECS/Component/RecoveryComponent/RecoveryComponent.cs" id="1_recovery"]
+[ext_resource type="Script" path="res://Src/ECS/Component/Unit/RecoveryComponent/RecoveryComponent.cs" id="1_recovery"]
 
 [node name="RecoveryComponent" type="Node"]
 script = ExtResource("1_recovery")

@@ -299,19 +299,6 @@ public partial class VelocityComponent : Node { }  // 自动识别为 Component
 
 **优势**：兼容旧代码，无需修改
 
-### 3. 白名单（特殊情况）
-
-在 `ECSIndex` 中注册特殊类型：
-
-```csharp
-// ECSIndex.cs
-private static readonly HashSet<string> _componentWhitelist = new()
-{
-    "Hitbox",    // 特殊命名的 Component
-    "Hurtbox"
-};
-```
-
 ---
 
 ## 数据流转设计

@@ -64,46 +64,6 @@ public partial class HealthComponent : Node, IComponent
     // ================= 核心 API =================
 
     /// <summary>
-    /// 应用伤害（由 DamageService 调用）
-    /// </summary>
-    /// <param name="amount">伤害量（正数）</param>
-    /// <param name="attacker">攻击者（可选）</param>
-    /// <param name="damageType">伤害类型</param>
-    public void ApplyDamage(float amount, IEntity attacker = null, DamageType damageType = DamageType.True)
-    {
-        if (amount <= 0) return;
-        if (_data == null || _entity == null) return;
-
-        // 无敌检测
-        if (_data.Get<bool>(DataKey.IsInvulnerable))
-        {
-            _log.Debug("无敌状态，伤害无效");
-            return;
-        }
-
-        // 死亡检测
-        if (_data.Get<bool>(DataKey.IsDead))
-        {
-            return;
-        }
-
-        float oldHp = CurrentHp;
-        float newHp = Mathf.Max(0f, oldHp - amount);
-
-        // 修改 HP
-        _data.Set(DataKey.CurrentHp, newHp);
-
-        // 触发事件
-        _entity.Events.Emit(GameEventType.Data.HealthChanged,
-            new GameEventType.Data.HealthChangedEventData(oldHp, newHp));
-
-        _entity.Events.Emit(GameEventType.Unit.Damaged,
-            new GameEventType.Unit.DamagedEventData(amount, attacker, damageType));
-
-        _log.Debug($"受到伤害: {amount}, HP: {oldHp} -> {newHp}");
-    }
-
-    /// <summary>
     /// 应用治疗生命/魔法
     /// </summary>
     /// <param name="evt">治疗请求事件数据</param>

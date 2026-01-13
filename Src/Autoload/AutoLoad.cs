@@ -211,7 +211,7 @@ public partial class AutoLoad : Node
             parent.AddChild(instance);
             _singletons[config.Name] = instance;
 
-            _log.Info($"📦 [Loaded] {config.Name} 注册成功，Priority：{config.Priority}");
+            _log.Info($"📦 [Loaded] {config.Name} 注册成功，AutoLoadPriority：{config.Priority}");
         }
         catch (Exception e)
         {

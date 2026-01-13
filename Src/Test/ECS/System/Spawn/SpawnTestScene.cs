@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 using BrotatoMy.Test;
 
 namespace BrotatoMy.Test
@@ -22,10 +23,12 @@ namespace BrotatoMy.Test
         // 状态
         private SpawnPositionStrategy _currentStrategy = SpawnPositionStrategy.Rectangle;
         private readonly SpawnPositionParams _previewParams = new(); // 用于绘图预览参数，保持默认值与 SpawnSystem 一致
-        private EnemyResource _testEnemy;
+        // 敌人资源
+        private Dictionary<string, object>? _testEnemy;
 
         public override void _Ready()
         {
+            base._Ready();
             // 1. 初始化环境
             SetupEnvironment();
 
@@ -37,8 +40,8 @@ namespace BrotatoMy.Test
 
         private void SetupEnvironment()
         {
-            // 加载测试用敌人资源
-            _testEnemy = GD.Load<EnemyResource>("res://Data/Resources/Unit/Enemy/豺狼人/豺狼人.tres");
+            // 从数据类直接获取敌人配置
+            EnemyData.Configs.TryGetValue("豺狼人", out _testEnemy);
             if (_testEnemy == null) _log.Error("Failed to load test enemy resource!");
 
             // 添加相机以便观察 Offscreen 策略
@@ -136,9 +139,8 @@ namespace BrotatoMy.Test
             if (_testEnemy == null) return;
             _log.Info($"请求生成 {count} 个敌人，策略: {_currentStrategy}");
 
-            // 为了测试不同的生成策略，我们临时修改测试资源的策略
-            _testEnemy.DefaultStrategy = _currentStrategy;
-            SpawnSystem.Instance.SpawnBatch(count, _testEnemy);
+            // 为了测试不同的生成策略，直接传入当前选中的策略
+            SpawnSystem.Instance.SpawnBatch(count, _testEnemy, _currentStrategy);
         }
 
         private void ClearEnemies()

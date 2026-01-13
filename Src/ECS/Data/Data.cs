@@ -438,53 +438,25 @@ public class Data
         return new Dictionary<string, object>(_data);
     }
 
-    /// <summary>
-    /// 根据简写名称自动获取 Resource 并映射到 Data 容器
-    /// </summary>
-    public void ApplyResource(string resourceName)
-    {
-        var res = DataResourceIndex.GetResource(resourceName);
-        if (res != null)
-        {
-            LoadFromResource(res);
-        }
-    }
+
 
     /// <summary>
-    /// 从 Resource 加载数据到容器
-    /// 自动遍历 Resource 的属性并设置到 Data 中
+    /// 从配置字典加载数据到容器
     /// </summary>
-    public void LoadFromResource(Resource resource)
+    public void LoadFromConfig(Dictionary<string, object> config)
     {
-        if (resource == null) return;
+        if (config == null) return;
 
-        var resourceType = resource.GetType();
-        var properties = resourceType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-
-        foreach (var prop in properties)
+        // 直接复制字典中的所有属性到 Data
+        foreach (var kvp in config)
         {
-            // 跳过 Godot 内部属性和 Resource 基类属性
-            if (prop.DeclaringType == typeof(Resource) || prop.DeclaringType == typeof(Godot.GodotObject))
-                continue;
-
-            if (!prop.CanRead)
-                continue;
-
-            try
-            {
-                var value = prop.GetValue(resource);
-                if (value == null) continue;
-
-                string key = prop.Name;
-                Set(key, value);
-
-                _log.Debug($"从 Resource 加载: {key} = {value}");
-            }
-            catch (Exception ex)
-            {
-                _log.Warn($"加载属性 {prop.Name} 失败: {ex.Message}");
-            }
+            // 跳过 SpawnRule，它不是 Data 的数据
+            if (kvp.Key == DataKey.SpawnRule) continue;
+            Set(kvp.Key, kvp.Value);
         }
+
+        var name = config.TryGetValue(DataKey.Name, out var n) ? n as string : "Unknown";
+        _log.Debug($"已加载配置: ({name})");
     }
 
     /// <summary>
