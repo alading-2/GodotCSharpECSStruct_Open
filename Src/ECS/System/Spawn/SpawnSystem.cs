@@ -146,7 +146,7 @@ public partial class SpawnSystem : Node
         // 遍历所有敌人配置，提取激活的生成规则
         foreach (var data in EnemyData.Configs.Values)
         {
-            var rule = data.TryGetValue(DataKey.SpawnRule, out var r) ? r as SpawnRule : null;
+            var rule = data[DataKey.SpawnRule] as SpawnRule;
             if (rule != null && IsRuleActiveForWave(rule, waveIndex))
             {
                 _activeStates.Add(new RuleRuntimeState

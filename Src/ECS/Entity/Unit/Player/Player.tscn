@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://bqu6n71cx1env"]
 
-[ext_resource type="Script" uid="uid://d3cifehq7mpiv" path="res://Src/ECS/Entity/Unit//Player/Player.cs" id="1_a3twn"]
-[ext_resource type="PackedScene" uid="uid://briqv073sqyvk" path="res://assets/character/player/德鲁伊/AnimatedSprite2D/AnimatedSprite2D.tscn" id="3_a3twn"]
+[ext_resource type="Script" uid="uid://d3cifehq7mpiv" path="res://Src/ECS/Entity/Unit/Player/Player.cs" id="1_a3twn"]
+[ext_resource type="PackedScene" uid="uid://briqv073sqyvk" path="res://assets/Unit/player/德鲁伊/AnimatedSprite2D/AnimatedSprite2D.tscn" id="3_a3twn"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/VelocityComponent/VelocityComponent.tscn" id="3_qo223"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_a3twn"]

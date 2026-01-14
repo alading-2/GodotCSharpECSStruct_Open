@@ -1,63 +1,88 @@
 # SpriteFrames Generator 插件说明
 
-这是一个用于 Godot 4 的编辑器插件，可以自动扫描文件夹中的 PNG 序列帧并生成 `SpriteFrames` 资源（.tres），极大简化了 `AnimatedSprite2D` 的动画设置流程。
+这是一个用于 Godot 4 的编辑器插件，旨在极大简化从序列帧图片到 `AnimatedSprite2D` 的工作流。它可以自动扫描文件夹中的 PNG 序列帧，智能分组，生成 `SpriteFrames` 资源（.tres），并创建或更新 `AnimatedSprite2D` 场景（.tscn）。
+
+## 核心特性
+
+- **一键批量生成**：支持预设路径的批量扫描。
+- **右键快捷菜单**：支持对任意文件夹进行单独生成。
+- **智能命名规范**：自动识别 Spine 导出格式和通用命名格式，并将动作名称标准化（如 `movement` -> `run`）。
+- **场景智能更新（Smart Update）**：
+  - **初次生成**：创建标准的 `AnimatedSprite2D` 场景。
+  - **后续更新**：如果场景已存在，插件会自动**保留**你手动调整的所有属性（位置、缩放、脚本、子节点等），仅更新动画数据引用。这意味着你可以放心地调整场景，而不必担心重新生成序列帧时前功尽弃。
 
 ## 1. 安装与启用
 
-1. 插件文件已自动放置在 `addons/SpriteFramesGenerator` 目录下。
+1. 插件文件应位于 `addons/SpriteFramesGenerator` 目录下。
 2. 打开 Godot 编辑器。
 3. 进入菜单栏 **Project (项目) -> Project Settings (项目设置) -> Plugins (插件)**。
 4. 找到 **SpriteFrames Generator** 并勾选 **Enable (启用)**。
    - _注意：如果列表中未出现，请点击编辑器右上角的 "Build" 按钮重新编译 C# 项目。_
 
-## 2. 使用方法
+## 2. 配置设置
+
+插件的所有通用配置都已集成到 Godot 的 **项目设置 (Project Settings)** 中。
+
+1. 打开菜单 **Project (项目) -> Project Settings (项目设置)**。
+2. 搜索 `sprite_frames_generator` 即可看到所有配置项。
+3. **配置项说明**：
+
+| 设置项名称 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| **sprite_frames_generator/批量扫描路径** | 字符串数组 | 定义“批量生成”功能扫描的根目录（如 `res://assets/Unit`）。 |
+| **sprite_frames_generator/默认帧率** | 浮点数 | 生成新动画时默认使用的 FPS (如 `10.0`)。 |
+| **sprite_frames_generator/默认循环播放** | 布尔值 | 新生成的动画是否默认开启循环。 |
+| **sprite_frames_generator/名称映射表** | 字典 | 自动重名修正表。例如将美术资源名 `movement` 映射为标准的 `run`。 |
+
+> **注意**：由于 Godot 引擎限制，动态添加的项目设置目前无法在编辑器中显示文字描述（Tooltip）。请以上表作为配置参考。
+> **提示**：插件默认采用“智能更新”策略。当重新生成时，会自动保留场景中你手动修改过的属性（位置、脚本、子节点等），只更新动画数据。
+
+## 3. 使用方法
 
 ### 方式一：批量生成 (推荐)
 
 1. 点击编辑器顶部菜单栏 **Project (项目) -> Tools (工具) -> Generate All SpriteFrames (Batch)**。
-2. 插件会自动扫描以下预设目录下的所有子文件夹：
-   - `res://assets/character/ememy`
-   - `res://assets/character/player`
-3. 只要子文件夹内包含 PNG 序列，就会自动在其中创建 `AnimatedSprite2D` 文件夹并生成场景。
+2. 插件会自动扫描项目设置中定义的路径。
+3. 只要子文件夹内包含 PNG 序列，就会自动在其中创建 `AnimatedSprite2D` 文件夹并生成/更新场景。
 
 ### 方式二：手动选中生成 (Single)
 
 1. 在 **FileSystem (文件系统)** 面板中，**右键点击** 包含序列帧图片的文件夹。
 2. 在弹出的菜单中选择 **Generate SpriteFrames (Single/Selection)**。
 
-- **自动转换**：插件会将识别到的原始名称转换为标准名称。
-- **当前规则**：
+## 4. 命名规则与识别
 
-| 原始名称 (素材中)        | 标准名称 (生成后) | 说明         |
-| :----------------------- | :---------------- | :----------- |
-| `movement`               | `run`             | 统一移动动画 |
-| `deaded`, `death`, `die` | `dead`            | 统一死亡动画 |
+插件支持以下两种文件命名格式（不区分大小写）：
 
-- **自定义**：你可以通过修改 `SpriteFramesGeneratorPlugin.cs` 中的 `_nameMap` 字典来添加自己的映射规则。
+### A. Spine 导出格式 (推荐)
+- **格式**：`前缀-动画名_序号.png`
+- **示例**：
+  - `hero_guangfa-Attack1_00.png` -> 识别为动画名为 `attack1`，第 0 帧
+  - `hero_guangfa-Idle_01.png` -> 识别为动画名为 `idle`，第 1 帧
 
-### 方式三：自动识别格式规则
+### B. 简单格式
+- **格式**：`动画名_序号.png`
+- **示例**：
+  - `Run_00.png` -> 识别为动画名为 `run`，第 0 帧
 
-插件支持以下两种文件命名格式：
+### 自动名称映射
+插件内置了映射表，会将常见的异名动作统一化：
+- `movement` -> `run`
+- `deaded`, `death`, `die` -> `dead`
 
-1. **Spine 导出格式 (推荐)**：
+## 4. 生成结果详解
 
-   - 格式：`前缀-动画名_序号.png`
-   - 示例：`hero_guangfa-Attack1_00.png` -> 识别为动画名 `attack1`
-   - 示例：`hero_guangfa-Idle_01.png` -> 识别为动画名 `idle`
+对于每个处理的文件夹，插件会在其中创建一个 `AnimatedSprite2D` 子文件夹，包含以下文件：
 
-2. **简单格式**：
+1.  **`AnimatedSprite2D.tres` (SpriteFrames 资源)**
+    *   这是纯粹的“数据”文件。
+    *   包含所有识别到的动作、帧序列、帧率（默认 10fps）和循环设置（默认开启）。
+    *   **更新机制**：每次生成都会直接覆盖此文件，确保动画数据是最新的。
 
-   - 格式：`动画名_序号.png`
-   - 示例：`Run_00.png` -> 识别为动画名 `run`
-
-## 3. 生成结果
-
-- **AnimatedSprite2D.tres**：纯 `SpriteFrames` 资源文件，可用于任何 `AnimatedSprite2D` 节点。
-- **AnimatedSprite2D.tscn**：完整的动画场景文件。你可以直接将其拖入其他场景中作为子场景使用。它已经自动配置好了 `SpriteFrames` 并默认选中了 `idle` 动画（如果存在）。
-
-## 4. 常见问题
-
-- **Q: 生成后找不到文件？**
-  - A: 插件会自动刷新文件系统，如果未出现，请手动右键文件夹 -> `Rescan`。
-- **Q: 动画名识别错误？**
-  - A: 请确保文件名中包含 `_数字` 结尾，且动画名位于 `-` 之后（如果存在 `-`）或 `_` 之前。
+2.  **`AnimatedSprite2D.tscn` (场景文件)**
+    *   这是游戏中的“实体”对象。
+    *   **如果是新文件**：创建一个居中、重置变换的 `AnimatedSprite2D` 节点。
+    *   **如果文件已存在（智能更新）**：
+        *   插件会加载现有场景。
+        *   **保留**：位置、旋转、缩放、偏移量、挂载的脚本、添加的子节点等。
+        *   **更新**：仅将 `SpriteFrames` 属性指向最新的 `.tres` 资源，并校验当前动画名有效性。

@@ -2,14 +2,33 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Play in Editor", // 选这个模式调试
+      "name": "调试游戏主场景", // 1. 调试游戏主场景 (原配置)
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "godot-C#-build", //前置任务
+      "preLaunchTask": "godot-C#-build",
       "program": "E:\\Godot\\GodotEngine\\4.x\\C#\\Godot_v4.5.1-stable_mono_win64\\Godot_v4.5.1-stable_mono_win64.exe",
       "args": [],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false
+    },
+    {
+      "name": "调试当前场景", // 2. 调试当前场景
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "godot-C#-build",
+      "program": "E:\\Godot\\GodotEngine\\4.x\\C#\\Godot_v4.5.1-stable_mono_win64\\Godot_v4.5.1-stable_mono_win64.exe",
+      "args": [
+        "${file}" // 将当前打开的文件路径作为参数传给 Godot
+      ],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "调试Godot编辑器插件 ", // 3. 调试插件 (附加到编辑器)
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "Godot_v4.5.1-stable_mono_win64.exe" // 指定进程名称：godot编辑器的名称
     }
   ]
 }

@@ -1,0 +1,393 @@
+[gd_resource type="SpriteFrames" load_steps=88 format=3 uid="uid://cokvrh8wcp284"]
+
+[ext_resource type="Texture2D" uid="uid://bhyfvcfjesex0" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_00.png" id="1_e68t3"]
+[ext_resource type="Texture2D" uid="uid://cjlqyuvf4oh11" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_01.png" id="2_l3gkt"]
+[ext_resource type="Texture2D" uid="uid://gncxh8cly3gt" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_02.png" id="3_t5qfd"]
+[ext_resource type="Texture2D" uid="uid://e6q6ya3rixq6" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_03.png" id="4_8cfmn"]
+[ext_resource type="Texture2D" uid="uid://c10ysfa1f5rmx" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_04.png" id="5_bgutv"]
+[ext_resource type="Texture2D" uid="uid://c1s0uaku7xw0s" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_05.png" id="6_xykul"]
+[ext_resource type="Texture2D" uid="uid://cd6podou2ocsr" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_06.png" id="7_tk4r7"]
+[ext_resource type="Texture2D" uid="uid://bcb7yxu1nuqji" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_07.png" id="8_5dkic"]
+[ext_resource type="Texture2D" uid="uid://bel6od5t16pqi" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_08.png" id="9_f7ptb"]
+[ext_resource type="Texture2D" uid="uid://rqav2ya252ho" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_09.png" id="10_1fu7x"]
+[ext_resource type="Texture2D" uid="uid://ceyc1wkq5u00" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_10.png" id="11_xqtw1"]
+[ext_resource type="Texture2D" uid="uid://ct2yiqtlk1aw1" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_11.png" id="12_j2g2o"]
+[ext_resource type="Texture2D" uid="uid://cfgd1c7t3utpg" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_12.png" id="13_48hio"]
+[ext_resource type="Texture2D" uid="uid://c10l1dvo1dcq1" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_13.png" id="14_e4xwm"]
+[ext_resource type="Texture2D" uid="uid://bg6v6m54x1d6l" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_14.png" id="15_ho5f0"]
+[ext_resource type="Texture2D" uid="uid://bngqyy5japkqk" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_15.png" id="16_ii3n6"]
+[ext_resource type="Texture2D" uid="uid://cc127p7tgyo8v" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_16.png" id="17_ai2od"]
+[ext_resource type="Texture2D" uid="uid://cex8dcc1e51x7" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-BeAttacked_0.png" id="18_f270m"]
+[ext_resource type="Texture2D" uid="uid://cakt4qex15pxo" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-BeAttacked_1.png" id="19_k2hhf"]
+[ext_resource type="Texture2D" uid="uid://bkrkmpx5yqd8d" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-BeAttacked_2.png" id="20_6ooqo"]
+[ext_resource type="Texture2D" uid="uid://c8j0q7ia6p3e5" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-BeAttacked_3.png" id="21_y44rb"]
+[ext_resource type="Texture2D" uid="uid://bbp2r7qjqw5y4" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-BeAttacked_4.png" id="22_knl2r"]
+[ext_resource type="Texture2D" uid="uid://b23pbw2kr22bu" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-BeAttacked_5.png" id="23_d7lfd"]
+[ext_resource type="Texture2D" uid="uid://bhqk852ulg8om" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-CastingIdle_0.png" id="24_bj8hn"]
+[ext_resource type="Texture2D" uid="uid://bu6i8ww4qrbbh" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-CastingIdle_1.png" id="25_3udkk"]
+[ext_resource type="Texture2D" uid="uid://dvh6u4es1xxs6" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-CastingIdle_2.png" id="26_n0uov"]
+[ext_resource type="Texture2D" uid="uid://brl182xrqpefr" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-CastingIdle_3.png" id="27_xnvyj"]
+[ext_resource type="Texture2D" uid="uid://clu0sut5cbx0k" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_0.png" id="28_5pw6f"]
+[ext_resource type="Texture2D" uid="uid://b0oxa2abrmr73" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_1.png" id="29_ppj85"]
+[ext_resource type="Texture2D" uid="uid://fhv8r5u26rso" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_2.png" id="30_3mg45"]
+[ext_resource type="Texture2D" uid="uid://beydytjarc8jn" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_3.png" id="31_dufht"]
+[ext_resource type="Texture2D" uid="uid://bftb7tm1fpyvf" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_4.png" id="32_k0cb5"]
+[ext_resource type="Texture2D" uid="uid://rw3ynpf110ra" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_5.png" id="33_u1u45"]
+[ext_resource type="Texture2D" uid="uid://ba8i04o4fedqd" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_6.png" id="34_a3als"]
+[ext_resource type="Texture2D" uid="uid://dufiwwvfcne3t" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Celebrate_7.png" id="35_y61lt"]
+[ext_resource type="Texture2D" uid="uid://kejjkboqnulg" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_00.png" id="36_nlhtj"]
+[ext_resource type="Texture2D" uid="uid://c73p1s46nbfhv" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_01.png" id="37_1eugo"]
+[ext_resource type="Texture2D" uid="uid://dy82ofwjlk632" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_02.png" id="38_wcyr0"]
+[ext_resource type="Texture2D" uid="uid://cn4jpx5hhppn5" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_03.png" id="39_owpmp"]
+[ext_resource type="Texture2D" uid="uid://b4m2gcmjngk30" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_04.png" id="40_k4kn8"]
+[ext_resource type="Texture2D" uid="uid://cgo8fyp7e1ssa" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_05.png" id="41_tjo8e"]
+[ext_resource type="Texture2D" uid="uid://bltvf4byb7umk" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_06.png" id="42_e8c3q"]
+[ext_resource type="Texture2D" uid="uid://cowsq4u6p52by" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_07.png" id="43_1ptxx"]
+[ext_resource type="Texture2D" uid="uid://gn3yg7q34ynm" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_08.png" id="44_hhsr6"]
+[ext_resource type="Texture2D" uid="uid://r2g26ck1wygt" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_09.png" id="45_fa428"]
+[ext_resource type="Texture2D" uid="uid://cksftulc7af4w" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_10.png" id="46_ipykn"]
+[ext_resource type="Texture2D" uid="uid://bllm0w6cd6w2x" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_11.png" id="47_8fwmc"]
+[ext_resource type="Texture2D" uid="uid://ckd520y5d3ejj" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Deaded_12.png" id="48_3wgl1"]
+[ext_resource type="Texture2D" uid="uid://7bui022es7w6" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_00.png" id="49_smcbj"]
+[ext_resource type="Texture2D" uid="uid://dfihr2n7jcbi0" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_01.png" id="50_dndc3"]
+[ext_resource type="Texture2D" uid="uid://ckd168s0xf1s0" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_02.png" id="51_i08s4"]
+[ext_resource type="Texture2D" uid="uid://c2gcdc3v4b2gq" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_03.png" id="52_o0a5l"]
+[ext_resource type="Texture2D" uid="uid://ccut16vhk5cqe" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_04.png" id="53_fvx4k"]
+[ext_resource type="Texture2D" uid="uid://dwfc40tn7s1vy" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_05.png" id="54_407w6"]
+[ext_resource type="Texture2D" uid="uid://cp5lo34rhnvp0" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_06.png" id="55_ldi3r"]
+[ext_resource type="Texture2D" uid="uid://dcyo22wq3bxl5" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_07.png" id="56_ks6uf"]
+[ext_resource type="Texture2D" uid="uid://clgt7gly82g1p" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_08.png" id="57_f7833"]
+[ext_resource type="Texture2D" uid="uid://cbu2qfhqek0b7" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_09.png" id="58_j6vts"]
+[ext_resource type="Texture2D" uid="uid://busqf23akcane" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Idle_10.png" id="59_qs3gg"]
+[ext_resource type="Texture2D" uid="uid://xkr1y8i1s4oe" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_0.png" id="60_4emp0"]
+[ext_resource type="Texture2D" uid="uid://fpn6w5qv67ev" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_1.png" id="61_3nkkr"]
+[ext_resource type="Texture2D" uid="uid://be2s4u48auriu" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_2.png" id="62_42jti"]
+[ext_resource type="Texture2D" uid="uid://4w3tt4oae3md" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_3.png" id="63_pylhr"]
+[ext_resource type="Texture2D" uid="uid://cvgr1slhlopm6" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_4.png" id="64_58sml"]
+[ext_resource type="Texture2D" uid="uid://d1038una6ctjs" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_5.png" id="65_aok58"]
+[ext_resource type="Texture2D" uid="uid://sqh4cxh8ooti" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_6.png" id="66_ub8ks"]
+[ext_resource type="Texture2D" uid="uid://dbvktrrtvqbha" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Movement_7.png" id="67_s1kdb"]
+[ext_resource type="Texture2D" uid="uid://cgvt2epc27xon" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_00.png" id="68_03g81"]
+[ext_resource type="Texture2D" uid="uid://bhllqo1i37sgk" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_01.png" id="69_j5pq4"]
+[ext_resource type="Texture2D" uid="uid://c0vautlnb0os0" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_02.png" id="70_vviwx"]
+[ext_resource type="Texture2D" uid="uid://d1323dp3rp40b" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_03.png" id="71_iup8u"]
+[ext_resource type="Texture2D" uid="uid://45hsocox7c2q" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_04.png" id="72_lv7kw"]
+[ext_resource type="Texture2D" uid="uid://c008a6hw1vund" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_05.png" id="73_ssvdw"]
+[ext_resource type="Texture2D" uid="uid://dcmx2jxg6u6ks" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_06.png" id="74_o3m3g"]
+[ext_resource type="Texture2D" uid="uid://dc6fggt3je3nk" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_07.png" id="75_0dwfk"]
+[ext_resource type="Texture2D" uid="uid://btt0nj3b0ofpv" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_08.png" id="76_0tgqy"]
+[ext_resource type="Texture2D" uid="uid://b0es4d54blht5" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_09.png" id="77_mt7w6"]
+[ext_resource type="Texture2D" uid="uid://ctbhqavlvvb1m" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_10.png" id="78_75jxq"]
+[ext_resource type="Texture2D" uid="uid://c5l1pogxeomyu" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_11.png" id="79_w78mc"]
+[ext_resource type="Texture2D" uid="uid://cmftnv6heayy5" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_12.png" id="80_bjaki"]
+[ext_resource type="Texture2D" uid="uid://drx5m231d0rpa" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_13.png" id="81_bgpjf"]
+[ext_resource type="Texture2D" uid="uid://dhihlxwgvyvkp" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_14.png" id="82_4m3ei"]
+[ext_resource type="Texture2D" uid="uid://by7blvujbd356" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_15.png" id="83_i3wmg"]
+[ext_resource type="Texture2D" uid="uid://dkqiqabargod5" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_16.png" id="84_wh75w"]
+[ext_resource type="Texture2D" uid="uid://cq03txvt1whbc" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_17.png" id="85_f1w3s"]
+[ext_resource type="Texture2D" uid="uid://ny1qytvj1qck" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_18.png" id="86_40yyy"]
+[ext_resource type="Texture2D" uid="uid://rallc2h7l2po" path="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Skill_19.png" id="87_1v0l8"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_e68t3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_l3gkt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_t5qfd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_8cfmn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_bgutv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_xykul")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_tk4r7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_5dkic")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_f7ptb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_1fu7x")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_xqtw1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_j2g2o")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_48hio")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_e4xwm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_ho5f0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_ii3n6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_ai2od")
+}],
+"loop": true,
+"name": &"attack1",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("18_f270m")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_k2hhf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_6ooqo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_y44rb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_knl2r")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_d7lfd")
+}],
+"loop": true,
+"name": &"beattacked",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("24_bj8hn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_3udkk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26_n0uov")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_xnvyj")
+}],
+"loop": true,
+"name": &"castingidle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("28_5pw6f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_ppj85")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_3mg45")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_dufht")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_k0cb5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_u1u45")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_a3als")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_y61lt")
+}],
+"loop": true,
+"name": &"celebrate",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("36_nlhtj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_1eugo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_wcyr0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_owpmp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_k4kn8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("41_tjo8e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42_e8c3q")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43_1ptxx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44_hhsr6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45_fa428")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46_ipykn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47_8fwmc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48_3wgl1")
+}],
+"loop": true,
+"name": &"dead",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("49_smcbj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("50_dndc3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("51_i08s4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("52_o0a5l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("53_fvx4k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("54_407w6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("55_ldi3r")
+}, {
+"duration": 1.0,
+"texture": ExtResource("56_ks6uf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("57_f7833")
+}, {
+"duration": 1.0,
+"texture": ExtResource("58_j6vts")
+}, {
+"duration": 1.0,
+"texture": ExtResource("59_qs3gg")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("60_4emp0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("61_3nkkr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("62_42jti")
+}, {
+"duration": 1.0,
+"texture": ExtResource("63_pylhr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("64_58sml")
+}, {
+"duration": 1.0,
+"texture": ExtResource("65_aok58")
+}, {
+"duration": 1.0,
+"texture": ExtResource("66_ub8ks")
+}, {
+"duration": 1.0,
+"texture": ExtResource("67_s1kdb")
+}],
+"loop": true,
+"name": &"run",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("68_03g81")
+}, {
+"duration": 1.0,
+"texture": ExtResource("69_j5pq4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("70_vviwx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("71_iup8u")
+}, {
+"duration": 1.0,
+"texture": ExtResource("72_lv7kw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("73_ssvdw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("74_o3m3g")
+}, {
+"duration": 1.0,
+"texture": ExtResource("75_0dwfk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("76_0tgqy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("77_mt7w6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("78_75jxq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("79_w78mc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("80_bjaki")
+}, {
+"duration": 1.0,
+"texture": ExtResource("81_bgpjf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("82_4m3ei")
+}, {
+"duration": 1.0,
+"texture": ExtResource("83_i3wmg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("84_wh75w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("85_f1w3s")
+}, {
+"duration": 1.0,
+"texture": ExtResource("86_40yyy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("87_1v0l8")
+}],
+"loop": true,
+"name": &"skill",
+"speed": 10.0
+}]
