@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using BrotatoMy.Test;
+using BrotatoMy.Test.DamageSystemTest;
 
 public partial class ECSTest : Node
 {

@@ -6,6 +6,7 @@ using Godot;
 /// </summary>
 public class ShieldProcessor : IDamageProcessor
 {
+    private static readonly Log _log = new Log("ShieldProcessor");
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)

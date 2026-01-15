@@ -6,13 +6,20 @@ using Godot;
 /// </summary>
 public class DodgeProcessor : IDamageProcessor
 {
+    private static readonly Log _log = new Log("DodgeProcessor");
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {
-        // 必定命中的伤害类型 (如 True Damage 是否不可闪避? Brotato 中 True Damage 似乎也不可闪避?)
-        // 这里假设 True Damage 不可闪避，或者由 Tags 决定。
-        // 目前简化为：所有伤害都进行闪避判定。
+        // 检查 Victim 有效性（主循环已处理 IsEnd）
+        if (info.Victim == null) return;
+
+        // 真实伤害不可闪避
+        if (info.Type == DamageType.True)
+        {
+            return;
+        }
+
         float dodgeChance = info.Victim!.Data.Get<float>(DataKey.DodgeChance);
 
         if (dodgeChance > 0 && GD.Randf() * 100 < dodgeChance)

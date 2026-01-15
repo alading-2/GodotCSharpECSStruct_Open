@@ -2,43 +2,44 @@ using Godot;
 
 /// <summary>
 /// 生命值结算处理器
-/// <para>实际执行扣血逻辑，并触发死亡检测。</para>
+/// <para>实际执行扣血逻辑，调用受击方 HealthComponent。</para>
 /// </summary>
 public class HealthExecutionProcessor : IDamageProcessor
 {
+    private static readonly Log _log = new Log("HealthExecutionProcessor");
+
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {
-        if (info.IsDodged) return;
-        if (info.FinalDamage <= 0) return;
+        // 冗余检查已移除
 
         var victim = info.Victim as Node;
         if (victim == null) return;
 
-        // 获取 Entity 的 Data
-        var data = EntityManager.GetEntityData(victim);
-        if (data == null)
+        // ✅ 获取 HealthComponent（由其负责扣血和致死判定）
+        var health = EntityManager.GetComponent<HealthComponent>(victim);
+        if (health != null)
         {
-            info.AddLog("No Data on Victim");
-            return;
-        }
-
-        // ✅ 获取 DamageComponent（由其负责扣血和致死判定）
-        var damage = EntityManager.GetComponent<DamageComponent>(victim);
-        if (damage != null)
-        {
-            damage.TakeDamage(info);
-            info.AddLog($"Damage Executed via DamageComponent: -{info.FinalDamage}");
+            if (info.IsSimulation)
+            {
+                info.AddLog($"[Simulation] Would execute damage via HealthComponent: -{info.FinalDamage}");
+            }
+            else
+            {
+                health.ApplyDamage(info);
+                info.AddLog($"Damage Executed via HealthComponent: -{info.FinalDamage}");
+            }
         }
         else
         {
-            info.AddLog("Victim has no DamageComponent");
-
-            // 回退逻辑：如果没 DamageComponent 但有 Data，尝试手动修改
-            float currentHp = data.Get<float>(DataKey.CurrentHp);
-            data.Set(DataKey.CurrentHp, Mathf.Max(0, currentHp - info.FinalDamage));
+            // ❌ 没有 HealthComponent 是严重错误，不应该有回退逻辑
+            // 原因：
+            // 1. 有 HealthComponent：会触发 Damaged/Kill 事件，统计系统正常工作
+            // 2. 无 HealthComponent：直接修改 Data，不触发任何事件，统计数据丢失
+            // 3. 两种路径结果差异巨大，会导致难以排查的 bug
+            _log.Error($"受击者 {info.Victim} 没有 HealthComponent，无法执行伤害！这是架构错误，所有可受击单位必须有 HealthComponent。");
+            info.AddLog("ERROR: Victim has no HealthComponent");
         }
     }
 }
-

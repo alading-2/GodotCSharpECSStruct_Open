@@ -4,16 +4,18 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 资源注册表 - 统一管理项目中所有 Resource 的索引
+/// 资源注册表 - 统一管理项目中所有 **资产 (Assets)** 的索引
+/// 
+/// 【定位说明】
+/// - **资产 (Assets)**：场景 (.tscn)、音效、纹理等，需要通过 ResourceRegistry 管理。
+/// - **数据 (Data)**：数值属性、生成规则等，**不再**使用 ResourceRegistry，而是直接使用纯 C# 类（如 EnemyData）管理。
 /// 
 /// 【核心优势】
 /// - 编辑器友好：通过 [Export] 在 Inspector 中配置资源项
 /// - 路径安全：资源引用失效时编辑器立即报错，不会出现硬编码路径失效导致的运行时崩溃
 /// - 自动重构：在 Godot 编辑器中移动资源文件时，UID 引用会自动更新
-/// - 类型安全：支持泛型加载，自动校验资源类型
 /// 
 /// 【支持的资源类型】
-/// - 配置文件 (.tres): 直接映射为 Resource 或其子类
 /// - 预制体/场景 (.tscn): 映射为 PackedScene，加载后需调用 Instantiate()
 /// 
 /// 【使用方式】

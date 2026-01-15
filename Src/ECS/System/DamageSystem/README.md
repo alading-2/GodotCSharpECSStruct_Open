@@ -23,7 +23,7 @@
 | 5 | [DefenseProcessor](./Processors/DefenseProcessor.cs) | **受击减免** | 计算护甲/魔抗带来的减伤。<br>公式：`Reduction = Armor / (Armor + Constant)` |
 | 6 | [DamageTakenAmplificationProcessor](./Processors/DamageTakenAmplificationProcessor.cs) | **伤害增幅** | 应用受击者的易伤/减伤修正（如“受到伤害+20%”）。<br>`FinalDamage *= DamageTakenMultiplier` |
 | 7 | [FlatReductionProcessor](./Processors/FlatReductionProcessor.cs) | **受击减免** | 应用固定数值减伤（如“格挡 5 点伤害”）。<br>`FinalDamage = Max(0, FinalDamage - FlatReduction)` |
-| 8 | [HealthExecutionProcessor](./Processors/HealthExecutionProcessor.cs) | **最终结算** | 实际扣除目标生命值。<br>调用 `HealthComponent.ModifyHealth()` |
+| 8 | [HealthExecutionProcessor](./Processors/HealthExecutionProcessor.cs) | **最终结算** | 实际扣除目标生命值。<br>调用 `HealthComponent.ApplyDamage()` |
 | 9 | [LifestealProcessor](./Processors/LifestealProcessor.cs) | **后处理** | 计算吸血逻辑。<br>基于实际造成伤害治疗攻击者。 |
 | 10 | [StatisticsProcessor](./Processors/StatisticsProcessor.cs) | **后处理** | 记录伤害统计数据。<br>更新 `DamageDealt` 等统计项。 |
 
@@ -51,6 +51,40 @@
 3.  **Data 驱动**：所有数值（暴击率、护甲等）均通过 `entity.GetData()` 获取，支持动态 Buff 修改。
 
 ---
+
+## 5. 伤害统计系统
+
+### 5.1 统计模块
+
+- **[StatisticsProcessor](./Processors/StatisticsProcessor.cs)** - 管道末端统计处理器，记录攻击方和受击方的伤害数据
+- **[DamageStatisticsSystem](./DamageStatisticsSystem.cs)** - 波次统计重置系统，监听波次事件和击杀事件
+
+### 5.2 统计 DataKey
+
+| DataKey | 类型 | 说明 |
+|---------|------|------|
+| `TotalDamageTaken` | float | 累计受到的伤害 |
+| `WaveDamageTaken` | float | 本波次受到的伤害 |
+| `TotalDamageDealt` | float | 累计造成的伤害 |
+| `WaveDamageDealt` | float | 本波次造成的伤害 |
+| `HighestSingleDamage` | float | 单次最高伤害 |
+| `TotalKills` | int | 累计击杀数 |
+| `WaveKills` | int | 本波次击杀数 |
+| `TotalHits` | int | 总命中次数 |
+| `WaveHits` | int | 本波次命中次数 |
+| `TotalCriticalHits` | int | 总暴击次数 |
+| `WaveCriticalHits` | int | 本波次暴击次数 |
+
+### 5.3 使用示例
+
+```csharp
+// 查询玩家统计数据
+var player = EntityManager.GetEntitiesByType<Player>("Player").First();
+float totalDamage = player.Data.Get<float>(DataKey.TotalDamageDealt);
+int kills = player.Data.Get<int>(DataKey.TotalKills);
+```
+
+---
 ---
 
 # 详细组件解析 (Detailed Component Analysis)
@@ -60,8 +94,40 @@
 
 ### 设计优势
 - **解耦**: 暴击、防御、护盾等逻辑完全分离，互不依赖。
-- **灵活**: 可以轻松插入新的逻辑（如“斩杀”、“元素反应”）而无需修改现有代码，只需注册新的 Processor。
+- **灵活**: 可以轻松插入新的逻辑（如"斩杀"、"元素反应"）而无需修改现有代码，只需注册新的 Processor。
 - **可测试**: 每个 Processor 都可以单独进行单元测试。
+
+### 重要设计约定
+
+#### IsEnd 检查统一由主循环处理
+**核心原则**：`DamageService.Process()` 的主循环已经在每个处理器执行后检查 `if (info.IsEnd) break;`，因此**处理器内部不需要检查 `IsEnd`**。
+
+```csharp
+// DamageService.cs
+foreach (var processor in _processors)
+{
+    processor.Process(info);
+    if (info.IsEnd) break;  // ✅ 统一在此检查
+}
+```
+
+**各处理器的责任**：
+- ✅ **应该检查**: `IsDodged`（某些逻辑需要在闪避后跳过）、`FinalDamage <= 0`（无效伤害）
+- ❌ **不应检查**: `IsEnd`（主循环已处理，检查是冗余的）
+
+**示例**：
+```csharp
+public void Process(DamageInfo info)
+{
+    // ✅ 正确：只检查本处理器关心的条件
+    if (info.IsDodged || info.FinalDamage <= 0) return;
+    
+    // ❌ 错误：不要检查 IsEnd
+    // if (info.IsEnd) return;  // 冗余！主循环已保证后续处理器不会被调用
+    
+    // 处理器逻辑...
+}
+```
 
 ## 2. 核心类说明 (Core Classes)
 
@@ -69,7 +135,12 @@
 - **生命周期**: 从 `DamageService.Process(info)` 开始，直到管道执行完毕。
 - **关键属性**:
   - `Id`: 唯一标识，用于日志追踪。
-  - `Attacker` vs `Instigator`: `Attacker` 是直接来源（如子弹节点），`Instigator` 是逻辑来源（如发射子弹的玩家）。统计伤害时应使用 `Instigator`。
+  - `Attacker`: 伤害来源节点（如子弹、陷阱 Area2D）。
+    - 注意：这是**直接来源**，统计归属需通过 `EntityRelationshipManager.FindAncestorOfType<IUnit>(Attacker)` 向上查找。
+  - `Victim`: 受击者实体（必须实现 IUnit）。
+  - `FinalDamage`: 流转过程中的最终结算伤害值。
+  - `IsEnd`: 标记伤害流程是否应提前终止（由主循环检查）。
+  - `IsSimulation`: **新增** 标记伤害是否为模拟预测。若为 `true`，则最后一步不会实际扣血。
   - `Logs`: 记录了伤害计算过程中的关键变化，用于调试。
 
 ### DamageService (核心服务)
@@ -77,6 +148,7 @@
 - **职责**:
   - 维护处理器列表 `_processors`，并按 `Priority` 排序。
   - 提供 `Process(DamageInfo info)` 入口方法。
+  - 统一处理 `IsEnd` 检查，确保流程提前终止。
   - 自动跳过无效的伤害处理（如 `Victim` 无效）。
 
 ### IUnit (战斗单位接口)
@@ -106,6 +178,7 @@
 #### [DodgeProcessor](./Processors/DodgeProcessor.cs) (P:100)
 *   **逻辑**: 读取 `Victim` 的 `DodgeChance` (上限 60%)。
 *   **效果**: 若闪避成功，`Result: FinalDamage = 0`, `IsDodged = true`。
+*   **特殊**: `DamageType.True` (真实伤害) **不可闪避**，直接跳过此判定。
 *   **影响**: 后续的 Shield, Defense 等处理器会检测 `IsDodged` 并直接跳过。
 
 ### Stage 3: 护盾抵扣 (Shield) - 优先消耗
@@ -135,8 +208,10 @@
 
 #### [HealthExecutionProcessor](./Processors/HealthExecutionProcessor.cs) (P:500)
 *   **逻辑**: 获取 `Victim` 的 `HealthComponent`。
-*   **操作**: 调用 `healthComp.ModifyHealth(-FinalDamage)`。
-*   **注意**: 即使 `FinalDamage` 为 0，也可能触发 `ModifyHealth(0)`，视具体实现而定是否触发受伤事件。
+*   **操作**: 分为两种模式：
+    *   **正常执行**: 调用 `healthComp.ApplyDamage(info)` 实际扣血。
+    *   **模拟模式** (`info.IsSimulation = true`): 仅记录日志，**不实际扣血**。用于伤害预测功能。
+*   **注意**: 即使 `FinalDamage` 为 0，也根据具体实现决定是否触发受击事件。
 
 #### [LifestealProcessor](./Processors/LifestealProcessor.cs) (P:600)
 *   **逻辑**: 读取 `Instigator` 的 `LifeSteal` 属性。

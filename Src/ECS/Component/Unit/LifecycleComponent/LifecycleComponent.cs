@@ -96,7 +96,7 @@ public partial class LifecycleComponent : Node, IComponent
             _data = iEntity.Data;
         }
 
-        // ✅ 监听致死伤害事件（由 DamageComponent 判定 HP<=0 后发送）
+        // ✅ 监听致死伤害事件（由于 HealthComponent 判定 HP<=0 后发送）
         _entity?.Events.On<GameEventType.Unit.KillEventData>(
             GameEventType.Unit.Kill, OnUnitKilled);
 
@@ -160,14 +160,15 @@ public partial class LifecycleComponent : Node, IComponent
     // ================= 单位被击杀事件监听 =================
 
     /// <summary>
-    /// 当 DamageComponent 判定 HP<=0 后的回调。
+    /// 当 HealthComponent 判定 HP<=0 后的回调。
     /// 执行死亡流程。
     /// </summary>
     private void OnUnitKilled(GameEventType.Unit.KillEventData data)
     {
         if (StateIsAlive())
         {
-            Kill(DeathType);
+            // 使用事件中的死亡类型，如果未指定则使用组件默认值
+            Kill(data.DeathType);
         }
     }
 
@@ -218,11 +219,6 @@ public partial class LifecycleComponent : Node, IComponent
         // 强制将 HP 归零，但不触发 HealthChanged 事件（避免死循环）
         _data?.Set(DataKey.CurrentHp, 0f);
 
-        // TODO 暂时没用
-        // 广播死亡事件，携带死亡类型信息
-        // 具体的销毁或复活逻辑由 OnUnitDead 事件回调处理，实现逻辑解耦
-        _entity?.Events.Emit(GameEventType.Unit.Dead,
-            new GameEventType.Unit.DeadEventData(deathType));
         _log.Info($"单位死亡, 类型: {deathType}");
 
         // 根据死亡类型决定后续行为：是直接移除还是尝试复活

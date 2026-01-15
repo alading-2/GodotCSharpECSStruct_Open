@@ -89,7 +89,7 @@ public static class SpawnPositionCalculator
     /// <param name="parameters">包含计算所需参数的对象（如半径、边界、间距等）</param>
     /// <param name="viewport">视口引用。在使用 Offscreen（屏幕外）策略时必须提供，用于获取相机位置和屏幕尺寸</param>
     /// <returns>计算出的全局 Vector2 坐标。如果策略未知或缺少必要引用，通常返回 Vector2.Zero</returns>
-    public static Vector2 GetSpawnPosition(SpawnPositionStrategy strategy, SpawnPositionParams parameters, Viewport viewport = null)
+    public static Vector2 GetSpawnPosition(SpawnPositionStrategy strategy, SpawnPositionParams parameters, Viewport? viewport = null)
     {
         return strategy switch
         {
@@ -112,7 +112,7 @@ public static class SpawnPositionCalculator
     /// <param name="parameters">生成参数</param>
     /// <param name="viewport">视口引用</param>
     /// <returns>包含 count 个坐标点的列表</returns>
-    public static List<Vector2> GetSpawnPositions(SpawnPositionStrategy strategy, int count, SpawnPositionParams parameters, Viewport viewport = null)
+    public static List<Vector2> GetSpawnPositions(SpawnPositionStrategy strategy, int count, SpawnPositionParams parameters, Viewport? viewport = null)
     {
         var results = new List<Vector2>(count);
 
@@ -191,7 +191,7 @@ public static class SpawnPositionCalculator
     /// 屏幕外生成逻辑 (Hollow Rectangle)。
     /// 在 [Min, Max] 定义的大矩形内，挖去 Viewport 定义的小矩形。
     /// </summary>
-    private static Vector2 GetOffscreenHollowPosition(SpawnPositionParams p, Viewport viewport)
+    private static Vector2 GetOffscreenHollowPosition(SpawnPositionParams p, Viewport? viewport)
     {
         if (viewport == null) return Vector2.Zero;
 
@@ -275,7 +275,7 @@ public static class SpawnPositionCalculator
     /// <summary>
     /// 网格生成位置。
     /// </summary>
-    private static Vector2 GetGridPosition(SpawnPositionParams p, Viewport viewport)
+    private static Vector2 GetGridPosition(SpawnPositionParams p, Viewport? viewport)
     {
         // 确定原点：如果有指定则用指定，否则用视口中心，再否则用 (0,0)
         Vector2 origin = p.GridOrigin ?? (viewport?.GetCamera2D()?.GlobalPosition ?? Vector2.Zero);
@@ -295,7 +295,7 @@ public static class SpawnPositionCalculator
     /// <summary>
     /// 螺旋线生成位置。
     /// </summary>
-    private static Vector2 GetSpiralPosition(SpawnPositionParams p, Viewport viewport)
+    private static Vector2 GetSpiralPosition(SpawnPositionParams p, Viewport? viewport)
     {
         Vector2 center = p.Center;
         if (viewport != null)
@@ -312,7 +312,7 @@ public static class SpawnPositionCalculator
     /// <summary>
     /// 单个 Cluster 模式位置 (退化为基于 BaseStrategy 的单点偏移)。
     /// </summary>
-    private static Vector2 GetClusterPosition(SpawnPositionParams p, Viewport viewport)
+    private static Vector2 GetClusterPosition(SpawnPositionParams p, Viewport? viewport)
     {
         // 如果直接调用 GetSpawnPosition(Cluster)，我们只能随机选一个中心点，然后偏离一点
         var center = GetSpawnPosition(p.ClusterBaseStrategy, p, viewport);

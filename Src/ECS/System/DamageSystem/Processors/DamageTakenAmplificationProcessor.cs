@@ -6,11 +6,11 @@ using Godot;
 /// </summary>
 public class DamageTakenAmplificationProcessor : IDamageProcessor
 {
+    private static readonly Log _log = new Log("DamageTakenAmplificationProcessor");
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {
-        if (info.IsDodged || info.FinalDamage <= 0) return;
         if (info.Victim is not IEntity victimEntity) return;
 
         // 默认为 1.0 (100%)

@@ -31,8 +31,8 @@ namespace BrotatoMy.Test
             bus.Emit("OnceEvent"); // Should not trigger
 
             // Test Priority
-            bus.On("Order", () => GD.Print("Low Priority"), 0);
-            bus.On("Order", () => GD.Print("High Priority"), 10);
+            bus.On("Order", () => GD.Print("Low Priority"), EventPriority.Low);
+            bus.On("Order", () => GD.Print("High Priority"), EventPriority.High);
             bus.Emit("Order");
 
             GD.Print($"Total Call Count: {callCount} (Expected 2)");

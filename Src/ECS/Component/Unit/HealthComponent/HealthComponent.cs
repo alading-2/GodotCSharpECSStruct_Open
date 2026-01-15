@@ -119,4 +119,51 @@ public partial class HealthComponent : Node, IComponent
         }
     }
 
+    /// <summary>
+    /// 应用伤害（由 DamageService 通过 HealthExecutionProcessor 调用）
+    /// </summary>
+    /// <param name="info">伤害上下文，包含最终伤害、攻击者等信息</param>
+    public void ApplyDamage(DamageInfo info)
+    {
+        if (_data == null || _entity == null) return;
+
+        float amount = info.FinalDamage;
+        if (amount <= 0) return;
+
+        float oldHp = CurrentHp;
+        float newHp = Mathf.Max(0f, oldHp - amount);
+
+        // 修改 HP
+        _data.Set(DataKey.CurrentHp, newHp);
+
+        // 统计伤害
+        _data.Add(DataKey.TotalDamageTaken, amount);
+
+        // 发送 HealthChanged 事件（供 UI 等使用）
+        _entity.Events.Emit(GameEventType.Data.HealthChanged,
+            new GameEventType.Data.HealthChangedEventData(oldHp, newHp));
+
+        // 发送 Damaged 事件（供飘字等使用）
+        // Attacker 可能是子弹/武器，在需要时通过关系链查找 IUnit
+        _entity.Events.Emit(GameEventType.Unit.Damaged,
+            new GameEventType.Unit.DamagedEventData(amount, info.Attacker as IEntity, info.Type));
+
+        _log.Debug($"受到伤害: {amount}, HP: {oldHp} -> {newHp}");
+
+        // ✅ 致死判定 - 发送统一的 Kill 事件
+        if (newHp <= 0)
+        {
+            _log.Debug("HP 归零，发送致死伤害事件");
+            // Killer 为 Attacker（直接攻击来源），统计归属通过关系链在 DamageStatisticsSystem 中处理
+            var killData = new GameEventType.Unit.KillEventData(
+                Victim: _entity,
+                Killer: info.Attacker as IEntity,
+                DeathType: DeathType.Normal,
+                DamageType: info.Type
+            );
+            _entity.Events.Emit(GameEventType.Unit.Kill, killData);
+            GlobalEventBus.Global.Emit(GameEventType.Unit.Kill, killData);
+        }
+    }
+
 }

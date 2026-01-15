@@ -32,24 +32,31 @@
 
 ### 4. [Resources](Resources/)
 存放**具体游戏资产** (Godot Resources)。
-- **用途**：Godot 的 `.tres`, `.tscn` 文件。代表具体的游戏个体数据。
-- **示例**：`Enemy_01.tres` (某个具体敌人的数值配置), `Weapon_Gun.tres`.
+- **用途**：Godot 的 `.tscn` 文件。代表具体的游戏实体或组件预制体。
+- **示例**：`Enemy.tscn` (敌人实体模板), `HealthComponent.tscn`.
+- **注意**：纯数值数据（如敌人属性）不再使用 `.tres` 文件，而是使用 `.cs` 静态类定义。
 
 ### 5. [ResourceRegistry](ResourceRegistry.cs)
 
-**资源注册表** - 统一管理项目中所有 Resource 的引用。
+**资源注册表** - 统一管理项目中所有 **资产 (Assets)** 的引用。
 
 > 📖 **详细文档**：请参阅 [资源管理系统手册](ResourceManagement.md)
 
-- **核心功能**：提供编辑器的可视化配置和代码中的类型安全加载。
+- **核心功能**：管理场景预制体等 Godot 资源。
 - **配置方式**：在 `Data/ResourceRegistry.tscn` 场景中直接配置。
 - **API 示例**：
     ```csharp
-    // 单个加载
-    ResourceRegistry.Load<EnemyResource>("豺狼人");
-    
-    // 批量加载
-    ResourceRegistry.LoadAllInCategory<EnemySpawnConfig>(ResourceCategory.SpawnRule);
+    // 加载场景
+    ResourceRegistry.Load<PackedScene>("EnemyEntity");
+    ```
+
+### 6. 纯数据类 (Pure Data Classes)
+- **位置**: `Data/Data/` (如 `EnemyData.cs`, `PlayerData.cs`)
+- **用途**: 定义游戏单位的数值属性和生成规则。
+- **优势**: 纯代码管理，易于重构和搜索，避免了 `.tres` 文件维护的繁琐。
+- **示例**:
+    ```csharp
+    var config = EnemyData.Configs["豺狼人"];
     ```
 
 ---

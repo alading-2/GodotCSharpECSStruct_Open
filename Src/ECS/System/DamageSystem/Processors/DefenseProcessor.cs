@@ -6,23 +6,25 @@ using System;
 /// </summary>
 public class DefenseProcessor : IDamageProcessor
 {
+    private static readonly Log _log = new Log("DefenseProcessor");
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {
+
         // if (info.Type == DamageType.True) return; // 真实伤害无视护甲
         float armor = info.Victim.Data.Get<float>(DataKey.Armor);
 
-        float originalParams = info.FinalDamage;
+        float originalDamage = info.FinalDamage;
         info.FinalDamage *= MyMath.CalculateArmorDamageMultiplier(armor);
 
         if (armor >= 0)
         {
-            info.AddLog($"护甲({armor}) 减少伤害： {(int)(originalParams - info.FinalDamage)}");
+            info.AddLog($"护甲({armor}) 减少伤害： {(int)(originalDamage - info.FinalDamage)}");
         }
         else
         {
-            info.AddLog($"护甲({armor}) 增加伤害： {(int)(originalParams - info.FinalDamage)}");
+            info.AddLog($"护甲({armor}) 增加伤害： {(int)(originalDamage - info.FinalDamage)}");
         }
     }
 }

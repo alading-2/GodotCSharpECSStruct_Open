@@ -4,6 +4,21 @@ using System.Linq;
 using Godot;
 
 /// <summary>
+/// 事件优先级
+/// 数值越大越优先执行
+/// </summary>
+public enum EventPriority
+{
+    Monitor = -100,  // 最后执行，用于监控或后期处理
+    Lowest = -50,
+    Low = -10,
+    Normal = 0,
+    High = 10,
+    Highest = 50,
+    Critical = 100   // 最先执行，用于关键逻辑
+}
+
+/// <summary>
 /// 通用游戏事件总线
 /// 支持泛型数据传递、优先级排序、一次性订阅
 /// </summary>
@@ -70,33 +85,33 @@ public class EventBus
     /// <summary>
     /// 订阅带参数的事件
     /// </summary>
-    public void On<T>(string eventName, Action<T> handler, int priority = 0)
+    public void On<T>(string eventName, Action<T> handler, EventPriority priority = EventPriority.Normal)
     {
-        Subscribe(eventName, handler, priority, false);
+        Subscribe(eventName, handler, (int)priority, false);
     }
 
     /// <summary>
     /// 订阅无参数的事件
     /// </summary>
-    public void On(string eventName, Action handler, int priority = 0)
+    public void On(string eventName, Action handler, EventPriority priority = EventPriority.Normal)
     {
-        Subscribe(eventName, handler, priority, false);
+        Subscribe(eventName, handler, (int)priority, false);
     }
 
     /// <summary>
     /// 订阅一次性事件（带参数）
     /// </summary>
-    public void Once<T>(string eventName, Action<T> handler, int priority = 0)
+    public void Once<T>(string eventName, Action<T> handler, EventPriority priority = EventPriority.Normal)
     {
-        Subscribe(eventName, handler, priority, true);
+        Subscribe(eventName, handler, (int)priority, true);
     }
 
     /// <summary>
     /// 订阅一次性事件（无参数）
     /// </summary>
-    public void Once(string eventName, Action handler, int priority = 0)
+    public void Once(string eventName, Action handler, EventPriority priority = EventPriority.Normal)
     {
-        Subscribe(eventName, handler, priority, true);
+        Subscribe(eventName, handler, (int)priority, true);
     }
 
     private void Subscribe(string eventName, Delegate handler, int priority, bool once)

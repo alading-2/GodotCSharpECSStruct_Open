@@ -3,41 +3,37 @@ using System;
 
 /// <summary>
 /// 吸血处理器
-/// <para>处理攻击者的吸血逻辑。</para>
+/// <para>处理攻击者的吸血逻辑，向角色（IUnit）发送治疗请求。</para>
 /// </summary>
 public class LifestealProcessor : IDamageProcessor
 {
+    private static readonly Log _log = new Log("LifestealProcessor");
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)
     {
         if (info.FinalDamage <= 0) return;
-        if (info.Instigator is not Node instigatorNode) return; // Instigator usually is Node (Player/Enemy implements IUnit which is usually Node?)
-                                                                // IUnit 不一定是 Node，但在此项目中 Player/Enemy 都是 Node。
-                                                                // 我们需要访问 Instigator 的 Data 和 HealthComponent。
+        if (info.Attacker == null) return;
 
-        // 尝试将 Instigator 转换为 Node 以获取组件
-        // 或者 IUnit 应该提供获取 Entity/Data 的方法？
-        // 目前 IEntity 包含 Data。 Player/Enemy 实现 IEntity。
-
-        if (info.Instigator is IEntity instigatorEntity)
+        // 查找归属的 IUnit（自身或沿 PARENT 向上）
+        var targetUnit = EntityRelationshipManager.FindAncestorOfType<IUnit>(info.Attacker);
+        if (targetUnit == null)
         {
-            float lifestealChance = instigatorEntity.Data.Get<float>(DataKey.LifeSteal);
+            _log.Error($"吸血处理失败：无法找到归属的 IUnit，Attacker={info.Attacker}");
+            return;
+        }
 
-            // Brotato 逻辑：LifeSteal 是触发回血 1 点的概率？还是百分比吸血？
-            // Brotato Wiki: Life Steal is a chance to heal 1 HP when damaging an enemy. Max 10HP/wave cap usually?
-            // 这里假设是 概率回复 1 点血。
+        // 获取吸血概率并判定
+        float lifestealChance = targetUnit.Data.Get<float>(DataKey.LifeSteal);
 
-            if (lifestealChance > 0)
-            {
-                if (GD.Randf() * 100 < lifestealChance)
-                {
-                    // ✅ 发送治疗请求事件，解耦 Processor 与 HealthComponent
-                    instigatorEntity.Events.Emit(GameEventType.Unit.HealRequest,
-                        new GameEventType.Unit.HealRequestEventData(1, HealSource.Lifesteal));
-                    info.AddLog("Lifesteal triggered (+1 HP)");
-                }
-            }
+        // Brotato 逻辑：LifeSteal 是触发回血 1 点的概率
+        if (lifestealChance > 0 && GD.Randf() * 100 < lifestealChance)
+        {
+            // 发送治疗请求事件到正确的 IUnit（角色）
+            targetUnit.Events.Emit(GameEventType.Unit.HealRequest,
+                new GameEventType.Unit.HealRequestEventData(1, HealSource.Lifesteal));
+            info.AddLog("Lifesteal triggered (+1 HP to Unit)");
         }
     }
 }
+

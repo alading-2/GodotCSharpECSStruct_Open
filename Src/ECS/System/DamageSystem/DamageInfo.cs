@@ -41,19 +41,15 @@ public class DamageInfo
     public Guid Id { get; } = Guid.NewGuid();
 
     /// <summary>
-    /// 伤害的直接来源（可能是子弹、陷阱 Area2D、或者近战武器 Area2D）
+    /// 伤害的直接来源（可能是子弹 Area2D、陷阱 Area2D、或者近战武器 Area2D）
+    /// <para>注意：此为直接攻击来源，不一定是最终归属的角色。</para>
+    /// <para>统计归属查找：使用 EntityRelationshipManager.FindAncestorOfType&lt;IUnit&gt;(Attacker) 沿 PARENT 关系向上查找角色。</para>
+    /// <para>例如：子弹 → 武器 → 角色，最终归属到角色进行统计。</para>
     /// </summary>
     public Node Attacker { get; set; }
 
     /// <summary>
-    /// 伤害的始作俑者（真正的凶手，用于统计伤害）
-    /// <para>如果 Attacker 是 Unit，则 Instigator == Attacker</para>
-    /// <para>如果 Attacker 是子弹，则 Instigator == Attacker.Owner</para>
-    /// </summary>
-    public IUnit? Instigator { get; set; }
-
-    /// <summary>
-    /// 受击者实体
+    /// 受击者实体（必须实现 IUnit 接口）
     /// </summary>
     public IUnit Victim { get; set; }
 
@@ -92,6 +88,12 @@ public class DamageInfo
     /// 是否结束，闪避、免疫、0伤害直接结束
     /// </summary>
     public bool IsEnd { get; set; }
+
+    /// <summary>
+    /// 是否为模拟模式（预计算）
+    /// <para>如果是模拟模式，HealthExecutionProcessor 将不会实际扣血，仅记录计算结果。</para>
+    /// </summary>
+    public bool IsSimulation { get; set; }
 
     // === 辅助数据 ===
     public List<string> Logs { get; } = new();

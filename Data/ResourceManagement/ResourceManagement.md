@@ -1,8 +1,9 @@
 # ResourceRegistry 资源管理系统
 
-**ResourceRegistry** 是项目中统一管理 Resource（如单位配置、生成规则、物品数据）的核心系统。
+**ResourceRegistry** 是项目中统一管理 **游戏资产 (Assets)**（如场景预制体）的核心系统。
+> ⚠️ **注意**：游戏数值数据（如敌人属性、生成规则）和配置已移至纯 C# 类（`EnemyData`, `PlayerData`）管理，不再通过此系统加载。
 
-相比旧版的 `DataResourceIndex`（硬编码路径），新系统采用 **Godot 原生 Export 模式**，具有以下优势：
+相比硬编码路径，本系统采用 **Godot 原生 Export 模式**，具有以下优势：
 
 - 🎨 **可视化配置**：直接在 Godot 编辑器中拖拽资源，无需编写代码。
 - 🛡️ **路径安全**：文件移动或重命名时，Godot 会自动更新引用（UID 机制），路径错误会立即报红。
@@ -21,50 +22,28 @@
 3. 在右侧 **Inspector (检查器)** 面板中，找到 **Resources** 数组。
 4. 点击 **Add Element**（添加元素）。
 5. 在新增的 **ResourceEntry** 中填写：
-  - **Name**: 资源的简写名称（代码加载时使用，如 "豺狼人"）。
-  - **Category**: 选择资源分类（如 `Unit`, `SpawnRule`）。
-  - **Data**: 拖入对应的 `.tres` 或 `.tscn` 文件。
-    - *提示*：`PackedScene` (预制体) 也是一种 Resource，完全兼容。
+  - **Name**: 资源的简写名称（代码加载时使用，如 "EnemyEntity", "DamageComponent"）。
+  - **Category**: 选择资源分类（目前主要用于 Entity 和 Component）。
+  - **Data**: 拖入对应的 `.tscn` 文件。
+    - *提示*：主要支持 `PackedScene` (预制体)。
 6. 保存场景 (`Ctrl + S`)。
 
 ### 2. 代码调用
 
 使用 `ResourceRegistry` 类的静态 API 进行加载。
 
-#### 单个资源加载
+#### 加载场景预制体
 
 ```csharp
-// 推荐：使用泛型 API，类型安全
-var enemyData = ResourceRegistry.Load<EnemyResource>("豺狼人");
-
 // 加载预制体 (PackedScene)
-var playerScene = ResourceRegistry.Load<PackedScene>("Player");
+var playerScene = ResourceRegistry.Load<PackedScene>("PlayerEntity");
 var playerNode = playerScene.Instantiate();
-
-if (enemyData != null)
-{
-    // 使用资源...
-}
-```
-
-#### 按分类批量加载
-
-常用于系统初始化，例如加载所有敌人生成规则。
-
-```csharp
-// 获取所有 "SpawnRule" 分类的资源
-var rules = ResourceRegistry.LoadAllInCategory<EnemySpawnConfig>(ResourceCategory.SpawnRule);
-
-foreach (var rule in rules)
-{
-    // 激活规则...
-}
 ```
 
 #### 检查资源是否存在
 
 ```csharp
-if (ResourceRegistry.Has("倚天剑"))
+if (ResourceRegistry.Has("PlayerEntity"))
 {
     // ...
 }

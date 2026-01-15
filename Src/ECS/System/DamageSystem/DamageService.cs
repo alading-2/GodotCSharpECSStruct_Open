@@ -59,25 +59,28 @@ public partial class DamageService : Node
     /// <summary>
     /// 私有构造函数，初始化并注册默认的伤害处理器
     /// </summary>
+    /// <summary>
+    /// 私有构造函数，初始化并注册默认的伤害处理器
+    /// </summary>
     private void DamageServiceRegister()
     {
         // 注册默认处理器（按计算逻辑顺序）
-        // 1. 基础伤害计算（获取攻击者基础属性）
+        // 1. 基础伤害计算与前置检查（死亡、无敌、基础数值）
         RegisterProcessor(new BaseDamageProcessor(), 100);
-        // 2. 暴击判定与计算
-        RegisterProcessor(new CritProcessor(), 200);
-        // 3. 闪避判定（如果闪避成功，后续减伤逻辑通常跳过）
-        RegisterProcessor(new DodgeProcessor(), 300);
+        // 2. 闪避判定（如果闪避成功，后续计算逻辑应跳过）
+        RegisterProcessor(new DodgeProcessor(), 200);
+        // 3. 暴击判定与计算
+        RegisterProcessor(new CritProcessor(), 300);
         // 4. 护盾抵扣
         RegisterProcessor(new ShieldProcessor(), 400);
         // 5. 防御力/护甲减伤
         RegisterProcessor(new DefenseProcessor(), 500);
-        // 6. 吸血逻辑（基于最终造成的伤害恢复生命值）
-        RegisterProcessor(new LifestealProcessor(), 600);
-        // 7. 受伤加成（受击者易伤等效果）
-        RegisterProcessor(new DamageTakenAmplificationProcessor(), 700);
-        // 8. 固定值减伤
-        RegisterProcessor(new FlatReductionProcessor(), 800);
+        // 6. 受伤倍率（受击者易伤等效果）
+        RegisterProcessor(new DamageTakenAmplificationProcessor(), 600);
+        // 7. 固定值减伤（最后的防御手段）
+        RegisterProcessor(new FlatReductionProcessor(), 700);
+        // 8. 吸血逻辑（基于减伤后的最终伤害恢复生命值）
+        RegisterProcessor(new LifestealProcessor(), 800);
         // 9. 生命百分比斩杀逻辑
         RegisterProcessor(new HealthExecutionProcessor(), 900);
         // 10. 数据统计（记录总伤害、DPS等）

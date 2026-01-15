@@ -462,6 +462,91 @@ public static class EntityRelationshipManager
         _log.Info($"已移除所有类型为 {relationType} 的关系，共 {recordsToRemove.Count} 个");
     }
 
+    // ==================== 所有权链查找 ====================
+
+    /// <summary>
+    /// 查找第一个符合类型的实体（包括自身或沿 PARENT 关系向上查找）
+    /// <para>优先检查传入节点本身是否符合目标类型，如果是则直接返回。</para>
+    /// <para>常用场景：子弹→武器→角色，查找角色以进行统计归属/吸血/暴击等。</para>
+    /// <para>找不到时会自动打印警告日志。</para>
+    /// </summary>
+    /// <typeparam name="T">目标类型（如 IUnit、IEntity）</typeparam>
+    /// <param name="entityId">起始实体 ID</param>
+    /// <param name="maxDepth">最大查找深度（防止无限循环，默认 10）</param>
+    /// <returns>找到的目标类型实体，未找到返回 null</returns>
+    public static T? FindAncestorOfType<T>(string entityId, int maxDepth = 10) where T : class
+    {
+        // 1. 首先检查传入的实体本身是否符合目标类型
+        var startEntity = EntityManager.GetEntityById(entityId);
+        if (startEntity is T startTypedEntity)
+        {
+            return startTypedEntity;
+        }
+
+        // 2. 沿 PARENT 关系向上查找
+        string currentId = entityId;
+        int depth = 0;
+
+        while (depth < maxDepth)
+        {
+            // 查找当前实体的 PARENT
+            var parentId = GetParentEntitiesByChildAndType(currentId, EntityRelationshipType.PARENT)
+                .FirstOrDefault();
+
+            if (string.IsNullOrEmpty(parentId))
+            {
+                // 没有更多父级了
+                break;
+            }
+
+            // 获取父级实体
+            var parentEntity = EntityManager.GetEntityById(parentId);
+            if (parentEntity == null)
+            {
+                _log.Warn($"父级实体 {parentId} 已不存在，终止向上查找");
+                break;
+            }
+
+            // 检查是否符合目标类型
+            if (parentEntity is T typedEntity)
+            {
+                return typedEntity;
+            }
+
+            // 继续向上
+            currentId = parentId;
+            depth++;
+        }
+
+        // 找不到时打印警告
+        _log.Warn($"未能在实体 {entityId}({startEntity?.GetType().Name ?? "null"}) 的层级链上找到类型 {typeof(T).Name}");
+        return null;
+    }
+
+    /// <summary>
+    /// 查找第一个符合类型的实体（包括自身或沿 PARENT 关系向上查找）
+    /// <para>便捷重载，自动获取实体 ID。</para>
+    /// <para>优先检查传入节点本身是否符合目标类型，如果是则直接返回。</para>
+    /// <para>找不到时会自动打印警告日志。</para>
+    /// </summary>
+    public static T? FindAncestorOfType<T>(Godot.Node entity, int maxDepth = 10) where T : class
+    {
+        if (entity == null)
+        {
+            _log.Error($"FindAncestorOfType 传入节点为 null，无法查找 {typeof(T).Name}");
+            return null;
+        }
+
+        // 1. 首先检查传入的节点本身是否符合目标类型
+        if (entity is T typedEntity)
+        {
+            return typedEntity;
+        }
+
+        // 2. 沿 PARENT 关系向上查找
+        return FindAncestorOfType<T>(entity.GetInstanceId().ToString(), maxDepth);
+    }
+
     // ==================== 工具方法 ====================
 
     /// <summary>

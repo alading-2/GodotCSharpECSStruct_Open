@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://cj8x2k5dpm7nq"]
-
-[ext_resource type="Script" path="res://Src/ECS/Component/Unit/DamageComponent/DamageComponent.cs" id="1_damage"]
-
-[node name="DamageComponent" type="Node"]
-script = ExtResource("1_damage")

@@ -69,8 +69,8 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     public void OnPoolAcquire()
     {
         // 示例:订阅局部事件
-        Events.On<GameEventType.Unit.DeadEventData>(
-            GameEventType.Unit.Dead, OnDied);
+        Events.On<GameEventType.Unit.KillEventData>(
+            GameEventType.Unit.Kill, OnKilled);
         Events.On<GameEventType.Unit.DamagedEventData>(
             GameEventType.Unit.Damaged, OnDamaged);
     }
@@ -99,9 +99,9 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
 
     #region ================= 事件处理 =================
 
-    private void OnDied(GameEventType.Unit.DeadEventData evt)
+    private void OnKilled(GameEventType.Unit.KillEventData evt)
     {
-        _log.Info($"{Name} 死亡");
+        _log.Info($"{Name} 死亡, 类型: {evt.DeathType}");
         // 处理死亡逻辑...
     }
 
