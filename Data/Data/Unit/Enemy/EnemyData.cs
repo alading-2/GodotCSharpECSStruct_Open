@@ -10,7 +10,7 @@ public static class EnemyData
         ["鱼人"] = new()
         {
             { DataKey.Name, "鱼人" },
-            { DataKey.VisualScenePath, "res://assets/character/ememy/鱼人/AnimatedSprite2D/AnimatedSprite2D.tscn" },
+            { DataKey.VisualScenePath, "res://assets/Unit/Enemy/鱼人/AnimatedSprite2D/AnimatedSprite2D.tscn" },
             { DataKey.ExpReward, 2 },
             { DataKey.BaseHp, 20f },
             { DataKey.MoveSpeed, 80f },
@@ -31,7 +31,7 @@ public static class EnemyData
         ["豺狼人"] = new()
         {
             { DataKey.Name, "豺狼人" },
-            { DataKey.VisualScenePath, "res://assets/character/ememy/豺狼人/AnimatedSprite2D/AnimatedSprite2D.tscn" },
+            { DataKey.VisualScenePath, "res://assets/Unit/Enemy/豺狼人/AnimatedSprite2D/AnimatedSprite2D.tscn" },
             { DataKey.ExpReward, 5 },
             { DataKey.BaseHp, 50f },
             { DataKey.MoveSpeed, 100f },

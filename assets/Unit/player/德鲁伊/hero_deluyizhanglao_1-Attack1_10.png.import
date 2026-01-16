@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ceyc1wkq5u00"
-path="res://.godot/imported/hero_deluyizhanglao_1-Attack1_10.png-353e68f33d4556454da29df81846ad35.ctex"
+path="res://.godot/imported/hero_deluyizhanglao_1-Attack1_10.png-aa2ae6b733639189ddf0bb272e6b59f2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-Attack1_10.png"
-dest_files=["res://.godot/imported/hero_deluyizhanglao_1-Attack1_10.png-353e68f33d4556454da29df81846ad35.ctex"]
+source_file="res://assets/Unit/Player/德鲁伊/hero_deluyizhanglao_1-Attack1_10.png"
+dest_files=["res://.godot/imported/hero_deluyizhanglao_1-Attack1_10.png-aa2ae6b733639189ddf0bb272e6b59f2.ctex"]
 
 [params]
 

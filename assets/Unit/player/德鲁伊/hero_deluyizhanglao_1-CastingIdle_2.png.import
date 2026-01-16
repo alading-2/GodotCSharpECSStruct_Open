@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dvh6u4es1xxs6"
-path="res://.godot/imported/hero_deluyizhanglao_1-CastingIdle_2.png-2f8c7e7991759ecefebdbf6755bddb48.ctex"
+path="res://.godot/imported/hero_deluyizhanglao_1-CastingIdle_2.png-eda2f791c4e677019b9a7bfdab9e2d31.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/player/德鲁伊/hero_deluyizhanglao_1-CastingIdle_2.png"
-dest_files=["res://.godot/imported/hero_deluyizhanglao_1-CastingIdle_2.png-2f8c7e7991759ecefebdbf6755bddb48.ctex"]
+source_file="res://assets/Unit/Player/德鲁伊/hero_deluyizhanglao_1-CastingIdle_2.png"
+dest_files=["res://.godot/imported/hero_deluyizhanglao_1-CastingIdle_2.png-eda2f791c4e677019b9a7bfdab9e2d31.ctex"]
 
 [params]
 

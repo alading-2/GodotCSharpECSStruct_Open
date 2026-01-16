@@ -10,7 +10,7 @@ public static class PlayerData
         ["Player1"] = new()
         {
             { DataKey.Name, "Player1" },
-            { DataKey.VisualScenePath, "res://assets/character/player/AnimatedSprite2D.tscn" },
+            { DataKey.VisualScenePath, "res://assets/Unit/Player/AnimatedSprite2D.tscn" },
             { DataKey.BaseHp, 100f },
             { DataKey.MoveSpeed, 200f },
             { DataKey.BaseAttack, 10f },
