@@ -14,18 +14,18 @@
 
 > **点击类名可直接跳转至代码文件**
 
-| 序 | 处理器 (Processor) | 阶段 | 核心职责 (Core Responsibility) |
-|:--:|:---|:---|:---|
-| 1 | [BaseDamageProcessor](./Processors/BaseDamageProcessor.cs) | **初始化** | 确定基础面板伤害。<br>`FinalDamage = BaseDamage` |
-| 2 | [CritProcessor](./Processors/CritProcessor.cs) | **输出修正** | 判定暴击。若暴击：<br>`FinalDamage *= CritDamageMultiplier` |
-| 3 | [DodgeProcessor](./Processors/DodgeProcessor.cs) | **生存判定** | 判定闪避。若闪避成功：<br>`IsDodged = true`, `FinalDamage = 0` (后续流程部分跳过) |
-| 4 | [ShieldProcessor](./Processors/ShieldProcessor.cs) | **护盾抵扣** | 优先扣除护盾。<br>**注意**：护盾承受的是**原始伤害**（无视护甲）。 |
-| 5 | [DefenseProcessor](./Processors/DefenseProcessor.cs) | **受击减免** | 计算护甲/魔抗带来的减伤。<br>公式：`Reduction = Armor / (Armor + Constant)` |
-| 6 | [DamageTakenAmplificationProcessor](./Processors/DamageTakenAmplificationProcessor.cs) | **伤害增幅** | 应用受击者的易伤/减伤修正（如“受到伤害+20%”）。<br>`FinalDamage *= DamageTakenMultiplier` |
-| 7 | [FlatReductionProcessor](./Processors/FlatReductionProcessor.cs) | **受击减免** | 应用固定数值减伤（如“格挡 5 点伤害”）。<br>`FinalDamage = Max(0, FinalDamage - FlatReduction)` |
-| 8 | [HealthExecutionProcessor](./Processors/HealthExecutionProcessor.cs) | **最终结算** | 实际扣除目标生命值。<br>调用 `HealthComponent.ApplyDamage()` |
-| 9 | [LifestealProcessor](./Processors/LifestealProcessor.cs) | **后处理** | 计算吸血逻辑。<br>基于实际造成伤害治疗攻击者。 |
-| 10 | [StatisticsProcessor](./Processors/StatisticsProcessor.cs) | **后处理** | 记录伤害统计数据。<br>更新 `DamageDealt` 等统计项。 |
+| 序 | 处理器 (Processor) | 优先级 | 阶段 | 核心职责 (Core Responsibility) |
+|:--:|:---|:--:|:---|:---|
+| 1 | [BaseDamageProcessor](./Processors/BaseDamageProcessor.cs) | 100 | **初始化与前置检查** | 初始化 `FinalDamage = BaseDamage`<br>检查死亡/无敌状态，可提前终止流程 |
+| 2 | [DodgeProcessor](./Processors/DodgeProcessor.cs) | 200 | **生存判定** | 判定闪避。若闪避成功：<br>`IsDodged = true`, `IsEnd = true`, `FinalDamage = 0`<br>**注意**：真实伤害不可闪避 |
+| 3 | [CritProcessor](./Processors/CritProcessor.cs) | 300 | **输出修正** | 判定暴击。若暴击：<br>`IsCritical = true`, `FinalDamage *= CritDamageMultiplier` |
+| 4 | [ShieldProcessor](./Processors/ShieldProcessor.cs) | 400 | **护盾抵扣** | 优先扣除护盾（**TODO**）<br>护盾承受**原始伤害**（护甲减免前） |
+| 5 | [DefenseProcessor](./Processors/DefenseProcessor.cs) | 500 | **受击减免** | 计算护甲减伤<br>公式：`multiplier = MyMath.CalculateArmorDamageMultiplier(Armor)` |
+| 6 | [DamageTakenAmplificationProcessor](./Processors/DamageTakenAmplificationProcessor.cs) | 600 | **伤害增幅** | 应用受击者的易伤/减伤修正<br>`FinalDamage *= DamageTakenMultiplier` |
+| 7 | [FlatReductionProcessor](./Processors/FlatReductionProcessor.cs) | 700 | **受击减免** | 固定数值减伤（**预留**）<br>如"格挡 5 点伤害" |
+| 8 | [LifestealProcessor](./Processors/LifestealProcessor.cs) | 800 | **后处理** | 计算吸血逻辑<br>基于 `FinalDamage` 发送治疗请求事件 |
+| 9 | [HealthExecutionProcessor](./Processors/HealthExecutionProcessor.cs) | 900 | **最终结算** | 实际扣除目标生命值<br>调用 `HealthComponent.ApplyDamage(info)`<br>**模拟模式**：不实际扣血 |
+| 10 | [StatisticsProcessor](./Processors/StatisticsProcessor.cs) | 1000 | **后处理** | 记录伤害统计数据<br>遍历攻击链，累加 `TotalDamageDealt` 等 |
 
 ---
 
@@ -140,8 +140,9 @@ public void Process(DamageInfo info)
   - `Victim`: 受击者实体（必须实现 IUnit）。
   - `FinalDamage`: 流转过程中的最终结算伤害值。
   - `IsEnd`: 标记伤害流程是否应提前终止（由主循环检查）。
-  - `IsSimulation`: **新增** 标记伤害是否为模拟预测。若为 `true`，则最后一步不会实际扣血。
-  - `Logs`: 记录了伤害计算过程中的关键变化，用于调试。
+  - `IsSimulation`: 模拟模式标记。若为 `true`，`HealthExecutionProcessor` 将跳过实际扣血，仅记录日志。
+    - **用途**：伤害预测、技能说明面板（显示"预计造成 XXX 伤害"）等
+  - `Logs`: 记录伤害计算过程中的关键变化（仅 DEBUG 模式），用于追踪和调试。
 
 ### DamageService (核心服务)
 - **单例模式**: `DamageService.Instance` 全局唯一。
@@ -159,27 +160,23 @@ public void Process(DamageInfo info)
 
 ### Stage 1: 输出修正 (Outgoing) - 决定理论伤害
 
-#### [BaseDamageProcessor](./Processors/BaseDamageProcessor.cs) (P:0)
-*   **逻辑**: 初始化 `FinalDamage`。如果 `BaseDamage` 未设置，尝试从 `Attacker` 读取（当前主要是兜底逻辑）。
-*   **目的**: 确保伤害计算有一个非零的起始值。
+#### [BaseDamageProcessor](./Processors/BaseDamageProcessor.cs) (P:100)
+*   **逻辑**: 初始化 `FinalDamage = BaseDamage`。执行前置检查（死亡、无敌、基础伤害 <= 0）。
+*   **提前终止**: 若检查失败，设置 `IsEnd = true`, `FinalDamage = 0`。
+*   **职责整合**: 合并了原 `PreDamageCheckProcessor` 的功能。
 
-#### [DamageAmplificationProcessor](./Processors/DamageAmplificationProcessor.cs) (P:10)
-*   **逻辑**: 读取 `Instigator` 的 `DataKey.Damage` (作为百分比加成) 修正伤害。
-*   **公式**: `FinalDamage *= (1 + Damage% / 100)`。
-*   **扩展**: 预留了对近战/远程 (`DamageTags`) 的特定加成接口。
-
-#### [CritProcessor](./Processors/CritProcessor.cs) (P:20)
-*   **逻辑**: 读取 `Instigator` 的 `CritChance` 进行概率判定。
-*   **效果**: 若暴击，`FinalDamage *= CritDamageMultiplier` (默认读取 `DataKey.CritDamage`，若无则默认 1.5倍)。
-*   **标记**: 设置 `IsCritical = true`。
+#### [CritProcessor](./Processors/CritProcessor.cs) (P:300)
+*   **逻辑**: 查找攻击者 IUnit（通过 `FindAncestorOfType`），读取 `CritRate` 进行概率判定。
+*   **效果**: 若暴击，`IsCritical = true`, `FinalDamage *= (CritDamage / 100)`。
+*   **数据来源**: `DataKey.CritRate`（暴击率）, `DataKey.CritDamage`（暴击倍率，如 150）。
 
 ### Stage 2: 生存判定 (Survival) - 决定是否命中
 
-#### [DodgeProcessor](./Processors/DodgeProcessor.cs) (P:100)
-*   **逻辑**: 读取 `Victim` 的 `DodgeChance` (上限 60%)。
-*   **效果**: 若闪避成功，`Result: FinalDamage = 0`, `IsDodged = true`。
+#### [DodgeProcessor](./Processors/DodgeProcessor.cs) (P:200)
+*   **逻辑**: 读取 `Victim` 的 `DodgeChance`。
+*   **效果**: 若闪避成功，`FinalDamage = 0`, `IsDodged = true`, `IsEnd = true`，流程提前终止。
 *   **特殊**: `DamageType.True` (真实伤害) **不可闪避**，直接跳过此判定。
-*   **影响**: 后续的 Shield, Defense 等处理器会检测 `IsDodged` 并直接跳过。
+*   **执行时机**: 在暴击判定之前，可提前终止后续无用计算，提升性能。
 
 ### Stage 3: 护盾抵扣 (Shield) - 优先消耗
 
@@ -190,11 +187,11 @@ public void Process(DamageInfo info)
 
 ### Stage 4: 受击减免 (Mitigation) - 最终减伤
 
-#### [DefenseProcessor](./Processors/DefenseProcessor.cs) (P:300)
-*   **逻辑**: 读取 `Victim` 的 `Armor`。
-*   **公式**: `Reduction = Armor / (Armor + 15)` (参考 Brotato 经典公式)。
-*   **限制**: 最大减免 90%。
-*   **排除**: `DamageType.True` (真实) 伤害不触发此减伤。
+#### [DefenseProcessor](./Processors/DefenseProcessor.cs) (P:500)
+*   **逻辑**: 读取 `Victim` 的 `Armor`，调用 `MyMath.CalculateArmorDamageMultiplier(armor)`。
+*   **效果**: 正护甲减伤，负护甲增伤。
+*   **公式**: 参考 Brotato 经典公式（具体实现见 `MyMath` 工具类）。
+*   **注意**: 当前代码未检查 `DamageType.True`（已注释），真实伤害仍受护甲影响。
 
 #### [DamageTakenAmplificationProcessor](./Processors/DamageTakenAmplificationProcessor.cs) (P:310)
 *   **逻辑**: 读取 `Victim` 的 `DataKey.DamageTakenMultiplier`。
@@ -213,10 +210,11 @@ public void Process(DamageInfo info)
     *   **模拟模式** (`info.IsSimulation = true`): 仅记录日志，**不实际扣血**。用于伤害预测功能。
 *   **注意**: 即使 `FinalDamage` 为 0，也根据具体实现决定是否触发受击事件。
 
-#### [LifestealProcessor](./Processors/LifestealProcessor.cs) (P:600)
-*   **逻辑**: 读取 `Instigator` 的 `LifeSteal` 属性。
-*   **机制**: 概率触发 (DataKey.LifeSteal 作为概率值)。
-*   **效果**: 触发成功则对 `Instigator` 进行 +1 生命值的治疗 (调用 `ModifyHealth(1)`)。
+#### [LifestealProcessor](./Processors/LifestealProcessor.cs) (P:800)
+*   **逻辑**: 查找攻击者 IUnit，读取 `LifeSteal` 作为触发概率。
+*   **机制**: 概率判定成功后，基于 `FinalDamage` 计算回血量（当前公式：`FinalDamage * (lifestealChance / 100)`）。
+*   **效果**: 发送 `HealRequest` 事件到 IUnit（由 `HealthComponent` 处理）。
+*   **执行时机**: 在 `HealthExecutionProcessor` 之前，确保获取到最终伤害值。
 
 #### [StatisticsProcessor](./Processors/StatisticsProcessor.cs) (P:700)
 *   **逻辑**: 记录伤害统计。

@@ -18,9 +18,6 @@ public readonly record struct EntitySpawnConfig
     /// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
     public string? PoolName { get; init; }
 
-    /// <summary>场景路径（UsingObjectPool=false 时必填，如 ECSIndex.Entity.EnemyEntity）</summary>
-    public string? ScenePath { get; init; }
-
     /// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
     public Vector2? Position { get; init; }
 
@@ -60,18 +57,18 @@ public readonly record struct EntitySpawnConfig
 /// // 生成 Entity (对象池)
 /// var enemy = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
 /// {
-///     Resource = enemyData,
+///     Config = enemyData,
 ///     UsingObjectPool = true,
 ///     PoolName = ObjectPoolNames.EnemyPool,
 ///     Position = new Vector2(100, 200)
 /// });
 /// 
-/// // 生成 Entity (场景)
-/// var boss = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+/// // 生成 Entity (场景) - 类型安全，无需指定 SceneName
+/// // 自动使用 typeof(T).Name (即 "Player") 查找 ResourceRegistry
+/// var player = EntityManager.Spawn&lt;Player&gt;(new EntitySpawnConfig
 /// {
-///     Resource = bossData,
+///     Config = playerData,
 ///     UsingObjectPool = false,
-/// ScenePath = ECSIndex.Entity.EnemyEntity,
 ///     Position = new Vector2(500, 300)
 /// });
 /// 
@@ -108,18 +105,17 @@ public static class EntityManager
     /// // 对象池 Entity
     /// var enemy = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
     /// {
-    ///     Resource = enemyData,
+    ///     Config = enemyData,
     ///     UsingObjectPool = true,
     ///     PoolName = ObjectPoolNames.EnemyPool,
     ///     Position = new Vector2(100, 200)
     /// });
     /// 
-    /// // 场景 Entity
-    /// var boss = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+    /// // 场景 Entity - 类型安全，无需指定 SceneName
+    /// var player = EntityManager.Spawn&lt;Player&gt;(new EntitySpawnConfig
     /// {
-    ///     Resource = bossData,
-    ///     UsingObjectPool = false,
-    ///     ScenePath = ECSIndex.Entity.EnemyEntity,
+    ///     Config = playerData,
+    ///     UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceRegistry
     ///     Position = new Vector2(500, 300),
     ///     Rotation = Mathf.Pi / 4
     /// });
@@ -153,38 +149,43 @@ public static class EntityManager
         }
         else
         {
-            // 路径 2: 场景 Entity
-            if (string.IsNullOrEmpty(config.ScenePath))
-            {
-                _log.Error($"场景路径为空，无法实例化 {typeof(T).Name}");
-                return null;
-            }
-
-            var scene = GD.Load<PackedScene>(config.ScenePath);
+            // 路径 2: 场景 Entity（通过 ResourceRegistry 加载）
+            // 强制使用类型名作为资源名称
+            var scene = ResourceRegistry.LoadScene<T>();
             if (scene == null)
             {
-                _log.Error($"场景加载失败: {config.ScenePath}");
+                _log.Error($"场景加载失败: {typeof(T).Name} (请检查 ResourceRegistry.tscn 配置)");
                 return null;
             }
             entity = scene.Instantiate<T>();
-            _log.Debug($"从场景实例化 Entity: {typeof(T).Name} (场景: {config.ScenePath})");
+            _log.Debug($"从场景实例化 Entity: {typeof(T).Name}");
         }
 
         string entityType = typeof(T).Name;
         string id = entity.GetInstanceId().ToString();
 
-        // 2. 防止重复注册（对象池复用场景）
+        // 2. 数据注入（核心: 将配置字典写入 Data），需要放在Component注册之前，因为可能包含Component初始数据，不过初始数据一般是spawn后再修改
+        // 2. 数据注入（核心: 将配置字典写入 Data）
+        // ⚠️  重要时序说明:
+        //    - 此时注入的是"预设配置数据"(如敌人基础属性: HP, Speed, Damage 等)
+        //    - OnComponentRegistered 会在步骤 4 中执行,此时 Component 可以访问这些配置数据
+        //    - 实际的"运行时初始数据"(如SkillLevel, Target)通常是 Spawn 之后才设置
+        //    - Component 如需响应后续数据变化,应在 OnComponentRegistered 中监听 PropertyChanged 事件
+        //
+        // 典型场景示例:
+        //   var enemy = EntityManager.Spawn<Enemy>(config);  // ← config 包含 HP, Speed 等
+        //   enemy.Data.Set(DataKey.SkillLevel, 5);          // ← 这才是"初始数据"
+        entity.Data.LoadFromConfig(config.Config);
+
+        // 3. 自动加载 VisualScene (如有)
+        InjectVisualScene(entity, config.Config);
+
+        // 4. 防止重复注册（对象池复用场景）
         if (!_entities.ContainsKey(id))
         {
             Register(entity, entityType);
             RegisterComponents(entity);
         }
-
-        // 3. 数据注入（核心: 将配置字典写入 Data）
-        entity.Data.LoadFromConfig(config.Config);
-
-        // 4. 自动加载 VisualScene (如有)
-        InjectVisualScene(entity, config.Config);
 
         // 5. 设置位置和旋转（仅对 Node2D 生效）
         if (entity is Node2D entity2D)
@@ -215,8 +216,8 @@ public static class EntityManager
     private static void InjectVisualScene(Node entity, Dictionary<string, object> config)
     {
         // 检查 VisualScenePath 是否存在
-        var visualPath = config.TryGetValue("VisualScenePath", out var v) ? v as string : null;
-        var name = config.TryGetValue("Name", out var n) ? n as string : "Unknown";
+        var visualPath = config.GetValueOrDefault(DataKey.VisualScenePath) as string;
+        var name = config.GetValueOrDefault(DataKey.Name) as string ?? "Unknown";
 
         if (string.IsNullOrEmpty(visualPath))
         {
@@ -594,7 +595,7 @@ public static class EntityManager
 
     /// <summary>
     /// 从 Entity 获取指定类型的 Component
-    /// 常用场景：通过 ECSIndex.Component.HealthComponent 获取组件
+    /// 常用场景：获取 Entity 上的特定组件（如 HealthComponent）
     /// </summary>
     /// <typeparam name="T">Component 类型</typeparam>
     /// <param name="entity">目标 Entity</param>
@@ -626,7 +627,7 @@ public static class EntityManager
     /// <summary>
     /// 从 Entity 移除 Component（通过类型字符串）
     /// 自动处理：查找 Component → 触发回调 → 移除关系 → 注销 → 销毁节点
-    /// 常用场景：通过 ECSIndex.Component.HealthComponent 移除组件
+    /// 常用场景：通过组件类型名称移除组件（如 "HealthComponent"）
     /// </summary>
     /// <param name="entity">目标 Entity</param>
     /// <param name="componentType">Component 类型名称（如 "HealthComponent"）</param>
@@ -751,6 +752,13 @@ public static class EntityManager
     /// </summary>
     public static void Destroy(Node entity)
     {
+        if (!GodotObject.IsInstanceValid(entity))
+        {
+            // 如果节点已经无效（已被引擎释放），仅执行注销逻辑
+            UnregisterEntity(entity);
+            return;
+        }
+
         // 1. 注销（内部已清理 Component、关系、Data、Events）
         UnregisterEntity(entity);
 

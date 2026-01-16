@@ -104,7 +104,7 @@ public static class ObjectPoolManager
         {
             lock (_lock)
             {
-                _objectToPoolMap.TryGetValue(instance, out poolName);
+                poolName = _objectToPoolMap.GetValueOrDefault(instance);
             }
 
             if (poolName == null)

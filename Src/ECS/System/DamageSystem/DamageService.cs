@@ -36,7 +36,7 @@ public partial class DamageService : Node
     {
         if (Instance != null && Instance != this)
         {
-            _log.Warn("Duplicate DamageService instance detected. Destroying duplicate.");
+            _log.Warn("检测到重复的 DamageService 实例。正在销毁重复项。");
             QueueFree();
             return;
         }
@@ -73,7 +73,7 @@ public partial class DamageService : Node
         RegisterProcessor(new CritProcessor(), 300);
         // 4. 护盾抵扣
         RegisterProcessor(new ShieldProcessor(), 400);
-        // 5. 防御力/护甲减伤
+        // 5. 护甲减伤
         RegisterProcessor(new DefenseProcessor(), 500);
         // 6. 受伤倍率（受击者易伤等效果）
         RegisterProcessor(new DamageTakenAmplificationProcessor(), 600);
@@ -81,12 +81,12 @@ public partial class DamageService : Node
         RegisterProcessor(new FlatReductionProcessor(), 700);
         // 8. 吸血逻辑（基于减伤后的最终伤害恢复生命值）
         RegisterProcessor(new LifestealProcessor(), 800);
-        // 9. 生命百分比斩杀逻辑
+        // 9. 生命值结算逻辑
         RegisterProcessor(new HealthExecutionProcessor(), 900);
         // 10. 数据统计（记录总伤害、DPS等）
         RegisterProcessor(new StatisticsProcessor(), 1000);
 
-        _log.Debug("DamageServiceRegister 初始化完成");
+        _log.Debug("伤害服务注册完成");
     }
 
     /// <summary>
@@ -100,7 +100,7 @@ public partial class DamageService : Node
         _processors.Add(processor);
         // 按 Priority 从小到大排序，优先级值越小越先执行
         _processors.Sort((a, b) => a.Priority.CompareTo(b.Priority));
-        _log.Debug($"Registered processor: {processor.GetType().Name} (Priority: {processor.Priority})");
+        _log.Debug($"已注册处理器: {processor.GetType().Name} (优先级: {processor.Priority})");
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public partial class DamageService : Node
         // 基础合法性检查
         if (info == null || info.Victim == null)
         {
-            _log.Warn("伤害系统：Invalid damage info or victim.");
+            _log.Warn("伤害系统：无效的伤害信息或受击者。");
             return;
         }
 

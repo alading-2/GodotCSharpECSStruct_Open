@@ -33,7 +33,13 @@ public interface IComponent
 {
     /// <summary>
     /// Component 注册到 Entity 时的回调
-    /// 在此方法中缓存 Entity 引用和 Data 容器
+    /// 在此方法中缓存 Entity 引用和 Data 容器,并订阅事件
+    /// 
+    /// ⚠️  数据访问时序说明:
+    ///     - 此时可以访问"配置数据"(如敌人基础属性: HP, Speed, Damage)
+    ///     - "运行时初始数据"(如 SkillLevel, Target)通常在 Spawn 之后才设置
+    ///     - 如需响应后续数据设置,应在此方法中监听 PropertyChanged 事件
+    /// 
     /// 注意：此时 Entity-Component 关系已由 EntityManager 自动建立
     /// </summary>
     /// <param name="entity">所属的 Entity 节点</param>

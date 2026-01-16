@@ -33,5 +33,22 @@ public static partial class GameEventType
         public const string GameOver = "global:game_over";
         /// <summary>游戏结束事件数据</summary>
         public readonly record struct GameOverEventData(bool IsVictory);
+
+        // === 单位全局事件 ===
+        /// <summary>
+        /// 单位被击杀（全局广播）
+        /// </summary>
+        /// <remarks>
+        /// <para>发送者：HealthComponent（HP≤0）</para>
+        /// <para>监听者：DamageStatisticsSystem（击杀统计）、LifecycleComponent（通过 Victim 筛选）</para>
+        /// </remarks>
+        public const string UnitKilled = "global:unit_killed";
+        /// <summary>单位被击杀事件数据</summary>
+        public readonly record struct UnitKilledEventData(
+            IEntity? Victim,
+            IEntity? Killer,
+            DeathType DeathType = DeathType.Normal,
+            DamageType DamageType = DamageType.True
+        );
     }
 }

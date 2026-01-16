@@ -474,7 +474,7 @@ public static class EntityRelationshipManager
     /// <param name="entityId">起始实体 ID</param>
     /// <param name="maxDepth">最大查找深度（防止无限循环，默认 10）</param>
     /// <returns>找到的目标类型实体，未找到返回 null</returns>
-    public static T? FindAncestorOfType<T>(string entityId, int maxDepth = 10) where T : class
+    private static T? FindAncestorOfType<T>(string entityId, int maxDepth = 10) where T : class
     {
         // 1. 首先检查传入的实体本身是否符合目标类型
         var startEntity = EntityManager.GetEntityById(entityId);
@@ -545,6 +545,43 @@ public static class EntityRelationshipManager
 
         // 2. 沿 PARENT 关系向上查找
         return FindAncestorOfType<T>(entity.GetInstanceId().ToString(), maxDepth);
+    }
+
+    /// <summary>
+    /// 获取从 startNode 沿 PARENT 关系向上的所有实体链（包括自身，如果是 IEntity）
+    /// <para>常用场景：伤害统计时遍历攻击链（子弹→武器→角色），为每个 IStatisticsTarget 累加数据。</para>
+    /// </summary>
+    /// <param name="startNode">起始节点</param>
+    /// <param name="maxDepth">最大查找深度（防止无限循环，默认 10）</param>
+    /// <returns>从起始节点到最顶层的所有 IEntity</returns>
+    public static System.Collections.Generic.IEnumerable<IEntity> GetAncestorChain(Godot.Node startNode, int maxDepth = 10)
+    {
+        if (startNode == null) yield break;
+
+        // 1. 检查起始节点自身
+        if (startNode is IEntity startEntity)
+            yield return startEntity;
+
+        // 2. 沿 PARENT 关系向上遍历
+        string currentId = startNode.GetInstanceId().ToString();
+        int depth = 0;
+
+        while (depth < maxDepth)
+        {
+            var parentId = GetParentEntitiesByChildAndType(currentId, EntityRelationshipType.PARENT)
+                .FirstOrDefault();
+
+            if (string.IsNullOrEmpty(parentId)) break;
+
+            var parentEntity = EntityManager.GetEntityById(parentId);
+            if (parentEntity == null) break;
+
+            if (parentEntity is IEntity entity)
+                yield return entity;
+
+            currentId = parentId;
+            depth++;
+        }
     }
 
     // ==================== 工具方法 ====================

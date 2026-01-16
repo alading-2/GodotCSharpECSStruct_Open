@@ -68,9 +68,10 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     /// </summary>
     public void OnPoolAcquire()
     {
-        // 示例:订阅局部事件
-        Events.On<GameEventType.Unit.KillEventData>(
-            GameEventType.Unit.Kill, OnKilled);
+        // 示例:订阅全局 Kill 事件（通过 Victim 筛选是否是自己）
+        GlobalEventBus.Global.On<GameEventType.Global.UnitKilledEventData>(
+            GameEventType.Global.UnitKilled, OnKilled);
+        // 示例:订阅局部事件（仅在实体内部组件间通信）
         Events.On<GameEventType.Unit.DamagedEventData>(
             GameEventType.Unit.Damaged, OnDamaged);
     }
@@ -82,6 +83,9 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     /// </summary>
     public void OnPoolRelease()
     {
+        // 取消全局事件订阅
+        GlobalEventBus.Global.Off<GameEventType.Global.UnitKilledEventData>(
+            GameEventType.Global.UnitKilled, OnKilled);
         // 示例:重置物理状态
         Velocity = Vector2.Zero;
     }
@@ -99,8 +103,10 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
 
     #region ================= 事件处理 =================
 
-    private void OnKilled(GameEventType.Unit.KillEventData evt)
+    private void OnKilled(GameEventType.Global.UnitKilledEventData evt)
     {
+        // 全局事件筛选：只处理自己被击杀的事件
+        if (evt.Victim as Node != this) return;
         _log.Info($"{Name} 死亡, 类型: {evt.DeathType}");
         // 处理死亡逻辑...
     }
@@ -116,6 +122,20 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     #region ================= 业务逻辑 =================
 
     // 在此添加业务逻辑
+
+    /// <summary>
+    /// Spawn 后的初始化示例(由 System 或其他逻辑调用)
+    /// </summary>
+    /// <param name="skillLevel">运行时数据: 技能等级</param>
+    /// <param name="target">运行时数据: 目标</param>
+    public void InitAfterSpawn(int skillLevel, IEntity target)
+    {
+        // ✅ Spawn 之后设置的运行时数据
+        // 这些数据会触发 PropertyChanged 事件,Component 可以监听响应
+        // 这种"Spawn -> Configure"模式是标准做法
+        Data.Set("SkillLevel", skillLevel); // 建议使用 DataKey.SkillLevel
+        Data.Set("Target", target);         // 建议使用 DataKey.Target
+    }
 
     #endregion
 }

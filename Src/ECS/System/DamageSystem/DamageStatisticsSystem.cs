@@ -35,10 +35,10 @@ public partial class DamageStatisticsSystem : Node
 
         // 2. 订阅全局击杀事件
         // 伤害系统（HealthComponent）在目标死亡时会发送 Kill 事件，本系统负责持久化这些统计
-        GlobalEventBus.Global.On<GameEventType.Unit.KillEventData>(
-            GameEventType.Unit.Kill, OnUnitKilled);
+        GlobalEventBus.Global.On<GameEventType.Global.UnitKilledEventData>(
+            GameEventType.Global.UnitKilled, OnUnitKilled);
 
-        _log.Debug("DamageStatisticsSystem 初始化完成");
+        _log.Debug("伤害统计系统初始化完成");
     }
 
     public override void _ExitTree()
@@ -47,8 +47,8 @@ public partial class DamageStatisticsSystem : Node
         GlobalEventBus.Global.Off<GameEventType.Global.WaveStartedEventData>(
             GameEventType.Global.WaveStarted, OnWaveStarted);
 
-        GlobalEventBus.Global.Off<GameEventType.Unit.KillEventData>(
-            GameEventType.Unit.Kill, OnUnitKilled);
+        GlobalEventBus.Global.Off<GameEventType.Global.UnitKilledEventData>(
+            GameEventType.Global.UnitKilled, OnUnitKilled);
     }
 
     /// <summary>
@@ -57,14 +57,28 @@ public partial class DamageStatisticsSystem : Node
     /// <param name="data">包含当前波次索引等信息</param>
     private void OnWaveStarted(GameEventType.Global.WaveStartedEventData data)
     {
-        _log.Debug($"波次 {data.WaveIndex} 开始，执行玩家统计数据重置");
+        _log.Debug($"波次 {data.WaveIndex} 开始，执行统计数据重置");
 
-        // 核心机制：重置玩家实体的波次相关数据键 (DataKey)
+        // 核心机制：重置玩家实体及其装备的武器/物品的波次数据
         // 敌人实体通常在波次结束或死亡时销毁，因此无需显式重置波次数据
         var players = EntityManager.GetEntitiesByType<Player>("Player");
         foreach (var player in players)
         {
+            // 1. 重置玩家自身的波次统计
             ResetWaveStats(player.Data);
+
+            // 2. 重置玩家装备的所有武器/物品的波次统计
+            var itemIds = EntityRelationshipManager.GetChildEntitiesByParentAndType(
+                player.EntityId, EntityRelationshipType.UNIT_TO_ITEM);
+
+            foreach (var itemId in itemIds)
+            {
+                var item = EntityManager.GetEntityById(itemId);
+                if (item is IWeapon weapon)
+                {
+                    ResetWaveStats(weapon.Data);
+                }
+            }
         }
     }
 
@@ -82,27 +96,33 @@ public partial class DamageStatisticsSystem : Node
     }
 
     /// <summary>
-    /// 处理单位死亡事件，累加击杀数值
+    /// 处理单位死亡事件，遍历攻击链为 IUnit 和 IWeapon 累加击杀数
     /// </summary>
     /// <param name="data">击杀事件上下文，包含凶手、受害者、伤害类型等</param>
-    private void OnUnitKilled(GameEventType.Unit.KillEventData data)
+    private void OnUnitKilled(GameEventType.Global.UnitKilledEventData data)
     {
         if (data.Killer is not Godot.Node killerNode) return;
 
-        // 查找归属的 IUnit（自身或沿 PARENT 向上）
-        var killerUnit = EntityRelationshipManager.FindAncestorOfType<IUnit>(killerNode);
-        if (killerUnit == null)
+        // 遍历攻击链，为 IUnit 和 IWeapon 记录击杀
+        var ancestorChain = EntityRelationshipManager.GetAncestorChain(killerNode);
+        bool foundAnyTarget = false;
+
+        foreach (var entity in ancestorChain)
         {
-            _log.Error($"击杀统计失败：无法找到归属的 IUnit，Killer={data.Killer}");
-            return;
+            if (entity is IUnit or IWeapon)
+            {
+                foundAnyTarget = true;
+                entity.Data.Add(DataKey.TotalKills, 1);
+                entity.Data.Add(DataKey.WaveKills, 1);
+
+                _log.Debug($"[击杀统计] {entity} 记录击杀 {data.Victim}");
+            }
         }
 
-        // 更新累计总数
-        killerUnit.Data.Add(DataKey.TotalKills, 1);
-        // 更新当波累计数
-        killerUnit.Data.Add(DataKey.WaveKills, 1);
-
-        _log.Debug($"[杀敌统计] {killerUnit} 成功击杀了 {data.Victim}");
+        if (!foundAnyTarget)
+        {
+            _log.Warn($"击杀统计失败：攻击链上未找到 IUnit 或 IWeapon，Killer={data.Killer}");
+        }
     }
 
 }

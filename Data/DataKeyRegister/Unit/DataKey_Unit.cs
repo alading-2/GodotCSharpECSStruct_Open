@@ -42,8 +42,8 @@ public static partial class DataKey
     public const string HighestSingleDamage = "HighestSingleDamage"; // 单次最高伤害
     public const string TotalKills = "TotalKills"; // 累计击杀数
     public const string WaveKills = "WaveKills"; // 本波次击杀数
-    public const string TotalHits = "TotalHits"; // 总命中次数
-    public const string WaveHits = "WaveHits"; // 本波次命中次数
+    public const string TotalHits = "TotalHits"; // 总命中次数/造成伤害次数
+    public const string WaveHits = "WaveHits"; // 本波次命中次数/造成伤害次数
     public const string TotalCriticalHits = "TotalCriticalHits"; // 总暴击次数
     public const string WaveCriticalHits = "WaveCriticalHits"; // 本波次暴击次数
     // === RecoveryComponent ===

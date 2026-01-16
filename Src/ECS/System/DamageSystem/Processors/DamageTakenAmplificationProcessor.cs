@@ -15,12 +15,12 @@ public class DamageTakenAmplificationProcessor : IDamageProcessor
 
         // 默认为 1.0 (100%)
         // 如果 < 1.0 表示减伤，> 1.0 表示易伤
-        float multiplier = victimEntity.Data.Get<float>(DataKey.DamageTakenMultiplier);
+        float multiplier = victimEntity.Data.Get<float>(DataKey.DamageTakenMultiplier, 1.0f);
 
         if (multiplier != 1.0f)
         {
             info.FinalDamage *= multiplier;
-            info.AddLog($"TakenAmp({multiplier:F2}) -> {info.FinalDamage}");
+            info.AddLog($"受到伤害增幅({multiplier:F2}) -> {info.FinalDamage}");
         }
     }
 }

@@ -12,8 +12,6 @@ public class HealthExecutionProcessor : IDamageProcessor
 
     public void Process(DamageInfo info)
     {
-        // 冗余检查已移除
-
         var victim = info.Victim as Node;
         if (victim == null) return;
 
@@ -23,12 +21,12 @@ public class HealthExecutionProcessor : IDamageProcessor
         {
             if (info.IsSimulation)
             {
-                info.AddLog($"[Simulation] Would execute damage via HealthComponent: -{info.FinalDamage}");
+                info.AddLog($"[模拟] 将通过 HealthComponent 执行伤害: -{info.FinalDamage}");
             }
             else
             {
                 health.ApplyDamage(info);
-                info.AddLog($"Damage Executed via HealthComponent: -{info.FinalDamage}");
+                info.AddLog($"通过 HealthComponent 执行伤害: -{info.FinalDamage}");
             }
         }
         else
@@ -39,7 +37,7 @@ public class HealthExecutionProcessor : IDamageProcessor
             // 2. 无 HealthComponent：直接修改 Data，不触发任何事件，统计数据丢失
             // 3. 两种路径结果差异巨大，会导致难以排查的 bug
             _log.Error($"受击者 {info.Victim} 没有 HealthComponent，无法执行伤害！这是架构错误，所有可受击单位必须有 HealthComponent。");
-            info.AddLog("ERROR: Victim has no HealthComponent");
+            info.AddLog("错误：受击者没有 HealthComponent");
         }
     }
 }

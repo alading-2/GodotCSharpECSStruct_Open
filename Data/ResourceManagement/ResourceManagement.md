@@ -22,28 +22,38 @@
 3. 在右侧 **Inspector (检查器)** 面板中，找到 **Resources** 数组。
 4. 点击 **Add Element**（添加元素）。
 5. 在新增的 **ResourceEntry** 中填写：
-  - **Name**: 资源的简写名称（代码加载时使用，如 "EnemyEntity", "DamageComponent"）。
-  - **Category**: 选择资源分类（目前主要用于 Entity 和 Component）。
+  - **Name**: **必须与 C# 类名完全一致**（如 `Player`, `Enemy`, `HealthComponent`）。
+  - **Category**: 选择资源分类（Entity 或 Component）。
   - **Data**: 拖入对应的 `.tscn` 文件。
-    - *提示*：主要支持 `PackedScene` (预制体)。
 6. 保存场景 (`Ctrl + S`)。
+
+> [!IMPORTANT]
+> **命名规范**：Name 字段必须与 C# 类名完全一致，这样才能使用类型安全的 `LoadScene<T>()` 方法。
 
 ### 2. 代码调用
 
 使用 `ResourceRegistry` 类的静态 API 进行加载。
 
-#### 加载场景预制体
+#### 加载场景预制体（类型安全，推荐）
 
 ```csharp
-// 加载预制体 (PackedScene)
-var playerScene = ResourceRegistry.Load<PackedScene>("PlayerEntity");
-var playerNode = playerScene.Instantiate();
+// ✅ 推荐：类型安全，自动使用类名查找
+var playerScene = ResourceRegistry.LoadScene<Player>();
+var playerNode = playerScene.Instantiate<Player>();
+```
+
+#### 加载场景预制体（字符串名称）
+
+```csharp
+// 指定名称加载
+ var enemyScene = ResourceRegistry.Load<PackedScene>("Enemy");
+var enemyNode = enemyScene.Instantiate<Enemy>();
 ```
 
 #### 检查资源是否存在
 
 ```csharp
-if (ResourceRegistry.Has("PlayerEntity"))
+if (ResourceRegistry.Has(nameof(Player)))
 {
     // ...
 }
@@ -52,6 +62,12 @@ if (ResourceRegistry.Has("PlayerEntity"))
 ---
 
 ## 📚 API 参考
+
+### `ResourceRegistry.LoadScene<TEntity>()`
+
+- **描述**: 类型安全的场景加载，自动使用 `typeof(TEntity).Name` 作为资源名称。
+- **要求**: ResourceRegistry.tscn 中的 Name 必须与类名完全一致。
+- **返回**: `PackedScene?`，失败返回 `null`。
 
 ### `ResourceRegistry.Load<T>(string name)`
 

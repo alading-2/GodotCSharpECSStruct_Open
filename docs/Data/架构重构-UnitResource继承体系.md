@@ -202,7 +202,7 @@ GD.Print($"拾取范围: {player.PickupRange}");
 // EntityManager 会自动识别类型并注入所有属性
 var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 {
-    Resource = enemyData,
+    Config = enemyData,
     UsingObjectPool = true,
     PoolName = ObjectPoolNames.EnemyPool,
     Position = pos

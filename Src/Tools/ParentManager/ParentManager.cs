@@ -87,7 +87,7 @@ public static class ParentManager
             // 特殊逻辑：如果是挂载到全局 Root 的第一级节点，需要检查待创建缓存
             if (next == null && current == _root)
             {
-                _pendingRootNodes.TryGetValue(segment, out next);
+                next = _pendingRootNodes.GetValueOrDefault(segment);
             }
 
             // 如果节点不存在，则创建它

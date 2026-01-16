@@ -455,7 +455,7 @@ public class Data
             Set(kvp.Key, kvp.Value);
         }
 
-        var name = config.TryGetValue(DataKey.Name, out var n) ? n as string : "Unknown";
+        var name = config.GetValueOrDefault(DataKey.Name) as string ?? "Unknown";
         _log.Debug($"已加载配置: ({name})");
     }
 

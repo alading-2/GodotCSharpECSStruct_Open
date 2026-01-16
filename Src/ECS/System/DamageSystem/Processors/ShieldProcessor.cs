@@ -25,14 +25,14 @@ public class ShieldProcessor : IDamageProcessor
         //     {
         //         // 护盾足够抵消所有伤害
         //         shield -= damageToAbsorb;
-        //         info.AddLog($"Shield Absorb: {damageToAbsorb} (Remaining: {shield})");
+        //         info.AddLog($"护盾吸收: {damageToAbsorb} (剩余: {shield})");
         //         info.FinalDamage = 0;
         //     }
         //     else
         //     {
         //         // 护盾破裂，扣除护盾值，剩余伤害穿透
         //         info.FinalDamage -= shield;
-        //         info.AddLog($"Shield Broken! Absorbed: {shield}, Overflow: {info.FinalDamage}");
+        //         info.AddLog($"护盾破裂！吸收: {shield}，溢出: {info.FinalDamage}");
         //         shield = 0;
         //     }
 

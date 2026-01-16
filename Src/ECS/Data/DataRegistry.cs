@@ -25,7 +25,7 @@ public static class DataRegistry
     /// </summary>
     public static DataMeta? GetMeta(string key)
     {
-        return _metaRegistry.TryGetValue(key, out var meta) ? meta : null;
+        return _metaRegistry.GetValueOrDefault(key);
     }
 
     /// <summary>

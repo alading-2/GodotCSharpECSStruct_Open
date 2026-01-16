@@ -55,4 +55,16 @@ public static class GlobalEventBus
     {
         Global.Emit(GameEventType.Global.GameOver, new GameEventType.Global.GameOverEventData(isVictory));
     }
+
+    /// <summary>
+    /// 触发单位击杀事件（全局广播）
+    /// </summary>
+    /// <remarks>
+    /// 由 HealthComponent 在 HP≤0 时调用，供全局系统（统计、成就、任务）监听。
+    /// </remarks>
+    /// <param name="data">击杀事件数据，包含受害者、击杀者等信息</param>
+    public static void TriggerUnitKilled(GameEventType.Global.UnitKilledEventData data)
+    {
+        Global.Emit(GameEventType.Global.UnitKilled, data);
+    }
 }

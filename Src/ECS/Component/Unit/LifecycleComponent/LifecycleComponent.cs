@@ -96,19 +96,49 @@ public partial class LifecycleComponent : Node, IComponent
             _data = iEntity.Data;
         }
 
-        // ✅ 监听致死伤害事件（由于 HealthComponent 判定 HP<=0 后发送）
-        _entity?.Events.On<GameEventType.Unit.KillEventData>(
-            GameEventType.Unit.Kill, OnUnitKilled);
+        // ✅ 全局监听 Kill 事件（通过 Victim 筛选是否是自己）
+        GlobalEventBus.Global.On<GameEventType.Global.UnitKilledEventData>(
+            GameEventType.Global.UnitKilled, OnUnitKilled);
 
+        // ✅ 监听数据变化事件（处理 Spawn 后动态设置 MaxLifeTime 的场景）
+        _entity?.Events.On<GameEventType.Data.PropertyChangedEventData>(
+            GameEventType.Data.PropertyChanged, OnDataChanged);
 
         // 初始化状态为 Alive，确保单位生成后立即可用
         ChangeState(LifecycleState.Alive);
 
-        // 处理有时限的单位（如召唤物）：启动销毁倒计时
+        // ✅ 主动检查并启动计时器（处理配置预设 MaxLifeTime 的场景）
+        UpdateLifeTimer();
+    }
+
+    /// <summary>
+    /// 数据变化事件处理：响应 MaxLifeTime 变化
+    /// </summary>
+    private void OnDataChanged(GameEventType.Data.PropertyChangedEventData data)
+    {
+        if (data.Key == DataKey.MaxLifeTime)
+        {
+            UpdateLifeTimer();
+        }
+    }
+
+    /// <summary>
+    /// 更新生命周期计时器
+    /// 根据当前 MaxLifeTime 值决定是否启动/更新/取消计时器
+    /// 支持运行时动态修改 MaxLifeTime（如延长/缩短召唤物寿命的 Buff）
+    /// </summary>
+    private void UpdateLifeTimer()
+    {
+        // 取消旧计时器
+        _lifeTimer?.Cancel();
+        _lifeTimer = null;
+
+        // 根据当前 MaxLifeTime 决定是否启动新计时器
         if (MaxLifeTime > 0)
         {
             _lifeTimer = TimerManager.Instance?.Delay(MaxLifeTime)
                 .OnComplete(() => Kill(DeathType.Summon));
+            _log.Debug($"启动生命周期计时器: {MaxLifeTime}s");
         }
     }
 
@@ -118,6 +148,9 @@ public partial class LifecycleComponent : Node, IComponent
     /// </summary>
     public void OnComponentUnregistered()
     {
+        // 取消全局事件订阅
+        GlobalEventBus.Global.Off<GameEventType.Global.UnitKilledEventData>(
+            GameEventType.Global.UnitKilled, OnUnitKilled);
 
         // 停止所有活跃的计时器（生命周期或复活倒计时）
         _lifeTimer?.Cancel();
@@ -163,8 +196,11 @@ public partial class LifecycleComponent : Node, IComponent
     /// 当 HealthComponent 判定 HP<=0 后的回调。
     /// 执行死亡流程。
     /// </summary>
-    private void OnUnitKilled(GameEventType.Unit.KillEventData data)
+    private void OnUnitKilled(GameEventType.Global.UnitKilledEventData data)
     {
+        // 全局事件筛选：只处理自己被击杀的事件
+        if (data.Victim != _entity) return;
+
         if (StateIsAlive())
         {
             // 使用事件中的死亡类型，如果未指定则使用组件默认值
@@ -216,7 +252,7 @@ public partial class LifecycleComponent : Node, IComponent
         // 在 Data 容器中同步死亡标记，供无状态系统（如渲染器）查询
         _data?.Set(DataKey.IsDead, true);
 
-        // 强制将 HP 归零，但不触发 HealthChanged 事件（避免死循环）
+        // 将 HP 归零
         _data?.Set(DataKey.CurrentHp, 0f);
 
         _log.Info($"单位死亡, 类型: {deathType}");

@@ -164,6 +164,43 @@ Destroy 流程:
 
 
 
+167: ### 关键规则
+
+### 数据访问时序 (Data Access Timing)
+
+> [!IMPORTANT]
+> **Component 在 `OnComponentRegistered` 时只能访问配置数据**
+
+| 数据类型 | 来源 | 示例 | 在 OnComponentRegistered 中 | 正确处理方式 |
+|:---|:---|:---|:---:|:---|
+| **配置数据** | Spawn Config (.tres) | MaxHp, Speed | ✅ **可用** | 直接读取 `_data.Get()` |
+| **初始数据** | Spawn 后代码设置 | SkillLevel, Target | ❌ **不可用** | 监听 `PropertyChanged` 事件 |
+
+**错误写法**:
+```csharp
+public void OnComponentRegistered(Node entity)
+{
+    // ❌ 错误: 假设 TargetPlayer 在注册时已存在
+    // 实际上 TargetPlayer 通常在 Spawn 后才设置
+    var target = _data.Get<Node>("TargetPlayer"); 
+    if (target != null) StartAttack(target);
+}
+```
+
+**正确写法**:
+```csharp
+public void OnComponentRegistered(Node entity)
+{
+    // ✅ 正确: 监听数据变化
+    entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
+        GameEventType.Data.PropertyChanged, evt => 
+        {
+            if (evt.Key == "TargetPlayer") 
+                StartAttack(evt.NewValue as Node);
+        });
+}
+```
+
 ### 关键规则
 
 1. **仅使用 `_entity` 引用**

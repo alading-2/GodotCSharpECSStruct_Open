@@ -41,7 +41,7 @@ namespace BrotatoMy.Test
         private void SetupEnvironment()
         {
             // 从数据类直接获取敌人配置
-            EnemyData.Configs.TryGetValue("豺狼人", out _testEnemy);
+            _testEnemy = EnemyData.Configs.GetValueOrDefault("豺狼人") as Dictionary<string, object>;
             if (_testEnemy == null) _log.Error("Failed to load test enemy resource!");
 
             // 添加相机以便观察 Offscreen 策略

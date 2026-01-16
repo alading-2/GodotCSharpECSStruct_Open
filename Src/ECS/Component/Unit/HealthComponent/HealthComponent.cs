@@ -150,19 +150,19 @@ public partial class HealthComponent : Node, IComponent
 
         _log.Debug($"受到伤害: {amount}, HP: {oldHp} -> {newHp}");
 
-        // ✅ 致死判定 - 发送统一的 Kill 事件
+        // ✅ 致死判定 - 发送全局 Kill 事件
         if (newHp <= 0)
         {
             _log.Debug("HP 归零，发送致死伤害事件");
             // Killer 为 Attacker（直接攻击来源），统计归属通过关系链在 DamageStatisticsSystem 中处理
-            var killData = new GameEventType.Unit.KillEventData(
+            var killData = new GameEventType.Global.UnitKilledEventData(
                 Victim: _entity,
                 Killer: info.Attacker as IEntity,
                 DeathType: DeathType.Normal,
                 DamageType: info.Type
             );
-            _entity.Events.Emit(GameEventType.Unit.Kill, killData);
-            GlobalEventBus.Global.Emit(GameEventType.Unit.Kill, killData);
+            // 全局事件：监听者通过 Victim 字段筛选是否是自己关心的实体
+            GlobalEventBus.TriggerUnitKilled(killData);
         }
     }
 

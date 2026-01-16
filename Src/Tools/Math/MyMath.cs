@@ -19,6 +19,8 @@ public static class MyMath
     /// <summary>
     /// 护甲/魔抗减伤计算
     /// 返回的是受到伤害的倍率 (1.0 = 100% 伤害, 0.5 = 50% 伤害)
+    /// <param name="armor">护甲值</param>
+    /// <returns>伤害倍率: 1.5 = 150% 伤害, 0.5 = 50% 伤害</returns>
     /// </summary>
     public static float CalculateArmorDamageMultiplier(float armor)
     {

@@ -12,7 +12,11 @@ public class LifestealProcessor : IDamageProcessor
 
     public void Process(DamageInfo info)
     {
-        if (info.FinalDamage <= 0) return;
+        if (info.FinalDamage <= 0)
+        {
+            info.IsEnd = true;
+            return;
+        }
         if (info.Attacker == null) return;
 
         // 查找归属的 IUnit（自身或沿 PARENT 向上）
@@ -29,10 +33,12 @@ public class LifestealProcessor : IDamageProcessor
         // Brotato 逻辑：LifeSteal 是触发回血 1 点的概率
         if (lifestealChance > 0 && GD.Randf() * 100 < lifestealChance)
         {
+            // float LifeSteal = 1;
+            float LifeSteal = info.FinalDamage * (lifestealChance / 100);
             // 发送治疗请求事件到正确的 IUnit（角色）
             targetUnit.Events.Emit(GameEventType.Unit.HealRequest,
-                new GameEventType.Unit.HealRequestEventData(1, HealSource.Lifesteal));
-            info.AddLog("Lifesteal triggered (+1 HP to Unit)");
+                new GameEventType.Unit.HealRequestEventData(LifeSteal, HealSource.Lifesteal));
+            info.AddLog($"触发吸血 (恢复 {LifeSteal} 生命值)");
         }
     }
 }

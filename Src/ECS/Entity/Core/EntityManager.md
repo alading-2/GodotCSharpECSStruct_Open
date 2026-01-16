@@ -45,25 +45,25 @@ public partial class Enemy : CharacterBody2D, IEntity
 // 场景 1：SpawnSystem 批量生成敌人（使用对象池）
 var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 {
-    Resource = enemyData,
+    Config = enemyData,
     UsingObjectPool = true,
     PoolName = ObjectPoolNames.EnemyPool,
     Position = pos
 });
 
 // 场景 2：游戏初始化生成玩家（不使用对象池）
+// 类型安全：无需指定 SceneName，自动使用 typeof(Player).Name
 var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
 {
-    Resource = playerData,
-    UsingObjectPool = false,       // 全局唯一，直接场景实例化
-    ScenePath = ECSIndex.Entity.PlayerEntity,
+    Config = playerData,
+    UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceRegistry
     Position = startPos
 });
 
 // 场景 3：生成子弹（使用位置和方向）
 var bullet = EntityManager.Spawn<Bullet>(new EntitySpawnConfig
 {
-    Resource = bulletData,
+    Config = bulletData,
     UsingObjectPool = true,
     PoolName = ObjectPoolNames.BulletPool,
     Position = muzzlePos,
@@ -74,14 +74,58 @@ var bullet = EntityManager.Spawn<Bullet>(new EntitySpawnConfig
 **自动化操作**：
 
 - ✅ **模式自适应**：根据 `UsingObjectPool` 自动选择对象池获取或场景实例化
-- ✅ **数据注入**：将 Resource 数据自动注入到 `Data` 容器
-- ✅ **视觉加载**：自动加载 VisualScene（如果 Resource 中配置了）
+- ✅ **数据注入**：将 Config 数据自动注入到 `Data` 容器
+- ✅ **视觉加载**：自动加载 VisualScene（如果配置了 `VisualScenePath`）
 - ✅ **组件管理**：自动注册所有 Component 并建立 Entity-Component 关系
 - ✅ **生命周期注册**：将 Entity 注册到 EntityManager 进行统一管理
 
 ### 2. 创建 Component
 
 #### 2.1 实现 IComponent 接口（推荐）
+
+#### 数据初始化时序详解 (Critical Timing)
+
+> [!IMPORTANT]
+> **理解 Entity 数据初始化的两个阶段至关重要**
+
+**阶段 1: 配置注入 (Spawn 内部)**
+- **时间点**: `EntityManager.Spawn` 执行过程中
+- **数据源**: `EntitySpawnConfig.Config` (通常来自 .tres 或字典配置)
+- **可用性**: 在 `OnComponentRegistered` 中**可以访问**
+- **典型数据**:MaxHp, MoveSpeed, BaseDamage
+
+**阶段 2: 运行时初始化 (Spawn 之后)**
+- **时间点**: `EntityManager.Spawn` 返回之后
+- **数据源**: 代码动态设置 (如 `entity.Data.Set()`)
+- **可用性**: 在 `OnComponentRegistered` 中**不可访问**
+- **典型数据**:SkillLevel, TargetPlayer, Summoner
+
+**代码对照**:
+```csharp
+// 1. 配置注入阶段
+var enemy = EntityManager.Spawn<Enemy>(config); // 内部执行 Data.LoadFromConfig + OnComponentRegistered
+// ↑ component.OnComponentRegistered 在此执行,只能读到 config 数据
+
+// 2. 运行时初始化阶段
+enemy.Data.Set(DataKey.SkillLevel, 5);         // 动态设置数据
+// ↑ component 必须监听 PropertyChanged 才能响应此变化
+```
+
+**Component 最佳实践**:
+```csharp
+public void OnComponentRegistered(Node entity)
+{
+    // 1. 获取配置数据 (安全)
+    float speed = _data.Get<float>(DataKey.MoveSpeed);
+    
+    // 2. 监听运行时数据 (必须)
+    // 因为 SkillLevel 可能在 Spawn 之后才设置
+    _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
+        GameEventType.Data.PropertyChanged, OnDataChanged);
+}
+```
+
+#### 2.2 Component 访问 Entity 的方式
 
 ```csharp
 using Godot;
@@ -270,12 +314,11 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 
 **参数配置 (`EntitySpawnConfig`)**：
 
-- `Resource`：**必填**。静态配置资源（如 `UnitResource`, `ItemResource`）。
+- `Config`：**必填**。配置数据字典（`Dictionary<string, object>`）。
 - `UsingObjectPool`：是否使用对象池。
-  - `true`：从对象池获取（适用于 Enemy, Bullet, Effect）。内部通过 `typeof(T).Name` 匹配池名。
-  - `false`：直接从场景路径实例化（适用于 Player, UniqueBoss）。
+  - `true`：从对象池获取（适用于 Enemy, Bullet, Effect）。
+  - `false`：通过 ResourceRegistry 加载场景实例化（适用于 Player, UniqueBoss）。
 - `PoolName`：**必填** (当 `UsingObjectPool` 为 true 时)。对象池名称（如 `ObjectPoolNames.EnemyPool`）。
-- `ScenePath`：**必填** (当 `UsingObjectPool` 为 false 时)。ECSIndex 中定义的场景路径。
 - `Position`：(可选) 初始位置 `Vector2`。
 - `Rotation`：(可选) 初始旋转角度（弧度）。
 
@@ -285,18 +328,17 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 // 1. 对象池模式 (Enemy)
 var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 {
-    Resource = enemyData,
+    Config = enemyData,
     UsingObjectPool = true,
     PoolName = ObjectPoolNames.EnemyPool,
     Position = new Vector2(100, 100)
 });
 
-// 2. 场景实例化模式 (Player)
+// 2. 场景实例化模式 (Player) - 类型安全，无需指定 SceneName
 var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
 {
-    Resource = playerData,
-    UsingObjectPool = false,
-    ScenePath = ECSIndex.Entity.PlayerEntity,
+    Config = playerData,
+    UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceRegistry
     Position = Vector2.Zero
 });
 ```
@@ -314,7 +356,7 @@ T? GetComponent<T>(Node entity) where T : Node
 ```csharp
 var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 {
-    Resource = resource,
+    Config = enemyData,
     UsingObjectPool = true,
      PoolName = ObjectPoolNames.EnemyPool,
     Position = pos
@@ -528,7 +570,7 @@ public partial class SpawnSystem : Node
         // 使用参数对象，明确指定使用对象池
         var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
         {
-            Resource = _enemyResource,
+            Config = enemyData,
             UsingObjectPool = true,
              PoolName = ObjectPoolNames.EnemyPool,
             Position = position
@@ -638,167 +680,56 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 
     public void OnPoolReset() { }
 }
-```
-
-### 示例 3：实现完整的 HealthComponent
-
-```csharp
-using Godot;
-using System;
-
-/// <summary>
-/// 生命值组件 - 无状态设计，所有数据存储在 Entity.Data 中
-/// </summary>
-public partial class HealthComponent : Node, IComponent
-{
-    private static readonly Log _log = new("HealthComponent");
-
-    // ================= 标准字段 =================
-    private Data? _data;
-    private IEntity? _entity;
-
-    // 事件
-    public event Action<float>? Damaged;
-    public event Action? Died;
-
-    // ================= IComponent 接口 =================
-
-    public void OnComponentRegistered(Node entity)
-    {
-        if (entity is IEntity iEntity)
-        {
-            _data = iEntity.Data;
-            _entity = iEntity;
-        }
-    }
-
-    public void OnComponentUnregistered()
-    {
-        Damaged = null;
-        Died = null;
-        _data = null;
-        _entity = null;
-    }
-
-    // ================= Godot 生命周期 =================
-
-    public override void _Ready()
-    {
-        // ✅ 仅做日志输出
-        _log.Debug($"就绪, MaxHp: {_data?.Get<float>(DataKey.MaxHp, 100f)}");
-    }
-
-    public override void _ExitTree()
-    {
-        // 清理事件
-        Damaged = null;
-        Died = null;
-    }
-
-    // ================= 业务逻辑 =================
-
-    /// <summary>
-    /// 造成伤害
-    /// </summary>
-    public void TakeDamage(float amount)
-    {
-        if (_data == null) return;
-
-        float currentHp = _data.Get<float>(DataKey.CurrentHp);
-        currentHp -= amount;
-        _data.Set(DataKey.CurrentHp, currentHp);
-
-        Damaged?.Invoke(amount);
-
-        if (currentHp <= 0)
-        {
-            Died?.Invoke();
-        }
-    }
-
-    /// <summary>
-    /// 重置生命值（对象池复用时）
-    /// </summary>
-    public void Reset()
-    {
-        if (_data == null) return;
-
-        // 直接从 Data 获取 MaxHp
-        float maxHp = _data.Get<float>(DataKey.MaxHp, 100f);
-        _data.Set(DataKey.CurrentHp, maxHp);
-    }
+    public void OnPoolReset() { }
 }
 ```
 
----
+## 常见场景实战 (Scenarios)
 
-## 注意事项
-
-### 1. 统一使用 EntityManager.Destroy()
+### 场景 A: 生成敌人（基础属性 + 动态难度）
 
 ```csharp
-// ✅ 正确：统一使用 Destroy，自动判断对象池/QueueFree
-EntityManager.Destroy(this);
+// 1. Spawn: 注入基础属性 (MaxHp: 100, Speed: 50)
+var enemy = EntityManager.Spawn<Enemy>(enemyConfig); 
 
-// ❌ 错误：直接调用 QueueFree，会跳过注销流程
-// QueueFree();
+// 2. Init: 注入动态数据 (难度系数: 1.5, 掉落倍率: 2.0)
+enemy.Data.Set(DataKey.Difficulty, 1.5f);
+enemy.Data.Set(DataKey.DropRate, 2.0f);
+
+// 3. Component 响应
+// DifficultyComponent 监听 Difficulty 变化，动态调整最终属性
+// DropComponent 监听 DropRate 变化
 ```
 
-### 2. 不需要手动清理 Data/Events
+### 场景 B: 装备武器（基础数值 + 强化等级）
 
 ```csharp
-// ✅ 正确：EntityManager.Destroy/UnregisterEntity 自动清理
-public override void _ExitTree()
-{
-    base._ExitTree();
-}
+// 1. Spawn: 生成武器实体
+var weapon = EntityManager.Spawn<Weapon>(weaponConfig);
 
-// ❌ 错误：冗余的手动清理
-public override void _ExitTree()
-{
-    Events.Clear();  // 无需，已由 EntityManager 统一处理
-    Data.Clear();    // 无需，已由 EntityManager 统一处理
-    base._ExitTree();
-}
+// 2. Init: 设置强化等级和持有者
+weapon.Data.Set(DataKey.Level, 5);      // 强化等级 +5
+weapon.Data.Set(DataKey.Owner, player); // 归属玩家
+
+// 3. Component 响应
+// WeaponStatsComponent 监听 Level，重新计算攻击力
+// AttackComponent 监听 Owner，用于伤害统计归属
 ```
 
-### 3. Component 识别优先级
-
-1. **实现 IComponent 接口**（推荐）
-2. **类名以 "Component" 结尾**（命名约定）
-
-### 4. 事件绑定和解绑
+### 场景 C: 召唤物（配置 + 召唤者关联）
 
 ```csharp
-// ✅ 正确：防止重复绑定
-health.Died -= OnDied;
-health.Died += OnDied;
+// 1. Spawn: 生成召唤物 (炮台)
+var turret = EntityManager.Spawn<Turret>(turretConfig);
 
-// ✅ 正确：在 _ExitTree 解绑
-public override void _ExitTree()
-{
-    health.Died -= OnDied;
-}
+// 2. Init: 设置召唤者和持续时间
+turret.Data.Set(DataKey.Summoner, player);
+turret.Data.Set(DataKey.MaxLifeTime, 10f + player.SkillDurationBonus);
+
+// 3. Component 响应
+// LifecycleComponent 监听 MaxLifeTime，重置存活计时器
+// DamageComponent 读取 Summoner，将击杀数算给玩家
 ```
-
----
-
-## 性能优化
-
-### 缓存查询结果
-
-```csharp
-// ❌ 避免：每帧查询
-public override void _Process(double delta)
-{
-    var enemies = EntityManager.GetEntitiesByType<Enemy>("Enemy");
-    // ...
-}
-
-// ✅ 推荐：定期更新缓存
-private List<Enemy> _cachedEnemies = new();
-private float _updateInterval = 0.5f;
-private float _timer = 0f;
 
 public override void _Process(double delta)
 {

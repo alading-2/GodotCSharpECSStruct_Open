@@ -77,7 +77,25 @@ entity.GetNode<HealthComponent>("HealthComponent");
 - 配置 `UsingObjectPool = false`
 - 销毁时自动执行 `QueueFree`并注销
 
-### 4. 事件订阅
+### 4. Spawn 后的数据设置
+
+> [!TIP]
+> **推荐模式: Spawn -> Configure -> Use**
+
+由于 `OnComponentRegistered` 早于外部数据设置执行,请遵循以下模式初始化 Entity:
+
+```csharp
+// 1. Spawn (注入基础配置)
+var enemy = EntityManager.Spawn<Enemy>(config);
+
+// 2. Configure (设置运行时数据)
+// 这些操作会触发 PropertyChanged 事件,激活 Component 的逻辑
+enemy.Data.Set(DataKey.SkillLevel, 10);
+enemy.Data.Set(DataKey.Summoner, this);
+enemy.Data.Set(DataKey.TargetPosition, targetPos);
+```
+
+### 5. 事件订阅
 
 **Entity 使用局部事件总线 (`Entity.Events`)**:
 - `Entity.Events` 是每个 Entity 的局部事件总线,用于实体内部的组件间通信

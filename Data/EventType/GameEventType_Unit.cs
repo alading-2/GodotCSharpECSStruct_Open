@@ -36,25 +36,6 @@ public static partial class GameEventType
 
         // ================= LifecycleComponent 相关事件 =================
 
-        /// <summary>
-        /// 单位被击杀（统一的死亡事件）
-        /// 发送者：HealthComponent（HP<=0）或 LifecycleComponent（召唤物过期等）
-        /// 监听者：LifecycleComponent（执行死亡）、DamageStatisticsSystem（击杀统计）、Entity（死亡处理）
-        /// </summary>
-        public const string Kill = "unit:kill";
-        /// <summary>单位被击杀事件数据（完整的击杀信息）</summary>
-        /// <remarks>
-        /// <para>Killer 字段为直接攻击来源（可能是子弹、武器等）。</para>
-        /// <para>击杀统计归属通过 EntityRelationshipManager.FindAncestorOfType&lt;IUnit&gt;(Killer) 查找角色。</para>
-        /// </remarks>
-        public readonly record struct KillEventData(
-            IEntity? Victim,           // 受害者
-            IEntity? Killer,           // 击杀者（直接来源，如子弹。归属通过 PARENT 关系向上查找）
-            DeathType DeathType = DeathType.Normal,  // 死亡类型
-            DamageType DamageType = DamageType.True  // 致死伤害类型
-        );
-
-
         /// <summary>单位状态变化</summary>
         public const string StateChanged = "unit:state_changed";
         /// <summary>单位状态变化事件数据</summary>

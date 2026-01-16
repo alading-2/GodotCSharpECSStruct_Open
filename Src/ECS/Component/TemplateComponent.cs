@@ -50,7 +50,9 @@ public partial class TemplateComponent : Node, IComponent
 
             // ✅ 在此订阅事件
 
-            // 示例1:监听 Data 属性变化
+            // 示例1:监听 Data 属性变化(响应 Spawn 后设置的初始数据)
+            // ⚠️ 关键: 许多数据(如 SkillLevel, Target)是在 Spawn 之后才设置的
+            // 所以必须监听 PropertyChanged 事件,而不是假设它们已经存在
             _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
                 GameEventType.Data.PropertyChanged, OnDataChanged);
 

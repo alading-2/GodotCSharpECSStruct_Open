@@ -189,7 +189,7 @@ public override void _Ready()
 ```C#
 EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 {
-    Resource = resource,
+    Config = enemyData,
     UsingObjectPool = true,
     PoolName = ObjectPoolNames.EnemyPool,
     Position = position
@@ -253,10 +253,8 @@ public void OnComponentRegistered(Node entity)
 {
     _entity = entity;
 
-    // 推荐：通过 Entity 引用
-    _healthComp = _entity.GetComponent<HealthComponent>(
-        ECSIndex.Component.HealthComponent
-    );
+    // 推荐：通过 EntityManager 获取组件
+    var healthComp = EntityManager.GetComponent<HealthComponent>(_entity);
 }
 ```
 

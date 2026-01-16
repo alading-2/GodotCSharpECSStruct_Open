@@ -16,13 +16,13 @@
 
 [sub_resource type="Resource" id="Resource_6"]
 script = ExtResource("2_entry")
-Name = "PlayerEntity"
+Name = "Player"
 Category = 4
 Data = ExtResource("8_ent_player")
 
 [sub_resource type="Resource" id="Resource_7"]
 script = ExtResource("2_entry")
-Name = "EnemyEntity"
+Name = "Enemy"
 Category = 4
 Data = ExtResource("9_ent_enemy")
 

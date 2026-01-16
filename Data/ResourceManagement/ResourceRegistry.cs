@@ -126,10 +126,9 @@ public partial class ResourceRegistry : Node
     /// var scene = ResourceRegistry.Load&lt;PackedScene&gt;("Player");
     /// </code>
     /// </summary>
-    /// <typeparam name="T">期望的资源类型 (如 EnemyResource, PackedScene)</typeparam>
-    /// <param name="name">在编辑器中配置的简写名称</param>
+    /// <param name="name">资源名称</param>
     /// <returns>找到并匹配类型的资源对象，失败返回 null</returns>
-    public static T? Load<T>(string name) where T : Resource
+    private static T? Load<T>(string name) where T : Resource
     {
         if (Instance == null)
         {
@@ -150,6 +149,27 @@ public partial class ResourceRegistry : Node
 
         _log.Error($"资源 '{name}' 类型不匹配。配置类型: {resource.GetType().Name}, 期望类型: {typeof(T).Name}");
         return null;
+    }
+
+    /// <summary>
+    /// 类型安全的场景加载 - 自动使用类型名作为资源名称。
+    /// 要求: ResourceRegistry.tscn 中的 Name 必须与类型名完全一致。
+    /// 
+    /// 示例:
+    /// <code>
+    /// // 加载 Player 场景 (自动查找名为 "Player" 的资源)
+    /// var scene = ResourceRegistry.LoadScene&lt;Player&gt;();
+    /// var player = scene.Instantiate&lt;Player&gt;();
+    /// 
+    /// // 等价于:
+    /// var scene = ResourceRegistry.Load&lt;PackedScene&gt;(nameof(Player));
+    /// </code>
+    /// </summary>
+    /// <typeparam name="TEntity">Entity 类型 (如 Player, Enemy)</typeparam>
+    /// <returns>找到的 PackedScene，失败返回 null</returns>
+    public static PackedScene? LoadScene<TEntity>() where TEntity : Node
+    {
+        return Load<PackedScene>(typeof(TEntity).Name);
     }
 
     /// <summary>

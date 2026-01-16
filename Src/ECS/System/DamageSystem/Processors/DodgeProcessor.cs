@@ -11,7 +11,6 @@ public class DodgeProcessor : IDamageProcessor
 
     public void Process(DamageInfo info)
     {
-        // 检查 Victim 有效性（主循环已处理 IsEnd）
         if (info.Victim == null) return;
 
         // 真实伤害不可闪避

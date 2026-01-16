@@ -181,21 +181,35 @@ Data.ClearModifiers(DataKey.Damage);
 
 ### 事件监听
 
+**注意：Data.On 方法已移除，统一使用 Entity.Events 事件总线。**
+
 ```csharp
-// 全局监听所有数据变更
-Data.OnValueChanged += (key, oldValue, newValue) => {
-    GD.Print($"数据变更: {key} = {oldValue} -> {newValue}");
-};
+// 1. 获取 Entity (Data 的拥有者)
+var entity = EntityManager.GetEntityByComponent(this);
 
-// 监听特定数据变更
-Data.On(DataKey.MaxHp, (oldValue, newValue) => {
-    GD.Print($"生命值变更: {oldValue} -> {newValue}");
-});
+// 2. 监听数据变更事件
+entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
+    GameEventType.Data.PropertyChanged, 
+    OnDataChanged
+);
 
-// 取消监听
-Action<object?, object?> callback = (old, @new) => { /* ... */ };
-Data.On(DataKey.MaxHp, callback);
-Data.Off(DataKey.MaxHp, callback);
+// 3. 处理事件
+private void OnDataChanged(GameEventType.Data.PropertyChangedEventData evt)
+{
+    // 过滤感兴趣的数据键
+    if (evt.Key == DataKey.MaxHp)
+    {
+        GD.Print($"生命值变更: {evt.OldValue} -> {evt.NewValue}");
+    }
+}
+
+// 4. 取消监听
+// Entity.Events 会在 Destroy 时自动清理，通常无需手动 Off
+// 如果需要中途取消：
+entity.Events.Off<GameEventType.Data.PropertyChangedEventData>(
+    GameEventType.Data.PropertyChanged, 
+    OnDataChanged
+);
 ```
 
 ### 元数据查询
@@ -595,10 +609,19 @@ public override void _Ready()
 {
     _cachedDamage = Data.Get<float>(DataKey.Damage);
 
-    // 监听变更，更新缓存
-    Data.On(DataKey.Damage, (old, @new) => {
-        _cachedDamage = (@new as float?) ?? 0f;
-    });
+    // 注意：实际开发中应在 OnComponentRegistered 中订阅 Entity.Events
+    // 这里仅演示逻辑
+    var entity = this.GetData().Owner; // 假设有扩展方法获取 Owner
+    if (entity != null)
+    {
+        entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
+            GameEventType.Data.PropertyChanged, 
+            evt => {
+                if (evt.Key == DataKey.Damage)
+                    _cachedDamage = (float)evt.NewValue;
+            }
+        );
+    }
 }
 
 public override void _Process(double delta)
