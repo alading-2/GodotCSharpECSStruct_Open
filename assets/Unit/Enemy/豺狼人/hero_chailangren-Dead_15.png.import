@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bp7m8cctqu55r"
-path="res://.godot/imported/hero_chailangren-Dead_15.png-1d1500dbc5950e0cc17fd9adab79ac66.ctex"
+path="res://.godot/imported/hero_chailangren-Dead_15.png-7e0ba99f4a95bb0e203569b86827e504.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/豺狼人/hero_chailangren-Dead_15.png"
-dest_files=["res://.godot/imported/hero_chailangren-Dead_15.png-1d1500dbc5950e0cc17fd9adab79ac66.ctex"]
+source_file="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_15.png"
+dest_files=["res://.godot/imported/hero_chailangren-Dead_15.png-7e0ba99f4a95bb0e203569b86827e504.ctex"]
 
 [params]
 

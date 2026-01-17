@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c5rf48fyql7wr"
-path="res://.godot/imported/hero_jianshi-Attack2_04.png-cb107ad2913f62a2e8c22019388acf40.ctex"
+path="res://.godot/imported/hero_jianshi-Attack2_04.png-678aa5ff42c427c383b36c03d9984057.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/鱼人/hero_jianshi-Attack2_04.png"
-dest_files=["res://.godot/imported/hero_jianshi-Attack2_04.png-cb107ad2913f62a2e8c22019388acf40.ctex"]
+source_file="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_04.png"
+dest_files=["res://.godot/imported/hero_jianshi-Attack2_04.png-678aa5ff42c427c383b36c03d9984057.ctex"]
 
 [params]
 

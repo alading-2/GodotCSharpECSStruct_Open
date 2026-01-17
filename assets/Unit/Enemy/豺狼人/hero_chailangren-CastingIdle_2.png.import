@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ddx40do2k7tst"
-path="res://.godot/imported/hero_chailangren-CastingIdle_2.png-5ea87384bbf3b2513434eb3f4473a234.ctex"
+path="res://.godot/imported/hero_chailangren-CastingIdle_2.png-4b855e400e6e8c1db529a541e8974f48.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/豺狼人/hero_chailangren-CastingIdle_2.png"
-dest_files=["res://.godot/imported/hero_chailangren-CastingIdle_2.png-5ea87384bbf3b2513434eb3f4473a234.ctex"]
+source_file="res://assets/Unit/Enemy/豺狼人/hero_chailangren-CastingIdle_2.png"
+dest_files=["res://.godot/imported/hero_chailangren-CastingIdle_2.png-4b855e400e6e8c1db529a541e8974f48.ctex"]
 
 [params]
 

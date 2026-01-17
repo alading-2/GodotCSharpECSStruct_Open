@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxf3q6y1wk8nn"]
+
+[ext_resource type="Script" uid="uid://c3ll7j85u21n4" path="res://Src/Test/SingleTest/ECS/Data/DataTestScene.cs" id="1_data_test"]
+
+
+[node name="DataTestScene" type="Node"]
+script = ExtResource("1_data_test")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(576, 324)

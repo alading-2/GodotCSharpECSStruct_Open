@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c00av3wykp6t1"
-path="res://.godot/imported/hero_chailangren-BeAttacked_1.png-046e94b46d1a5b2fc56f2bd1b083a825.ctex"
+path="res://.godot/imported/hero_chailangren-BeAttacked_1.png-a7210e0f4eb011c1bedbe9bbc05e4e29.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/豺狼人/hero_chailangren-BeAttacked_1.png"
-dest_files=["res://.godot/imported/hero_chailangren-BeAttacked_1.png-046e94b46d1a5b2fc56f2bd1b083a825.ctex"]
+source_file="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_1.png"
+dest_files=["res://.godot/imported/hero_chailangren-BeAttacked_1.png-a7210e0f4eb011c1bedbe9bbc05e4e29.ctex"]
 
 [params]
 

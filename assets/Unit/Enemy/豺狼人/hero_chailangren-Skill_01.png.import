@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dmscf3j02b3el"
-path="res://.godot/imported/hero_chailangren-Skill_01.png-e6ba924e83eecf75d889e01ecd2af4e8.ctex"
+path="res://.godot/imported/hero_chailangren-Skill_01.png-62ba93ce0551524314d489eb2415ef2f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/豺狼人/hero_chailangren-Skill_01.png"
-dest_files=["res://.godot/imported/hero_chailangren-Skill_01.png-e6ba924e83eecf75d889e01ecd2af4e8.ctex"]
+source_file="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_01.png"
+dest_files=["res://.godot/imported/hero_chailangren-Skill_01.png-62ba93ce0551524314d489eb2415ef2f.ctex"]
 
 [params]
 

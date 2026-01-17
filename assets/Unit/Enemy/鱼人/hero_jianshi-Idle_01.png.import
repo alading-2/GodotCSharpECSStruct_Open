@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bm1hcng0j2s6y"
-path="res://.godot/imported/hero_jianshi-Idle_01.png-2898b8ab77ab969dbe6562929647785e.ctex"
+path="res://.godot/imported/hero_jianshi-Idle_01.png-365073f22aab622fd8a34104ff9e4a39.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/鱼人/hero_jianshi-Idle_01.png"
-dest_files=["res://.godot/imported/hero_jianshi-Idle_01.png-2898b8ab77ab969dbe6562929647785e.ctex"]
+source_file="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_01.png"
+dest_files=["res://.godot/imported/hero_jianshi-Idle_01.png-365073f22aab622fd8a34104ff9e4a39.ctex"]
 
 [params]
 

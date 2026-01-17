@@ -23,7 +23,7 @@ public static class EnemyData
                     SingleSpawnCount = 3,
                     SingleSpawnVariance = 1,
                     StartDelay = 0f,
-                    Strategy = SpawnPositionStrategy.Perimeter
+                    Strategy = SpawnPositionStrategy.Circle
                 }
             }
         },

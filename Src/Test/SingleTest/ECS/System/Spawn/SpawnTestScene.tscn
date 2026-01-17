@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8x7y302w1v0"]
+
+[ext_resource type="Script" path="res://Src/Test/SingleTest/ECS/System/Spawn/SpawnTestScene.cs" id="1_script"]
+
+[node name="SpawnTestScene" type="Node2D"]
+script = ExtResource("1_script")

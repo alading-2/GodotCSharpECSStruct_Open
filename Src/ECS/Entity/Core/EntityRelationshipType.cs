@@ -44,6 +44,7 @@ public static class EntityRelationshipType
 
     // ==================== 技能相关关系 ====================
 
+    public const string ENTITY_TO_ABILITY = "relationship.entity.ability";
     /// <summary>技能与子弹关系</summary>
     public const string ABILITY_TO_BULLET = "relationship.ability.bullet";
 

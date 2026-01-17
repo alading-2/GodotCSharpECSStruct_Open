@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ue1k43cnvqtv"
-path="res://.godot/imported/hero_jianshi-Deaded_01.png-a29132034f8e96bc22d3cb39a1d9c148.ctex"
+path="res://.godot/imported/hero_jianshi-Deaded_01.png-85df0df6e13ef3ecc6262c1c8d30b385.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/鱼人/hero_jianshi-Deaded_01.png"
-dest_files=["res://.godot/imported/hero_jianshi-Deaded_01.png-a29132034f8e96bc22d3cb39a1d9c148.ctex"]
+source_file="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_01.png"
+dest_files=["res://.godot/imported/hero_jianshi-Deaded_01.png-85df0df6e13ef3ecc6262c1c8d30b385.ctex"]
 
 [params]
 

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://damage_system_test_scene"]
+
+[ext_resource type="Script" path="res://Src/Test/SingleTest/ECS/System/DamageSystemTest/DamageSystemTest.cs" id="1_damage_test"]
+
+[node name="DamageSystemTest" type="Node"]
+script = ExtResource("1_damage_test")

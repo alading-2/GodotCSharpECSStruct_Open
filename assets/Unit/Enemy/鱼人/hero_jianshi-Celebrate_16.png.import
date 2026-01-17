@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dhqefewmlgy24"
-path="res://.godot/imported/hero_jianshi-Celebrate_16.png-d393191d5630d172db1a9339527d0e0a.ctex"
+path="res://.godot/imported/hero_jianshi-Celebrate_16.png-631f7e891025eb0a07e822b45e504096.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Unit/ememy/鱼人/hero_jianshi-Celebrate_16.png"
-dest_files=["res://.godot/imported/hero_jianshi-Celebrate_16.png-d393191d5630d172db1a9339527d0e0a.ctex"]
+source_file="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_16.png"
+dest_files=["res://.godot/imported/hero_jianshi-Celebrate_16.png-631f7e891025eb0a07e822b45e504096.ctex"]
 
 [params]
 

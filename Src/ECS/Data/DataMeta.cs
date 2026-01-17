@@ -58,7 +58,7 @@ public class DataMeta
     public bool IsPercentage { get; init; } = false;
 
     /// <summary>
-    /// 是否支持修改器（可选，数值类型默认 true，其他默认 false）
+    /// 是否支持修改器（可选，数值类型设置 true，其他默认 false）
     /// </summary>
     public bool? SupportModifiers { get; init; }
 
