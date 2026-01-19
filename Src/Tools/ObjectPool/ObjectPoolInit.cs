@@ -15,6 +15,9 @@ public struct ObjectPoolNames
 
     /// <summary> 定时器对象池 </summary>
     public const string TimerPool = "TimerPool";
+
+    /// <summary> 技能实体对象池 </summary>
+    public const string AbilityPool = "AbilityPool";
 }
 
 /// <summary>
@@ -70,15 +73,27 @@ public partial class ObjectPoolInit : Node
 
         // 2. 初始化 EnemyPool (Node 对象池)
         // 注意：必须使用 ObjectPool<Enemy> 而不是 ObjectPool<Node>，否则 SpawnSystem 无法通过 GetPool<Enemy> 获取
-        var scene = GD.Load<PackedScene>("res://Src/ECS/Entity/Unit/Enemy/Enemy.tscn");
-        new ObjectPool<Enemy>(
-            () => (Enemy)scene.Instantiate(),
+        new ObjectPool<EnemyEntity>(
+            () => (EnemyEntity)ResourceRegistry.LoadScene<EnemyEntity>().Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.EnemyPool,
                 InitialSize = 100,
                 MaxSize = 500,
                 ParentPath = "ECS/Entity/Enemy"
+            }
+        );
+
+        // 3. 初始化 AbilityPool (技能实体对象池)
+        // 支持敌人技能等高频生成场景
+        new ObjectPool<AbilityEntity>(
+            () => (AbilityEntity)ResourceRegistry.LoadScene<AbilityEntity>().Instantiate(),
+            new ObjectPoolConfig
+            {
+                Name = ObjectPoolNames.AbilityPool,
+                InitialSize = 50,
+                MaxSize = 300,
+                ParentPath = "ECS/Entity/Ability"
             }
         );
 

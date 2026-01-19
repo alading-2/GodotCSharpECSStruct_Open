@@ -630,56 +630,24 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 
     // ================= 业务逻辑 =================
 
-    /// <summary>
-    /// EntityManager.Spawn() 后的自定义初始化
-    /// </summary>
-    public void OnSpawn(EnemyResource resource)
-    {
-        // 绑定事件
-        var health = EntityManager.GetComponent<HealthComponent>(this);
-        if (health != null)
-        {
-            health.Died -= OnDied;  // 防止重复绑定
-            health.Died += OnDied;
-        }
-    }
-
-    private void OnDied()
-    {
-        _log.Info($"{Name} 死亡，归还对象池");
-
-        // 触发全局事件
-        EventBus.TriggerEnemyDied(this, GlobalPosition);
-
-        // 归还对象池
-        ObjectPoolManager.ReturnToPool(this);
-    }
+    // ❌ 严禁在此处编写业务逻辑！
+    // ❌ 死亡逻辑请放入 LifecycleComponent
+    // ❌ 移动逻辑请放入 VelocityComponent
 
     // ================= IPoolable 接口实现 =================
 
     public void OnPoolAcquire()
     {
-        // 从池中取出时重新激活
-        var health = EntityManager.GetComponent<HealthComponent>(this);
-        if (health != null)
-        {
-            health.Died -= OnDied;
-            health.Died += OnDied;
-        }
+        // 仅做必要的重置或基础事件订阅（如调试日志）
     }
 
     public void OnPoolRelease()
     {
         // 归还池时重置状态
-        // 重置所有 Component
-        EntityManager.GetComponent<HealthComponent>(this)?.Reset();
-
         Velocity = Vector2.Zero;
-        Data.Clear();
+        // Data 和 Events 由 EntityManager 自动清理
     }
 
-    public void OnPoolReset() { }
-}
     public void OnPoolReset() { }
 }
 ```

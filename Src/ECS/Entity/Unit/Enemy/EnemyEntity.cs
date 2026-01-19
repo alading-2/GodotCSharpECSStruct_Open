@@ -7,7 +7,7 @@ using Godot;
 /// 架构：与 Player 逻辑分离，通过组件（Component）复用共享行为。
 /// </para>
 /// </summary>
-public partial class Enemy : CharacterBody2D, IPoolable, IUnit
+public partial class EnemyEntity : CharacterBody2D, IPoolable, IUnit
 {
     private static readonly Log _log = new("Enemy", LogLevel.Info);
 
@@ -18,7 +18,7 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     /// </summary>
     public Data Data { get; private set; }
 
-    public Enemy()
+    public EnemyEntity()
     {
         Data = new Data(this);
     }
@@ -28,11 +28,6 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     /// </summary>
     public EventBus Events { get; } = new EventBus();
 
-    /// <summary>
-    /// Entity唯一标识符
-    /// </summary>
-    public string EntityId { get; private set; } = string.Empty;
-
     // 1: Enemy
     public int FactionId => 1;
 
@@ -41,8 +36,6 @@ public partial class Enemy : CharacterBody2D, IPoolable, IUnit
     public override void _Ready()
     {
         base._Ready();
-        EntityId = GetInstanceId().ToString();
-
         _log.Debug($"敌人 {Name} 初始化完成。");
     }
 

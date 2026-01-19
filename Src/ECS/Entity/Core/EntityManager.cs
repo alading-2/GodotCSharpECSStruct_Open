@@ -82,7 +82,7 @@ public readonly record struct EntitySpawnConfig
 /// var entity = EntityManager.GetEntityByComponent(component);
 /// </code>
 /// </summary>
-public static class EntityManager
+public static partial class EntityManager
 {
     private static readonly Log _log = new("EntityManager", LogLevel.Warning);
 
@@ -163,7 +163,7 @@ public static class EntityManager
 
         string entityType = typeof(T).Name;
         string id = entity.GetInstanceId().ToString();
-
+        entity.Data.Set(DataKey.Id, id);
         // 2. 数据注入（核心: 将配置字典写入 Data），需要放在Component注册之前，因为可能包含Component初始数据，不过初始数据一般是spawn后再修改
         // 2. 数据注入（核心: 将配置字典写入 Data）
         // ⚠️  重要时序说明:
@@ -469,6 +469,8 @@ public static class EntityManager
 
     /// <summary>
     /// 根据 ID 获取 Entity/Component
+    /// <param name="id">Entity/Component 的 节点ID</param>
+    /// <returns>Entity/Component 的节点</returns>
     /// </summary>
     public static Node? GetEntityById(string id)
     {

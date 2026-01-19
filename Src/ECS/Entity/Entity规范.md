@@ -32,13 +32,19 @@ public interface IEntity
 
 ## Entity 设计原则
 
-### 1. Entity 是纯容器
+### 1. Entity 是纯容器 (Pure Container)
 
 > [!IMPORTANT]
-> **Entity 不应包含业务逻辑**，只负责：
-> - 持有 `Data` 容器
-> - 持有 `Events` 总线
-> - 提供唯一标识符 `EntityId`
+> **Entity 严禁包含业务逻辑**，它仅仅是一个"挂载点"：
+> - **挂载数据**：持有 `Data` 容器
+> - **挂载事件**：持有 `Events` 总线
+> - **挂载组件**：作为 Component 的父节点
+> - **提供标识**：提供 `EntityId` 和 `FactionId`
+
+**核心准则**：
+- 如果你在 Entity 类中写了 `_Process` 或 `_PhysicsProcess`，**你错了**。请移至 Component。
+- 如果你在 Entity 类中写了 `TakeDamage()` 方法，**你错了**。请移至 HealthComponent 或 DamageSystem。
+- Entity 类文件行数通常不超过 **50 行**。
 
 **业务逻辑归属**：
 - ❌ 死亡逻辑 → ✅ 放在 `LifecycleComponent`

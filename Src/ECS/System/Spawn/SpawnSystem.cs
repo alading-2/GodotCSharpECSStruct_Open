@@ -259,7 +259,7 @@ public partial class SpawnSystem : Node
         foreach (var pos in positions)
         {
             // 使用新的 EntitySpawnConfig 参数对象方式
-            var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
+            var enemy = EntityManager.Spawn<EnemyEntity>(new EntitySpawnConfig
             {
                 Config = enemyConfig,
                 UsingObjectPool = true,
@@ -304,7 +304,7 @@ public partial class SpawnSystem : Node
     public void KillAllEnemies()
     {
         // 关键修复：必须使用注册时的常量池名 "EnemyPool" 而非类型名 "Enemy"
-        var pool = ObjectPoolManager.GetPool<Enemy>(ObjectPoolNames.EnemyPool);
+        var pool = ObjectPoolManager.GetPool<EnemyEntity>(ObjectPoolNames.EnemyPool);
         pool?.ReleaseAll();
         _log.Debug("已清理所有活跃敌人。");
     }

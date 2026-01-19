@@ -17,6 +17,18 @@ public static class MyMath
     }
 
     /// <summary>
+    /// 计算最终冷却时间（应用缩减）
+    /// FinalTime = BaseTime * (1 - reduction / 100)
+    /// </summary>
+    /// <param name="baseTime">基础时间</param>
+    /// <param name="reduction">缩减百分比 (0-100)</param>
+    /// <returns>计算后的最终时间</returns>
+    public static float CalculateFinalCooldownTime(float baseTime, float reduction)
+    {
+        return baseTime * (1f - reduction / 100f);
+    }
+
+    /// <summary>
     /// 护甲/魔抗减伤计算
     /// 返回的是受到伤害的倍率 (1.0 = 100% 伤害, 0.5 = 50% 伤害)
     /// <param name="armor">护甲值</param>

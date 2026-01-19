@@ -218,7 +218,7 @@ public partial class ECSTest : Node
 
         EntityManager.Register(entity, "TestEntity");
 
-        Assert(entity.EntityId != "", "Entity ID assigned");
+        Assert(!string.IsNullOrEmpty(entity.Data.Get<string>(DataKey.Id)), "Entity ID assigned");
 
         // 2. Add Component
         var comp = new TestComponent();

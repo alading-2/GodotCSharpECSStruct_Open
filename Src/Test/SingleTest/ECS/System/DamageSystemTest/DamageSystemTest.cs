@@ -389,8 +389,7 @@ namespace BrotatoMy.Test.DamageSystemTest
         {
             public Data Data { get; } = new Data();
             public EventBus Events { get; } = new EventBus();
-            // IEntity expects string EntityId
-            public string EntityId { get; } = System.Guid.NewGuid().ToString();
+            // EntityId 由 IEntity 默认实现（从 DataKey.Id 读取）
             // IUnit expects FactionId
             public int FactionId { get; set; } = 0;
 

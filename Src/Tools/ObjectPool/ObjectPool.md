@@ -69,10 +69,15 @@ pool.Release(data);  // 必须持有池引用
 public override void _Ready()
 {
     // 使用 PoolNames 常量避免字符串硬编码
-    var scene = GD.Load<PackedScene>("res://Src/ECS/Entity/Unit/Enemy/Enemy.tscn");
-    new ObjectPool<Node>(
-        () => scene.Instantiate(),
-        new ObjectPoolConfig { Name = PoolNames.EnemyPool, InitialSize = 100, MaxSize = 500 }
+    new ObjectPool<EnemyEntity>(
+        () => (EnemyEntity)ResourceRegistry.LoadScene<EnemyEntity>().Instantiate(),
+        new ObjectPoolConfig
+        {
+            Name = ObjectPoolNames.EnemyPool,
+            InitialSize = 100,
+            MaxSize = 500,
+            ParentPath = "ECS/Entity/Enemy"
+        }
     );
 }
 ```

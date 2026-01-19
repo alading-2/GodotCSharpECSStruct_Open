@@ -61,15 +61,16 @@ public partial class DamageStatisticsSystem : Node
 
         // 核心机制：重置玩家实体及其装备的武器/物品的波次数据
         // 敌人实体通常在波次结束或死亡时销毁，因此无需显式重置波次数据
-        var players = EntityManager.GetEntitiesByType<Player>("Player");
+        var players = EntityManager.GetEntitiesByType<PlayerEntity>("Player");
         foreach (var player in players)
         {
             // 1. 重置玩家自身的波次统计
             ResetWaveStats(player.Data);
 
             // 2. 重置玩家装备的所有武器/物品的波次统计
+            var playerId = player.Data.Get<string>(DataKey.Id) ?? string.Empty;
             var itemIds = EntityRelationshipManager.GetChildEntitiesByParentAndType(
-                player.EntityId, EntityRelationshipType.UNIT_TO_ITEM);
+                playerId, EntityRelationshipType.UNIT_TO_ITEM);
 
             foreach (var itemId in itemIds)
             {

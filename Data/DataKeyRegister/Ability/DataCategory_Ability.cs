@@ -39,9 +39,9 @@ public enum DataCategory_Ability
     Effect,
 
     /// <summary>
-    /// 召唤效果（召唤物ID、数量）
+    /// 标签系统（激活条件、互斥标签）
     /// </summary>
-    Summon,
+    Tag,
 
     /// <summary>
     /// 状态标记（解锁、启用、激活）

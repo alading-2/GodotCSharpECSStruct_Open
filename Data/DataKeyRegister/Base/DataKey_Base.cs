@@ -7,5 +7,5 @@ public static partial class DataKey
     // === 基础信息 ===
     public const string Name = "Name"; // 名称
     public const string Level = "Level"; // 等级
-
+    public const string Id = "Id"; // ID
 }

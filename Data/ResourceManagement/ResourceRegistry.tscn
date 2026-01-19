@@ -13,73 +13,100 @@
 [ext_resource type="PackedScene" uid="uid://dq8m5nvk2r7wp" path="res://Src/ECS/Component/Unit/RecoveryComponent/RecoveryComponent.tscn" id="17_cmp_recov"]
 [ext_resource type="PackedScene" uid="uid://bpd8k5x3qcfmr" path="res://Src/ECS/Component/Unit/UnitStateComponent/UnitStateComponent.tscn" id="18_cmp_state"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/VelocityComponent/VelocityComponent.tscn" id="19_cmp_vel"]
+[ext_resource type="PackedScene" uid="uid://dj5xc3qx1jfgt" path="res://Src/ECS/Entity/Ability/AbilityEntity.tscn" id="20_ent_ability"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.tscn" id="21_cmp_trigger"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn" id="22_cmp_cooldown"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/ChargeComponent/ChargeComponent.tscn" id="23_cmp_charge"]
 
 [sub_resource type="Resource" id="Resource_6"]
 script = ExtResource("2_entry")
-Name = "Player"
-Category = 4
+Name = "PlayerEntity"
 Data = ExtResource("8_ent_player")
 
 [sub_resource type="Resource" id="Resource_7"]
 script = ExtResource("2_entry")
-Name = "Enemy"
-Category = 4
+Name = "EnemyEntity"
+Category = 1
 Data = ExtResource("9_ent_enemy")
 
 [sub_resource type="Resource" id="Resource_9"]
 script = ExtResource("2_entry")
 Name = "FollowComponent"
-Category = 5
+Category = 7
 Data = ExtResource("11_cmp_follow")
 
 [sub_resource type="Resource" id="Resource_10"]
 script = ExtResource("2_entry")
 Name = "HealthComponent"
-Category = 5
+Category = 7
 Data = ExtResource("12_cmp_health")
 
 [sub_resource type="Resource" id="Resource_11"]
 script = ExtResource("2_entry")
 Name = "HitboxComponent"
-Category = 5
+Category = 7
 Data = ExtResource("13_cmp_hitbox")
 
 [sub_resource type="Resource" id="Resource_12"]
 script = ExtResource("2_entry")
 Name = "HurtboxComponent"
-Category = 5
+Category = 7
 Data = ExtResource("14_cmp_hurtbox")
 
 [sub_resource type="Resource" id="Resource_13"]
 script = ExtResource("2_entry")
 Name = "LifecycleComponent"
-Category = 5
+Category = 7
 Data = ExtResource("15_cmp_life")
 
 [sub_resource type="Resource" id="Resource_14"]
 script = ExtResource("2_entry")
 Name = "PickupComponent"
-Category = 5
+Category = 7
 Data = ExtResource("16_cmp_pickup")
 
 [sub_resource type="Resource" id="Resource_15"]
 script = ExtResource("2_entry")
 Name = "RecoveryComponent"
-Category = 5
+Category = 7
 Data = ExtResource("17_cmp_recov")
 
 [sub_resource type="Resource" id="Resource_16"]
 script = ExtResource("2_entry")
 Name = "UnitStateComponent"
-Category = 5
+Category = 7
 Data = ExtResource("18_cmp_state")
 
 [sub_resource type="Resource" id="Resource_17"]
 script = ExtResource("2_entry")
 Name = "VelocityComponent"
-Category = 5
+Category = 7
 Data = ExtResource("19_cmp_vel")
+
+[sub_resource type="Resource" id="Resource_18"]
+script = ExtResource("2_entry")
+Name = "AbilityEntity"
+Category = 12
+Data = ExtResource("20_ent_ability")
+
+[sub_resource type="Resource" id="Resource_19"]
+script = ExtResource("2_entry")
+Name = "TriggerComponent"
+Category = 23
+Data = ExtResource("21_cmp_trigger")
+
+[sub_resource type="Resource" id="Resource_20"]
+script = ExtResource("2_entry")
+Name = "CooldownComponent"
+Category = 23
+Data = ExtResource("22_cmp_cooldown")
+
+[sub_resource type="Resource" id="Resource_21"]
+script = ExtResource("2_entry")
+Name = "ChargeComponent"
+Category = 23
+Data = ExtResource("23_cmp_charge")
 
 [node name="ResourceRegistry" type="Node"]
 script = ExtResource("1_script")
-Resources = Array[ExtResource("2_entry")]([SubResource("Resource_6"), SubResource("Resource_7"), SubResource("Resource_9"), SubResource("Resource_10"), SubResource("Resource_11"), SubResource("Resource_12"), SubResource("Resource_13"), SubResource("Resource_14"), SubResource("Resource_15"), SubResource("Resource_16"), SubResource("Resource_17")])
+Resources = Array[ExtResource("2_entry")]([SubResource("Resource_6"), SubResource("Resource_7"), SubResource("Resource_9"), SubResource("Resource_10"), SubResource("Resource_11"), SubResource("Resource_12"), SubResource("Resource_13"), SubResource("Resource_14"), SubResource("Resource_15"), SubResource("Resource_16"), SubResource("Resource_17"), SubResource("Resource_18"), SubResource("Resource_19"), SubResource("Resource_20"), SubResource("Resource_21")])

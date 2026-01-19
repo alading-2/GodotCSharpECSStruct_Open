@@ -27,8 +27,7 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     /// <summary>实体局部事件总线</summary>
     public EventBus Events { get; } = new EventBus();
 
-    /// <summary>Entity 唯一标识符</summary>
-    public string EntityId { get; private set; } = string.Empty;
+    // EntityId 由 IEntity 默认实现（从 DataKey.Id 读取）
 
     public TemplateEntity()
     {
@@ -42,7 +41,6 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     public override void _Ready()
     {
         base._Ready();
-        EntityId = GetInstanceId().ToString();
 
         // 注意: 通过 EntityManager.Spawn 创建的实体会自动注册
         // 只有直接放置在场景中的物体才需要手动调用 EntityManager.Register(this, "Type");

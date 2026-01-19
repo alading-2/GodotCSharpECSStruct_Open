@@ -11,11 +11,12 @@
 本项目的 Entity 架构基于 Godot 哲学：**Scene 即 Entity**。
 
 **核心原则**：
-
-- **Entity = .tscn 文件**：每个游戏对象（Player.tscn, Enemy.tscn）都是独立场景
-- **Component = 子节点**：实现 `IComponent` 接口的功能模块
-- **零继承污染**：通过接口而非继承实现能力扩展
-- **统一管理**：EntityManager 作为唯一入口，管理生命周期和数据访问
+ 
+ - **Entity = .tscn 文件**：每个游戏对象（Player.tscn, Enemy.tscn）都是独立场景
+ - **Component = 子节点**：实现 `IComponent` 接口的功能模块
+ - **Entity 是纯容器**：仅仅持有 Data 和 Events，严禁包含业务逻辑
+ - **零继承污染**：通过接口而非继承实现能力扩展
+ - **统一管理**：EntityManager 作为唯一入口，管理生命周期和数据访问
 
 **管理体系**：
 

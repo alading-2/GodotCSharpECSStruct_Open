@@ -36,25 +36,16 @@ public static class EntityRelationshipType
 
     // ==================== 物品相关关系 ====================
 
-    /// <summary>物品与玩家关系</summary>
-    public const string ITEM_TO_PLAYER = "relationship.item.player";
-
     /// <summary>物品与技能关系</summary>
     public const string ITEM_TO_ABILITY = "relationship.item.ability";
 
     // ==================== 技能相关关系 ====================
-
+    /// <summary>Entity 与技能关系</summary>
     public const string ENTITY_TO_ABILITY = "relationship.entity.ability";
-    /// <summary>技能与子弹关系</summary>
-    public const string ABILITY_TO_BULLET = "relationship.ability.bullet";
 
     /// <summary>技能与特效关系</summary>
     public const string ABILITY_TO_EFFECT = "relationship.ability.effect";
 
     // ==================== Buff 相关关系 ====================
 
-    /// <summary>Buff 与修改器关系</summary>
-    public const string BUFF_TO_MODIFIER = "relationship.buff.modifier";
-
-    // 未来可扩展更多关系类型...
 }

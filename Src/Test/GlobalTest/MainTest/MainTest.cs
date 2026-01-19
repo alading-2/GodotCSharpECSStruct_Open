@@ -14,7 +14,7 @@ public partial class MainTest : Node
     private void test()
     {
         var playerConfig = PlayerData.Configs["Player1"];
-        var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
+        var player = EntityManager.Spawn<PlayerEntity>(new EntitySpawnConfig
         {
             Config = playerConfig,
             UsingObjectPool = false,

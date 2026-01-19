@@ -12,11 +12,10 @@ namespace BrotatoMy.Test
         public EventBus Events { get; } = new EventBus();
         // IEntity Implementation
         public Data Data { get; private set; } = new Data();
-        public string EntityId { get; private set; } = string.Empty;
+        // EntityId 由 IEntity 默认实现（从 DataKey.Id 读取）
 
         public override void _Ready()
         {
-            EntityId = GetInstanceId().ToString();
             _log.Debug("TestEntity Ready");
         }
 
@@ -26,7 +25,8 @@ namespace BrotatoMy.Test
 
             // 仅在已注册时才注销，避免未注册实体的警告
             // 对象池初始化时创建的实体不会被注册，因此不需要注销
-            if (EntityManager.GetEntityById(EntityId) != null)
+            var id = Data.Get<string>(DataKey.Id);
+            if (!string.IsNullOrEmpty(id) && EntityManager.GetEntityById(id) != null)
             {
                 EntityManager.UnregisterEntity(this);
             }

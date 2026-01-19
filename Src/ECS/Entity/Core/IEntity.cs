@@ -1,14 +1,19 @@
 /// <summary>
-/// Entity标记接口 - 定义所有游戏实体的核心能力
+/// Entity 标记接口 - 纯数据容器
 /// 
-/// 设计理念：
-/// - Scene 即 Entity：每个Entity都是独立的.tscn文件
-/// - 零继承污染：通过接口而非继承实现Data能力
-/// - 精准范围控制：只有Entity拥有Data，Component和普通Node不需要
+/// 核心原则：
+/// 1. **纯容器**：Entity 仅负责持有 Data 和 Events，不应包含任何业务逻辑。
+/// 2. **零继承**：通过接口实现，避免基类继承污染。
+/// 3. **Scene 即 Entity**：每个 Entity 对应一个 .tscn 场景文件。
 /// 
-/// 使用场景：
-/// - Enemy、Player、Bullet、Item等游戏实体
-/// - 任何需要拥有动态数据容器的游戏对象
+/// 职责：
+/// - 提供统一的 Data 访问入口
+/// - 提供局部 Events 总线
+/// - 提供唯一标识符 (EntityId)
+/// 
+/// 注意：
+/// - 所有业务逻辑（移动、攻击、AI等）必须放入 Component 或 System。
+/// - Entity 类本身应保持极简，通常只有几行代码。
 /// </summary>
 public interface IEntity
 {
@@ -17,12 +22,6 @@ public interface IEntity
     /// 用于存储和管理实体的运行时数据（属性、状态、标记等）
     /// </summary>
     Data Data { get; }
-
-    /// <summary>
-    /// Entity的唯一标识符
-    /// 通常使用 GetInstanceId().ToString()
-    /// </summary>
-    string EntityId { get; }
 
     /// <summary>
     /// 实体局部事件总线

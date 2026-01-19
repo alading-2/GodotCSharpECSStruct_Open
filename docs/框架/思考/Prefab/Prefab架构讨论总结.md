@@ -132,10 +132,15 @@ public partial class Enemy : CharacterBody2D, ITargetable, IPoolable { ... }
 
 ```csharp
 // ObjectPoolInit.cs
-var enemyScene = GD.Load<PackedScene>("res://Src/ECS/Entity/Unit/Enemy.tscn");
-var pool = new ObjectPool<Enemy>(
-    () => enemyScene.Instantiate<Enemy>(),
-    config
+new ObjectPool<EnemyEntity>(
+    () => (EnemyEntity)ResourceRegistry.LoadScene<EnemyEntity>().Instantiate(),
+    new ObjectPoolConfig
+    {
+        Name = ObjectPoolNames.EnemyPool,
+        InitialSize = 100,
+        MaxSize = 500,
+        ParentPath = "ECS/Entity/Enemy"
+    }
 );
 ```
 

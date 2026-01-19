@@ -115,16 +115,7 @@ public partial class ResourceRegistry : Node
     // ========================================
 
     /// <summary>
-    /// 类型安全的资源加载。
-    /// 
-    /// 示例:
-    /// <code>
-    /// // 加载配置文件 (.tres)
-    /// var config = ResourceRegistry.Load&lt;EnemyResource&gt;("豺狼人");
-    /// 
-    /// // 加载场景预制体 (.tscn)
-    /// var scene = ResourceRegistry.Load&lt;PackedScene&gt;("Player");
-    /// </code>
+    /// 类型安全的资源加载。通常用`LoadScene`而不是`Load`
     /// </summary>
     /// <param name="name">资源名称</param>
     /// <returns>找到并匹配类型的资源对象，失败返回 null</returns>

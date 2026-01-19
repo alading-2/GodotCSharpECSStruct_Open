@@ -7,8 +7,9 @@ using Godot;
 /// - 技能是 Entity，实现 IEntity 接口
 /// - 业务逻辑归 Component (Cooldown, Trigger, Charge 等)
 /// - 效果执行归 AbilityEffect 执行器
+/// - 支持对象池复用（实现 IPoolable）
 /// </summary>
-public partial class AbilityEntity : Node, IEntity
+public partial class AbilityEntity : Node, IEntity, IPoolable
 {
     private static readonly Log _log = new("AbilityEntity");
 
@@ -16,7 +17,7 @@ public partial class AbilityEntity : Node, IEntity
 
     public Data Data { get; private set; }
     public EventBus Events { get; } = new EventBus();
-    public string EntityId { get; private set; } = string.Empty;
+    // EntityId 由 IEntity 默认实现（从 DataKey.Id 读取）
 
     // ================= 构造函数 =================
 
@@ -29,33 +30,43 @@ public partial class AbilityEntity : Node, IEntity
 
     public override void _Ready()
     {
-        EntityId = GetInstanceId().ToString();
         _log.Debug($"技能实体就绪: {Data.Get<string>(DataKey.Name)}");
     }
 
-    // ================= 便捷属性 =================
-
-    /// <summary>技能ID</summary>
-    public string AbilityId => Data.Get<string>(DataKey.Name);
-
-    /// <summary>技能名称</summary>
-    public string AbilityName => Data.Get<string>(DataKey.Name);
-
-    /// <summary>技能类型</summary>
-    public AbilityType Type => (AbilityType)Data.Get<int>(DataKey.AbilityType);
-
-    /// <summary>触发模式</summary>
-    public AbilityTriggerMode TriggerMode => (AbilityTriggerMode)Data.Get<int>(DataKey.AbilityTriggerMode);
-
-    /// <summary>技能是否启用</summary>
-    public bool IsEnabled => Data.Get<bool>(DataKey.AbilityEnabled);
-
-    /// <summary>技能是否正在执行</summary>
-    public bool IsActive => Data.Get<bool>(DataKey.AbilityIsActive);
-
-    /// <summary>获取技能拥有者</summary>
-    public IEntity? GetOwner()
+    public override void _ExitTree()
     {
-        return Data.Get<IEntity>(DataKey.AbilityOwner);
+        // 统一注销 (内部自动清理 Data 和 Events)
+        EntityManager.UnregisterEntity(this);
+    }
+
+    // ================= IPoolable 接口实现 =================
+
+    /// <summary>
+    /// [IPoolable] 当从池中取出时调用 (Active)。
+    /// 统一在此处订阅事件，确保对象池复用时事件正确绑定。
+    /// </summary>
+    public void OnPoolAcquire()
+    {
+        // 对象池复用时的初始化
+        // Data 和 Events 的清理/重置由 EntityManager.UnregisterEntity 处理
+    }
+
+    /// <summary>
+    /// [IPoolable] 当归还池时调用 (Deactive)。
+    /// 核心职责：清理状态、重置数据。
+    /// </summary>
+    public void OnPoolRelease()
+    {
+        // 注意：Events.Clear(), Data.Clear()
+        // 均由 EntityManager.Destroy() -> UnregisterEntity() 统一处理
+    }
+
+    /// <summary>
+    /// [IPoolable] 当归还池时重置
+    /// </summary>
+    public void OnPoolReset()
+    {
+        // 可以在这里移除所有动态添加的组件，如果需要的话
+        // 但通常为了复用，我们保留组件结构，只重置数据
     }
 }

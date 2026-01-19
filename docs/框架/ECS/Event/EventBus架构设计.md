@@ -462,5 +462,6 @@ func _on_damaged(amount):
 ---
 
 **参考资料**:
+- [Context 模式设计](Context模式设计.md)
 - [使用说明文档](file:///e:/Godot/Games/MyGames/%E5%A4%8D%E5%88%BB%E5%9C%9F%E8%B1%86%E5%85%84%E5%BC%9F/brotato-my/Src/ECS/Event/README.md)
 - [EventBus 源码](file:///e:/Godot/Games/MyGames/%E5%A4%8D%E5%88%BB%E5%9C%9F%E8%B1%86%E5%85%84%E5%BC%9F/brotato-my/Src/ECS/Event/EventBus.cs)
