@@ -49,16 +49,18 @@ public enum AbilityTriggerMode
 /// </summary>
 public enum AbilityTargetOrigin
 {
+    /// <summary>无目标（自增益等无目标技能）</summary>
+    None = 0,
     /// <summary>以施法者为中心</summary>
-    Self = 0,
+    Self = 1,
     /// <summary>指定目标单位</summary>
-    Unit = 1,
+    Unit = 2,
     /// <summary>指定地点</summary>
-    Point = 2,
+    Point = 3,
     /// <summary>事件来源 (如攻击者)</summary>
-    EventSource = 3,
+    EventSource = 4,
     /// <summary>光标位置</summary>
-    Cursor = 4,
+    Cursor = 5,
 }
 
 /// <summary>

@@ -6,9 +6,10 @@ using Godot;
 /// 技能系统 - 管理技能激活和执行逻辑
 /// 
 /// 职责：
+/// - 接收 TryActivate 请求（统一施法入口）
 /// - 激活技能（就绪检查 → 消耗 → 冷却 → 执行）
 /// - 目标选择（5 层目标系统）
-/// - 效果执行协调
+/// - 调用 AbilityExecutorRegistry 执行效果
 /// 
 /// 注意：技能的增删查由 EntityManager.AddAbility/RemoveAbility/GetAbilities 负责
 /// </summary>
@@ -16,10 +17,50 @@ public static class AbilitySystem
 {
     private static readonly Log _log = new("AbilitySystem");
 
+    // ==================== TryActivate 入口 ====================
+
+    /// <summary>
+    /// 处理 TryActivate 事件 - 统一施法入口
+    /// 
+    /// 调用者：
+    /// - TriggerComponent 发送的 TryActivate 事件
+    /// - 可直接调用（如输入系统、AI）
+    /// </summary>
+    public static void HandleTryActivate(GameEventType.Ability.TryActivateEventData eventData)
+    {
+        if (eventData.Ability == null)
+        {
+            _log.Debug("TryActivate 失败: Ability 为空");
+            return;
+        }
+
+        // 创建施法上下文
+        var context = new CastContext
+        {
+            Ability = eventData.Ability,
+            Caster = eventData.Caster,
+            Targets = eventData.RequestedTargets,
+            SourceEventData = eventData.SourceEventData
+        };
+
+        // 如果没有提供施法者，从关系中查找
+        if (context.Caster == null)
+        {
+            var abilityId = eventData.Ability.Data.Get<string>(DataKey.Id) ?? string.Empty;
+            var ownerId = EntityRelationshipManager.GetParentEntitiesByChildAndType(
+                abilityId, EntityRelationshipType.ENTITY_TO_ABILITY).FirstOrDefault();
+            context.Caster = !string.IsNullOrEmpty(ownerId)
+                ? EntityManager.GetEntityById(ownerId) as IEntity
+                : null;
+        }
+
+        TryActivateAbilityWithContext(context);
+    }
+
     // ==================== 技能激活 ====================
 
     /// <summary>
-    /// 尝试激活技能
+    /// 尝试激活技能（便捷方法）
     /// </summary>
     /// <param name="owner">技能拥有者</param>
     /// <param name="abilityName">技能名称</param>
@@ -33,15 +74,23 @@ public static class AbilitySystem
             return false;
         }
 
-        return TryActivateAbilityInternal(ability);
+        var context = new CastContext
+        {
+            Ability = ability,
+            Caster = owner
+        };
+
+        return TryActivateAbilityWithContext(context);
     }
 
     /// <summary>
-    /// 内部激活逻辑
+    /// 使用施法上下文激活技能
     /// </summary>
-    private static bool TryActivateAbilityInternal(AbilityEntity ability)
+    private static bool TryActivateAbilityWithContext(CastContext context)
     {
-        if (ability == null) return false;
+        if (context.Ability == null) return false;
+
+        var ability = context.Ability;
 
         // 事件驱动：就绪检查
         if (!CanUseAbility(ability))
@@ -72,8 +121,19 @@ public static class AbilitySystem
         // 标记为执行中
         ability.Data.Set(DataKey.AbilityIsActive, true);
 
-        // 选择目标
-        var targets = SelectTargets(ability);
+        // 目标选择：优先使用预选目标，否则自动选取
+        List<IEntity> targets;
+        if (context.HasPreselectedTargets)
+        {
+            targets = context.Targets!;
+        }
+        else
+        {
+            targets = SelectTargets(ability, context);
+        }
+
+        // 更新上下文的目标列表
+        context.Targets = targets;
 
         // 发送激活事件
         ability.Events.Emit(
@@ -81,22 +141,14 @@ public static class AbilitySystem
             new GameEventType.Ability.ActivatedEventData(ability, targets)
         );
 
-        // 查找拥有者并发送事件
-        var abilityId = ability.Data.Get<string>(DataKey.Id) ?? string.Empty;
-        var ownerId = EntityRelationshipManager.GetParentEntitiesByChildAndType(
-            abilityId, EntityRelationshipType.ENTITY_TO_ABILITY).FirstOrDefault();
+        // 向拥有者发送事件
+        context.Caster?.Events.Emit(
+            GameEventType.Ability.Activated,
+            new GameEventType.Ability.ActivatedEventData(ability, targets)
+        );
 
-        if (!string.IsNullOrEmpty(ownerId))
-        {
-            var owner = EntityManager.GetEntityById(ownerId) as IEntity;
-            owner?.Events.Emit(
-                GameEventType.Ability.Activated,
-                new GameEventType.Ability.ActivatedEventData(ability, targets)
-            );
-        }
-
-        // 执行效果
-        ExecuteAbilityEffects(ability, targets);
+        // 执行效果（通过 AbilityExecutorRegistry）
+        ExecuteAbilityEffects(context);
 
         // 标记执行完成
         ability.Data.Set(DataKey.AbilityIsActive, false);
@@ -156,18 +208,11 @@ public static class AbilitySystem
     /// <summary>
     /// 基于 5 层目标系统选择目标
     /// </summary>
-    private static List<IEntity> SelectTargets(AbilityEntity ability)
+    private static List<IEntity> SelectTargets(AbilityEntity ability, CastContext context)
     {
         var targets = new List<IEntity>();
+        var owner = context.Caster;
 
-        // 1. 获取拥有者 (通过 EntityRelationshipManager)
-        var abilityId = ability.Data.Get<string>(DataKey.Id) ?? string.Empty;
-        var ownerId = EntityRelationshipManager.GetParentEntitiesByChildAndType(
-            abilityId,
-            EntityRelationshipType.ENTITY_TO_ABILITY
-        ).FirstOrDefault();
-
-        var owner = EntityManager.GetEntityById(ownerId) as IEntity;
         if (owner == null) return targets;
 
         // 1. 获取选取原点
@@ -180,8 +225,8 @@ public static class AbilitySystem
                 break;
 
             case AbilityTargetOrigin.EventSource:
-                var eventData = ability.Data.Get<object>("_TriggerEventData");
-                if (eventData is IEntity eventSource)
+                // 从施法上下文中获取事件源
+                if (context.SourceEventData is IEntity eventSource)
                 {
                     targets.Add(eventSource);
                 }
@@ -259,18 +304,24 @@ public static class AbilitySystem
 
     // ==================== 效果执行 ====================
 
-    private static void ExecuteAbilityEffects(AbilityEntity ability, List<IEntity> targets)
+    /// <summary>
+    /// 执行技能效果 - 通过 AbilityExecutorRegistry 调用具体执行器
+    /// </summary>
+    private static void ExecuteAbilityEffects(CastContext context)
     {
-        // TODO: 调用 AbilityEffect 执行器
+        if (context.Ability == null) return;
 
-        var result = new AbilityExecuteResult
-        {
-            TargetsHit = targets.Count
-        };
+        var ability = context.Ability;
+        var abilityName = ability.Data.Get<string>(DataKey.Name) ?? string.Empty;
 
+        // 调用执行器注册表
+        var result = AbilityExecutorRegistry.Execute(abilityName, context);
+
+        // 发送执行完成事件
         ability.Events.Emit(
             GameEventType.Ability.Executed,
             new GameEventType.Ability.ExecutedEventData(ability, result)
         );
     }
 }
+

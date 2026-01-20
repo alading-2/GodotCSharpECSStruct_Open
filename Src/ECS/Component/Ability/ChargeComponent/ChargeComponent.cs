@@ -132,7 +132,7 @@ public partial class ChargeComponent : Node, IComponent
     /// <summary>响应增加充能请求</summary>
     private void OnRequestAddCharge(GameEventType.Ability.AddChargeEventData eventData)
     {
-        InternalAddCharges(eventData.Amount, "外部触发");
+        InternalAddCharges(eventData.Amount);
     }
 
     public override void _ExitTree()
@@ -176,7 +176,7 @@ public partial class ChargeComponent : Node, IComponent
     /// </summary>
     private void RecoverOneCharge()
     {
-        InternalAddCharges(1, "自动恢复");
+        InternalAddCharges(1);
     }
 
 
@@ -185,9 +185,8 @@ public partial class ChargeComponent : Node, IComponent
     /// 内部统一的充能增加逻辑（带上限检查和事件发送）
     /// </summary>
     /// <param name="amount">增加数量</param>
-    /// <param name="source">充能来源（用于日志区分）</param>
     /// <returns>实际增加的数量</returns>
-    private int InternalAddCharges(int amount, string source)
+    private int InternalAddCharges(int amount)
     {
         if (_data == null || amount <= 0) return 0;
 
@@ -202,7 +201,7 @@ public partial class ChargeComponent : Node, IComponent
         _data.Set(DataKey.AbilityCurrentCharges, currentCharges);
 
         string abilityName = _data.Get<string>(DataKey.Name);
-        _log.Debug($"充能增加 [{source}]: {abilityName}, +{actualAdd}, 当前: {currentCharges}/{maxCharges}");
+        _log.Debug($"充能增加: {abilityName}, +{actualAdd}, 当前: {currentCharges}/{maxCharges}");
 
         // ✅ 充能已满时停止自动恢复计时器
         if (currentCharges >= maxCharges)

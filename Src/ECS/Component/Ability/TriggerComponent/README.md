@@ -1,46 +1,37 @@
 # TriggerComponent (触发组件)
 
 ## 概述
-`TriggerComponent` 是技能系统的“扳机”，负责监听外部输入或游戏事件，决定何时尝试激活技能。它支持多种触发模式的组合。
+`TriggerComponent` 是技能的"扳机"，负责决定何时向 `AbilitySystem` 发起激活请求。
 
-## 核心功能
-1.  **其于模式的触发**：根据 `AbilityTriggerMode` (Flags) 执行不同的触发逻辑。
-2.  **事件监听**：订阅全局事件或特定对象的事件（如“受击时触发”）。
-3.  **周期性触发**：处理光环或持续性技能的自动触发。
-4.  **自动触发**：处理武器类技能的自动攻击尝试。
-5.  **手动触发**：提供接口供玩家输入系统调用。
+## 触发模式 (AbilityTriggerMode)
+支持 `[Flags]` 位运算组合：
+*   **Manual**：手动触发，响应 `TryManualTrigger` 调用。
+*   **OnEvent**：监听 `GlobalEventBus` 上的特定游戏事件。
+*   **Periodic**：基于 `_Process` 的固定频率循环触发。
+*   **Auto**：武器专用，自动轮询并发出 `TryActivate` 激活请求。
 
-## 支持的触发模式 (AbilityTriggerMode)
-*   **Manual (主动)**：玩家按下按键时触发。
-*   **OnEvent (被动)**：监听如 `UnitHurt` (受击), `UnitKilled` (击杀) 等事件时触发。
-*   **Periodic (被动/光环)**：每隔固定时间间隔触发一次。
-*   **Auto (武器)**：类似于“吸血鬼幸存者”的自动武器，自动寻找目标触发。
-*   **Permanent (被动)**：永久生效（属性加成），通常仅在添加时执行一次初始化逻辑。
+## 核心 DataKeys
+| DataKey | 类型 | 描述 |
+| :--- | :--- | :--- |
+| `AbilityTriggerMode` | `int` | 触发模式掩码 |
+| `AbilityTriggerEvent` | `string` | OnEvent 模式监听的事件名 |
+| `AbilityTriggerInterval` | `float` | Periodic 模式的定时间隔 |
+| `AbilityTriggerChance` | `float` | 触发概率 (0~1.0) |
 
-**注意**：使用了 `[Flags]`，一个技能可以同时具备多种触发方式（例如既可以主动释放，也可以在濒死时自动触发）。
+## 触发流程 (事件化)
+当满足触发条件时，组件会按以下步骤操作：
+1. **就绪预检**：发送 `RequestCheckCanUse` 事件。
+2. **数据注入**：若由事件触发，将 `eventData` 存入 Data 的 `_TriggerEventData` 以供 Effect 使用。
+3. **发射激活**：
+    - 主动/周期：直接发送 `Activated` 事件。
+    - 自动/武器：发送 `TryActivate` 请求（由系统协调目标选择）。
 
-## 依赖的 DataKeys
+## 生命周期管理
+- **订阅**：在 `OnComponentRegistered` 时根据模式初始化（如订阅全局事件）。
+- **清理**：在 `OnComponentUnregistered` 时必须 `UnsubscribeEvent` 以防止内存泄漏。
 
-| DataKey | 类型 | 描述 | 用途 |
-| :--- | :--- | :--- | :--- |
-| `AbilityTriggerMode` | `AbilityTriggerMode` | 触发模式掩码 | 决定组件行为 |
-| `AbilityTriggerEvent` | `string` | 监听的事件名称 | OnEvent 模式必需 |
-| `AbilityTriggerInterval` | `float` | 触发间隔 (秒) | Periodic 模式必需 |
-| `AbilityTriggerChance` | `float` | 触发概率 (0-1) | OnEvent 模式用于概率触发 |
+---
 
-## 关键流程
-*   **OnEvent**: 订阅 `GlobalEventBus` -> 收到事件 -> 概率检查 -> 冷却检查 -> `TriggerAbility()`。
-*   **Periodic**: `_Process` 累加时间 -> 间隔检查 -> 冷却检查 -> `TriggerAbility()`。
-*   **Auto**: `_Process` 轮询 -> 冷却检查 -> 发出 `TryActivate` 事件 (由 `TargetingComponent` 接手寻找目标)。
-
-## 接口说明
-```csharp
-// 尝试手动触发（需检查是否包含 Manual 模式）
-bool TryManualTrigger();
-
-// 检查是否包含某种触发模式
-bool HasTriggerMode(AbilityTriggerMode mode);
-```
-
-## 事件交互
-当条件满足且通过内部冷却检查后，组件会发送 `GameEventType.Ability.Activated` 事件，通知 `AbilitySystem` 正式执行技能流程。
+**维护者**：项目团队  
+**文档版本**：v2.1  
+**更新日期**：2026-01-19

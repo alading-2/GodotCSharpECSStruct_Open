@@ -56,8 +56,18 @@ public static partial class GameEventType
         /// 接收者：AbilitySystem (执行具体激活逻辑，如目标选择)
         /// </summary>
         public const string TryActivate = "ability:try_activate";
-        /// <summary>尝试激活事件数据</summary>
-        public readonly record struct TryActivateEventData(AbilityEntity? Ability);
+        /// <summary>
+        /// 尝试激活事件数据
+        /// - Caster: 施法者（可选，若为空则从关系中查找）
+        /// - RequestedTargets: 外部指定的目标（可选，若为空则由 AbilitySystem 自动选取）
+        /// - SourceEventData: 触发源事件数据（事件触发时携带，如 DamageEventData）
+        /// </summary>
+        public readonly record struct TryActivateEventData(
+            AbilityEntity? Ability,
+            IEntity? Caster = null,
+            System.Collections.Generic.List<IEntity>? RequestedTargets = null,
+            object? SourceEventData = null
+        );
 
 
         // ================= CooldownComponent (冷却组件) =================
