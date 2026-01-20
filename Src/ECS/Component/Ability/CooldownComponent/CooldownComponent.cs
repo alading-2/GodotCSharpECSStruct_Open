@@ -59,24 +59,24 @@ public partial class CooldownComponent : Node, IComponent
     {
         if (_entity == null) return;
         // 监听请求检查可用性事件
-        _entity.Events.On<GameEventType.Ability.RequestCheckCanUseEventData>(
-            GameEventType.Ability.RequestCheckCanUse,
-            OnRequestCheckCanUse
+        _entity.Events.On<GameEventType.Ability.CheckCanUseEventData>(
+            GameEventType.Ability.CheckCanUse,
+            OnCheckCanUse
         );
         // 监听请求启动冷却事件
-        _entity.Events.On<GameEventType.Ability.RequestStartCooldownEventData>(
-            GameEventType.Ability.RequestStartCooldown,
+        _entity.Events.On<GameEventType.Ability.StartCooldownEventData>(
+            GameEventType.Ability.StartCooldown,
             StartCooldown
         );
         // 监听请求重置冷却事件
-        _entity.Events.On<GameEventType.Ability.RequestResetCooldownEventData>(
-            GameEventType.Ability.RequestResetCooldown,
+        _entity.Events.On<GameEventType.Ability.ResetCooldownEventData>(
+            GameEventType.Ability.ResetCooldown,
             ResetCooldown
         );
     }
 
     /// <summary>响应可用性检查请求</summary>
-    private void OnRequestCheckCanUse(GameEventType.Ability.RequestCheckCanUseEventData eventData)
+    private void OnCheckCanUse(GameEventType.Ability.CheckCanUseEventData eventData)
     {
         if (!IsReady())
         {
@@ -99,7 +99,7 @@ public partial class CooldownComponent : Node, IComponent
     }
 
     /// <summary>启动冷却计时</summary>
-    public void StartCooldown(GameEventType.Ability.RequestStartCooldownEventData eventData)
+    public void StartCooldown(GameEventType.Ability.StartCooldownEventData eventData)
     {
         if (_data == null) return;
 
@@ -130,7 +130,7 @@ public partial class CooldownComponent : Node, IComponent
     }
 
     /// <summary>重置冷却（立即完成冷却）</summary>
-    public void ResetCooldown(GameEventType.Ability.RequestResetCooldownEventData eventData)
+    public void ResetCooldown(GameEventType.Ability.ResetCooldownEventData eventData)
     {
         CancelTimer();
         _log.Debug($"技能冷却重置: {AbilityName}");

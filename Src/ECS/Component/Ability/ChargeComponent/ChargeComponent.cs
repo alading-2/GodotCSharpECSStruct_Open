@@ -84,9 +84,9 @@ public partial class ChargeComponent : Node, IComponent
     {
         if (_entity == null) return;
         // 监听请求检查可用性事件
-        _entity.Events.On<GameEventType.Ability.RequestCheckCanUseEventData>(
-            GameEventType.Ability.RequestCheckCanUse,
-            OnRequestCheckCanUse
+        _entity.Events.On<GameEventType.Ability.CheckCanUseEventData>(
+            GameEventType.Ability.CheckCanUse,
+            OnCheckCanUse
         );
         // 监听使用技能消耗充能事件
         _entity.Events.On<GameEventType.Ability.ConsumeChargeEventData>(
@@ -101,7 +101,7 @@ public partial class ChargeComponent : Node, IComponent
     }
 
     /// <summary>响应可用性检查请求</summary>
-    private void OnRequestCheckCanUse(GameEventType.Ability.RequestCheckCanUseEventData eventData)
+    private void OnCheckCanUse(GameEventType.Ability.CheckCanUseEventData eventData)
     {
         // 仅主动技能需要检查充能
         if (AbilityType != AbilityType.Active) return;

@@ -12,7 +12,7 @@
 1.  **多段充能**：支持 1 到 N 次充能。
 2.  **高性能恢复**：使用 `TimerManager` 驱动恢复，若 `ChargeTime < 0` 则禁用自动恢复。
 3.  **事件交互**：
-    *   **Check**: 响应 `RequestCheckCanUse` -> 检查 `CurrentCharges > 0`。
+    *   **Check**: 响应 `CheckCanUse` -> 检查 `CurrentCharges > 0`。
     *   **Consume**: 响应 `ConsumeCharge` -> 扣除 1 层充能。
     *   **Add**: 响应 `AddCharge` -> 外部逻辑增加充能。
 

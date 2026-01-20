@@ -6,7 +6,7 @@ using Godot;
 /// 技能系统 - 管理技能激活和执行逻辑
 /// 
 /// 职责：
-/// - 接收 TryActivate 请求（统一施法入口）
+/// - 接收 TryTrigger 请求（统一施法入口）
 /// - 激活技能（就绪检查 → 消耗 → 冷却 → 执行）
 /// - 目标选择（5 层目标系统）
 /// - 调用 AbilityExecutorRegistry 执行效果
@@ -17,55 +17,36 @@ public static class AbilitySystem
 {
     private static readonly Log _log = new("AbilitySystem");
 
-    // ==================== TryActivate 入口 ====================
+    // ==================== TryTrigger 入口 ====================
 
     /// <summary>
-    /// 处理 TryActivate 事件 - 统一施法入口
+    /// 处理 TryTrigger 事件 - 统一施法入口
     /// 
     /// 调用者：
-    /// - TriggerComponent 发送的 TryActivate 事件
+    /// - TriggerComponent 发送的 TryTrigger 事件
     /// - 可直接调用（如输入系统、AI）
     /// </summary>
-    public static void HandleTryActivate(GameEventType.Ability.TryActivateEventData eventData)
+    public static void HandleTryTrigger(GameEventType.Ability.TryTriggerEventData eventData)
     {
-        if (eventData.Ability == null)
+        // 直接使用传入的上下文
+        var context = eventData.Context;
+
+        if (context.Ability == null)
         {
-            _log.Debug("TryActivate 失败: Ability 为空");
+            _log.Debug("TryTrigger 失败: Ability 为空");
             return;
         }
 
-        // 创建施法上下文
-        var context = new CastContext
-        {
-            Ability = eventData.Ability,
-            Caster = eventData.Caster,
-            Targets = eventData.RequestedTargets,
-            SourceEventData = eventData.SourceEventData
-        };
-
-        // 如果没有提供施法者，从关系中查找
-        if (context.Caster == null)
-        {
-            var abilityId = eventData.Ability.Data.Get<string>(DataKey.Id) ?? string.Empty;
-            var ownerId = EntityRelationshipManager.GetParentEntitiesByChildAndType(
-                abilityId, EntityRelationshipType.ENTITY_TO_ABILITY).FirstOrDefault();
-            context.Caster = !string.IsNullOrEmpty(ownerId)
-                ? EntityManager.GetEntityById(ownerId) as IEntity
-                : null;
-        }
-
-        TryActivateAbilityWithContext(context);
+        TryTriggerAbilityWithContext(context);
     }
 
-    // ==================== 技能激活 ====================
-
     /// <summary>
-    /// 尝试激活技能（便捷方法）
+    /// 尝试直接触发技能，不通过TriggerComponent触发
     /// </summary>
     /// <param name="owner">技能拥有者</param>
     /// <param name="abilityName">技能名称</param>
-    /// <returns>是否成功激活</returns>
-    public static bool TryActivateAbility(IEntity owner, string abilityName)
+    /// <returns>是否成功触发</returns>
+    public static bool TryTriggerAbility(IEntity owner, string abilityName)
     {
         var ability = EntityManager.GetAbilityByName(owner, abilityName);
         if (ability == null)
@@ -80,13 +61,14 @@ public static class AbilitySystem
             Caster = owner
         };
 
-        return TryActivateAbilityWithContext(context);
+        return TryTriggerAbilityWithContext(context);
     }
 
     /// <summary>
-    /// 使用施法上下文激活技能
+    /// 使用施法上下文触发技能
+    /// <returns>是否成功触发</returns>
     /// </summary>
-    private static bool TryActivateAbilityWithContext(CastContext context)
+    private static bool TryTriggerAbilityWithContext(CastContext context)
     {
         if (context.Ability == null) return false;
 
@@ -98,12 +80,15 @@ public static class AbilitySystem
             return false;
         }
 
-        // 事件驱动：请求消耗资源（充能等）
         var consumeContext = new EventContext();
-        ability.Events.Emit(
-            GameEventType.Ability.ConsumeCharge,
-            new GameEventType.Ability.ConsumeChargeEventData(ability, consumeContext)
-        );
+        // 事件驱动：请求消耗资源（充能等）
+        if (ability.Data.Get<bool>(DataKey.IsAbilityUsesCharges))
+        {
+            ability.Events.Emit(
+                GameEventType.Ability.ConsumeCharge,
+                new GameEventType.Ability.ConsumeChargeEventData(ability, consumeContext)
+            );
+        }
 
         // 检查消耗是否成功
         if (!consumeContext.Success)
@@ -114,8 +99,8 @@ public static class AbilitySystem
 
         // 事件驱动：请求启动冷却
         ability.Events.Emit(
-            GameEventType.Ability.RequestStartCooldown,
-            new GameEventType.Ability.RequestStartCooldownEventData(ability)
+            GameEventType.Ability.StartCooldown,
+            new GameEventType.Ability.StartCooldownEventData(ability)
         );
 
         // 标记为执行中
@@ -137,12 +122,6 @@ public static class AbilitySystem
 
         // 发送激活事件
         ability.Events.Emit(
-            GameEventType.Ability.Activated,
-            new GameEventType.Ability.ActivatedEventData(ability, targets)
-        );
-
-        // 向拥有者发送事件
-        context.Caster?.Events.Emit(
             GameEventType.Ability.Activated,
             new GameEventType.Ability.ActivatedEventData(ability, targets)
         );
@@ -188,8 +167,8 @@ public static class AbilitySystem
         // 事件驱动：请求检查可用性（冷却、充能等组件响应）
         var context = new EventContext();
         ability.Events.Emit(
-            GameEventType.Ability.RequestCheckCanUse,
-            new GameEventType.Ability.RequestCheckCanUseEventData(ability, context)
+            GameEventType.Ability.CheckCanUse,
+            new GameEventType.Ability.CheckCanUseEventData(ability, context)
         );
 
         if (!context.Success)
@@ -208,99 +187,86 @@ public static class AbilitySystem
     /// <summary>
     /// 基于 5 层目标系统选择目标
     /// </summary>
+    /// <param name="ability">技能实体</param>
+    /// <param name="context">施法上下文</param>
+    /// <returns>选中的目标列表</returns>
     private static List<IEntity> SelectTargets(AbilityEntity ability, CastContext context)
     {
-        var targets = new List<IEntity>();
         var owner = context.Caster;
+        if (owner == null) return new List<IEntity>();
 
-        if (owner == null) return targets;
-
-        // 1. 获取选取原点
+        // 1. 获取选取原点 (Origin)
         var origin = (AbilityTargetOrigin)ability.Data.Get<int>(DataKey.AbilityTargetOrigin);
 
         switch (origin)
         {
             case AbilityTargetOrigin.Self:
-                targets.Add(owner);
-                break;
+                // 以施法者自身作为目标
+                return new List<IEntity> { owner };
 
             case AbilityTargetOrigin.EventSource:
-                // 从施法上下文中获取事件源
+                // 从施法上下文中获取触发此技能的事件源实体（例如反击技能的目标是攻击者）
                 if (context.SourceEventData is IEntity eventSource)
                 {
-                    targets.Add(eventSource);
+                    return new List<IEntity> { eventSource };
                 }
-                break;
+                return new List<IEntity>();
 
             case AbilityTargetOrigin.Unit:
             case AbilityTargetOrigin.Point:
             case AbilityTargetOrigin.Cursor:
-                targets = SelectTargetsByGeometry(ability, owner);
-                break;
-        }
+                // 委托给 TargetSelector 进行几何查询
+                return SelectTargetsUsingSelector(ability, owner);
 
-        // 排序和数量限制
-        if (targets.Count > 1)
-        {
-            targets = SortAndLimitTargets(ability, targets, owner);
+            default:
+                return new List<IEntity>();
         }
-
-        return targets;
     }
 
     /// <summary>
-    /// 基于几何形状选择目标
+    /// 使用 TargetSelector 进行几何查询
     /// </summary>
-    private static List<IEntity> SelectTargetsByGeometry(AbilityEntity ability, IEntity owner)
+    private static List<IEntity> SelectTargetsUsingSelector(AbilityEntity ability, IEntity owner)
     {
-        var targets = new List<IEntity>();
+        // 获取施法者位置和朝向
+        Vector2 origin = Vector2.Zero;
+        Vector2? forward = null;
 
-        var geometry = (AbilityTargetGeometry)ability.Data.Get<int>(DataKey.AbilityTargetGeometry);
-        var teamFilter = (AbilityTargetTeamFilter)ability.Data.Get<int>(DataKey.AbilityTargetTeamFilter);
-        var typeFilter = (AbilityTargetTypeFilter)ability.Data.Get<int>(DataKey.AbilityTargetTypeFilter);
-        var range = ability.Data.Get<float>(DataKey.AbilityRange);
-
-        // TODO: 实际实现需要物理查询或 EntityManager 查询
-        switch (geometry)
+        if (owner is Node2D ownerNode2D)
         {
-            case AbilityTargetGeometry.Single:
-                break;
-            case AbilityTargetGeometry.Circle:
-                // targets = QueryEntitiesInCircle(owner.Position, range, teamFilter, typeFilter);
-                break;
-            case AbilityTargetGeometry.Box:
-                break;
-            case AbilityTargetGeometry.Line:
-                break;
-            case AbilityTargetGeometry.Cone:
-                break;
-            case AbilityTargetGeometry.Chain:
-                break;
-            case AbilityTargetGeometry.Global:
-                break;
+            origin = ownerNode2D.GlobalPosition;
+            // 从旋转角度计算前向向量
+            forward = Vector2.Right.Rotated(ownerNode2D.GlobalRotation);
         }
 
-        return targets;
-    }
-
-    /// <summary>
-    /// 排序并限制目标数量
-    /// </summary>
-    private static List<IEntity> SortAndLimitTargets(AbilityEntity ability, List<IEntity> targets, IEntity owner)
-    {
-        var sorting = (AbilityTargetSorting)ability.Data.Get<int>(DataKey.AbilityTargetSorting);
-        var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
-
-        // TODO: 实现排序逻辑
-
-        // 限制数量
-        if (maxTargets > 0 && targets.Count > maxTargets)
+        // 构造查询配置
+        var query = new TargetSelectorQuery
         {
-            targets = targets.GetRange(0, maxTargets);
-        }
+            // 几何参数
+            Geometry = (AbilityTargetGeometry)ability.Data.Get<int>(DataKey.AbilityTargetGeometry),
+            Origin = origin,
+            Forward = forward,
+            Range = ability.Data.Get<float>(DataKey.AbilityRange),
+            Width = ability.Data.Get<float>(DataKey.AbilityWidth),
+            Length = ability.Data.Get<float>(DataKey.AbilityLength),
+            Angle = ability.Data.Get<float>(DataKey.AbilityAngle),
+            ChainCount = ability.Data.Get<int>(DataKey.AbilityChainCount),
+            ChainRange = ability.Data.Get<float>(DataKey.AbilityChainRange),
 
-        return targets;
+            // 过滤参数
+            CenterEntity = owner,
+            TeamFilter = (AbilityTargetTeamFilter)ability.Data.Get<int>(DataKey.AbilityTargetTeamFilter),
+            TypeFilter = (AbilityTargetTypeFilter)ability.Data.Get<int>(DataKey.AbilityTargetTypeFilter),
+
+            // 排序与限制
+            Sorting = (AbilityTargetSorting)ability.Data.Get<int>(DataKey.AbilityTargetSorting),
+            MaxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets)
+        };
+
+        // 调用 TargetSelector
+        return TargetSelector.Query(query);
     }
+
 
     // ==================== 效果执行 ====================
 

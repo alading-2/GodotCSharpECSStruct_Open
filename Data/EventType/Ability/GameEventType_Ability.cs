@@ -24,11 +24,11 @@ public static partial class GameEventType
 
         /// <summary>
         /// 请求检查技能是否可用。
-        /// 响应者：所有资源/限制类组件 (CooldownComponent, ChargeComponent, CostComponent 等)
+        /// 响应者：所有资源/限制类组件 (CooldownComponent是否冷却完成, ChargeComponent是否充能足够, CostComponent是否消耗得起 等)
         /// </summary>
-        public const string RequestCheckCanUse = "ability:request_check_can_use";
+        public const string CheckCanUse = "ability:check_can_use";
         /// <summary>检查可用性事件数据</summary>
-        public readonly record struct RequestCheckCanUseEventData(AbilityEntity Ability, EventContext Context);
+        public readonly record struct CheckCanUseEventData(AbilityEntity Ability, EventContext Context);
 
         // ================= AbilitySystem (技能系统核心流程) =================
 
@@ -55,19 +55,17 @@ public static partial class GameEventType
         /// 发送者：TriggerComponent (当满足触发条件时，如按下按键或周期已到)
         /// 接收者：AbilitySystem (执行具体激活逻辑，如目标选择)
         /// </summary>
-        public const string TryActivate = "ability:try_activate";
+        /// <summary>
+        /// 尝试激活技能。
+        /// 发送者：TriggerComponent (当满足触发条件时，如按下按键或周期已到)
+        /// 接收者：AbilitySystem (执行具体激活逻辑，如目标选择)
+        /// </summary>
+        public const string TryTrigger = "ability:try_trigger";
         /// <summary>
         /// 尝试激活事件数据
-        /// - Caster: 施法者（可选，若为空则从关系中查找）
-        /// - RequestedTargets: 外部指定的目标（可选，若为空则由 AbilitySystem 自动选取）
-        /// - SourceEventData: 触发源事件数据（事件触发时携带，如 DamageEventData）
+        /// 使用 CastContext 传递所有上下文信息，避免参数重复
         /// </summary>
-        public readonly record struct TryActivateEventData(
-            AbilityEntity? Ability,
-            IEntity? Caster = null,
-            System.Collections.Generic.List<IEntity>? RequestedTargets = null,
-            object? SourceEventData = null
-        );
+        public readonly record struct TryTriggerEventData(CastContext Context);
 
 
         // ================= CooldownComponent (冷却组件) =================
@@ -82,18 +80,28 @@ public static partial class GameEventType
         /// 发送者：AbilitySystem (技能激活后)
         /// 接收者：CooldownComponent
         /// </summary>
-        public const string RequestStartCooldown = "ability:request_start_cooldown";
+        /// <summary>
+        /// 请求启动冷却。
+        /// 发送者：AbilitySystem (技能激活后)
+        /// 接收者：CooldownComponent
+        /// </summary>
+        public const string StartCooldown = "ability:start_cooldown";
         /// <summary>启动冷却事件数据</summary>
-        public readonly record struct RequestStartCooldownEventData(AbilityEntity Ability);
+        public readonly record struct StartCooldownEventData(AbilityEntity Ability);
 
         /// <summary>
         /// 请求重置冷却（立即完成）。
         /// 发送者：任意逻辑 (如刷新球效果)
         /// 接收者：CooldownComponent
         /// </summary>
-        public const string RequestResetCooldown = "ability:request_reset_cooldown";
+        /// <summary>
+        /// 请求重置冷却（立即完成）。
+        /// 发送者：任意逻辑 (如刷新球效果)
+        /// 接收者：CooldownComponent
+        /// </summary>
+        public const string ResetCooldown = "ability:reset_cooldown";
         /// <summary>重置冷却事件数据</summary>
-        public readonly record struct RequestResetCooldownEventData(AbilityEntity Ability);
+        public readonly record struct ResetCooldownEventData(AbilityEntity Ability);
 
         // ================= ChargeComponent (充能组件) =================
 

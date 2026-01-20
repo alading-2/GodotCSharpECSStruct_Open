@@ -74,10 +74,10 @@ public static partial class EntityManager
             EntityRelationshipType.ENTITY_TO_ABILITY
         );
 
-        // 核心逻辑连通：订阅 TryActivate 事件，由 AbilitySystem 统一处理
-        ability.Events.On<GameEventType.Ability.TryActivateEventData>(
-            GameEventType.Ability.TryActivate,
-            AbilitySystem.HandleTryActivate
+        // 核心逻辑连通：订阅 TryTrigger 事件，由 AbilitySystem 统一处理
+        ability.Events.On<GameEventType.Ability.TryTriggerEventData>(
+            GameEventType.Ability.TryTrigger,
+            AbilitySystem.HandleTryTrigger
         );
 
         // 发送事件

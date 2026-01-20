@@ -8,4 +8,7 @@ public static partial class DataKey
     public const string Name = "Name"; // 名称
     public const string Level = "Level"; // 等级
     public const string Id = "Id"; // ID
+    public const string Team = "Team"; // 阵营 (Enum: Team)
+    public const string EntityType = "EntityType"; // 实体类型 (Enum: EntityType)
+
 }

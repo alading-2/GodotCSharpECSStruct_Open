@@ -23,26 +23,9 @@ public partial class DataRegister_Unit : Node
         _log.Info("注册Unit数据...");
 
         // DisableHealthRecovery
-        DataRegistry.Register(new DataMeta
-        {
-            Key = DataKey.IsDisableHealthRecovery,
-            DisplayName = "是否禁止生命恢复",
-            Description = "是否禁止生命恢复",
-            Category = DataCategory_Unit.Recovery,
-            Type = typeof(bool),
-            DefaultValue = false
-        });
-
+        DataRegistry.Register(new DataMeta { Key = DataKey.IsDisableHealthRecovery, DisplayName = "是否禁止生命恢复", Description = "是否禁止生命恢复", Category = DataCategory_Unit.Recovery, Type = typeof(bool), DefaultValue = false });
         // DisableManaRecovery
-        DataRegistry.Register(new DataMeta
-        {
-            Key = DataKey.IsDisableManaRecovery,
-            DisplayName = "是否禁止魔法恢复",
-            Description = "是否禁止魔法恢复",
-            Category = DataCategory_Unit.Recovery,
-            Type = typeof(bool),
-            DefaultValue = false
-        });
+        DataRegistry.Register(new DataMeta { Key = DataKey.IsDisableManaRecovery, DisplayName = "是否禁止魔法恢复", Description = "是否禁止魔法恢复", Category = DataCategory_Unit.Recovery, Type = typeof(bool), DefaultValue = false });
 
         // === 状态标记 ===
         // 是否死亡

@@ -9,14 +9,14 @@
 *   **自动处理**：支持全局冷却缩减 (Cooldown Reduction) 统计属性。
 
 ## 事件交互
-1.  **`RequestCheckCanUse` (IN)**:
-    *   检查 `IsOnCooldown`。
-    *   若为 true -> `Context.SetFailed("冷却中")`。
-2.  **`RequestStartCooldown` (IN)**:
-    *   读取 `AbilityCooldown` 和 `CooldownReduction`。
-    *   计算最终 CD 并启动计时器。
-3.  **`RequestResetCooldown` (IN)**:
-    *   立即 Cancel 计时器，恢复就绪状态。
+12: 1.  **`CheckCanUse` (IN)**:
+13:     *   检查 `IsOnCooldown`。
+14:     *   若为 true -> `Context.SetFailed("冷却中")`。
+15: 2.  **`StartCooldown` (IN)**:
+16:     *   读取 `AbilityCooldown` 和 `CooldownReduction`。
+17:     *   计算最终 CD 并启动计时器。
+18: 3.  **`ResetCooldown` (IN)**:
+19:     *   立即 Cancel 计时器，恢复就绪状态。
 
 ## 依赖 DataKeys
 | DataKey | 类型 | 描述 |

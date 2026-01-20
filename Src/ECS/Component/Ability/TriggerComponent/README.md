@@ -4,7 +4,7 @@
 `TriggerComponent` 是技能的"扳机"，负责产生 **施法意图**，不负责具体执行。
 
 ## 核心职责
-1.  **意图生成**：当条件满足时，发送 `TryActivate` 事件。
+1.  **意图生成**：当条件满足时，发送 `TryTrigger` 事件。
 2.  **多模式支持**：支持手动、事件、周期、自动等多种触发模式。
 3.  **纯粹性**：不扣除消耗，不启动冷却，只负责"想不想放"。
 
@@ -15,7 +15,7 @@
 *   **Auto**: 自动攻击逻辑（如武器）。
 
 ## 事件交互
-*   **OUT -> `TryActivate`**: 发送给 `AbilitySystem`，请求激活技能。
+*   **OUT -> `TryTrigger`**: 发送给 `AbilitySystem`，请求激活技能。
 *   **IN <- `GlobalEventBus`**: 监听外部事件（如果是 OnEvent 模式）。
 
 ## 依赖 DataKeys

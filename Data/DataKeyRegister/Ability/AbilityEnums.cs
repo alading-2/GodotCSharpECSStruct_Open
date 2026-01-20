@@ -114,22 +114,25 @@ public enum AbilityTargetTeamFilter
 public enum AbilityTargetTypeFilter
 {
     None = 0,
-    /// <summary>英雄</summary>
-    Hero = 1 << 0,
-    /// <summary>小怪</summary>
-    Creep = 1 << 1,
+    /// <summary>单位 (生物)</summary>
+    Unit = 1 << 0,
+    /// <summary>投射物 (子弹)</summary>
+    Projectile = 1 << 1,
     /// <summary>建筑</summary>
     Structure = 1 << 2,
-    /// <summary>召唤物</summary>
-    Summoned = 1 << 3,
-    /// <summary>Boss</summary>
-    Boss = 1 << 4,
+    /// <summary>物品 (掉落物)</summary>
+    Item = 1 << 3,
+    /// <summary>技能实体</summary>
+    Ability = 1 << 4,
+    /// <summary>Buff实体</summary>
+    Buff = 1 << 5,
+
 
     // ============ 组合预设 ============
-    // 所有可攻击的单位
-    AllAttackable = Hero | Creep | Summoned | Boss,
-    // 所有地面单位
-    AllGround = Hero | Creep | Structure | Summoned | Boss,
+    // 所有物理实体
+    AllPhysical = Unit | Structure | Item,
+    // 所有可被攻击的目标
+    AllAttackable = Unit | Structure,
 }
 
 /// <summary>

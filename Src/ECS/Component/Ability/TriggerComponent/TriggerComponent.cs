@@ -213,16 +213,6 @@ public partial class TriggerComponent : Node, IComponent
     {
         if (_data == null || _entity is not AbilityEntity ability) return;
 
-        // 事件驱动：检查技能是否可用（内部冷却等）
-        var context = new EventContext();
-        _entity?.Events.Emit(
-            GameEventType.Ability.RequestCheckCanUse,
-            new GameEventType.Ability.RequestCheckCanUseEventData(ability, context)
-        );
-
-        if (!context.Success) return;
-
-        // 执行技能触发
         TriggerAbility();
     }
 
@@ -245,28 +235,18 @@ public partial class TriggerComponent : Node, IComponent
             return;
         }
 
-        // 2. 事件驱动：检查技能是否可用（内部冷却等）
-        var context = new EventContext();
-        _entity?.Events.Emit(
-            GameEventType.Ability.RequestCheckCanUse,
-            new GameEventType.Ability.RequestCheckCanUseEventData(ability, context)
-        );
-
-        if (!context.Success) return;
-
-        // 3. 执行触发（将事件数据传递给 AbilitySystem）
         TriggerAbility(eventData);
     }
 
     // ================= 触发执行 =================
 
     /// <summary>
-    /// 核心触发逻辑：发送 TryActivate 请求，由 AbilitySystem 统一处理。
+    /// 核心触发逻辑：发送 TryTrigger 请求，由 AbilitySystem 统一处理。
     /// 
     /// 修改说明（2026-01-20）：
     /// - 移除直接启动冷却的逻辑（由 AbilitySystem 处理）
     /// - 移除直接发送 Activated 事件（由 AbilitySystem 处理）
-    /// - 改为只发送 TryActivate 请求
+    /// - 改为只发送 TryTrigger 请求
     /// </summary>
     /// <param name="sourceEventData">触发源事件数据（事件触发时携带）</param>
     private void TriggerAbility(object? sourceEventData = null)
@@ -281,16 +261,20 @@ public partial class TriggerComponent : Node, IComponent
             ? EntityManager.GetEntityById(ownerId) as IEntity
             : null;
 
-        // 发送 TryActivate 请求，由 AbilitySystem 统一处理后续流程
+        // 创建施法上下文
+        var context = new CastContext
+        {
+            Ability = ability,
+            Caster = caster,
+            SourceEventData = sourceEventData
+            // RequestedTargets 默认为 null，表示自动选取
+        };
+
+        // 发送 TryTrigger 请求，由 AbilitySystem 统一处理
         // 包括：CanUse 检查、消耗资源、启动冷却、选择目标、执行效果
         _entity.Events.Emit(
-            GameEventType.Ability.TryActivate,
-            new GameEventType.Ability.TryActivateEventData(
-                ability,
-                caster,
-                null,  // RequestedTargets: 自动选取
-                sourceEventData
-            )
+            GameEventType.Ability.TryTrigger,
+            new GameEventType.Ability.TryTriggerEventData(context)
         );
 
         _log.Debug($"触发技能请求: {AbilityName}");
@@ -316,20 +300,6 @@ public partial class TriggerComponent : Node, IComponent
             return false;
         }
 
-        // 事件驱动：检查技能是否可用（冷却、充能等）
-        var context = new EventContext();
-        _entity?.Events.Emit(
-            GameEventType.Ability.RequestCheckCanUse,
-            new GameEventType.Ability.RequestCheckCanUseEventData(ability, context)
-        );
-
-        if (!context.Success)
-        {
-            _log.Debug($"技能 {AbilityName} 不可用: {context.FailReason}");
-            return false;
-        }
-
-        // 执行触发
         TriggerAbility();
         return true;
     }

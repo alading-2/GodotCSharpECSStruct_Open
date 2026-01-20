@@ -34,14 +34,15 @@ Src/ECS/System/AbilitySystem/
 由 `TriggerComponent`、AI 或玩家输入发起：
 ```csharp
 // 只表达“想放”，不处理逻辑
+// 这里的 Utility Method 实际上是包装了 TryTrigger 的逻辑或直接调用处理入口
 AbilitySystem.TryActivateAbility(player, "Fireball");
 ```
 
 ### 2. 施法 (Cast)
 `AbilitySystem` 执行核心检查：
-1.  **Check**: `RequestCheckCanUse` (CD? 消耗? 标签?)
-2.  **Target**: 获取或选择目标
-3.  **Cost**: `ConsumeCharge` & `RequestStartCooldown`
+42: 1.  **Check**: `CheckCanUse` (CD? 消耗? 标签?)
+43: 2.  **Target**: 获取或选择目标
+44: 3.  **Cost**: `ConsumeCharge` & `StartCooldown`
 
 ### 3. 执行 (Execute)
 若施法成功，发出 `Activated` 事件，Payload 包含完整上下文：
@@ -78,9 +79,9 @@ ability.Events.Emit(GameEventType.Ability.Activated, new ActivatedEventData(
 
 | 事件名称 | 方向 |Payload 核心数据 | 描述 |
 | :--- | :--- | :--- | :--- |
-| `RequestCheckCanUse` | Sys->Cmp | `EventContext` (可设置失败原因) | 询问组件是否允许施法 |
+| `CheckCanUse` | Sys->Cmp | `EventContext` (可设置失败原因) | 询问组件是否允许施法 |
 | `ConsumeCharge` | Sys->Cmp | `EventContext` | 请求扣除次数 |
-| `RequestStartCooldown`| Sys->Cmp | - | 请求开始冷却 |
+| `StartCooldown`| Sys->Cmp | - | 请求开始冷却 |
 | `Activated` | Sys->Exec | `List<IEntity> Targets` | 施法成功，开始执行业务 |
 
 ---
