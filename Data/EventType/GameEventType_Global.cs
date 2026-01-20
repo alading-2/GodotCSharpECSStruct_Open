@@ -50,5 +50,14 @@ public static partial class GameEventType
             DeathType DeathType = DeathType.Normal,
             DamageType DamageType = DamageType.True
         );
+
+        // === 属性/等级全局事件 ===
+        /// <summary>
+        /// 单位等级提升 (全局广播)
+        /// </summary>
+        public const string LevelUp = "global:level_up";
+        /// <summary>等级提升事件数据</summary>
+        public readonly record struct LevelUpEventData(IEntity Entity, int OldLevel, int NewLevel);
+
     }
 }

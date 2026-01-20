@@ -33,9 +33,7 @@ public enum AbilityTriggerMode
     /// <summary>永久生效 - 无触发概念 (如属性加成)</summary>
     Permanent = 1 << 3,
 
-    // ============ 武器技能触发 ============
-    /// <summary>自动触发 - 满足条件自动释放 (如自动攻击)</summary>
-    Auto = 1 << 4,
+
 
     // ============ 组合预设 ============
     /// <summary>事件 + 周期 (如反伤光环)</summary>

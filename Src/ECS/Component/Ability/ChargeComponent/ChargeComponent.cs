@@ -24,6 +24,13 @@ public partial class ChargeComponent : Node, IComponent
     /// <summary>充能恢复计时器（由 TimerManager 管理）</summary>
     private GameTimer? _chargeTimer;
 
+    // ================= 属性访问 =================
+
+    private AbilityType AbilityType => _data.Get<AbilityType>(DataKey.AbilityType);
+    private string AbilityName => _data.Get<string>(DataKey.Name);
+    private int CurrentCharges => _data.Get<int>(DataKey.AbilityCurrentCharges);
+    private int MaxCharges => _data.Get<int>(DataKey.AbilityMaxCharges);
+
     // ================= IComponent 实现 =================
 
     /// <summary>
@@ -44,10 +51,6 @@ public partial class ChargeComponent : Node, IComponent
                 return;
             }
 
-            // 初始化当前充能为最大充能值
-            int maxCharges = _data.Get<int>(DataKey.AbilityMaxCharges);
-            _data.Set(DataKey.AbilityCurrentCharges, maxCharges);
-
             // 订阅事件驱动请求
             SubscribeEvents();
         }
@@ -62,10 +65,6 @@ public partial class ChargeComponent : Node, IComponent
 
         // 停止恢复计时
         StopChargeRecovery();
-
-        // 将充能状态恢复到初始满状态
-        int maxCharges = _data.Get<int>(DataKey.AbilityMaxCharges);
-        _data.Set(DataKey.AbilityCurrentCharges, maxCharges);
     }
 
     /// <summary>
@@ -105,8 +104,7 @@ public partial class ChargeComponent : Node, IComponent
     private void OnRequestCheckCanUse(GameEventType.Ability.RequestCheckCanUseEventData eventData)
     {
         // 仅主动技能需要检查充能
-        var abilityType = _data.Get<AbilityType>(DataKey.AbilityType);
-        if (abilityType != AbilityType.Active) return;
+        if (AbilityType != AbilityType.Active) return;
 
         if (!HasCharge())
         {
@@ -118,8 +116,7 @@ public partial class ChargeComponent : Node, IComponent
     private void OnRequestConsumeCharge(GameEventType.Ability.ConsumeChargeEventData eventData)
     {
         // 仅主动技能需要消耗充能
-        AbilityType abilityType = _data.Get<AbilityType>(DataKey.AbilityType);
-        if (abilityType != AbilityType.Active) return;
+        if (AbilityType != AbilityType.Active) return;
 
         // 调用消耗方法并在 Context 中报告结果
         bool success = ConsumeCharge();
@@ -161,14 +158,12 @@ public partial class ChargeComponent : Node, IComponent
         // 如果充能时间间隔<=0，不启动充能恢复计时器
         if (chargeTime <= 0f) return;
 
-        string abilityName = _data.Get<string>(DataKey.Name);
-
         // 使用 TimerManager.Loop() 创建循环计时器
         _chargeTimer = TimerManager.Instance.Loop(chargeTime)
             .WithTag("AbilityCharge")
             .OnLoop(RecoverOneCharge);
 
-        _log.Debug($"启动充能恢复: {abilityName}, 间隔: {chargeTime:F2}s");
+        _log.Debug($"启动充能恢复: {AbilityName}, 间隔: {chargeTime:F2}s");
     }
 
     /// <summary>
@@ -190,21 +185,17 @@ public partial class ChargeComponent : Node, IComponent
     {
         if (_data == null || amount <= 0) return 0;
 
-        int currentCharges = _data.Get<int>(DataKey.AbilityCurrentCharges);
-        int maxCharges = _data.Get<int>(DataKey.AbilityMaxCharges);
-
         // ✅ 统一的上限检查 - 防止充能超过最大值
-        int actualAdd = System.Math.Min(amount, maxCharges - currentCharges);
+        int actualAdd = System.Math.Min(amount, MaxCharges - CurrentCharges);
         if (actualAdd <= 0) return 0;
 
-        currentCharges += actualAdd;
-        _data.Set(DataKey.AbilityCurrentCharges, currentCharges);
+        int newCharges = CurrentCharges + actualAdd;
+        _data.Set(DataKey.AbilityCurrentCharges, newCharges);
 
-        string abilityName = _data.Get<string>(DataKey.Name);
-        _log.Debug($"充能增加: {abilityName}, +{actualAdd}, 当前: {currentCharges}/{maxCharges}");
+        _log.Debug($"充能增加: {AbilityName}, +{actualAdd}, 当前: {newCharges}/{MaxCharges}");
 
         // ✅ 充能已满时停止自动恢复计时器
-        if (currentCharges >= maxCharges)
+        if (newCharges >= MaxCharges)
         {
             StopChargeRecovery();
         }
@@ -212,7 +203,7 @@ public partial class ChargeComponent : Node, IComponent
         // ✅ 发送统一的充能恢复事件
         _entity?.Events.Emit(
             GameEventType.Ability.ChargeRestored,
-            new GameEventType.Ability.ChargeRestoredEventData(currentCharges, maxCharges)
+            new GameEventType.Ability.ChargeRestoredEventData(newCharges, MaxCharges)
         );
 
         return actualAdd;
@@ -229,7 +220,7 @@ public partial class ChargeComponent : Node, IComponent
     public bool HasCharge()
     {
         if (_data == null) return false;
-        return _data.Get<int>(DataKey.AbilityCurrentCharges) > 0;
+        return CurrentCharges > 0;
     }
 
     /// <summary>
@@ -241,23 +232,20 @@ public partial class ChargeComponent : Node, IComponent
     {
         if (_data == null) return false;
 
-        int currentCharges = _data.Get<int>(DataKey.AbilityCurrentCharges);
-        if (currentCharges <= 0)
+        if (CurrentCharges <= 0)
         {
-            _log.Debug($"技能 {_data.Get<string>(DataKey.Name)} 充能不足");
+            _log.Debug($"技能 {AbilityName} 充能不足");
             return false;
         }
 
-        int maxCharges = _data.Get<int>(DataKey.AbilityMaxCharges);
-
         // 减少一次充能
-        currentCharges--;
-        _data.Set(DataKey.AbilityCurrentCharges, currentCharges);
+        int newCharges = CurrentCharges - 1;
+        _data.Set(DataKey.AbilityCurrentCharges, newCharges);
 
-        _log.Debug($"消耗充能: {_data.Get<string>(DataKey.Name)}, 剩余: {currentCharges}/{maxCharges}");
+        _log.Debug($"消耗充能: {AbilityName}, 剩余: {newCharges}/{MaxCharges}");
 
         // 从满充能变为非满，启动恢复计时器
-        if (currentCharges == maxCharges - 1)
+        if (newCharges == MaxCharges - 1)
         {
             StartChargeRecovery();
         }
@@ -273,7 +261,7 @@ public partial class ChargeComponent : Node, IComponent
     public int GetCurrentCharges()
     {
         if (_data == null) return 0;
-        return _data.Get<int>(DataKey.AbilityCurrentCharges);
+        return CurrentCharges;
     }
 
     /// <summary>
@@ -282,7 +270,7 @@ public partial class ChargeComponent : Node, IComponent
     public int GetMaxCharges()
     {
         if (_data == null) return 1;
-        return _data.Get<int>(DataKey.AbilityMaxCharges);
+        return MaxCharges;
     }
 
     /// <summary>
@@ -293,11 +281,8 @@ public partial class ChargeComponent : Node, IComponent
     {
         if (_data == null) return 1f;
 
-        int currentCharges = _data.Get<int>(DataKey.AbilityCurrentCharges);
-        int maxCharges = _data.Get<int>(DataKey.AbilityMaxCharges);
-
         // 充能已满，进度为 1
-        if (currentCharges >= maxCharges) return 1f;
+        if (CurrentCharges >= MaxCharges) return 1f;
 
         // 如果计时器存在，返回其进度
         if (_chargeTimer != null)
@@ -316,13 +301,12 @@ public partial class ChargeComponent : Node, IComponent
     {
         if (_data == null) return;
 
-        int maxCharges = _data.Get<int>(DataKey.AbilityMaxCharges);
-        _data.Set(DataKey.AbilityCurrentCharges, maxCharges);
+        _data.Set(DataKey.AbilityCurrentCharges, MaxCharges);
 
         // 停止恢复计时
         StopChargeRecovery();
 
-        _log.Debug($"技能充能完全恢复: {_data.Get<string>(DataKey.Name)}");
+        _log.Debug($"技能充能完全恢复: {AbilityName}");
     }
 
     /// <summary>

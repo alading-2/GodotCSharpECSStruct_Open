@@ -3,40 +3,28 @@
 ## 概述
 `ChargeComponent` 管理技能的充能（Charges）系统，支持多次使用及随时间自动恢复机制。
 
-## 核心功能
-1.  **多段充能**：最大次数由 `AbilityMaxCharges` 定义。
-2.  **事件驱动消耗**：响应 `ConsumeCharge` 事件。
-3.  **高性能恢复**：使用 `TimerManager.Loop` 驱动自动恢复。
-4.  **按需恢复控制**：若 `AbilityChargeTime < 0`，则禁用自动恢复，仅响应 `AddCharge` 事件。
+## 架构特性
+1.  **无状态设计**：核心数据 (`MaxCharges`, `ChargeTime`) 存储于 `Entity.Data`。
+2.  **选择性封装**：高频运行时数据 (`CurrentCharges`, `Timer`) 通过 C# 属性封装，内部读写 Data，外部调用更简洁。
+3.  **事件驱动**：完全通过 `EventContext` 响应系统请求。
 
-## 依赖的 DataKeys
+## 核心功能
+1.  **多段充能**：支持 1 到 N 次充能。
+2.  **高性能恢复**：使用 `TimerManager` 驱动恢复，若 `ChargeTime < 0` 则禁用自动恢复。
+3.  **事件交互**：
+    *   **Check**: 响应 `RequestCheckCanUse` -> 检查 `CurrentCharges > 0`。
+    *   **Consume**: 响应 `ConsumeCharge` -> 扣除 1 层充能。
+    *   **Add**: 响应 `AddCharge` -> 外部逻辑增加充能。
+
+## 依赖 DataKeys
 | DataKey | 类型 | 描述 |
 | :--- | :--- | :--- |
-| `AbilityMaxCharges` | `int` | 最大充能次数 |
-| `AbilityCurrentCharges` | `int` | 运行时当前充能 |
-| `AbilityChargeTime` | `float` | 恢复一次所需时间（秒） |
-| `IsAbilityUsesCharges` | `bool` | 是否启用该组件逻辑 |
-
-## 事件交互 (Context 模式)
-
-### 1. 响应 `RequestCheckCanUse`
-检查充能是否大于 0。若不足，调用 `eventData.Context.SetFailed("充能不足")`。
-
-### 2. 响应 `ConsumeCharge`
-扣除一次充能并标记成功。若执行中充能不足，通过 `EventContext` 返回失败原因。
-
-### 3. 响应 `AddCharge`
-由外部系统（道具/Buff）增加充能层数，受 `MaxCharges` 保护。
-
-## 工作逻辑
-- **初始化**：通过 `OnComponentRegistered` 订阅实体事件。
-- **计时器管理**：
-    - 充能未满且 `AbilityChargeTime > 0` 时，启动 `TimerManager.Loop`。
-    - 充能满时自动 `Cancel` 计时器。
-    - 组件注销 (`OnComponentUnregistered`) 时强制清理计时器。
+| `AbilityMaxCharges` | `int` (Stat) | 最大充能次数 |
+| `AbilityCurrentCharges` | `int` (Runtime)| 当前充能次数（属性封装） |
+| `AbilityChargeTime` | `float` (Stat) | 恢复时间 (<0 禁用自动恢复) |
 
 ---
 
 **维护者**：项目团队  
-**文档版本**：v2.6  
-**更新日期**：2026-01-19
+**文档版本**：v3.0  
+**更新日期**：2026-01-20

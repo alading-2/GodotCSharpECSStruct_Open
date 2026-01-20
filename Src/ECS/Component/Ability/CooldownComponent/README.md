@@ -1,32 +1,31 @@
 # CooldownComponent (冷却组件)
 
 ## 概述
-`CooldownComponent` 利用 `TimerManager` 驱动高性能的技能冷却计时。
+`CooldownComponent` 管理技能的冷却状态 (CD)。
 
-## 核心职责
-1. **冷却状态管理**：判断技能是否处于 CD 中。
-2. **冷却缩减应用**：自动结合 `CooldownReduction` 与基础 CD 计算最终时长。
-3. **重置机制**：支持通过事件立即刷新技能。
+## 架构特性
+*   **精准计时**：利用 `TimerManager` 进行毫秒级冷却管理。
+*   **属性封装**：提供 `IsOnCooldown` 属性供快速访问。
+*   **自动处理**：支持全局冷却缩减 (Cooldown Reduction) 统计属性。
 
-## 依赖的 DataKeys
+## 事件交互
+1.  **`RequestCheckCanUse` (IN)**:
+    *   检查 `IsOnCooldown`。
+    *   若为 true -> `Context.SetFailed("冷却中")`。
+2.  **`RequestStartCooldown` (IN)**:
+    *   读取 `AbilityCooldown` 和 `CooldownReduction`。
+    *   计算最终 CD 并启动计时器。
+3.  **`RequestResetCooldown` (IN)**:
+    *   立即 Cancel 计时器，恢复就绪状态。
+
+## 依赖 DataKeys
 | DataKey | 类型 | 描述 |
 | :--- | :--- | :--- |
-| `AbilityCooldown` | `float` | 基础冷却时间 (Static) |
-| `CooldownReduction` | `float` | 全局冷却缩减百分比 (Modifiers) |
-
-## 事件驱动响应
-*   **`RequestCheckCanUse`**：若计时器存在，回复 "技能冷却中"。
-*   **`RequestStartCooldown`**：启动 `TimerManager.Delay`。
-*   **`RequestResetCooldown`**：立即取消计时器，使技能就绪。
-
-## 计时器设计
-- **无状态存储**：组件不记录 `RemainingTime` 到 DataKey，而是通过检查私有字段 `_timer` 是否为空来判断状态。
-- **自动清理**：
-    - `OnComplete` 回调中自动释放引用并发送 `Ready` 事件。
-    - `OnComponentUnregistered` 时强制 `Cancel`。
+| `AbilityCooldown` | `float` (Stat) | 基础冷却时间 |
+| `CooldownReduction` | `float` (Stat) | 缩减百分比 (0.0 - 1.0) |
 
 ---
 
 **维护者**：项目团队  
-**文档版本**：v2.2  
-**更新日期**：2026-01-19
+**文档版本**：v3.0  
+**更新日期**：2026-01-20

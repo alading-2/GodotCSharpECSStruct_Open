@@ -59,13 +59,13 @@ public partial class DataRegister_Ability : Node
 
         // ============ 触发配置 ============
         // 触发模式
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerMode, DisplayName = "触发模式", Category = DataCategory_Ability.Trigger, Type = typeof(AbilityTriggerMode), DefaultValue = AbilityTriggerMode.Auto });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerMode, DisplayName = "触发模式", Category = DataCategory_Ability.Trigger, Type = typeof(AbilityTriggerMode), DefaultValue = AbilityTriggerMode.None });
         // 触发事件
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerEvent, DisplayName = "触发事件", Category = DataCategory_Ability.Trigger, Type = typeof(string), DefaultValue = "" });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerEvent, DisplayName = "触发事件", Category = DataCategory_Ability.Trigger, Type = typeof(List<string>), DefaultValue = new List<string>() });
         // 触发间隔
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerInterval, DisplayName = "触发间隔", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
         // 触发概率
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerChance, DisplayName = "触发概率", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 1f, MinValue = 0, MaxValue = 1 });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerChance, DisplayName = "触发概率", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0f, MaxValue = 100f });
 
         // ============ 目标系统 - 5 层分解 ============
         // 目标原点

@@ -67,4 +67,13 @@ public static class GlobalEventBus
     {
         Global.Emit(GameEventType.Global.UnitKilled, data);
     }
+
+    /// <summary>
+    /// 触发单位升级事件
+    /// </summary>
+    public static void TriggerLevelUp(IEntity entity, int oldLevel, int newLevel)
+    {
+        Global.Emit(GameEventType.Global.LevelUp, new GameEventType.Global.LevelUpEventData(entity, oldLevel, newLevel));
+    }
+
 }

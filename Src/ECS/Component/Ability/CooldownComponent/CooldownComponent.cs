@@ -21,6 +21,12 @@ public partial class CooldownComponent : Node, IComponent
     private IEntity? _entity;
     private GameTimer? _timer;
 
+    // ================= 属性访问 =================
+
+    private string AbilityName => _data.Get<string>(DataKey.Name);
+    private float BaseCooldown => _data.Get<float>(DataKey.AbilityCooldown);
+    private float CooldownReduction => _data.Get<float>(DataKey.CooldownReduction);
+
     // ================= IComponent 实现 =================
 
     public void OnComponentRegistered(Node entity)
@@ -101,9 +107,8 @@ public partial class CooldownComponent : Node, IComponent
         float totalCooldown = GetTotalCooldown();
         if (totalCooldown <= 0f) return;
 
-        CancelTimer();
 
-        string abilityName = _data.Get<string>(DataKey.Name);
+        CancelTimer();
 
         // 创建 Timer
         _timer = TimerManager.Instance.Delay(totalCooldown)
@@ -118,17 +123,17 @@ public partial class CooldownComponent : Node, IComponent
                     new GameEventType.Ability.ReadyEventData(_entity as AbilityEntity)
                 );
 
-                _log.Debug($"技能冷却完成: {abilityName}");
+                _log.Debug($"技能冷却完成: {AbilityName}");
             });
 
-        _log.Debug($"技能开始冷却: {abilityName}, 时长: {totalCooldown:F2}s");
+        _log.Debug($"技能开始冷却: {AbilityName}, 时长: {totalCooldown:F2}s");
     }
 
     /// <summary>重置冷却（立即完成冷却）</summary>
     public void ResetCooldown(GameEventType.Ability.RequestResetCooldownEventData eventData)
     {
         CancelTimer();
-        _log.Debug($"技能冷却重置: {_data?.Get<string>(DataKey.Name)}");
+        _log.Debug($"技能冷却重置: {AbilityName}");
     }
 
     /// <summary>获取冷却进度 (0.0=刚开始, 1.0=完成)</summary>
@@ -151,13 +156,9 @@ public partial class CooldownComponent : Node, IComponent
         if (_data == null) return 0f;
 
         // 获取基础冷却时间 (支持修改器)
-        float baseCooldown = _data.Get<float>(DataKey.AbilityCooldown);
-
         // 获取冷却缩减 (支持修改器)
-        float cdReduction = _data.Get<float>(DataKey.CooldownReduction);
-
         // 使用 MyMath 统一公式
-        return MyMath.CalculateFinalCooldownTime(baseCooldown, cdReduction);
+        return MyMath.CalculateFinalCooldownTime(BaseCooldown, CooldownReduction);
     }
 
     // ================= 私有方法 =================

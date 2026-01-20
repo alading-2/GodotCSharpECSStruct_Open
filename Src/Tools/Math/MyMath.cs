@@ -61,4 +61,14 @@ public static class MyMath
             // return rate;
         }
     }
+
+    /// <summary>
+    /// 检查概率是否触发
+    /// </summary>
+    /// <param name="chance">触发概率 (0-100)</param>
+    /// <returns>是否触发</returns>
+    public static bool CheckProbability(float chance)
+    {
+        return GD.Randf() * 100f < chance;
+    }
 }

@@ -44,7 +44,7 @@ public static partial class DataKey
     public const string AbilityCostAmount = "AbilityCostAmount";
 
     // ============ 触发配置 ============
-    /// <summary>触发模式 [Flags] (Manual/OnEvent/Periodic/Permanent/Auto)</summary>
+    /// <summary>触发模式 [Flags] (Manual/OnEvent/Periodic/Permanent)</summary>
     public const string AbilityTriggerMode = "AbilityTriggerMode";
     /// <summary>触发事件类型 (当 TriggerMode 包含 OnEvent)</summary>
     public const string AbilityTriggerEvent = "AbilityTriggerEvent";

@@ -28,26 +28,29 @@ Src/ECS/System/AbilitySystem/
 
 ---
 
-## 核心流程
+## 核心流程 (Trigger -> Cast -> Execute)
 
-### 1. 添加技能
+### 1. 触发 (Trigger)
+由 `TriggerComponent`、AI 或玩家输入发起：
 ```csharp
-var config = new Dictionary<string, object>
-{
-    { DataKey.Name, "Fireball" },
-    { DataKey.AbilityCooldown, 5f },
-    { DataKey.AbilityTriggerMode, (int)AbilityTriggerMode.Manual }
-};
-
-// 自动建立 ENTITY_TO_ABILITY 关系，并默认使用对象池
-var ability = EntityManager.AddAbility(player, config);
-```
-
-### 2. 激活技能
-```csharp
-// 推荐：由 AbilitySystem 统一处理检查、消耗和冷却
+// 只表达“想放”，不处理逻辑
 AbilitySystem.TryActivateAbility(player, "Fireball");
 ```
+
+### 2. 施法 (Cast)
+`AbilitySystem` 执行核心检查：
+1.  **Check**: `RequestCheckCanUse` (CD? 消耗? 标签?)
+2.  **Target**: 获取或选择目标
+3.  **Cost**: `ConsumeCharge` & `RequestStartCooldown`
+
+### 3. 执行 (Execute)
+若施法成功，发出 `Activated` 事件，Payload 包含完整上下文：
+```csharp
+ability.Events.Emit(GameEventType.Ability.Activated, new ActivatedEventData(
+    caster, ability, targets, triggerContext
+));
+```
+具体的伤害、特效逻辑应监听此事件执行。
 
 ---
 
@@ -56,45 +59,45 @@ AbilitySystem.TryActivateAbility(player, "Fireball");
 ### EntityManager (Ability 扩展)
 | 方法 | 说明 |
 | :--- | :--- |
-| `AddAbility(owner, config)` | 为单位添加技能（自动处理关系和对象池） |
-| `RemoveAbility(owner, name)` | 移除技能并归还对象池 |
-| `GetAbilities(owner)` | 获取单位所有技能列表 |
-| `GetAbilityByName(owner, name)` | 按名称查找技能 |
+| `AddAbility` | 为单位添加技能（自动处理关系和对象池） |
+| `RemoveAbility` | 移除技能 |
+| `GetAbilities` | 获取单位所有技能 |
 
-### AbilitySystem
+### AbilitySystem (Static)
 | 方法 | 说明 |
 | :--- | :--- |
-| `TryActivateAbility(owner, name)` | 尝试完整激活流程 |
-| `CanUseAbility(ability)` | 检查可用性（发送 `RequestCheckCanUse` 事件） |
+| `TryActivateAbility` | 尝试激活（包含完整检查流程） |
+| `CanUseAbility` | 仅检查是否可用 (不消耗) |
+| `SelectTargets` | 执行目标选择逻辑 (基于 DataKey 配置) |
 
 ---
 
 ## 事件驱动机制
 
-系统核心流程完全依赖事件解耦：
+**核心原则**：`AbilitySystem` 是调度器，`Component` 是响应器。
 
-| 事件名称 | 发送者 | 预期响应者 | 描述 |
+| 事件名称 | 方向 |Payload 核心数据 | 描述 |
 | :--- | :--- | :--- | :--- |
-| `RequestCheckCanUse` | `AbilitySystem` | `CooldownComponent` 等 | 检查是否就绪 |
-| `ConsumeCharge` | `AbilitySystem` | `ChargeComponent` | 扣除充能次数 |
-| `RequestStartCooldown`| `AbilitySystem` | `CooldownComponent` | 启动冷却计时 |
-| `Activated` | `AbilitySystem` | `AbilityEffect` 系统 | 触发实际业务结果 |
+| `RequestCheckCanUse` | Sys->Cmp | `EventContext` (可设置失败原因) | 询问组件是否允许施法 |
+| `ConsumeCharge` | Sys->Cmp | `EventContext` | 请求扣除次数 |
+| `RequestStartCooldown`| Sys->Cmp | - | 请求开始冷却 |
+| `Activated` | Sys->Exec | `List<IEntity> Targets` | 施法成功，开始执行业务 |
 
 ---
 
 ## 架构特性
 
 ### 1. 静态化逻辑
-`AbilitySystem` 不需要挂载到场景树，所有方法均为 `static`，通过传入 `AbilityEntity` 进行操作。
+`AbilitySystem` 是纯静态类，无状态。所有状态存储在 `AbilityEntity` 的 `Data` 中。
 
-### 2. 增强的关系管理
-不再在 `Data` 中存储 `Owner` 引用，统一使用 `EntityRelationshipManager` 的 `ENTITY_TO_ABILITY` 类型维护技能与单位的关系。
+### 2. 选择性封装 (Selective Encapsulation)
+组件使用 `Data.Get<T>` 读写数据，但对于高频核心数据（如 `CurrentCharges`, `IsOnCooldown`），推荐使用 C# 属性封装以提高代码可读性。
 
-### 3. 对象池集成
-`AbilityEntity` 默认支持对象池。`EntityManager.AddAbility` 会自动从 `AbilityPool` 申请实例，`RemoveAbility` 会自动执行 `Destroy` 逻辑归还对象池。
+### 3. 统一关系管理
+技能归属权统一由 `EntityRelationshipManager` 维护，不依赖组件内的 `_owner` 字段序列化。
 
 ---
 
 **维护者**：项目团队  
-**文档版本**：v2.5  
-**更新日期**：2026-01-19
+**文档版本**：v3.0  
+**更新日期**：2026-01-20
