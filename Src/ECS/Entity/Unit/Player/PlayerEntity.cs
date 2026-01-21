@@ -28,24 +28,46 @@ public partial class PlayerEntity : CharacterBody2D, IUnit
     /// </summary>
     public EventBus Events { get; } = new EventBus();
 
-    // EntityId 由 IEntity 默认实现（从 DataKey.Id 读取）
-
-    // 0: Player
-    public int FactionId => 0;
-
     public override void _Ready()
     {
         base._Ready();
-
-        // 注册到 EntityManager（如果需要全局查询）
-        EntityManager.Register(this, "Player");
-
-        _log.Info("玩家实体初始化完成。");
     }
 
     public override void _ExitTree()
     {
-        // 统一注销 (内部自动清理 Data 和 Events)
-        EntityManager.UnregisterEntity(this);
+        base._ExitTree();
+    }
+
+    // ================= IPoolable 接口实现 =================
+
+    /// <summary>
+    /// [IPoolable] 当从池中取出时调用 (Active)。
+    /// 统一在此处订阅事件，确保对象池复用时事件正确绑定。
+    /// </summary>
+    public void OnPoolAcquire()
+    {
+        // 直接订阅即可（EntityManager 已自动清空事件）
+    }
+
+    /// <summary>
+    /// [IPoolable] 当归还池时调用 (Deactive)。
+    /// 核心职责：清理状态、重置数据。
+    /// </summary>
+    public void OnPoolRelease()
+    {
+        // 1. 重置自身状态 (仅重置非 Data/Component 管理的状态)
+        Velocity = Vector2.Zero;
+
+        // 注意：Events.Clear(), Data.Clear(), Component.OnComponentReset()
+        // 均由 EntityManager.Destroy() -> UnregisterEntity() 统一处理
+    }
+
+    /// <summary>
+    /// [IPoolable] 当归还池时重置
+    /// </summary>
+    public void OnPoolReset()
+    {
+        // 可以在这里移除所有动态添加的组件，如果需要的话
+        // 但通常为了复用，我们保留组件结构，只重置数据
     }
 }

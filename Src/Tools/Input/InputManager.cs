@@ -17,10 +17,10 @@ public static class InputManager
     public static bool IsCancel() => Godot.Input.IsActionJustPressed("BtnB");
 
     /// <summary>攻击键（X键）是否刚按下</summary>
-    public static bool IsAttack() => Godot.Input.IsActionJustPressed("BtnX");
+    public static bool IsX() => Godot.Input.IsActionJustPressed("BtnX");
 
     /// <summary>特殊键（Y键）是否刚按下</summary>
-    public static bool IsSpecial() => Godot.Input.IsActionJustPressed("BtnY");
+    public static bool IsY() => Godot.Input.IsActionJustPressed("BtnY");
 
     /// <summary>暂停键（Start/ESC）是否刚按下</summary>
     public static bool IsPause() => Godot.Input.IsActionJustPressed("BtnStart");

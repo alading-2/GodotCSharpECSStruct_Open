@@ -21,6 +21,9 @@ public partial class DataRegister_Unit : Node
     public override void _Ready()
     {
         _log.Info("注册Unit数据...");
+        // 等级
+        DataRegistry.Register(new DataMeta { Key = DataKey.Level, DisplayName = "等级", Description = "实体的等级", Category = DataCategory_Base.Basic, Type = typeof(int), DefaultValue = 1, MinValue = 1, MaxValue = GlobalConfig.Maxlevel, SupportModifiers = false });
+
 
         // DisableHealthRecovery
         DataRegistry.Register(new DataMeta { Key = DataKey.IsDisableHealthRecovery, DisplayName = "是否禁止生命恢复", Description = "是否禁止生命恢复", Category = DataCategory_Unit.Recovery, Type = typeof(bool), DefaultValue = false });

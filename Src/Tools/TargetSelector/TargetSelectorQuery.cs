@@ -61,6 +61,12 @@ public readonly record struct TargetSelectorQuery
     /// </summary>
     public float ChainRange { get; init; }
 
+    /// <summary>
+    /// 链式是否允许重复目标（可选，默认 false）
+    /// Chain 使用此参数
+    /// </summary>
+    public bool ChainAllowDuplicate { get; init; }
+
     // ==================== 过滤参数 ====================
 
     /// <summary>
@@ -84,8 +90,8 @@ public readonly record struct TargetSelectorQuery
     // ==================== 排序与限制 ====================
 
     /// <summary>
-    /// 排序规则（可选，默认不排序）
-    /// Nearest/Farthest/LowestHealth 等
+    /// 排序规则（可选，默认 AbilityTargetSorting.None）
+    /// None/Nearest/Farthest/LowestHealth 等
     /// </summary>
     public AbilityTargetSorting Sorting { get; init; }
 

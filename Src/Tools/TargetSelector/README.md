@@ -42,7 +42,7 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
     MaxTargets = 3
 });
 
-// 示例3: 链式传递(如闪电链)
+// 示例3: 链式传递(如闪电链)，默认不重复目标ChainAllowDuplicate = false
 var targets = TargetSelector.Query(new TargetSelectorQuery
 {
     Geometry = AbilityTargetGeometry.Chain,
@@ -69,20 +69,22 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
+|:-----------|:-----------|:-----------|:-----------------------------------|
 | `Geometry` | `AbilityTargetGeometry` | ✅ | 几何形状类型 |
 | `Origin` | `Vector2` | ✅ | 查询原点 |
-| `Forward` | `Vector2?` | - | 方向向量(Line/Cone/Box需要) |
-| `Range` | `float` | - | 半径(Circle/Cone使用) |
-| `Width` | `float` | - | 宽度(Box/Line使用) |
-| `Length` | `float` | - | 长度(Box/Line使用) |
-| `Angle` | `float` | - | 角度(Cone使用,单位:度) |
-| `ChainCount` | `int` | - | 链式跳跃次数(Chain使用) |
-| `ChainRange` | `float` | - | 链式每跳最大距离(Chain使用) |
+| `Forward` | `Vector2?` | - | 方向向量 (Line/Cone/Box 需要) |
+| `Range` | `float` | - | 半径 (Circle/Cone 使用) |
+| `Width` | `float` | - | 宽度 (Box/Line 使用) |
+| `Length` | `float` | - | 长度 (Box/Line 使用) |
+| `Angle` | `float` | - | 角度 (Cone 使用, 单位: 度) |
+| `ChainCount` | `int` | - | 链式跳跃次数 (Chain 使用) |
+| `ChainRange` | `float` | - | 链式每跳最大距离 (Chain 使用) |
+| `ChainAllowDuplicate` | `bool` | - | 链式是否允许重复目标 (默认 false) |
 
 #### 过滤参数
 
 | 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+|:-------------|:-----------|:-----------|:---------------|
 | `CenterEntity` | `IEntity?` | - | 阵营过滤基准实体 |
 | `TeamFilter` | `AbilityTargetTeamFilter` | - | 阵营过滤器 |
 | `TypeFilter` | `AbilityTargetTypeFilter` | - | 类型过滤器 |
@@ -90,9 +92,9 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
 #### 排序与限制参数
 
 | 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+|:-----------|:-----------|:-----------|:-------------------|
 | `Sorting` | `AbilityTargetSorting` | - | 排序规则 |
-| `MaxTargets` | `int` | - | 最大目标数量(0=不限制) |
+| `MaxTargets` | `int` | - | 最大目标数量 (0 = 不限制) |
 
 ## 几何形状详解
 
@@ -100,7 +102,7 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
 
 **参数**: `Origin`, `Range`  
 **逻辑**: `distance(target, Origin) <= Range`  
-**用途**: AOE技能、光环效果
+**用途**: AOE 技能、光环效果
 
 ```csharp
 Geometry = AbilityTargetGeometry.Circle,
@@ -111,7 +113,7 @@ Range = 200f
 ### Rectangle (矩形)
 
 **参数**: `Origin`, `Forward`, `Width`, `Length`  
-**逻辑**: 旋转矩形包含检测(支持任意角度)  
+**逻辑**: 旋转矩形包含检测 (支持任意角度)  
 **用途**: 扇形剑气、矩形冲击波
 
 ```csharp
@@ -153,8 +155,15 @@ Angle = 90f // 90度扇形
 ### Chain (链式传递)
 
 **参数**: `Origin`, `ChainCount`, `ChainRange`  
-**逻辑**: 贪心算法,每次选最近的未访问目标  
-**用途**: 闪电链、弹跳飞刃
+**逻辑**: 贪心算法,每次选最近的未访问目标。  
+**关键特性**: **瞬间快照** —— 在调用的一瞬间计算出完整路径。  
+**用途**: 瞬发链式杀伤、静电场指示器。
+
+> [!CAUTION]
+> **关于“时空错位”的警告**  
+> `QueryChain` 返回的是 T=0 时刻的计算快照。如果你的技能有明显的“飞行延迟”或“每跳等待时间”，请**不要**使用此方法。  
+> **原因**：在延迟期间，预选的目标可能已经搬走或死亡。  
+> **方案**：在 `AbilityExecutor` 中使用协程，每命中一次后，以当前命中者为圆心调用 `Circle` 查询下一个目标。
 
 ```csharp
 Geometry = AbilityTargetGeometry.Chain,
@@ -199,17 +208,17 @@ TeamFilter = AbilityTargetTeamFilter.Friendly | AbilityTargetTeamFilter.Neutral
 使用 `TypeFilter` 参数筛选单位类型:
 
 ```csharp
-// 只选英雄
-TypeFilter = AbilityTargetTypeFilter.Hero
+// 只选单位 (生物)
+TypeFilter = AbilityTargetTypeFilter.Unit
 
-// 选所有可攻击单位
+// 选所有可攻击单位 (单位 + 建筑)
 TypeFilter = AbilityTargetTypeFilter.AllAttackable
 
-// 自定义组合(小怪+Boss)
-TypeFilter = AbilityTargetTypeFilter.Creep | AbilityTargetTypeFilter.Boss
+// 自定义组合 (单位 + 掉落物)
+TypeFilter = AbilityTargetTypeFilter.Unit | AbilityTargetTypeFilter.Item
 ```
 
-**前提**: 目标实体必须设置 `DataKey.UnitType` 数据。
+**前提**: 目标实体必须设置 `DataKey.EntityType` 数据,且值与 `AbilityTargetTypeFilter` 对应。
 
 ## 排序规则
 
@@ -219,7 +228,8 @@ TypeFilter = AbilityTargetTypeFilter.Creep | AbilityTargetTypeFilter.Boss
 | `Farthest` | 距离最远 | - |
 | `LowestHealth` | 血量最低 | `CurrentHp` |
 | `HighestHealth` | 血量最高 | `CurrentHp` |
-| `LowestHealthPercent` | 血量百分比最低 | `CurrentHp`, `FinalHp` |
+| `LowestHealthPercent` | 血量百分比最低 | `HpPercent` |
+| `HighestHealthPercent` | 血量百分比最高 | `HpPercent` |
 | `Random` | 随机排序 | - |
 | `HighestThreat` | 威胁值最高 | `Threat` |
 
@@ -236,7 +246,7 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
     Range = 200f,
     CenterEntity = healer,
     TeamFilter = AbilityTargetTeamFilter.Friendly,
-    TypeFilter = AbilityTargetTypeFilter.Hero,
+    TypeFilter = AbilityTargetTypeFilter.Unit,
     Sorting = AbilityTargetSorting.LowestHealthPercent,
     MaxTargets = 3
 });

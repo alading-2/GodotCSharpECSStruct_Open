@@ -10,6 +10,7 @@ public static partial class DataKey
     public const string HpBonus = "HpBonus"; // 生命加成（百分比）
     public const string FinalHp = "FinalHp"; // 最终生命值（计算属性）,即最大生命值
     public const string CurrentHp = "CurrentHp"; // 当前生命值
+    public const string HpPercent = "HpPercent"; // 生命值百分比（计算属性）
 
     // 生命恢复
     public const string BaseHpRegen = "BaseHpRegen"; // 基础生命恢复
@@ -25,6 +26,7 @@ public static partial class DataKey
     public const string ManaBonus = "ManaBonus"; // 魔法加成（百分比）
     public const string FinalMana = "FinalMana"; // 最终魔法值（计算属性）
     public const string CurrentMana = "CurrentMana"; // 当前法力值
+    public const string ManaPercent = "ManaPercent"; // 魔法值百分比（计算属性）
     // 魔法恢复
     public const string BaseManaRegen = "BaseManaRegen"; // 基础魔法恢复
     public const string ManaRegenBonus = "ManaRegenBonus"; // 魔法恢复加成（百分比）

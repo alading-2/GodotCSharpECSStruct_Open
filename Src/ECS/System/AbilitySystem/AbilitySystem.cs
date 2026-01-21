@@ -41,12 +41,14 @@ public static class AbilitySystem
     }
 
     /// <summary>
-    /// 尝试直接触发技能，不通过TriggerComponent触发
+    /// 尝试触发技能（带预填充上下文）
+    /// 用于主动技能输入系统，外部预先填充目标/位置
     /// </summary>
     /// <param name="owner">技能拥有者</param>
     /// <param name="abilityName">技能名称</param>
+    /// <param name="context">预填充的施法上下文</param>
     /// <returns>是否成功触发</returns>
-    public static bool TryTriggerAbility(IEntity owner, string abilityName)
+    public static bool TryTriggerAbility(IEntity owner, string abilityName, CastContext context)
     {
         var ability = EntityManager.GetAbilityByName(owner, abilityName);
         if (ability == null)
@@ -55,11 +57,8 @@ public static class AbilitySystem
             return false;
         }
 
-        var context = new CastContext
-        {
-            Ability = ability,
-            Caster = owner
-        };
+        context.Ability = ability;
+        context.Caster = owner;
 
         return TryTriggerAbilityWithContext(context);
     }
@@ -76,6 +75,12 @@ public static class AbilitySystem
 
         // 事件驱动：就绪检查
         if (!CanUseAbility(ability))
+        {
+            return false;
+        }
+
+        // 验证输入是否符合配置 (移除自动 SelectTargets 逻辑)
+        if (!ValidateTargetInput(ability, context))
         {
             return false;
         }
@@ -106,24 +111,11 @@ public static class AbilitySystem
         // 标记为执行中
         ability.Data.Set(DataKey.AbilityIsActive, true);
 
-        // 目标选择：优先使用预选目标，否则自动选取
-        List<IEntity> targets;
-        if (context.HasPreselectedTargets)
-        {
-            targets = context.Targets!;
-        }
-        else
-        {
-            targets = SelectTargets(ability, context);
-        }
-
-        // 更新上下文的目标列表
-        context.Targets = targets;
-
         // 发送激活事件
+        // 注意：这里直接传递上下文中的 targets，如果没有则传空列表
         ability.Events.Emit(
             GameEventType.Ability.Activated,
-            new GameEventType.Ability.ActivatedEventData(ability, targets)
+            new GameEventType.Ability.ActivatedEventData(ability, context.Targets ?? new List<IEntity>())
         );
 
         // 执行效果（通过 AbilityExecutorRegistry）
@@ -182,89 +174,48 @@ public static class AbilitySystem
         return true;
     }
 
-    // ==================== 目标选择 ====================
+    // ==================== 目标/输入验证 ====================
 
     /// <summary>
-    /// 基于 5 层目标系统选择目标
+    /// 验证施法上下文中的输入数据是否符合技能配置
+    /// 原则：既然配置了需要 Unit/Point，调用者(Input/Trigger)就必须设置好 CastContext。
     /// </summary>
-    /// <param name="ability">技能实体</param>
-    /// <param name="context">施法上下文</param>
-    /// <returns>选中的目标列表</returns>
-    private static List<IEntity> SelectTargets(AbilityEntity ability, CastContext context)
+    private static bool ValidateTargetInput(AbilityEntity ability, CastContext context)
     {
-        var owner = context.Caster;
-        if (owner == null) return new List<IEntity>();
+        var selection = ability.Data.Get<AbilityTargetSelection>(DataKey.AbilityTargetOrigin);
 
-        // 1. 获取选取原点 (Origin)
-        var origin = (AbilityTargetOrigin)ability.Data.Get<int>(DataKey.AbilityTargetOrigin);
-
-        switch (origin)
+        switch (selection)
         {
-            case AbilityTargetOrigin.Self:
-                // 以施法者自身作为目标
-                return new List<IEntity> { owner };
-
-            case AbilityTargetOrigin.EventSource:
-                // 从施法上下文中获取触发此技能的事件源实体（例如反击技能的目标是攻击者）
-                if (context.SourceEventData is IEntity eventSource)
+            case AbilityTargetSelection.Unit:
+                if (!context.HasPreselectedTargets)
                 {
-                    return new List<IEntity> { eventSource };
+                    _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [Unit] 但上下文无目标单位！");
+                    return false;
                 }
-                return new List<IEntity>();
+                break;
 
-            case AbilityTargetOrigin.Unit:
-            case AbilityTargetOrigin.Point:
-            case AbilityTargetOrigin.Cursor:
-                // 委托给 TargetSelector 进行几何查询
-                return SelectTargetsUsingSelector(ability, owner);
+            case AbilityTargetSelection.Point:
+                if (!context.HasPreselectedPosition)
+                {
+                    _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [Point] 但上下文无目标位置！");
+                    return false;
+                }
+                break;
 
-            default:
-                return new List<IEntity>();
-        }
-    }
+            case AbilityTargetSelection.UnitOrPoint:
+                if (!context.HasPreselectedTargets && !context.HasPreselectedPosition)
+                {
+                    _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [UnitOrPoint] 但上下文无任何输入！");
+                    return false;
+                }
+                break;
 
-    /// <summary>
-    /// 使用 TargetSelector 进行几何查询
-    /// </summary>
-    private static List<IEntity> SelectTargetsUsingSelector(AbilityEntity ability, IEntity owner)
-    {
-        // 获取施法者位置和朝向
-        Vector2 origin = Vector2.Zero;
-        Vector2? forward = null;
-
-        if (owner is Node2D ownerNode2D)
-        {
-            origin = ownerNode2D.GlobalPosition;
-            // 从旋转角度计算前向向量
-            forward = Vector2.Right.Rotated(ownerNode2D.GlobalRotation);
+            // None 模式不强制要求输入
+            case AbilityTargetSelection.None:
+                break;
         }
 
-        // 构造查询配置
-        var query = new TargetSelectorQuery
-        {
-            // 几何参数
-            Geometry = (AbilityTargetGeometry)ability.Data.Get<int>(DataKey.AbilityTargetGeometry),
-            Origin = origin,
-            Forward = forward,
-            Range = ability.Data.Get<float>(DataKey.AbilityRange),
-            Width = ability.Data.Get<float>(DataKey.AbilityWidth),
-            Length = ability.Data.Get<float>(DataKey.AbilityLength),
-            Angle = ability.Data.Get<float>(DataKey.AbilityAngle),
-            ChainCount = ability.Data.Get<int>(DataKey.AbilityChainCount),
-            ChainRange = ability.Data.Get<float>(DataKey.AbilityChainRange),
-
-            // 过滤参数
-            CenterEntity = owner,
-            TeamFilter = (AbilityTargetTeamFilter)ability.Data.Get<int>(DataKey.AbilityTargetTeamFilter),
-            TypeFilter = (AbilityTargetTypeFilter)ability.Data.Get<int>(DataKey.AbilityTargetTypeFilter),
-
-            // 排序与限制
-            Sorting = (AbilityTargetSorting)ability.Data.Get<int>(DataKey.AbilityTargetSorting),
-            MaxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets)
-        };
-
-        // 调用 TargetSelector
-        return TargetSelector.Query(query);
+        return true;
     }
 
 

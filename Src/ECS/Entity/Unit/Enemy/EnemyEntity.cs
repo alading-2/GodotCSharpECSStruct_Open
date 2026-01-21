@@ -28,8 +28,6 @@ public partial class EnemyEntity : CharacterBody2D, IPoolable, IUnit
     /// </summary>
     public EventBus Events { get; } = new EventBus();
 
-    // 1: Enemy
-    public int FactionId => 1;
 
     // ================= Godot 生命周期 =================
 
@@ -44,9 +42,6 @@ public partial class EnemyEntity : CharacterBody2D, IPoolable, IUnit
         base._ExitTree();
     }
 
-    // ================= 业务逻辑 =================
-
-    // OnSpawn 方法已移除，配置数据通过 EntityManager.Spawn 时的 UnitConfig 直接注入
 
     // ================= IPoolable 接口实现 =================
 

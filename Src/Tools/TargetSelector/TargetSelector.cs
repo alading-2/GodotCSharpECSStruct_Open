@@ -46,7 +46,7 @@ public static class TargetSelector
             AbilityTargetGeometry.Box => QueryRectangle(query.Origin, query.Forward ?? Vector2.Right, query.Width, query.Length),
             AbilityTargetGeometry.Line => QueryLineWithWidth(query.Origin, query.Forward ?? Vector2.Right, query.Length, query.Width),
             AbilityTargetGeometry.Cone => QueryCone(query.Origin, query.Forward ?? Vector2.Right, query.Range, query.Angle),
-            AbilityTargetGeometry.Chain => QueryChain(query.Origin, query.ChainCount, query.ChainRange, query.CenterEntity, query.TeamFilter, query.TypeFilter),
+            AbilityTargetGeometry.Chain => QueryChain(query.Origin, query.ChainCount, query.ChainRange, query.CenterEntity, query.TeamFilter, query.TypeFilter, query.ChainAllowDuplicate), // 瞬间快照式链式查询
             AbilityTargetGeometry.Global => QueryGlobal(),
             AbilityTargetGeometry.Single => new List<IEntity>(), // Single 模式通常需要外部预选目标
             _ => new List<IEntity>()
@@ -56,7 +56,8 @@ public static class TargetSelector
         candidates = FilterTargets(candidates, query.CenterEntity, query.TeamFilter, query.TypeFilter);
 
         // 3. 排序：按优先级
-        if (candidates.Count > 1)
+        // 链式查询的结果是有序的（路径顺序），不应被通用排序打乱
+        if (candidates.Count > 1 && query.Geometry != AbilityTargetGeometry.Chain)
         {
             SortTargets(candidates, query.Origin, query.Sorting);
         }
@@ -135,12 +136,13 @@ public static class TargetSelector
     }
 
     /// <summary>
-    /// 带宽度的线段范围查询
+    /// 带宽度的线段范围查询（实际形状为“胶囊体 Capsule”）
+    /// <para>特点：以 [origin] 为起点，向 [forward] 方向延伸。形状两端为半圆，判定比矩形更宽容，手感更好。</para>
     /// </summary>
-    /// <param name="origin">起点</param>
-    /// <param name="forward">方向（归一化）</param>
-    /// <param name="length">长度</param>
-    /// <param name="width">宽度</param>
+    /// <param name="origin">射线起点（如枪口、玩家位置）</param>
+    /// <param name="forward">射线延伸方向</param>
+    /// <param name="length">射线长度</param>
+    /// <param name="width">射线的直径/宽度</param>
     private static List<IEntity> QueryLineWithWidth(Vector2 origin, Vector2 forward, float length, float width)
     {
         var results = new List<IEntity>();
@@ -201,19 +203,41 @@ public static class TargetSelector
 
     /// <summary>
     /// 链式传递查询（如闪电链）
+    /// <para>
+    /// ⚠️ **设计说明 (必读)**: 
+    /// 本方法采用“瞬间快照”模式。在调用的一瞬间，它会根据当前场景所有实体的坐标，
+    /// 预先计算出一条完整的弹射路径。
+    /// </para>
+    /// <para>
+    /// <b>适用场景：</b>
+    /// 1. 瞬发结算技能（如瞬间杀伤 10 个目标的激光、无飞行过程的电弧）。
+    /// 2. 性能敏感场景（高频触发且无需考虑飞行时间）。
+    /// 3. UI 辅助线/范围指示器的预览绘制。
+    /// </para>
+    /// <para>
+    /// <b>局限性（时空错位问题）：</b>
+    /// 本方法不适用于带有“缓慢飞行过程”或“跳跃间隔”的技能（如巫妖的大招、缓慢飞行的火球）。
+    /// 因为当技能在 0.5 秒后跳跃到第 3 个目标时，该目标可能已经移动或死亡。
+    /// 对于此类逻辑，建议在 AbilityExecutor 中通过循环+单次查询（如 QueryCircle）动态实现。
+    /// </para>
     /// </summary>
-    /// <param name="origin">起点</param>
+    /// <param name="origin">起点位置</param>
     /// <param name="chainCount">最大跳跃次数</param>
-    /// <param name="chainRange">每跳最大距离</param>
-    /// <param name="centerEntity">基准实体（用于过滤）</param>
-    /// <param name="teamFilter">阵营过滤</param>
-    /// <param name="typeFilter">类型过滤</param>
-    private static List<IEntity> QueryChain(Vector2 origin, int chainCount, float chainRange, IEntity? centerEntity, AbilityTargetTeamFilter teamFilter, AbilityTargetTypeFilter typeFilter)
+    /// <param name="chainRange">每跳跨度的最大距离</param>
+    /// <param name="centerEntity">基准实体（用于阵营/类型过滤）</param>
+    /// <param name="teamFilter">阵营过滤规则</param>
+    /// <param name="typeFilter">类型过滤规则</param>
+    /// <param name="allowDuplicate">是否允许在路径中重复出现同一个目标</param>
+    private static List<IEntity> QueryChain(Vector2 origin, int chainCount, float chainRange, IEntity? centerEntity, AbilityTargetTeamFilter teamFilter, AbilityTargetTypeFilter typeFilter, bool allowDuplicate)
     {
+        // 最终查询结果
         var results = new List<IEntity>();
+        // 闪电链访问过的实体，避免重复访问（仅在不允许重复时使用）
         var visited = new HashSet<IEntity>();
 
+        // 当前位置
         Vector2 currentPos = origin;
+        // 当前实体
         IEntity? currentEntity = null;
 
         // 获取所有候选目标
@@ -227,8 +251,12 @@ public static class TargetSelector
             // 贪心算法：找最近的未访问目标
             foreach (var candidate in allCandidates)
             {
-                if (visited.Contains(candidate)) continue;
-                if (candidate == currentEntity) continue; // 不能跳回自己
+                // 如果不允许重复，且已访问过，则跳过
+                if (!allowDuplicate && visited.Contains(candidate)) continue;
+
+                // 不能跳回当前所在的实体（防止 A->A 立即原地弹跳）
+                if (IsSameEntity(candidate, currentEntity)) continue;
+
 
                 // 阵营和类型过滤
                 if (!PassTeamFilter(candidate, centerEntity, teamFilter)) continue;
@@ -237,6 +265,8 @@ public static class TargetSelector
                 if (candidate is Node2D node2D)
                 {
                     float distance = node2D.GlobalPosition.DistanceTo(currentPos);
+                    // _log.Debug($"Candidate {node2D.Name} dist: {distance}");
+
                     if (distance <= chainRange && distance < minDistance)
                     {
                         minDistance = distance;
@@ -249,7 +279,11 @@ public static class TargetSelector
             if (nextTarget != null)
             {
                 results.Add(nextTarget);
-                visited.Add(nextTarget);
+                // 仅在不允许重复时记录已访问
+                if (!allowDuplicate)
+                {
+                    visited.Add(nextTarget);
+                }
 
                 // 更新当前位置和实体
                 if (nextTarget is Node2D nextNode2D)
@@ -267,7 +301,6 @@ public static class TargetSelector
 
         return results;
     }
-
     /// <summary>
     /// 全局查询（返回所有实体）
     /// </summary>
@@ -305,35 +338,31 @@ public static class TargetSelector
     /// <param name="target">待检测目标</param>
     /// <param name="center">基准实体（用于判断友军/敌军）</param>
     /// <param name="filter">过滤规则</param>
+    /// <returns>是否通过</returns>
     private static bool PassTeamFilter(IEntity target, IEntity? center, AbilityTargetTeamFilter filter)
     {
-        // 如果没有设置基准实体或过滤规则，跳过阵营过滤
-        if (center == null || filter == AbilityTargetTeamFilter.None)
+        // 快速路径：无过滤或全选
+        if (filter == AbilityTargetTeamFilter.None || filter == AbilityTargetTeamFilter.All)
             return true;
 
-        // All 通配符
-        if (filter == AbilityTargetTeamFilter.All)
-            return true;
+        // Self 检测 (优先处理，避免后续逻辑误判)
+        bool isSelf = IsSameEntity(target, center);
+        if (isSelf)
+            return filter.HasFlag(AbilityTargetTeamFilter.Self);
 
-        // Self 检测
-        if (filter.HasFlag(AbilityTargetTeamFilter.Self) && target == center)
-            return true;
-
-        // 获取阵营数据 (使用枚举类型获取)
-        Team centerTeam = center.Data.Get<Team>(DataKey.Team);
+        // 绝对阵营：Neutral (不依赖 center)
         Team targetTeam = target.Data.Get<Team>(DataKey.Team);
+        if (targetTeam == Team.Neutral)
+            return filter.HasFlag(AbilityTargetTeamFilter.Neutral);
 
-        // Friendly/Enemy/Neutral 检测
-        if (centerTeam == targetTeam && filter.HasFlag(AbilityTargetTeamFilter.Friendly))
-            return true;
+        // 相对阵营：Friendly/Enemy (需要 center)
+        if (center == null) return false;
 
-        if (centerTeam != targetTeam && targetTeam != Team.Neutral && filter.HasFlag(AbilityTargetTeamFilter.Enemy))
-            return true;
+        Team centerTeam = center.Data.Get<Team>(DataKey.Team);
+        bool isSameTeam = centerTeam == targetTeam;
 
-        if (targetTeam == Team.Neutral && filter.HasFlag(AbilityTargetTeamFilter.Neutral))
-            return true;
-
-        return false;
+        if (isSameTeam) return filter.HasFlag(AbilityTargetTeamFilter.Friendly);
+        return filter.HasFlag(AbilityTargetTeamFilter.Enemy);
     }
 
     /// <summary>
@@ -354,9 +383,9 @@ public static class TargetSelector
         EntityType entityType = target.Data.Get<EntityType>(DataKey.EntityType);
 
         // 将 EntityType 转换为对应的 Filter Flag
-        // EntityType: Unit=0, Projectile=1...
-        // Filter Flag: Unit=1<<0, Projectile=1<<1...
-        AbilityTargetTypeFilter typeFlag = (AbilityTargetTypeFilter)(1 << (int)entityType);
+        // 修正: EntityType 值 (1,2,4...) 本身已对齐 Filter Flag，直接强转即可
+        // 之前逻辑 (1 << entityType) 是错误的，会造成位移过量
+        AbilityTargetTypeFilter typeFlag = (AbilityTargetTypeFilter)entityType;
 
         return filter.HasFlag(typeFlag);
     }
@@ -365,6 +394,7 @@ public static class TargetSelector
 
     /// <summary>
     /// 目标排序
+    /// 内部逻辑已优化：血量百分比排序现在直接使用实体的计算属性 DataKey.HpPercent (0-100)
     /// </summary>
     /// <param name="targets">目标列表（原地修改）</param>
     /// <param name="origin">参考位置</param>
@@ -373,6 +403,9 @@ public static class TargetSelector
     {
         switch (sorting)
         {
+            case AbilityTargetSorting.None:
+                break;
+
             case AbilityTargetSorting.Nearest:
                 targets.Sort((a, b) =>
                 {
@@ -408,16 +441,19 @@ public static class TargetSelector
                     return hpB.CompareTo(hpA);
                 });
                 break;
-
+            case AbilityTargetSorting.HighestHealthPercent:
+                targets.Sort((a, b) =>
+                {
+                    float percentA = a.Data.Get<float>(DataKey.HpPercent);
+                    float percentB = b.Data.Get<float>(DataKey.HpPercent);
+                    return percentB.CompareTo(percentA);
+                });
+                break;
             case AbilityTargetSorting.LowestHealthPercent:
                 targets.Sort((a, b) =>
                 {
-                    float hpA = a.Data.Get<float>(DataKey.CurrentHp);
-                    float maxHpA = a.Data.Get<float>(DataKey.FinalHp);
-                    float hpB = b.Data.Get<float>(DataKey.CurrentHp);
-                    float maxHpB = b.Data.Get<float>(DataKey.FinalHp);
-                    float percentA = maxHpA > 0 ? hpA / maxHpA : 0;
-                    float percentB = maxHpB > 0 ? hpB / maxHpB : 0;
+                    float percentA = a.Data.Get<float>(DataKey.HpPercent);
+                    float percentB = b.Data.Get<float>(DataKey.HpPercent);
                     return percentA.CompareTo(percentB);
                 });
                 break;
@@ -446,32 +482,24 @@ public static class TargetSelector
     // ==================== 辅助方法 ====================
 
     /// <summary>
-    /// 获取所有 Node2D 类型的 Entity（临时实现）
-    /// TODO: 后续可优化为空间哈希或 Quadtree
+    /// 健壮的实体相等性判断（处理 Godot 对象包装器引用不一致）
+    /// </summary>
+    private static bool IsSameEntity(IEntity? a, IEntity? b)
+    {
+        if (a == b) return true;
+        if (a is Node n1 && b is Node n2) return n1 == n2;
+        return false;
+    }
+
+    /// <summary>
+    /// 获取所有 Node2D 类型的 Entity
+    /// 使用 EntityManager 的全局查询接口，无需硬编码类型列表
     /// </summary>
     private static IEnumerable<IEntity> GetAllNode2DEntities()
     {
-        // 从 EntityManager 获取所有已注册的实体
-        // 这里需要遍历常见的实体类型（Enemy, Player, Bullet 等）
-        var allEntities = new List<IEntity>();
-
-        // 动态获取所有实体类型（通过反射或预定义列表）
-        // 为了简化，这里硬编码常见类型
-        string[] entityTypes = { "Enemy", "Player", "Bullet", "Prop" };
-
-        foreach (var type in entityTypes)
-        {
-            var entities = EntityManager.GetEntitiesByType<Node2D>(type);
-            foreach (var entity in entities)
-            {
-                if (entity is IEntity iEntity)
-                {
-                    allEntities.Add(iEntity);
-                }
-            }
-        }
-
-        return allEntities;
+        // 使用新的 EntityManager API，获取所有实现 Node2D 的 Entity
+        return EntityManager.GetEntitiesByInterface<Node2D>()
+            .Cast<IEntity>();
     }
 
     /// <summary>

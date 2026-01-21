@@ -11,7 +11,7 @@ public static class AbilityData
         ["Dash"] = new()
         {
             { DataKey.Name, "Dash" },
-            { DataKey.AbilityDescription, "向前冲刺，消耗充能" },
+            { DataKey.Description, "向前冲刺，消耗充能" },
             { DataKey.AbilityType, AbilityType.Active },
             { DataKey.AbilityTriggerMode, AbilityTriggerMode.Manual },
             
@@ -22,7 +22,7 @@ public static class AbilityData
             { DataKey.AbilityCooldown, 0.5f }, // 冲刺之间的最小间隔
             
             // 目标配置
-            { DataKey.AbilityTargetOrigin, AbilityTargetOrigin.Self },
+            { DataKey.AbilityTargetOrigin, AbilityTargetSelection.Unit },
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Line },
             { DataKey.AbilityRange, 300f },
 
@@ -33,7 +33,7 @@ public static class AbilityData
         ["Slam"] = new()
         {
             { DataKey.Name, "Slam" },
-            { DataKey.AbilityDescription, "猛击地面，造成伤害" },
+            { DataKey.Description, "猛击地面，造成伤害" },
             { DataKey.AbilityType, AbilityType.Active },
             { DataKey.AbilityTriggerMode, AbilityTriggerMode.Manual },
 
@@ -42,7 +42,7 @@ public static class AbilityData
             { DataKey.AbilityCooldown, 8.0f },
 
             // 目标配置
-            { DataKey.AbilityTargetOrigin, AbilityTargetOrigin.Self },
+            { DataKey.AbilityTargetOrigin, AbilityTargetSelection.Unit },
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Circle },
             { DataKey.AbilityRange, 200f },
             { DataKey.AbilityTargetTeamFilter, AbilityTargetTeamFilter.AllEnemies },
@@ -54,13 +54,13 @@ public static class AbilityData
         ["RegenAura"] = new()
         {
             { DataKey.Name, "RegenAura" },
-            { DataKey.AbilityDescription, "每秒恢复生命值" },
+            { DataKey.Description, "每秒恢复生命值" },
             { DataKey.AbilityType, AbilityType.Passive },
             // 周期触发
             { DataKey.AbilityTriggerMode, AbilityTriggerMode.Periodic },
             { DataKey.AbilityTriggerInterval, 1.0f },
 
-            { DataKey.AbilityTargetOrigin, AbilityTargetOrigin.Self },
+            { DataKey.AbilityTargetOrigin, AbilityTargetSelection.Unit },
             { DataKey.AbilityTargetTeamFilter, AbilityTargetTeamFilter.FriendlyAndSelf },
 
             { DataKey.AbilityEnabled, true },
@@ -71,7 +71,7 @@ public static class AbilityData
         ["ReviveScroll"] = new()
         {
             { DataKey.Name, "ReviveScroll" },
-            { DataKey.AbilityDescription, "消耗后复活，全局限制次数" },
+            { DataKey.Description, "消耗后复活，全局限制次数" },
             { DataKey.AbilityType, AbilityType.Active },
             { DataKey.AbilityTriggerMode, AbilityTriggerMode.Manual },
 
@@ -81,7 +81,7 @@ public static class AbilityData
             { DataKey.AbilityChargeTime, -1f }, // 不自动恢复！
             { DataKey.AbilityCooldown, 0f },
 
-            { DataKey.AbilityTargetOrigin, AbilityTargetOrigin.Self },
+            { DataKey.AbilityTargetOrigin, AbilityTargetSelection.Unit },
             { DataKey.AbilityEnabled, true },
         }
     };

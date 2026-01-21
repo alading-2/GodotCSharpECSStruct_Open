@@ -7,9 +7,5 @@
 /// </summary>
 public interface IUnit : IEntity
 {
-    /// <summary>
-    /// 阵营标识
-    /// <para>0: 玩家, 1: 敌人, 2: 中立</para>
-    /// </summary>
-    int FactionId { get; }
+
 }

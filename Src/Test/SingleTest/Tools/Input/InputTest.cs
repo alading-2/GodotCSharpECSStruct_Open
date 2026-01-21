@@ -68,13 +68,13 @@ public partial class InputTest : Node2D
             InputManager.VibrateHeavy();
         }
 
-        if (InputManager.IsAttack())
+        if (InputManager.IsX())
         {
             Log("⚔️ [攻击] X键");
             InputManager.VibrateMedium();
         }
 
-        if (InputManager.IsSpecial())
+        if (InputManager.IsY())
         {
             Log("🌟 [特殊] Y键");
         }

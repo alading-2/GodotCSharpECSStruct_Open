@@ -48,6 +48,24 @@ public partial class DataRegister_Attribute : Node
                 return MyMath.AttributeBonusCalculation(baseHp, bonus);
             }
         });
+        // 生命百分比 (Computed)
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.HpPercent,
+            DisplayName = "生命百分比",
+            Description = "当前生命值百分比",
+            Category = DataCategory_Attribute.Computed,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            SupportModifiers = false,
+            Dependencies = [DataKey.CurrentHp, DataKey.FinalHp],
+            Compute = (data) =>
+            {
+                float current = data.Get<float>(DataKey.CurrentHp);
+                float max = data.Get<float>(DataKey.FinalHp);
+                return max > 0 ? (current / max) * 100f : 0f;
+            }
+        });
 
         DataRegistry.Register(new DataMeta { Key = DataKey.BaseHpRegen, DisplayName = "基础生命恢复", Description = "每秒恢复的基础生命值", Category = DataCategory_Attribute.Health, Type = typeof(float), DefaultValue = 0f, SupportModifiers = true });
         DataRegistry.Register(new DataMeta { Key = DataKey.HpRegenBonus, DisplayName = "生命恢复加成", Description = "生命恢复百分比加成", Category = DataCategory_Attribute.Health, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true, SupportModifiers = true });
@@ -94,6 +112,24 @@ public partial class DataRegister_Attribute : Node
                 float baseMana = data.Get<float>(DataKey.BaseMana);
                 float bonus = data.Get<float>(DataKey.ManaBonus);
                 return MyMath.AttributeBonusCalculation(baseMana, bonus);
+            }
+        });
+        // 魔法百分比 (Computed)
+        DataRegistry.Register(new DataMeta
+        {
+            Key = DataKey.ManaPercent,
+            DisplayName = "魔法百分比",
+            Description = "当前魔法值百分比",
+            Category = DataCategory_Attribute.Computed,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            SupportModifiers = false,
+            Dependencies = [DataKey.CurrentMana, DataKey.FinalMana],
+            Compute = (data) =>
+            {
+                float current = data.Get<float>(DataKey.CurrentMana);
+                float max = data.Get<float>(DataKey.FinalMana);
+                return max > 0 ? (current / max) * 100f : 0f;
             }
         });
 

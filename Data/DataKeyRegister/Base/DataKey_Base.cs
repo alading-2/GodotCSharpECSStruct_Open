@@ -6,7 +6,8 @@ public static partial class DataKey
 {
     // === 基础信息 ===
     public const string Name = "Name"; // 名称
-    public const string Level = "Level"; // 等级
+    /// <summary>描述</summary>
+    public const string Description = "Description";
     public const string Id = "Id"; // ID
     public const string Team = "Team"; // 阵营 (Enum: Team)
     public const string EntityType = "EntityType"; // 实体类型 (Enum: EntityType)

@@ -30,7 +30,6 @@ public partial class AbilityEntity : Node, IEntity, IPoolable
 
     public override void _Ready()
     {
-        _log.Debug($"技能实体就绪: {Data.Get<string>(DataKey.Name)}");
     }
 
     public override void _ExitTree()

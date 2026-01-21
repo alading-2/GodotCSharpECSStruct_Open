@@ -1,23 +1,25 @@
 [gd_scene load_steps=5 format=3 uid="uid://bqu6n71cx1env"]
 
-[ext_resource type="Script" uid="uid://d3cifehq7mpiv" path="res://Src/ECS/Entity/Unit/Player/Player.cs" id="1_a3twn"]
-[ext_resource type="PackedScene" uid="uid://briqv073sqyvk" path="res://assets/Unit/Player/德鲁伊/AnimatedSprite2D/AnimatedSprite2D.tscn" id="3_a3twn"]
-[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/VelocityComponent/VelocityComponent.tscn" id="3_qo223"]
+[ext_resource type="Script" uid="uid://d3cifehq7mpiv" path="res://Src/ECS/Entity/Unit/Player/PlayerEntity.cs" id="1_a3twn"]
+[ext_resource type="PackedScene" uid="uid://d0e7kth57lvet" path="res://Src/ECS/Component/Presets/Unit/UnitCorePreset.tscn" id="2_hhu18"]
+[ext_resource type="PackedScene" uid="uid://jx6dhoafnfft" path="res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn" id="3_in0jy"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_a3twn"]
 radius = 24.0
-height = 79.7
+height = 68.0
 
 [node name="Player" type="CharacterBody2D"]
 motion_mode = 1
 script = ExtResource("1_a3twn")
 
-[node name="VelocityComponent" parent="." instance=ExtResource("3_qo223")]
+[node name="Component" type="Node" parent="."]
+
+[node name="UnitCorePreset" parent="Component" instance=ExtResource("2_hhu18")]
+
+[node name="PlayerExclusivePreset" parent="Component" instance=ExtResource("3_in0jy")]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
-[node name="AnimatedSprite2D" parent="." instance=ExtResource("3_a3twn")]
-
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(1, -52)
+position = Vector2(0, -41)
 shape = SubResource("CapsuleShape2D_a3twn")

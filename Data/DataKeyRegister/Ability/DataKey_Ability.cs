@@ -6,8 +6,6 @@ using System.Collections.Generic;
 public static partial class DataKey
 {
     // ============ 基础信息 ============
-    /// <summary>技能描述</summary>
-    public const string AbilityDescription = "AbilityDescription";
     /// <summary>技能图标路径</summary>
     public const string AbilityIcon = "AbilityIcon";
     /// <summary>技能类型 (Active/Passive)</summary>
@@ -54,7 +52,7 @@ public static partial class DataKey
     public const string AbilityTriggerChance = "AbilityTriggerChance";
 
     // ============ 目标系统 - 5 层分解 ============
-    /// <summary>目标选取原点 (Self/Unit/Point/EventSource/Cursor)</summary>
+    /// <summary>目标选取 (Self/Unit/Point/EventSource/Cursor)</summary>
     public const string AbilityTargetOrigin = "AbilityTargetOrigin";
     /// <summary>目标几何形状 (Single/Circle/Box/Line/Cone/Chain/Global)</summary>
     public const string AbilityTargetGeometry = "AbilityTargetGeometry";
@@ -106,4 +104,8 @@ public static partial class DataKey
     public const string AbilityEnabled = "AbilityEnabled";
     /// <summary>技能是否正在执行</summary>
     public const string AbilityIsActive = "AbilityIsActive";
+
+    // ============ 主动技能输入 ============
+    /// <summary>当前选中的主动技能索引（存储在拥有者 Data 中）</summary>
+    public const string CurrentActiveAbilityIndex = "CurrentActiveAbilityIndex";
 }

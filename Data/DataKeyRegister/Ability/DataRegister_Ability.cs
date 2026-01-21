@@ -26,8 +26,6 @@ public partial class DataRegister_Ability : Node
         _log.Info("DataRegister_Ability注册技能数据...");
 
         // ============ 基础信息 ============
-        // 技能描述
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityDescription, DisplayName = "技能描述", Category = DataCategory_Ability.Basic, Type = typeof(string), DefaultValue = "" });
         // 技能图标
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityIcon, DisplayName = "技能图标", Category = DataCategory_Ability.Basic, Type = typeof(string), DefaultValue = "" });
         // 技能类型
@@ -68,16 +66,16 @@ public partial class DataRegister_Ability : Node
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerChance, DisplayName = "触发概率", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0f, MaxValue = 100f });
 
         // ============ 目标系统 - 5 层分解 ============
-        // 目标原点
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetOrigin, DisplayName = "目标原点", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetOrigin), DefaultValue = AbilityTargetOrigin.Self });
+        // 目标选取
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetOrigin, DisplayName = "目标原点", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSelection), DefaultValue = AbilityTargetSelection.None });
         // 目标几何
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetGeometry, DisplayName = "目标几何", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetGeometry), DefaultValue = AbilityTargetGeometry.Single });
         // 阵营过滤
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetTeamFilter, DisplayName = "阵营过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTeamFilter), DefaultValue = AbilityTargetTeamFilter.Enemy });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetTeamFilter, DisplayName = "阵营过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTeamFilter), DefaultValue = AbilityTargetTeamFilter.None });
         // 类型过滤
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetTypeFilter, DisplayName = "类型过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTypeFilter), DefaultValue = AbilityTargetTypeFilter.AllAttackable });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetTypeFilter, DisplayName = "类型过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTypeFilter), DefaultValue = AbilityTargetTypeFilter.None });
         // 目标排序
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetSorting, DisplayName = "目标排序", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSorting), DefaultValue = AbilityTargetSorting.Nearest });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetSorting, DisplayName = "目标排序", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSorting), DefaultValue = AbilityTargetSorting.None });
         // 最大目标
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityMaxTargets, DisplayName = "最大目标", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = 1, MinValue = 1 });
 

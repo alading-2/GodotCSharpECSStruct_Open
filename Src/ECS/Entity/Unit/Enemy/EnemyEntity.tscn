@@ -1,6 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://c7a7uoxm8i6t8"]
+[gd_scene load_steps=5 format=3 uid="uid://c7a7uoxm8i6t8"]
 
-[ext_resource type="Script" uid="uid://pj3op0qfykmq" path="res://Src/ECS/Entity/Unit/Enemy/Enemy.cs" id="1_id0n2"]
+[ext_resource type="Script" uid="uid://pj3op0qfykmq" path="res://Src/ECS/Entity/Unit/Enemy/EnemyEntity.cs" id="1_id0n2"]
+[ext_resource type="PackedScene" uid="uid://cgixcuwqqfvep" path="res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn" id="2_pu5y4"]
+[ext_resource type="PackedScene" uid="uid://d0e7kth57lvet" path="res://Src/ECS/Component/Presets/Unit/UnitCorePreset.tscn" id="3_3lh6w"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_vqy82"]
 radius = 25.0
@@ -8,6 +10,12 @@ height = 75.0
 
 [node name="Enemy" type="CharacterBody2D"]
 script = ExtResource("1_id0n2")
+
+[node name="Component" type="Node" parent="."]
+
+[node name="EnemyPreset" parent="Component" instance=ExtResource("2_pu5y4")]
+
+[node name="UnitCorePreset" parent="Component" instance=ExtResource("3_3lh6w")]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -46)

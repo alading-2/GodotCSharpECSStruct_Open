@@ -5,6 +5,7 @@
 public static partial class DataKey
 {
     // === 基础信息 ===
+    public const string Level = "Level"; // 等级
     public const string VisualScenePath = "VisualScenePath"; // 视觉场景路径
     // === Enemy ===
     public const string ExpReward = "ExpReward"; // 经验奖励

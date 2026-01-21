@@ -393,6 +393,6 @@ animations = [{
 }]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D"]
-position = Vector2(0, -66)
+position = Vector2(6, -66)
 sprite_frames = SubResource("SpriteFrames_8opkf")
 animation = &"idle"

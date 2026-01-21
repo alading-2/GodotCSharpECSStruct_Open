@@ -22,7 +22,7 @@ public enum AbilityTriggerMode
     None = 0,
 
     // ============ 主动技能触发 ============
-    /// <summary>手动触发 - 需要玩家按键输入</summary>
+    /// <summary>手动触发 - 需要玩家按键输入施放技能</summary>
     Manual = 1 << 0,
 
     // ============ 被动技能触发 ============
@@ -43,22 +43,18 @@ public enum AbilityTriggerMode
 }
 
 /// <summary>
-/// 目标选取原点 - 决定从哪里开始选取目标
+/// 目标选取 - 决定从哪里开始选取目标
 /// </summary>
-public enum AbilityTargetOrigin
+public enum AbilityTargetSelection
 {
-    /// <summary>无目标（自增益等无目标技能）</summary>
+    /// <summary>无目标（直接使用）</summary>
     None = 0,
-    /// <summary>以施法者为中心</summary>
-    Self = 1,
     /// <summary>指定目标单位</summary>
-    Unit = 2,
+    Unit = 1,
     /// <summary>指定地点</summary>
-    Point = 3,
-    /// <summary>事件来源 (如攻击者)</summary>
-    EventSource = 4,
-    /// <summary>光标位置</summary>
-    Cursor = 5,
+    Point = 2,
+    /// <summary>单位/地点</summary>
+    UnitOrPoint = 3,
 }
 
 /// <summary>
@@ -100,7 +96,7 @@ public enum AbilityTargetTeamFilter
 
     // ============ 组合预设 ============
     // 敌人
-    AllEnemies = Enemy | Neutral,
+    AllEnemies = Enemy,
     // 友方和自身
     FriendlyAndSelf = Friendly | Self,
     // 所有
@@ -140,20 +136,24 @@ public enum AbilityTargetTypeFilter
 /// </summary>
 public enum AbilityTargetSorting
 {
+    /// <summary>无排序 (默认)</summary>
+    None = 0,
     /// <summary>最近</summary>
-    Nearest = 0,
+    Nearest = 1,
     /// <summary>最远</summary>
-    Farthest = 1,
+    Farthest = 2,
     /// <summary>血量最低</summary>
-    LowestHealth = 2,
+    LowestHealth = 3,
     /// <summary>血量最高</summary>
-    HighestHealth = 3,
+    HighestHealth = 4,
+    /// <summary>血量百分比最高</summary>
+    HighestHealthPercent = 5,
     /// <summary>血量百分比最低</summary>
-    LowestHealthPercent = 4,
+    LowestHealthPercent = 6,
     /// <summary>随机</summary>
-    Random = 5,
+    Random = 7,
     /// <summary>威胁值最高</summary>
-    HighestThreat = 6,
+    HighestThreat = 8,
 }
 
 /// <summary>
