@@ -19,7 +19,7 @@
 /// 技能执行结果
 /// 用于 Executed 事件，记录技能执行的详细信息
 /// </summary>
-public class AbilityExecuteResult : EventContext
+public class AbilityExecutedResult : EventContext
 {
     // Success 和 FailReason (ErrorMessage) 已由 OperationContext 提供
 

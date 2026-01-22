@@ -36,8 +36,8 @@ public class HealthExecutionProcessor : IDamageProcessor
             // 1. 有 HealthComponent：会触发 Damaged/Kill 事件，统计系统正常工作
             // 2. 无 HealthComponent：直接修改 Data，不触发任何事件，统计数据丢失
             // 3. 两种路径结果差异巨大，会导致难以排查的 bug
-            _log.Error($"受击者 {info.Victim} 没有 HealthComponent，无法执行伤害！这是架构错误，所有可受击单位必须有 HealthComponent。");
-            info.AddLog("错误：受击者没有 HealthComponent");
+            _log.Error($"受害者 {info.Victim} 没有 HealthComponent，无法执行伤害！这是架构错误，所有可受击单位必须有 HealthComponent。");
+            info.AddLog("错误：受害者没有 HealthComponent");
         }
     }
 }

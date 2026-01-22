@@ -50,12 +50,12 @@ public static class AbilityExecutorRegistry
     /// <param name="abilityName">技能名称</param>
     /// <param name="context">施法上下文</param>
     /// <returns>执行结果，若未找到执行器则返回默认结果</returns>
-    public static AbilityExecuteResult Execute(string abilityName, CastContext context)
+    public static AbilityExecutedResult Execute(string abilityName, CastContext context)
     {
         if (!_executors.TryGetValue(abilityName, out var executor))
         {
             _log.Warn($"未找到技能执行器: {abilityName}，使用默认空执行");
-            return new AbilityExecuteResult
+            return new AbilityExecutedResult
             {
                 TargetsHit = context.Targets?.Count ?? 0
             };
@@ -68,7 +68,7 @@ public static class AbilityExecutorRegistry
         catch (Exception ex)
         {
             _log.Error($"技能执行器异常: {abilityName}, {ex.Message}");
-            return new AbilityExecuteResult
+            return new AbilityExecutedResult
             {
                 TargetsHit = 0
             };

@@ -17,7 +17,7 @@ public class DashExecutor : IAbilityExecutor
         AbilityExecutorRegistry.Register("Dash", new DashExecutor());
     }
 
-    public AbilityExecuteResult Execute(CastContext context)
+    public AbilityExecutedResult Execute(CastContext context)
     {
         var caster = context.Caster;
         var ability = context.Ability;
@@ -25,7 +25,7 @@ public class DashExecutor : IAbilityExecutor
         if (caster == null || ability == null)
         {
             _log.Error("冲刺失败：施法者或技能为空");
-            return new AbilityExecuteResult { TargetsHit = 0 };
+            return new AbilityExecutedResult { TargetsHit = 0 };
         }
 
         // 获取冲刺距离
@@ -40,7 +40,7 @@ public class DashExecutor : IAbilityExecutor
 
         _log.Info($"执行冲刺: 距离 {range}");
 
-        return new AbilityExecuteResult
+        return new AbilityExecutedResult
         {
             TargetsHit = 1  // 冲刺只影响自己
         };

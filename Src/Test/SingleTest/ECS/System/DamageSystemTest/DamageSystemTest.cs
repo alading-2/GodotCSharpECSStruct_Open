@@ -94,7 +94,7 @@ namespace BrotatoMy.Test.DamageSystemTest
         {
             _log.Info("Test 1: 闪避逻辑测试");
 
-            // 1. 创建受击者 (高闪避)
+            // 1. 创建受害者 (高闪避)
             var victim = CreateDummyUnit("Victim_Dodger");
             victim.Data.Set(DataKey.DodgeChance, 100f); // 100% 闪避
 

@@ -228,7 +228,7 @@ public static class TargetSelector
     /// <param name="teamFilter">阵营过滤规则</param>
     /// <param name="typeFilter">类型过滤规则</param>
     /// <param name="allowDuplicate">是否允许在路径中重复出现同一个目标</param>
-    private static List<IEntity> QueryChain(Vector2 origin, int chainCount, float chainRange, IEntity? centerEntity, AbilityTargetTeamFilter teamFilter, AbilityTargetTypeFilter typeFilter, bool allowDuplicate)
+    private static List<IEntity> QueryChain(Vector2 origin, int chainCount, float chainRange, IEntity? centerEntity, AbilityTargetTeamFilter teamFilter, EntityType typeFilter, bool allowDuplicate)
     {
         // 最终查询结果
         var results = new List<IEntity>();
@@ -314,7 +314,7 @@ public static class TargetSelector
     /// <summary>
     /// 统一过滤接口（阵营 + 类型）
     /// </summary>
-    private static List<IEntity> FilterTargets(List<IEntity> targets, IEntity? centerEntity, AbilityTargetTeamFilter teamFilter, AbilityTargetTypeFilter typeFilter)
+    private static List<IEntity> FilterTargets(List<IEntity> targets, IEntity? centerEntity, AbilityTargetTeamFilter teamFilter, EntityType typeFilter)
     {
         var filtered = new List<IEntity>();
 
@@ -370,10 +370,10 @@ public static class TargetSelector
     /// </summary>
     /// <param name="target">待检测目标</param>
     /// <param name="filter">过滤规则</param>
-    private static bool PassTypeFilter(IEntity target, AbilityTargetTypeFilter filter)
+    private static bool PassTypeFilter(IEntity target, EntityType filter)
     {
         // 如果没有设置过滤规则，跳过类型过滤
-        if (filter == AbilityTargetTypeFilter.None)
+        if (filter == EntityType.None)
             return true;
 
         // 获取目标类型
@@ -382,12 +382,7 @@ public static class TargetSelector
 
         EntityType entityType = target.Data.Get<EntityType>(DataKey.EntityType);
 
-        // 将 EntityType 转换为对应的 Filter Flag
-        // 修正: EntityType 值 (1,2,4...) 本身已对齐 Filter Flag，直接强转即可
-        // 之前逻辑 (1 << entityType) 是错误的，会造成位移过量
-        AbilityTargetTypeFilter typeFlag = (AbilityTargetTypeFilter)entityType;
-
-        return filter.HasFlag(typeFlag);
+        return filter.HasFlag(entityType);
     }
 
     // ==================== 排序方法 ====================

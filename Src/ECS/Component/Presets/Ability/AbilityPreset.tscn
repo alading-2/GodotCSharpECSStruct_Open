@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://l758gjfhuxjf"]
 
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.tscn" id="1_trigger"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn" id="2_cooldown"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/ChargeComponent/ChargeComponent.tscn" id="3_charge"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn" id="4_kfkou"]
 
 [node name="AbilityPreset" type="Node"]
 
@@ -11,3 +12,5 @@
 [node name="CooldownComponent" parent="." instance=ExtResource("2_cooldown")]
 
 [node name="ChargeComponent" parent="." instance=ExtResource("3_charge")]
+
+[node name="CostComponent" parent="." instance=ExtResource("4_kfkou")]

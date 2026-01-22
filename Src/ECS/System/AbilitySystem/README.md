@@ -39,10 +39,10 @@ AbilitySystem.TryActivateAbility(player, "Fireball");
 ```
 
 ### 2. 施法 (Cast)
-`AbilitySystem` 执行核心检查：
-42: 1.  **Check**: `CheckCanUse` (CD? 消耗? 标签?)
-43: 2.  **Target**: 获取或选择目标
-44: 3.  **Cost**: `ConsumeCharge` & `StartCooldown`
+`AbilitySystem` 执行核心检查:
+1.  **Check**: `CheckCanUse` (CD? 充能? 成本? 标签?)
+2.  **Target**: 获取或选择目标
+3.  **Cost**: `ConsumeCharge` & `ConsumeCost` & `StartCooldown`
 
 ### 3. 执行 (Execute)
 若施法成功，发出 `Activated` 事件，Payload 包含完整上下文：

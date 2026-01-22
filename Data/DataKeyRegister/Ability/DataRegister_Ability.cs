@@ -34,20 +34,22 @@ public partial class DataRegister_Ability : Node
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityLevel, DisplayName = "技能等级", Category = DataCategory_Ability.Basic, Type = typeof(int), DefaultValue = 1, MinValue = 1 });
         // 最大等级
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityMaxLevel, DisplayName = "最大等级", Category = DataCategory_Ability.Basic, Type = typeof(int), DefaultValue = 1, MinValue = 1 });
+        // 技能伤害
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityDamage, DisplayName = "技能伤害", Category = DataCategory_Ability.Effect, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
 
         // ============ 冷却系统 ============
         // 冷却时间
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityCooldown, DisplayName = "冷却时间", Category = DataCategory_Ability.Cooldown, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
 
         // ============ 充能系统 ============
-        // 最大充能
+        // 是否使用充能
+        DataRegistry.Register(new DataMeta { Key = DataKey.IsAbilityUsesCharges, DisplayName = "是否使用充能", Category = DataCategory_Ability.Charge, Type = typeof(bool), DefaultValue = false });
+        // 最大充能次数
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityMaxCharges, DisplayName = "最大充能", Category = DataCategory_Ability.Charge, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
-        // 当前充能
+        // 当前充能次数
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityCurrentCharges, DisplayName = "当前充能", Category = DataCategory_Ability.Charge, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
         // 充能时间
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChargeTime, DisplayName = "充能时间", Category = DataCategory_Ability.Charge, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
-        // 充能计时
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChargeTimer, DisplayName = "充能计时", Category = DataCategory_Ability.Charge, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
 
         // ============ 消耗系统 ============
         // 消耗类型
@@ -60,20 +62,16 @@ public partial class DataRegister_Ability : Node
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerMode, DisplayName = "触发模式", Category = DataCategory_Ability.Trigger, Type = typeof(AbilityTriggerMode), DefaultValue = AbilityTriggerMode.None });
         // 触发事件
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerEvent, DisplayName = "触发事件", Category = DataCategory_Ability.Trigger, Type = typeof(List<string>), DefaultValue = new List<string>() });
-        // 触发间隔
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerInterval, DisplayName = "触发间隔", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
         // 触发概率
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerChance, DisplayName = "触发概率", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0f, MaxValue = 100f });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerChance, DisplayName = "触发概率", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0f, MaxValue = 100f, IsPercentage = true });
 
         // ============ 目标系统 - 5 层分解 ============
         // 目标选取
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetOrigin, DisplayName = "目标原点", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSelection), DefaultValue = AbilityTargetSelection.None });
-        // 目标几何
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetGeometry, DisplayName = "目标几何", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetGeometry), DefaultValue = AbilityTargetGeometry.Single });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetSelection, DisplayName = "目标原点", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSelection), DefaultValue = AbilityTargetSelection.None });
+        // 目标几何形状
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetGeometry, DisplayName = "目标几何形状", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetGeometry), DefaultValue = AbilityTargetGeometry.Single });
         // 阵营过滤
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetTeamFilter, DisplayName = "阵营过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTeamFilter), DefaultValue = AbilityTargetTeamFilter.None });
-        // 类型过滤
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetTypeFilter, DisplayName = "类型过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTypeFilter), DefaultValue = AbilityTargetTypeFilter.None });
         // 目标排序
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetSorting, DisplayName = "目标排序", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSorting), DefaultValue = AbilityTargetSorting.None });
         // 最大目标
@@ -92,24 +90,6 @@ public partial class DataRegister_Ability : Node
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChainCount, DisplayName = "弹跳次数", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
         // 弹跳范围
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChainRange, DisplayName = "弹跳范围", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
-
-        // ============ 标签系统 ============
-        // 技能标签
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityAssetTags, DisplayName = "技能标签", Category = DataCategory_Ability.Tag, Type = typeof(List<string>), DefaultValue = null });
-        // 激活必须
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityActivationRequiredTags, DisplayName = "激活必须", Category = DataCategory_Ability.Tag, Type = typeof(List<string>), DefaultValue = null });
-        // 激活阻止
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityActivationBlockedTags, DisplayName = "激活阻止", Category = DataCategory_Ability.Tag, Type = typeof(List<string>), DefaultValue = null });
-        // 阻止技能
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityBlockAbilitiesWithTags, DisplayName = "阻止技能", Category = DataCategory_Ability.Tag, Type = typeof(List<string>), DefaultValue = null });
-        // 取消技能
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityCancelAbilitiesWithTags, DisplayName = "取消技能", Category = DataCategory_Ability.Tag, Type = typeof(List<string>), DefaultValue = null });
-
-        // ============ 效果参数 ============
-        // 技能伤害
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityDamage, DisplayName = "技能伤害", Category = DataCategory_Ability.Effect, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
-        // 持续时间
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityDuration, DisplayName = "持续时间", Category = DataCategory_Ability.Effect, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
 
         // ============ 状态标记 ============
         // 已解锁

@@ -193,7 +193,7 @@ public partial class TriggerComponent : Node, IComponent
     {
         if (_data == null || _entity is not AbilityEntity ability) return;
 
-        float interval = _data.Get<float>(DataKey.AbilityTriggerInterval);
+        float interval = _data.Get<float>(DataKey.AbilityCooldown);
         if (interval <= 0f) return;
 
         // 取消旧的定时器

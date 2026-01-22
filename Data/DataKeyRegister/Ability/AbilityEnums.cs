@@ -95,40 +95,10 @@ public enum AbilityTargetTeamFilter
     Self = 1 << 3,
 
     // ============ 组合预设 ============
-    // 敌人
-    AllEnemies = Enemy,
     // 友方和自身
     FriendlyAndSelf = Friendly | Self,
     // 所有
     All = Friendly | Enemy | Neutral | Self,
-}
-
-/// <summary>
-/// 目标类型过滤 - [Flags] 位运算
-/// </summary>
-[Flags]
-public enum AbilityTargetTypeFilter
-{
-    None = 0,
-    /// <summary>单位 (生物)</summary>
-    Unit = 1 << 0,
-    /// <summary>投射物 (子弹)</summary>
-    Projectile = 1 << 1,
-    /// <summary>建筑</summary>
-    Structure = 1 << 2,
-    /// <summary>物品 (掉落物)</summary>
-    Item = 1 << 3,
-    /// <summary>技能实体</summary>
-    Ability = 1 << 4,
-    /// <summary>Buff实体</summary>
-    Buff = 1 << 5,
-
-
-    // ============ 组合预设 ============
-    // 所有物理实体
-    AllPhysical = Unit | Structure | Item,
-    // 所有可被攻击的目标
-    AllAttackable = Unit | Structure,
 }
 
 /// <summary>

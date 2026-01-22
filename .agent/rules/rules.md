@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # 项目规则 - Godot 4.5 C# (.NET 8.0)
 
 > [!IMPORTANT]

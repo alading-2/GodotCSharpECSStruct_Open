@@ -87,7 +87,7 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
 |:-------------|:-----------|:-----------|:---------------|
 | `CenterEntity` | `IEntity?` | - | 阵营过滤基准实体 |
 | `TeamFilter` | `AbilityTargetTeamFilter` | - | 阵营过滤器 |
-| `TypeFilter` | `AbilityTargetTypeFilter` | - | 类型过滤器 |
+| `TypeFilter` | `EntityType` | - | 类型过滤器 |
 
 #### 排序与限制参数
 
@@ -207,18 +207,19 @@ TeamFilter = AbilityTargetTeamFilter.Friendly | AbilityTargetTeamFilter.Neutral
 
 使用 `TypeFilter` 参数筛选单位类型:
 
+
 ```csharp
 // 只选单位 (生物)
-TypeFilter = AbilityTargetTypeFilter.Unit
+TypeFilter = EntityType.Unit
 
 // 选所有可攻击单位 (单位 + 建筑)
-TypeFilter = AbilityTargetTypeFilter.AllAttackable
+TypeFilter = EntityType.AllAttackable
 
 // 自定义组合 (单位 + 掉落物)
-TypeFilter = AbilityTargetTypeFilter.Unit | AbilityTargetTypeFilter.Item
+TypeFilter = EntityType.Unit | EntityType.Item
 ```
 
-**前提**: 目标实体必须设置 `DataKey.EntityType` 数据,且值与 `AbilityTargetTypeFilter` 对应。
+**前提**: 目标实体必须设置 `DataKey.EntityType` 数据,且值与 `EntityType` 对应。
 
 ## 排序规则
 
@@ -246,7 +247,7 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
     Range = 200f,
     CenterEntity = healer,
     TeamFilter = AbilityTargetTeamFilter.Friendly,
-    TypeFilter = AbilityTargetTypeFilter.Unit,
+    TypeFilter = EntityType.Unit,
     Sorting = AbilityTargetSorting.LowestHealthPercent,
     MaxTargets = 3
 });

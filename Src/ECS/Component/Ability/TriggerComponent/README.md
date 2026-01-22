@@ -23,7 +23,6 @@
 | :--- | :--- | :--- |
 | `AbilityTriggerMode` | `int` (Flags) | 触发模式掩码 |
 | `AbilityTriggerEvent` | `string` | 监听的事件名 |
-| `AbilityTriggerInterval` | `float` | 周期触发间隔 |
 
 ---
 

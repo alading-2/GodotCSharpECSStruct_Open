@@ -154,7 +154,7 @@ public partial class ActiveSkillInputComponent : Node, IComponent
     private CastContext BuildCastContext(AbilityEntity ability)
     {
         var context = new CastContext();
-        var selection = ability.Data.Get<AbilityTargetSelection>(DataKey.AbilityTargetOrigin);
+        var selection = ability.Data.Get<AbilityTargetSelection>(DataKey.AbilityTargetSelection);
 
         if (_entity is not Node2D casterNode) return context;
         Vector2 origin = casterNode.GlobalPosition;

@@ -21,7 +21,7 @@
 | 3 | [CritProcessor](./Processors/CritProcessor.cs) | 300 | **输出修正** | 判定暴击。若暴击：<br>`IsCritical = true`, `FinalDamage *= CritDamageMultiplier` |
 | 4 | [ShieldProcessor](./Processors/ShieldProcessor.cs) | 400 | **护盾抵扣** | 优先扣除护盾（**TODO**）<br>护盾承受**原始伤害**（护甲减免前） |
 | 5 | [DefenseProcessor](./Processors/DefenseProcessor.cs) | 500 | **受击减免** | 计算护甲减伤<br>公式：`multiplier = MyMath.CalculateArmorDamageMultiplier(Armor)` |
-| 6 | [DamageTakenAmplificationProcessor](./Processors/DamageTakenAmplificationProcessor.cs) | 600 | **伤害增幅** | 应用受击者的易伤/减伤修正<br>`FinalDamage *= DamageTakenMultiplier` |
+| 6 | [DamageTakenAmplificationProcessor](./Processors/DamageTakenAmplificationProcessor.cs) | 600 | **伤害增幅** | 应用受害者的易伤/减伤修正<br>`FinalDamage *= DamageTakenMultiplier` |
 | 7 | [FlatReductionProcessor](./Processors/FlatReductionProcessor.cs) | 700 | **受击减免** | 固定数值减伤（**预留**）<br>如"格挡 5 点伤害" |
 | 8 | [LifestealProcessor](./Processors/LifestealProcessor.cs) | 800 | **后处理** | 计算吸血逻辑<br>基于 `FinalDamage` 发送治疗请求事件 |
 | 9 | [HealthExecutionProcessor](./Processors/HealthExecutionProcessor.cs) | 900 | **最终结算** | 实际扣除目标生命值<br>调用 `HealthComponent.ApplyDamage(info)`<br>**模拟模式**：不实际扣血 |
@@ -35,7 +35,7 @@
 承载单次伤害生命周期的所有信息。
 - `Attacker`: 伤害来源实体（可能是子弹、陷阱）。
 - `Instigator`: **真正施法者**（IUnit），用于伤害归属统计。
-- `Victim`:受击者实体。
+- `Victim`:受害者实体。
 - `FinalDamage`: 流转过程中的最终结算伤害值。
 
 ### 3.2 [IUnit](./IUnit.cs)
@@ -137,7 +137,7 @@ public void Process(DamageInfo info)
   - `Id`: 唯一标识，用于日志追踪。
   - `Attacker`: 伤害来源节点（如子弹、陷阱 Area2D）。
     - 注意：这是**直接来源**，统计归属需通过 `EntityRelationshipManager.FindAncestorOfType<IUnit>(Attacker)` 向上查找。
-  - `Victim`: 受击者实体（必须实现 IUnit）。
+  - `Victim`: 受害者实体（必须实现 IUnit）。
   - `FinalDamage`: 流转过程中的最终结算伤害值。
   - `IsEnd`: 标记伤害流程是否应提前终止（由主循环检查）。
   - `IsSimulation`: 模拟模式标记。若为 `true`，`HealthExecutionProcessor` 将跳过实际扣血，仅记录日志。

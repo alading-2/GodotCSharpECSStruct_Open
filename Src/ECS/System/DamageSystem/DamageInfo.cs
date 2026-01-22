@@ -49,7 +49,7 @@ public class DamageInfo
     public Node Attacker { get; set; }
 
     /// <summary>
-    /// 受击者实体（必须实现 IUnit 接口）
+    /// 受害者实体（必须实现 IUnit 接口）
     /// </summary>
     public IUnit Victim { get; set; }
 

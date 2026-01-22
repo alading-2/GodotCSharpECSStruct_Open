@@ -5,7 +5,7 @@ using Godot;
 /// <para>核心职责：</para>
 /// <list type="bullet">
 /// <item>遍历攻击链（Attacker → 武器 → 角色），为 IUnit 和 IWeapon 累加统计</item>
-/// <item>记录受击者（Victim）的波次受伤数据</item>
+/// <item>记录受害者（Victim）的波次受伤数据</item>
 /// </list>
 /// <para>核心机制：沿 PARENT 关系遍历攻击链，只统计 IUnit 或 IWeapon 类型的实体。</para>
 /// </summary>
@@ -44,11 +44,11 @@ public class StatisticsProcessor : IDamageProcessor
             _log.Warn($"统计处理：攻击链上未找到 IUnit 或 IWeapon，Attacker={info.Attacker}");
         }
 
-        // ===== 受击者 (Victim) 波次伤害统计 =====
+        // ===== 受害者 (Victim) 波次伤害统计 =====
         // 注意：TotalDamageTaken 通常由 HealthComponent 内部记录
         if (info.Victim is IEntity victim)
         {
-            // 记录受击者在该波次受到的总伤害
+            // 记录受害者在该波次受到的总伤害
             victim.Data.Add(DataKey.WaveDamageTaken, info.FinalDamage);
         }
 

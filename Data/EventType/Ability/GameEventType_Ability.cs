@@ -40,7 +40,7 @@ public static partial class GameEventType
         /// <summary>技能效果执行完成</summary>
         public const string Executed = "ability:executed";
         /// <summary>技能执行完成事件数据</summary>
-        public readonly record struct ExecutedEventData(AbilityEntity? Ability, AbilityExecuteResult? Result);
+        public readonly record struct ExecutedEventData(AbilityEntity? Ability, AbilityExecutedResult? Result);
 
         /// <summary>技能被取消 (如蓄力被打断)</summary>
         public const string Cancelled = "ability:cancelled";
@@ -127,6 +127,26 @@ public static partial class GameEventType
         public const string AddCharge = "ability:add_charge";
         /// <summary>增加充能事件数据</summary>
         public readonly record struct AddChargeEventData(int Amount);
+
+        // ================= CostComponent (消耗组件) =================
+
+        /// <summary>
+        /// 请求消耗成本 (魔法/能量/生命值等)。
+        /// 发送者：AbilitySystem (技能激活时)
+        /// 接收者：CostComponent
+        /// </summary>
+        public const string ConsumeCost = "ability:consume_cost";
+        /// <summary>消耗成本请求事件数据</summary>
+        public readonly record struct ConsumeCostEventData(AbilityEntity Ability, EventContext Context);
+
+        /// <summary>
+        /// 成本消耗完成事件 (供 UI 监听)。
+        /// 发送者：CostComponent
+        /// 接收者：UI、统计系统等
+        /// </summary>
+        public const string CostConsumed = "ability:cost_consumed";
+        /// <summary>成本消耗完成事件数据</summary>
+        public readonly record struct CostConsumedEventData(AbilityEntity Ability, AbilityCostType CostType, float Amount);
     }
 }
 

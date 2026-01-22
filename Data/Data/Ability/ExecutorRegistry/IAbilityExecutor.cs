@@ -16,5 +16,5 @@ public interface IAbilityExecutor
     /// </summary>
     /// <param name="context">施法上下文，包含施法者、技能、目标等信息</param>
     /// <returns>执行结果</returns>
-    AbilityExecuteResult Execute(CastContext context);
+    AbilityExecutedResult Execute(CastContext context);
 }

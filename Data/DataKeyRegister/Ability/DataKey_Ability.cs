@@ -14,6 +14,8 @@ public static partial class DataKey
     public const string AbilityLevel = "AbilityLevel";
     /// <summary>技能最大等级</summary>
     public const string AbilityMaxLevel = "AbilityMaxLevel";
+    /// <summary>技能基础伤害</summary>
+    public const string AbilityDamage = "AbilityDamage";
 
     // ============ 冷却系统 ============
     /// <summary>基础冷却时间 (秒)</summary>
@@ -32,8 +34,6 @@ public static partial class DataKey
     /// 此类技能只能通过事件 (AddCharge) 或方法 (AddCharges) 恢复充能。
     /// </summary>
     public const string AbilityChargeTime = "AbilityChargeTime";
-    /// <summary>充能恢复计时器</summary>
-    public const string AbilityChargeTimer = "AbilityChargeTimer";
 
     // ============ 消耗系统 ============
     /// <summary>消耗类型 (None/Mana/Energy/Ammo/Health)</summary>
@@ -46,20 +46,16 @@ public static partial class DataKey
     public const string AbilityTriggerMode = "AbilityTriggerMode";
     /// <summary>触发事件类型 (当 TriggerMode 包含 OnEvent)</summary>
     public const string AbilityTriggerEvent = "AbilityTriggerEvent";
-    /// <summary>触发间隔 (当 TriggerMode 包含 Periodic)</summary>
-    public const string AbilityTriggerInterval = "AbilityTriggerInterval";
-    /// <summary>触发概率 (0~1, 可选)</summary>
+    /// <summary>触发概率</summary>
     public const string AbilityTriggerChance = "AbilityTriggerChance";
 
     // ============ 目标系统 - 5 层分解 ============
     /// <summary>目标选取 (Self/Unit/Point/EventSource/Cursor)</summary>
-    public const string AbilityTargetOrigin = "AbilityTargetOrigin";
+    public const string AbilityTargetSelection = "AbilityTargetSelection";
     /// <summary>目标几何形状 (Single/Circle/Box/Line/Cone/Chain/Global)</summary>
     public const string AbilityTargetGeometry = "AbilityTargetGeometry";
     /// <summary>目标阵营过滤 [Flags] (Friendly/Enemy/Neutral/Self)</summary>
     public const string AbilityTargetTeamFilter = "AbilityTargetTeamFilter";
-    /// <summary>目标类型过滤 [Flags] (Hero/Creep/Boss/...)</summary>
-    public const string AbilityTargetTypeFilter = "AbilityTargetTypeFilter";
     /// <summary>目标排序方式 (Nearest/Farthest/LowestHealth/Random)</summary>
     public const string AbilityTargetSorting = "AbilityTargetSorting";
     /// <summary>目标数量上限</summary>
@@ -78,24 +74,6 @@ public static partial class DataKey
     public const string AbilityChainCount = "AbilityChainCount";
     /// <summary>链式弹跳范围</summary>
     public const string AbilityChainRange = "AbilityChainRange";
-
-    // ============ 标签系统 ============
-    /// <summary>技能自身标签 List&lt;string&gt;</summary>
-    public const string AbilityAssetTags = "AbilityAssetTags";
-    /// <summary>激活所需标签 List&lt;string&gt;</summary>
-    public const string AbilityActivationRequiredTags = "AbilityActivationRequiredTags";
-    /// <summary>激活阻止标签 List&lt;string&gt;</summary>
-    public const string AbilityActivationBlockedTags = "AbilityActivationBlockedTags";
-    /// <summary>阻止其他技能标签 List&lt;string&gt;</summary>
-    public const string AbilityBlockAbilitiesWithTags = "AbilityBlockAbilitiesWithTags";
-    /// <summary>取消其他技能标签 List&lt;string&gt;</summary>
-    public const string AbilityCancelAbilitiesWithTags = "AbilityCancelAbilitiesWithTags";
-
-    // ============ 效果参数 ============
-    /// <summary>技能基础伤害</summary>
-    public const string AbilityDamage = "AbilityDamage";
-    /// <summary>技能持续时间</summary>
-    public const string AbilityDuration = "AbilityDuration";
 
     // ============ 状态标记 ============
     /// <summary>技能是否已解锁</summary>

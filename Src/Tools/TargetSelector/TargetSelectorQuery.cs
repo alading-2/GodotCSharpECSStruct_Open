@@ -79,7 +79,7 @@ public readonly record struct TargetSelectorQuery
     /// 类型过滤器（可选，默认 AllAttackable）
     /// 用于过滤英雄/小怪/建筑/召唤物/Boss
     /// </summary>
-    public AbilityTargetTypeFilter TypeFilter { get; init; }
+    public EntityType TypeFilter { get; init; }
 
     /// <summary>
     /// 阵营过滤基准实体（可选）

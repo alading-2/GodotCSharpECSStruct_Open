@@ -102,11 +102,24 @@ public static class AbilitySystem
             return false;
         }
 
-        // 事件驱动：请求启动冷却
+        // 事件驱动:请求启动冷却
         ability.Events.Emit(
             GameEventType.Ability.StartCooldown,
             new GameEventType.Ability.StartCooldownEventData(ability)
         );
+
+        // 事件驱动:请求消耗成本 (魔法/能量等)
+        var costContext = new EventContext();
+        ability.Events.Emit(
+            GameEventType.Ability.ConsumeCost,
+            new GameEventType.Ability.ConsumeCostEventData(ability, costContext)
+        );
+
+        if (!costContext.Success)
+        {
+            _log.Debug($"消耗成本失败: {costContext.FailReason}");
+            return false;
+        }
 
         // 标记为执行中
         ability.Data.Set(DataKey.AbilityIsActive, true);
@@ -169,8 +182,6 @@ public static class AbilitySystem
             return false;
         }
 
-        // TODO: 检查资源消耗 (CostComponent)
-
         return true;
     }
 
@@ -182,7 +193,7 @@ public static class AbilitySystem
     /// </summary>
     private static bool ValidateTargetInput(AbilityEntity ability, CastContext context)
     {
-        var selection = ability.Data.Get<AbilityTargetSelection>(DataKey.AbilityTargetOrigin);
+        var selection = ability.Data.Get<AbilityTargetSelection>(DataKey.AbilityTargetSelection);
 
         switch (selection)
         {

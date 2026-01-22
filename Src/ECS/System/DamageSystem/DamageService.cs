@@ -75,7 +75,7 @@ public partial class DamageService : Node
         RegisterProcessor(new ShieldProcessor(), 400);
         // 5. 护甲减伤
         RegisterProcessor(new DefenseProcessor(), 500);
-        // 6. 受伤倍率（受击者易伤等效果）
+        // 6. 受伤倍率（受害者易伤等效果）
         RegisterProcessor(new DamageTakenAmplificationProcessor(), 600);
         // 7. 固定值减伤（最后的防御手段）
         RegisterProcessor(new FlatReductionProcessor(), 700);
@@ -106,13 +106,13 @@ public partial class DamageService : Node
     /// <summary>
     /// 处理伤害请求的主入口
     /// </summary>
-    /// <param name="info">包含攻击者、受击者及初始伤害信息的上下文对象</param>
+    /// <param name="info">包含攻击者、受害者及初始伤害信息的上下文对象</param>
     public void Process(DamageInfo info)
     {
         // 基础合法性检查
         if (info == null || info.Victim == null)
         {
-            _log.Warn("伤害系统：无效的伤害信息或受击者。");
+            _log.Warn("伤害系统：无效的伤害信息或受害者。");
             return;
         }
 
