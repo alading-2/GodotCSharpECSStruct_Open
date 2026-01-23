@@ -18,6 +18,12 @@ public struct ObjectPoolNames
 
     /// <summary> 技能实体对象池 </summary>
     public const string AbilityPool = "AbilityPool";
+
+    /// <summary> 头顶血条对象池 </summary>
+    public const string HealthBarPool = "HealthBarPool";
+
+    /// <summary> 伤害数字对象池 </summary>
+    public const string DamageNumberUIPool = "DamageNumberUIPool";
 }
 
 /// <summary>
@@ -94,6 +100,30 @@ public partial class ObjectPoolInit : Node
                 InitialSize = 50,
                 MaxSize = 300,
                 ParentPath = "ECS/Entity/Ability"
+            }
+        );
+
+        // 4. 初始化 HealthBarPool (头顶血条对象池)
+        new ObjectPool<HealthBarUI>(
+            () => (HealthBarUI)ResourceRegistry.LoadScene<HealthBarUI>().Instantiate(),
+            new ObjectPoolConfig
+            {
+                Name = ObjectPoolNames.HealthBarPool,
+                InitialSize = 50,
+                MaxSize = 200,
+                ParentPath = "UI/UI/HealthBarUI"
+            }
+        );
+
+        // 5. 初始化 DamageNumberUIPool (伤害数字对象池)
+        new ObjectPool<DamageNumberUI>(
+            () => (DamageNumberUI)ResourceRegistry.LoadScene<DamageNumberUI>().Instantiate(),
+            new ObjectPoolConfig
+            {
+                Name = ObjectPoolNames.DamageNumberUIPool,
+                InitialSize = 100,
+                MaxSize = 500,
+                ParentPath = "UI/UI/DamageNumberUI"
             }
         );
 

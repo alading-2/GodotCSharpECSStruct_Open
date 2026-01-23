@@ -10,7 +10,7 @@ using Godot;
 /// </summary>
 public partial class VelocityComponent : Node, IComponent
 {
-    private static readonly Log Log = new("VelocityComponent");
+    private static readonly Log _log = new("VelocityComponent");
 
     // ================= IComponent 实现 =================
 
@@ -62,14 +62,13 @@ public partial class VelocityComponent : Node, IComponent
 
     public override void _Ready()
     {
-        Log.Success($"就绪, Parent: {(_entity as Node)?.Name}");
     }
 
     public override void _ExitTree()
     {
         _data = null;
         _entity = null;
-        Log.Trace("移动组件退出场景树");
+        _log.Trace("移动组件退出场景树");
     }
 
     public override void _Process(double delta)
@@ -105,7 +104,7 @@ public partial class VelocityComponent : Node, IComponent
     {
         // ✅ 通过 Data 重置速度
         _data.Set(DataKey.Velocity, Vector2.Zero);
-        Log.Debug("移动已停止");
+        _log.Debug("移动已停止");
     }
 
     /// <summary>
@@ -115,7 +114,7 @@ public partial class VelocityComponent : Node, IComponent
     {
         // ✅ 通过 Data 设置速度
         _data.Set(DataKey.Velocity, velocity);
-        Log.Trace($"设置速度: {velocity}");
+        _log.Trace($"设置速度: {velocity}");
     }
 
     /// <summary>

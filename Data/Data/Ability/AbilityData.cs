@@ -23,8 +23,8 @@ public static class AbilityData
             { DataKey.AbilityCooldown, 1.0f }, // 技能冷却时间
             // { DataKey.AbilityTriggerChance, 50.0f }, // 技能触发概率
 
-            // 目标配置：圆形、敌人
-            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Point }, // 目标选取
+            // 目标配置:圆形、敌人
+            { DataKey.AbilityTargetSelection, AbilityTargetSelection.None }, // 目标选取
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Circle }, // 目标几何形状
             { DataKey.AbilityRange, 500f }, // 技能作用范围
             { DataKey.AbilityTargetTeamFilter, AbilityTargetTeamFilter.Enemy }, // 目标队伍过滤器

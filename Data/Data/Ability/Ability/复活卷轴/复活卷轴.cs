@@ -27,7 +27,7 @@ public class ReviveScrollExecutor : IAbilityExecutor
         // 1. 检查触发上下文
         // 复活通常由 UnitKilled 事件触发
         // 我们需要由 TriggerComponent 传递过来的 SourceEventData 来确认死者是不是自己
-        if (context.SourceEventData is not GameEventType.Global.UnitKilledEventData killData)
+        if (context.SourceEventData is not GameEventType.Unit.KilledEventData killData)
         {
             // 如果不是死亡事件触发的（比如手动点击），则允许直接使用（预防性复活？）
             _log.Info("复活卷轴手动使用（赋予复活Buff?）");

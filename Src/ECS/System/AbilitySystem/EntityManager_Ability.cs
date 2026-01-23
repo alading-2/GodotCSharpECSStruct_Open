@@ -1,4 +1,4 @@
-// Src/ECS/System/AbilitySystem/EntityManager.Ability.cs
+// Src/ECS/System/AbilitySystem/EntityManager_Ability.cs
 // partial 扩展 EntityManager，提供 Ability 相关的增删查功能
 // 放在 AbilitySystem 目录下，逻辑上属于 Ability 模块
 
@@ -14,7 +14,7 @@ using Godot;
 /// </summary>
 public static partial class EntityManager
 {
-    private static readonly Log _abilityLog = new("EntityManager.Ability");
+    private static readonly Log _abilityLog = new("EntityManager_Ability", LogLevel.Warning);
 
     // ==================== Ability 管理 ====================
 

@@ -48,4 +48,9 @@ public static class EntityRelationshipType
 
     // ==================== Buff 相关关系 ====================
 
+    // ==================== UI 相关关系 ====================
+
+    /// <summary>Entity 与 UI 关系（如血条、技能栏、Buff图标）</summary>
+    public const string ENTITY_TO_UI = "relationship.entity.ui";
+
 }

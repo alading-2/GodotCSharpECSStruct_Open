@@ -7,8 +7,13 @@ public static partial class GameEventType
     {
         /// <summary>单位创建</summary>
         public const string Created = "unit:created";
+        /// <summary>单位创建事件数据</summary>
+        public readonly record struct CreatedEventData(IEntity Entity);
         /// <summary>单位销毁</summary>
         public const string Destroyed = "unit:destroyed";
+
+        /// <summary>单位销毁事件数据</summary>
+        public readonly record struct DestroyedEventData(IEntity Entity);
 
         /// <summary>单位受到伤害</summary>
         public const string Damaged = "unit:damaged";
@@ -50,5 +55,30 @@ public static partial class GameEventType
         public const string Revived = "unit:revived";
         /// <summary>单位复活完成事件数据</summary>
         public readonly record struct RevivedEventData();
+
+        // === 死亡/等级全局事件 (迁移自 Global) ===
+
+        /// <summary>
+        /// 单位被击杀（建议使用 GlobalEventBus 广播）
+        /// </summary>
+        /// <remarks>
+        /// <para>发送者：HealthComponent（HP≤0）</para>
+        /// <para>监听者：DamageStatisticsSystem（击杀统计）、LifecycleComponent（通过 Victim 筛选）</para>
+        /// </remarks>
+        public const string Killed = "unit:killed";
+        /// <summary>单位被击杀事件数据</summary>
+        public readonly record struct KilledEventData(
+            IEntity? Victim,
+            IEntity? Killer,
+            DeathType DeathType = DeathType.Normal,
+            DamageType DamageType = DamageType.True
+        );
+
+        /// <summary>
+        /// 单位等级提升
+        /// </summary>
+        public const string LevelUp = "unit:level_up";
+        /// <summary>等级提升事件数据</summary>
+        public readonly record struct LevelUpEventData(IEntity Entity, int OldLevel, int NewLevel);
     }
 }

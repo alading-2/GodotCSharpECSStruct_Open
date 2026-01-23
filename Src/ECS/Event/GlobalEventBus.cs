@@ -59,21 +59,19 @@ public static class GlobalEventBus
     /// <summary>
     /// 触发单位击杀事件（全局广播）
     /// </summary>
-    /// <remarks>
-    /// 由 HealthComponent 在 HP≤0 时调用，供全局系统（统计、成就、任务）监听。
-    /// </remarks>
-    /// <param name="data">击杀事件数据，包含受害者、击杀者等信息</param>
-    public static void TriggerUnitKilled(GameEventType.Global.UnitKilledEventData data)
+    public static void TriggerUnitKilled(IEntity victim, IEntity killer)
     {
-        Global.Emit(GameEventType.Global.UnitKilled, data);
+        Global.Emit(GameEventType.Unit.Killed, new GameEventType.Unit.KilledEventData(
+            Victim: victim,
+            Killer: killer
+        ));
     }
 
     /// <summary>
-    /// 触发单位升级事件
+    /// 触发单位等级提升事件
     /// </summary>
     public static void TriggerLevelUp(IEntity entity, int oldLevel, int newLevel)
     {
-        Global.Emit(GameEventType.Global.LevelUp, new GameEventType.Global.LevelUpEventData(entity, oldLevel, newLevel));
+        Global.Emit(GameEventType.Unit.LevelUp, new GameEventType.Unit.LevelUpEventData(entity, oldLevel, newLevel));
     }
-
 }

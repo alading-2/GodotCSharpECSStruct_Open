@@ -7,9 +7,11 @@ public static partial class DataKey
     // === 基础信息 ===
     public const string Level = "Level"; // 等级
     public const string VisualScenePath = "VisualScenePath"; // 视觉场景路径
+    public const string UnitRank = "UnitRank"; // 单位品阶 (Enum: UnitRank)
     // === Enemy ===
     public const string ExpReward = "ExpReward"; // 经验奖励
     public const string SpawnRule = "SpawnRule"; // 生成规则
+    public const string HealthBarHeight = "HealthBarHeight"; // 血条高度（Y轴偏移）
 
     // === 状态标记 ===
     // 恢复

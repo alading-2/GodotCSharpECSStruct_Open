@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://v5bygumtw015" path="res://Src/Main/Main.cs" id="1_gqao1"]
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node"]
 script = ExtResource("1_gqao1")
 
 [node name="Camera2D" type="Camera2D" parent="."]

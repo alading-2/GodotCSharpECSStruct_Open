@@ -106,7 +106,7 @@ public class ObjectPool<T> where T : class
     /// </summary>
     /// <param name="createFunc">
     /// 创建新对象的工厂函数（必须提供）。
-    /// 对于 Node，通常是 () => scene.Instantiate&lt;T&gt;()。
+    /// 对于 Node，通常是 () => scene.Instantiate<T>()。
     /// 对于纯类，通常是 () => new T()。
     /// </param>
     /// <param name="config">配置参数（包含名称、容量、预热等）</param>
@@ -137,7 +137,7 @@ public class ObjectPool<T> where T : class
         // 自动注册父节点
         if (!string.IsNullOrEmpty(_config.Name) && !string.IsNullOrEmpty(_config.ParentPath))
         {
-            ParentManager.RegisterParent(_config.Name, _config.ParentPath);
+            ParentManager.Register(_config.Name, _config.ParentPath);
         }
 
         // 构造时直接预热，将性能开销放在初始化阶段

@@ -1,9 +1,9 @@
-[gd_scene load_steps=25 format=3 uid="uid://dpaa82ggxeqa3"]
+[gd_scene load_steps=29 format=3 uid="uid://dpaa82ggxeqa3"]
 
 [ext_resource type="Script" uid="uid://joghfrdjf2sr" path="res://Data/ResourceManagement/ResourceRegistry.cs" id="1_script"]
 [ext_resource type="Script" uid="uid://csg055em5kn2s" path="res://Data/ResourceManagement/ResourceEntry.cs" id="2_entry"]
-[ext_resource type="PackedScene" uid="uid://bqu6n71cx1env" path="res://Src/ECS/Entity/Unit/Player/Player.tscn" id="8_ent_player"]
-[ext_resource type="PackedScene" uid="uid://c7a7uoxm8i6t8" path="res://Src/ECS/Entity/Unit/Enemy/Enemy.tscn" id="9_ent_enemy"]
+[ext_resource type="PackedScene" uid="uid://bqu6n71cx1env" path="res://Src/ECS/Entity/Unit/Player/PlayerEntity.tscn" id="8_ent_player"]
+[ext_resource type="PackedScene" uid="uid://c7a7uoxm8i6t8" path="res://Src/ECS/Entity/Unit/Enemy/EnemyEntity.tscn" id="9_ent_enemy"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/FollowComponent/FollowComponent.tscn" id="11_cmp_follow"]
 [ext_resource type="PackedScene" uid="uid://cfvwgjvdxn0af" path="res://Src/ECS/Component/Unit/HealthComponent/HealthComponent.tscn" id="12_cmp_health"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/HitboxComponent/HitboxComponent.tscn" id="13_cmp_hitbox"]
@@ -17,6 +17,9 @@
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.tscn" id="21_cmp_trigger"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn" id="22_cmp_cooldown"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/ChargeComponent/ChargeComponent.tscn" id="23_cmp_charge"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn" id="24_cmp_cost"]
+[ext_resource type="PackedScene" path="res://Src/UI/UI/HealthBarUI/HealthBarUI.tscn" id="25_ui_health"]
+[ext_resource type="PackedScene" path="res://Src/UI/UI/DamageNumberUI/DamageNumberUI.tscn" id="26_ui_damage"]
 
 [sub_resource type="Resource" id="Resource_6"]
 script = ExtResource("2_entry")
@@ -26,87 +29,103 @@ Data = ExtResource("8_ent_player")
 [sub_resource type="Resource" id="Resource_7"]
 script = ExtResource("2_entry")
 Name = "EnemyEntity"
-Category = 1
 Data = ExtResource("9_ent_enemy")
 
 [sub_resource type="Resource" id="Resource_9"]
 script = ExtResource("2_entry")
 Name = "FollowComponent"
-Category = 7
+Category = 1
 Data = ExtResource("11_cmp_follow")
 
 [sub_resource type="Resource" id="Resource_10"]
 script = ExtResource("2_entry")
 Name = "HealthComponent"
-Category = 7
+Category = 1
 Data = ExtResource("12_cmp_health")
 
 [sub_resource type="Resource" id="Resource_11"]
 script = ExtResource("2_entry")
 Name = "HitboxComponent"
-Category = 7
+Category = 1
 Data = ExtResource("13_cmp_hitbox")
 
 [sub_resource type="Resource" id="Resource_12"]
 script = ExtResource("2_entry")
 Name = "HurtboxComponent"
-Category = 7
+Category = 1
 Data = ExtResource("14_cmp_hurtbox")
 
 [sub_resource type="Resource" id="Resource_13"]
 script = ExtResource("2_entry")
 Name = "LifecycleComponent"
-Category = 7
+Category = 1
 Data = ExtResource("15_cmp_life")
 
 [sub_resource type="Resource" id="Resource_14"]
 script = ExtResource("2_entry")
 Name = "PickupComponent"
-Category = 7
+Category = 1
 Data = ExtResource("16_cmp_pickup")
 
 [sub_resource type="Resource" id="Resource_15"]
 script = ExtResource("2_entry")
 Name = "RecoveryComponent"
-Category = 7
+Category = 1
 Data = ExtResource("17_cmp_recov")
 
 [sub_resource type="Resource" id="Resource_16"]
 script = ExtResource("2_entry")
 Name = "UnitStateComponent"
-Category = 7
+Category = 1
 Data = ExtResource("18_cmp_state")
 
 [sub_resource type="Resource" id="Resource_17"]
 script = ExtResource("2_entry")
 Name = "VelocityComponent"
-Category = 7
+Category = 1
 Data = ExtResource("19_cmp_vel")
 
 [sub_resource type="Resource" id="Resource_18"]
 script = ExtResource("2_entry")
 Name = "AbilityEntity"
-Category = 12
 Data = ExtResource("20_ent_ability")
 
 [sub_resource type="Resource" id="Resource_19"]
 script = ExtResource("2_entry")
 Name = "TriggerComponent"
-Category = 23
+Category = 1
 Data = ExtResource("21_cmp_trigger")
 
 [sub_resource type="Resource" id="Resource_20"]
 script = ExtResource("2_entry")
 Name = "CooldownComponent"
-Category = 23
+Category = 1
 Data = ExtResource("22_cmp_cooldown")
 
 [sub_resource type="Resource" id="Resource_21"]
 script = ExtResource("2_entry")
 Name = "ChargeComponent"
-Category = 23
+Category = 1
 Data = ExtResource("23_cmp_charge")
+
+[sub_resource type="Resource" id="Resource_22"]
+script = ExtResource("2_entry")
+Name = "CostComponent"
+Category = 1
+Data = ExtResource("24_cmp_cost")
+
+[sub_resource type="Resource" id="Resource_23"]
+script = ExtResource("2_entry")
+Name = "HealthBarUI"
+Category = 2
+Data = ExtResource("25_ui_health")
+
+[sub_resource type="Resource" id="Resource_24"]
+script = ExtResource("2_entry")
+Name = "DamageNumberUI"
+Category = 2
+Data = ExtResource("26_ui_damage")
 
 [node name="ResourceRegistry" type="Node"]
 script = ExtResource("1_script")
-Resources = Array[ExtResource("2_entry")]([SubResource("Resource_6"), SubResource("Resource_7"), SubResource("Resource_9"), SubResource("Resource_10"), SubResource("Resource_11"), SubResource("Resource_12"), SubResource("Resource_13"), SubResource("Resource_14"), SubResource("Resource_15"), SubResource("Resource_16"), SubResource("Resource_17"), SubResource("Resource_18"), SubResource("Resource_19"), SubResource("Resource_20"), SubResource("Resource_21")])
+Resources = Array[ExtResource("2_entry")]([SubResource("Resource_6"), SubResource("Resource_7"), SubResource("Resource_9"), SubResource("Resource_10"), SubResource("Resource_11"), SubResource("Resource_12"), SubResource("Resource_13"), SubResource("Resource_14"), SubResource("Resource_15"), SubResource("Resource_16"), SubResource("Resource_17"), SubResource("Resource_18"), SubResource("Resource_19"), SubResource("Resource_20"), SubResource("Resource_21"), SubResource("Resource_22"), SubResource("Resource_23"), SubResource("Resource_24")])

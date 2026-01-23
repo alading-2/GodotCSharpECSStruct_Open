@@ -22,7 +22,7 @@ Src/ECS/Entity/Ability/
 
 Src/ECS/System/AbilitySystem/
 ├── AbilitySystem.cs          # 激活逻辑（静态类）
-├── EntityManager.Ability.cs  # 增删查（EntityManager partial 扩展）
+├── EntityManager_Ability.cs  # 增删查（EntityManager partial 扩展）
 └── README.md                 # 本文档
 ```
 

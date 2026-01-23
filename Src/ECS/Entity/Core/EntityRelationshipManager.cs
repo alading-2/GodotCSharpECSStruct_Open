@@ -51,7 +51,7 @@ public enum RelationshipConstraint
 /// </summary>
 public static class EntityRelationshipManager
 {
-    private static readonly Log _log = new("EntityRelationshipManager");
+    private static readonly Log _log = new("EntityRelationshipManager", LogLevel.Warning);
 
     // ==================== 事件 ====================
 

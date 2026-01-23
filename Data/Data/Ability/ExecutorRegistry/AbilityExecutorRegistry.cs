@@ -18,7 +18,7 @@ using System.Collections.Generic;
 /// </summary>
 public static class AbilityExecutorRegistry
 {
-    private static readonly Log _log = new("AbilityExecutorRegistry");
+    private static readonly Log _log = new("AbilityExecutorRegistry", LogLevel.Warning);
     private static readonly Dictionary<string, IAbilityExecutor> _executors = new();
     private static bool _initialized = false;
 

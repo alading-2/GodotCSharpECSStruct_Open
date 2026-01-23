@@ -97,8 +97,8 @@ public partial class LifecycleComponent : Node, IComponent
         }
 
         // ✅ 全局监听 Kill 事件（通过 Victim 筛选是否是自己）
-        GlobalEventBus.Global.On<GameEventType.Global.UnitKilledEventData>(
-            GameEventType.Global.UnitKilled, OnUnitKilled);
+        GlobalEventBus.Global.On<GameEventType.Unit.KilledEventData>(
+            GameEventType.Unit.Killed, OnUnitKilled);
 
         // ✅ 监听数据变化事件（处理 Spawn 后动态设置 MaxLifeTime 的场景）
         _entity?.Events.On<GameEventType.Data.PropertyChangedEventData>(
@@ -149,8 +149,8 @@ public partial class LifecycleComponent : Node, IComponent
     public void OnComponentUnregistered()
     {
         // 取消全局事件订阅
-        GlobalEventBus.Global.Off<GameEventType.Global.UnitKilledEventData>(
-            GameEventType.Global.UnitKilled, OnUnitKilled);
+        GlobalEventBus.Global.Off<GameEventType.Unit.KilledEventData>(
+            GameEventType.Unit.Killed, OnUnitKilled);
 
         // 停止所有活跃的计时器（生命周期或复活倒计时）
         _lifeTimer?.Cancel();
@@ -196,7 +196,7 @@ public partial class LifecycleComponent : Node, IComponent
     /// 当 HealthComponent 判定 HP<=0 后的回调。
     /// 执行死亡流程。
     /// </summary>
-    private void OnUnitKilled(GameEventType.Global.UnitKilledEventData data)
+    private void OnUnitKilled(GameEventType.Unit.KilledEventData data)
     {
         // 全局事件筛选：只处理自己被击杀的事件
         if (data.Victim != _entity) return;

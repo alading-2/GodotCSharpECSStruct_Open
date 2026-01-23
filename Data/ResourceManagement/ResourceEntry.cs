@@ -5,22 +5,12 @@ using Godot;
 /// </summary>
 public enum ResourceCategory
 {
-    /// <summary>玩家</summary>
-    Player,
-    /// <summary>敌人</summary>
-    Enemy,
-    /// <summary>技能</summary>
-    Ability,
-    /// <summary>Buff</summary>
-    Buff,
-    /// <summary>敌人生成规则</summary>
-    SpawnRule,
-    /// <summary>物品</summary>
-    Item,
-    /// <summary>武器</summary>
-    Weapon,
-    /// <summary>组件场景 (PackedScene)</summary>
-    Component
+    /// <summary>Entity</summary>
+    Entity,
+    /// <summary>Component</summary>
+    Component,
+    /// <summary>UI</summary>
+    UI,
 }
 
 /// <summary>

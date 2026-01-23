@@ -38,3 +38,14 @@ public enum EntityType
 
     // ============ 组合预设 ============
 }
+
+/// <summary>
+/// 单位品阶/等级
+/// </summary>
+public enum UnitRank
+{
+    Normal, // 普通
+    Elite, // 精英
+    Boss, // BOSS
+    Summon // 召唤物
+}

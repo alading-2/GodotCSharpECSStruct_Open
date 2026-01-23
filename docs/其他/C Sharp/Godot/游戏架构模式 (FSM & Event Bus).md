@@ -211,7 +211,7 @@ public void TakeDamage(int dmg)
 UI 不需要知道 Player 在哪，叫什么名字。
 
 ```C#
-public partial class HealthBar : ProgressBar
+public partial class HealthBarUI : ProgressBar
 {
     public override void _Ready()
     {

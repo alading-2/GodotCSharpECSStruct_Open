@@ -149,11 +149,11 @@ public partial class ResourceRegistry : Node
     /// 示例:
     /// <code>
     /// // 加载 Player 场景 (自动查找名为 "Player" 的资源)
-    /// var scene = ResourceRegistry.LoadScene&lt;Player&gt;();
-    /// var player = scene.Instantiate&lt;Player&gt;();
+    /// var scene = ResourceRegistry.LoadScene<Player>();
+    /// var player = scene.Instantiate<Player>();
     /// 
     /// // 等价于:
-    /// var scene = ResourceRegistry.Load&lt;PackedScene&gt;(nameof(Player));
+    /// var scene = ResourceRegistry.Load<PackedScene>(nameof(Player));
     /// </code>
     /// </summary>
     /// <typeparam name="TEntity">Entity 类型 (如 Player, Enemy)</typeparam>

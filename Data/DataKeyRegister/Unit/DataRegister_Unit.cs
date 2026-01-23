@@ -23,7 +23,8 @@ public partial class DataRegister_Unit : Node
         _log.Info("注册Unit数据...");
         // 等级
         DataRegistry.Register(new DataMeta { Key = DataKey.Level, DisplayName = "等级", Description = "实体的等级", Category = DataCategory_Base.Basic, Type = typeof(int), DefaultValue = 1, MinValue = 1, MaxValue = GlobalConfig.Maxlevel, SupportModifiers = false });
-
+        // 单位品阶UnitRank
+        DataRegistry.Register(new DataMeta { Key = DataKey.UnitRank, DisplayName = "单位品阶", Description = "单位品阶", Category = DataCategory_Base.Basic, Type = typeof(UnitRank), DefaultValue = UnitRank.Normal });
 
         // DisableHealthRecovery
         DataRegistry.Register(new DataMeta { Key = DataKey.IsDisableHealthRecovery, DisplayName = "是否禁止生命恢复", Description = "是否禁止生命恢复", Category = DataCategory_Unit.Recovery, Type = typeof(bool), DefaultValue = false });

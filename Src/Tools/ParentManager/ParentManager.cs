@@ -3,16 +3,17 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
-/// 对象池父节点管理器 (静态工具类)
-/// <para>负责管理对象池对应的场景父节点，实现自动化的层级结构创建。</para>
-/// <para>通常由 AutoLoad (如 Global.cs) 初始化，提供全局静态访问。</para>
+/// 通用父节点管理器 (静态工具类)
+/// <para>负责管理命名父节点的注册与查询，实现自动化的层级结构创建。</para>
+/// <para>适用场景：对象池、Entity容器、UI层级等任何需要统一父节点管理的场景。</para>
+/// <para>通常由 AutoLoad 初始化，提供全局静态访问。</para>
 /// </summary>
 public static class ParentManager
 {
     private static readonly Log _log = new Log("ParentManager");
 
-    /// <summary> 存储池名称与对应父节点引用的映射 </summary>
-    private static readonly Dictionary<string, Node> _poolParents = new();
+    /// <summary> 存储命名父节点的映射表 </summary>
+    private static readonly Dictionary<string, Node> _parents = new();
 
     /// <summary> 场景根节点引用（通常是 Main 场景或全局根节点） </summary>
     private static Node? _root;
@@ -27,43 +28,60 @@ public static class ParentManager
     /// <summary>
     /// 初始化管理器
     /// </summary>
-    /// <param name="root">用于挂载所有对象池层级的根节点</param>
+    /// <param name="root">用于挂载所有父节点层级的根节点</param>
     public static void Init(Node root)
     {
         _root = root;
-        _poolParents.Clear();
+        _parents.Clear();
         _pendingRootNodes.Clear();
         _log.Info("ParentManager 已初始化");
     }
 
     /// <summary>
-    /// 获取指定池名称对应的父节点
+    /// 获取指定名称对应的父节点
     /// </summary>
-    /// <param name="poolName">池的唯一标识名称</param>
+    /// <param name="name">父节点的唯一标识名称</param>
     /// <returns>返回有效的节点引用，如果不存在或已销毁则返回 null</returns>
-    public static Node? GetParent(string poolName)
+    public static Node? GetParent(string name)
     {
-        var node = _poolParents.GetValueOrDefault(poolName);
+        var node = _parents.GetValueOrDefault(name);
         return IsInstanceValid(node) ? node : null;
     }
 
     /// <summary>
-    /// 注册对象池的父节点路径
-    /// <para>自动在 Root 节点下按路径创建层级，确保对象池节点在场景中位置明确且易于调试。</para>
+    /// 注册命名父节点路径
+    /// <para>自动在 Root 节点下按路径创建层级，确保节点在场景中位置明确且易于调试。</para>
     /// </summary>
-    /// <param name="poolName">池名称</param>
-    /// <param name="path">相对路径，例如 "Pools/Bullets"</param>
-    public static void RegisterParent(string poolName, string path)
+    /// <param name="name">父节点名称（用于后续查询）</param>
+    /// <param name="path">相对路径，例如 "Pools/Bullets" 或 "ECS/Unit"</param>
+    public static void Register(string name, string path)
     {
         if (_root == null)
         {
-            _log.Error($"无法为 {poolName} 注册路径 {path}: ParentManager 尚未初始化 (Root 为空)。");
+            _log.Error($"无法为 {name} 注册路径 {path}: ParentManager 尚未初始化 (Root 为空)。");
             return;
         }
 
         // 确保路径中的所有节点都已创建并获取末端节点
         Node targetNode = EnsurePath(_root, path);
-        _poolParents[poolName] = targetNode;
+        _parents[name] = targetNode;
+        _log.Debug($"已注册父节点: {name} -> {path}");
+    }
+
+    /// <summary>
+    /// 获取或注册父节点（便捷方法）
+    /// <para>如果已注册则直接返回，否则先注册再返回</para>
+    /// </summary>
+    /// <param name="name">父节点名称</param>
+    /// <param name="path">相对路径</param>
+    /// <returns>父节点引用</returns>
+    public static Node GetOrRegister(string name, string path)
+    {
+        var existing = GetParent(name);
+        if (existing != null) return existing;
+
+        Register(name, path);
+        return GetParent(name) ?? throw new InvalidOperationException($"注册父节点失败: {name}");
     }
 
     /// <summary>

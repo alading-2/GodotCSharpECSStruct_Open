@@ -35,8 +35,8 @@ public partial class DamageStatisticsSystem : Node
 
         // 2. 订阅全局击杀事件
         // 伤害系统（HealthComponent）在目标死亡时会发送 Kill 事件，本系统负责持久化这些统计
-        GlobalEventBus.Global.On<GameEventType.Global.UnitKilledEventData>(
-            GameEventType.Global.UnitKilled, OnUnitKilled);
+        GlobalEventBus.Global.On<GameEventType.Unit.KilledEventData>(
+            GameEventType.Unit.Killed, OnUnitKilled);
 
         _log.Debug("伤害统计系统初始化完成");
     }
@@ -47,8 +47,8 @@ public partial class DamageStatisticsSystem : Node
         GlobalEventBus.Global.Off<GameEventType.Global.WaveStartedEventData>(
             GameEventType.Global.WaveStarted, OnWaveStarted);
 
-        GlobalEventBus.Global.Off<GameEventType.Global.UnitKilledEventData>(
-            GameEventType.Global.UnitKilled, OnUnitKilled);
+        GlobalEventBus.Global.Off<GameEventType.Unit.KilledEventData>(
+            GameEventType.Unit.Killed, OnUnitKilled);
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public partial class DamageStatisticsSystem : Node
 
         // 核心机制：重置玩家实体及其装备的武器/物品的波次数据
         // 敌人实体通常在波次结束或死亡时销毁，因此无需显式重置波次数据
-        var players = EntityManager.GetEntitiesByType<PlayerEntity>("Player");
+        var players = EntityManager.GetEntitiesByType<PlayerEntity>();
         foreach (var player in players)
         {
             // 1. 重置玩家自身的波次统计
@@ -100,7 +100,7 @@ public partial class DamageStatisticsSystem : Node
     /// 处理单位死亡事件，遍历攻击链为 IUnit 和 IWeapon 累加击杀数
     /// </summary>
     /// <param name="data">击杀事件上下文，包含凶手、受害者、伤害类型等</param>
-    private void OnUnitKilled(GameEventType.Global.UnitKilledEventData data)
+    private void OnUnitKilled(GameEventType.Unit.KilledEventData data)
     {
         if (data.Killer is not Godot.Node killerNode) return;
 

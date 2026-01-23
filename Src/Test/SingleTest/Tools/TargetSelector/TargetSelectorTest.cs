@@ -49,9 +49,9 @@ public partial class TargetSelectorTest : Node
         var entityC = new MockEntity("C", new Vector2(200, 0));
 
         // Register manually
-        EntityManager.Register(entityA, "TestUnit");
-        EntityManager.Register(entityB, "TestUnit");
-        EntityManager.Register(entityC, "TestUnit");
+        EntityManager.Register(entityA);
+        EntityManager.Register(entityB);
+        EntityManager.Register(entityC);
 
         try
         {
@@ -101,9 +101,9 @@ public partial class TargetSelectorTest : Node
         var entityB = new MockEntity("B", new Vector2(100, 0));
         var entityC = new MockEntity("C", new Vector2(1000, 0));
 
-        EntityManager.Register(entityA, "TestUnit");
-        EntityManager.Register(entityB, "TestUnit");
-        EntityManager.Register(entityC, "TestUnit");
+        EntityManager.Register(entityA);
+        EntityManager.Register(entityB);
+        EntityManager.Register(entityC);
 
         try
         {
@@ -161,7 +161,7 @@ public partial class TargetSelectorTest : Node
         // Setup: Only A exists.
         var entityA = new MockEntity("A", new Vector2(0, 0));
 
-        EntityManager.Register(entityA, "TestUnit");
+        EntityManager.Register(entityA);
 
         try
         {

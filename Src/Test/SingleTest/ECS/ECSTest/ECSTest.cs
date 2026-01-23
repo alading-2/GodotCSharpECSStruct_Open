@@ -216,7 +216,7 @@ public partial class ECSTest : Node
 
         if (entity == null) throw new Exception("Entity from pool is null or not TestEntity");
 
-        EntityManager.Register(entity, "TestEntity");
+        EntityManager.Register(entity);
 
         Assert(!string.IsNullOrEmpty(entity.Data.Get<string>(DataKey.Id)), "Entity ID assigned");
 

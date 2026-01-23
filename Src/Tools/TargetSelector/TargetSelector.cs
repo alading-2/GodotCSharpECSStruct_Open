@@ -493,7 +493,7 @@ public static class TargetSelector
     private static IEnumerable<IEntity> GetAllNode2DEntities()
     {
         // 使用新的 EntityManager API，获取所有实现 Node2D 的 Entity
-        return EntityManager.GetEntitiesByInterface<Node2D>()
+        return NodeLifecycleManager.GetNodesByInterface<Node2D>()
             .Cast<IEntity>();
     }
 

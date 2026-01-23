@@ -67,7 +67,7 @@ public readonly record struct EntitySpawnConfig
 /// 
 /// <code>
 /// // 生成 Entity (对象池)
-/// var enemy = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+/// var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 /// {
 ///     Config = enemyData,
 ///     UsingObjectPool = true,
@@ -77,7 +77,7 @@ public readonly record struct EntitySpawnConfig
 /// 
 /// // 生成 Entity (场景) - 类型安全，无需指定 SceneName
 /// // 自动使用 typeof(T).Name (即 "Player") 查找 ResourceRegistry
-/// var player = EntityManager.Spawn&lt;Player&gt;(new EntitySpawnConfig
+/// var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
 /// {
 ///     Config = playerData,
 ///     UsingObjectPool = false,
@@ -88,7 +88,7 @@ public readonly record struct EntitySpawnConfig
 /// EntityManager.AddComponent(enemy, buffComponent);
 /// 
 /// // 查询 Component
-/// var healthComps = EntityManager.GetComponentsByType&lt;HealthComponent&gt;("HealthComponent");
+/// var healthComps = EntityManager.GetComponentsByType<HealthComponent>("HealthComponent");
 /// 
 /// // 通过 Component 反查 Entity
 /// var entity = EntityManager.GetEntityByComponent(component);
@@ -96,15 +96,7 @@ public readonly record struct EntitySpawnConfig
 /// </summary>
 public static partial class EntityManager
 {
-    private static readonly Log _log = new("EntityManager", LogLevel.Warning);
-
-    // ==================== 核心数据结构 ====================
-
-    // 全局实体注册表：InstanceId -> Node
-    private static readonly Dictionary<string, Node> _entities = new();
-
-    // 分类索引：EntityType -> HashSet<Node>
-    private static readonly Dictionary<string, HashSet<Node>> _entitiesByType = new();
+    private static readonly Log _log = new("EntityManager", LogLevel.Debug);
 
     // ==================== 实体生成（核心功能）====================
 
@@ -115,7 +107,7 @@ public static partial class EntityManager
     /// 使用示例：
     /// <code>
     /// // 对象池 Entity
-    /// var enemy = EntityManager.Spawn&lt;Enemy&gt;(new EntitySpawnConfig
+    /// var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
     /// {
     ///     Config = enemyData,
     ///     UsingObjectPool = true,
@@ -124,7 +116,7 @@ public static partial class EntityManager
     /// });
     /// 
     /// // 场景 Entity - 类型安全，无需指定 SceneName
-    /// var player = EntityManager.Spawn&lt;Player&gt;(new EntitySpawnConfig
+    /// var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
     /// {
     ///     Config = playerData,
     ///     UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceRegistry
@@ -171,6 +163,9 @@ public static partial class EntityManager
             }
             entity = scene.Instantiate<T>();
             _log.Debug($"从场景实例化 Entity: {typeof(T).Name}");
+
+            // 自动添加到场景树
+            AddToSceneTree(entity);
         }
 
         string entityType = typeof(T).Name;
@@ -189,13 +184,16 @@ public static partial class EntityManager
         //   enemy.Data.Set(DataKey.SkillLevel, 5);          // ← 这才是"初始数据"
         entity.Data.LoadFromConfig(config.Config);
 
-        // 3. 自动加载 VisualScene (如有)
-        InjectVisualScene(entity, config.Config);
+        // 3. IUnitEntity 自动加载 VisualScene (如有)
+        if (entity is IUnit)
+        {
+            InjectVisualScene(entity, config.Config);
+        }
 
         // 4. 防止重复注册（对象池复用场景）
-        if (!_entities.ContainsKey(id))
+        if (!NodeLifecycleManager.IsRegistered(id))
         {
-            Register(entity, entityType);
+            Register(entity);
             RegisterComponents(entity);
         }
 
@@ -216,7 +214,32 @@ public static partial class EntityManager
         }
 
         _log.Debug($"生成 Entity 完成: {typeof(T).Name}");
+
+        // 6. 发送全局 Entity 生成事件 (供 UI 和其他系统监听)
+        GlobalEventBus.Global.Emit(GameEventType.Global.EntitySpawned, new GameEventType.Global.EntitySpawnedEventData(entity));
+
         return entity;
+    }
+
+    /// <summary>
+    /// 将 Entity 添加到场景树（非对象池模式）
+    /// </summary>
+    private static void AddToSceneTree<T>(T entity) where T : Node, IEntity
+    {
+        // 如果已有父节点，则跳过
+        if (entity.GetParent() != null) return;
+
+        // 使用类型名称作为容器名称和路径
+        // 例如：PlayerEntity -> ECS/Entity/PlayerEntity
+        string typeName = typeof(T).Name;
+        string path = $"ECS/Entity/{typeName}";
+
+        // 自动创建并获取父节点
+        var parent = ParentManager.GetOrRegister(typeName, path);
+
+        // 添加到场景树
+        parent.AddChild(entity);
+        _log.Debug($"已将 Entity 添加到场景树: {typeName} -> {path}");
     }
 
 
@@ -273,29 +296,12 @@ public static partial class EntityManager
 
     /// <summary>
     /// 注册 Entity/Component 到 EntityManager
-    /// 
-    /// 注意：Entity 和 Component 都会注册到同一个 _entities 字典中
-    /// 通过 nodeType 参数区分类型，便于后续按类型查询
     /// </summary>
     /// <param name="node">要注册的节点（Entity 或 Component）</param>
-    /// <param name="nodeType">节点类型名称（如 "Enemy", "HealthComponent"）</param>
-    public static void Register(Node node, string nodeType)
+    public static void Register(Node node)
     {
-        string id = node.GetInstanceId().ToString();
-
-        // 防止重复注册
-        if (_entities.ContainsKey(id))
-        {
-            _log.Warn($"Entity {id} 已注册，跳过");
-            return;
-        }
-
-        _entities[id] = node;
-
-        // 更新类型索引
-        if (!_entitiesByType.ContainsKey(nodeType))
-            _entitiesByType[nodeType] = new HashSet<Node>();
-        _entitiesByType[nodeType].Add(node);
+        // 委托给 NodeLifecycleManager
+        NodeLifecycleManager.Register(node);
     }
 
     /// <summary>
@@ -306,7 +312,8 @@ public static partial class EntityManager
     {
         string id = entity.GetInstanceId().ToString();
 
-        if (!_entities.Remove(id))
+        // 检查是否已注册
+        if (!NodeLifecycleManager.IsRegistered(id))
         {
             _log.Warn($"Entity {id} 未注册，无法注销");
             return;
@@ -325,9 +332,8 @@ public static partial class EntityManager
             iEntity.Data.Clear();
         }
 
-        // 3. 从类型索引中移除
-        foreach (var set in _entitiesByType.Values)
-            set.Remove(entity);
+        // 3. 从 NodeLifecycleManager 注销
+        NodeLifecycleManager.Unregister(entity);
 
         // 4. 清理 Entity 自身的所有关系（作为父或子）
         EntityRelationshipManager.RemoveAllRelationships(id);
@@ -340,7 +346,8 @@ public static partial class EntityManager
     /// </summary>
     public static Node? GetEntityById(string id)
     {
-        return _entities.GetValueOrDefault(id);
+        // 委托给 NodeLifecycleManager
+        return NodeLifecycleManager.GetNodeById(id);
     }
 
     // ==================== 查询接口 ====================
@@ -348,11 +355,10 @@ public static partial class EntityManager
     /// <summary>
     /// 按类型查询所有 Entity
     /// </summary>
-    public static IEnumerable<T> GetEntitiesByType<T>(string entityType) where T : Node
+    public static IEnumerable<T> GetEntitiesByType<T>() where T : Node
     {
-        if (!_entitiesByType.TryGetValue(entityType, out var set))
-            return Enumerable.Empty<T>();
-        return set.OfType<T>();
+        // 委托给 NodeLifecycleManager
+        return NodeLifecycleManager.GetNodesByType<T>();
     }
 
 
@@ -365,37 +371,9 @@ public static partial class EntityManager
     /// <returns>所有实现 IEntity 接口的节点</returns>
     public static IEnumerable<IEntity> GetAllEntities()
     {
-        // 遍历所有类型索引，过滤出 IEntity
-        foreach (var set in _entitiesByType.Values)
-        {
-            foreach (var node in set)
-            {
-                if (node is IEntity entity)
-                    yield return entity;
-            }
-        }
+        // 委托给 NodeLifecycleManager，过滤出 IEntity
+        return NodeLifecycleManager.GetNodesByInterface<IEntity>();
     }
-
-    /// <summary>
-    /// 获取所有实现指定接口/基类的 Entity
-    /// 常用场景：获取所有 Node2D（用于空间查询）、所有 IUnit
-    /// </summary>
-    /// <typeparam name="T">接口或基类类型（如 Node2D、IUnit）</typeparam>
-    /// <returns>所有实现该接口且也是 IEntity 的节点</returns>
-    public static IEnumerable<T> GetEntitiesByInterface<T>() where T : class
-    {
-        foreach (var set in _entitiesByType.Values)
-        {
-            foreach (var node in set)
-            {
-                if (node is T typed && node is IEntity)
-                    yield return typed;
-            }
-        }
-    }
-
-
-
 
     // ==================== 生命周期管理 ====================
 
@@ -430,21 +408,22 @@ public static partial class EntityManager
     }
 
     /// <summary>
-    /// 销毁所有指定类型的 Entity
+    /// 销毁所有指定类型的 Entity，比如所有Enemy
     /// </summary>
-    public static void DestroyAllByType(string entityType)
+    public static void DestroyAllByType<T>() where T : Node
     {
-        if (!_entitiesByType.TryGetValue(entityType, out var set))
+        // 从 NodeLifecycleManager 获取该类型所有节点
+        var entities = NodeLifecycleManager.GetNodesByType<T>().ToList();
+        if (entities.Count == 0)
             return;
 
         // 复制列表避免迭代时修改
-        var entities = set.ToList();
         foreach (var entity in entities)
         {
             Destroy(entity);
         }
 
-        _log.Info($"已销毁所有 {entityType} 类型的 Entity，共 {entities.Count} 个");
+        _log.Info($"已销毁所有 {typeof(T).Name} 类型的 Entity，共 {entities.Count} 个");
     }
 
     /// <summary>
@@ -453,20 +432,20 @@ public static partial class EntityManager
     /// </summary>
     public static void Clear()
     {
-        // 复制列表避免迭代时修改
-        var allEntities = _entities.Values.ToList();
-        int count = allEntities.Count;
+        // 从 NodeLifecycleManager 获取所有节点
+        var allNodes = NodeLifecycleManager.GetAllNodes().ToList();
+        int count = allNodes.Count;
 
         // 使用 Destroy 统一处理，确保逻辑一致
-        foreach (var entity in allEntities)
+        foreach (var node in allNodes)
         {
-            Destroy(entity);
+            // 只销毁 IEntity，Component 会随 Entity 一起清理
+            if (node is IEntity)
+            {
+                Destroy(node);
+            }
         }
 
-        // 确保字典已清空（Destroy 内部会逐个移除）
-        _entities.Clear();
-        _entitiesByType.Clear();
-
-        _log.Info($"EntityManager 已清空，共销毁 {count} 个 Entity");
+        _log.Info($"EntityManager 已清空，共销毁 {count} 个节点");
     }
 }

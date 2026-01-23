@@ -43,7 +43,7 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
         base._Ready();
 
         // 注意: 通过 EntityManager.Spawn 创建的实体会自动注册
-        // 只有直接放置在场景中的物体才需要手动调用 EntityManager.Register(this, "Type");
+        // 只有直接放置在场景中的物体才需要手动调用 EntityManager.Register(this);
 
         _log.Debug($"{Name} 初始化完成");
     }
@@ -67,8 +67,8 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     public void OnPoolAcquire()
     {
         // 示例:订阅全局 Kill 事件（通过 Victim 筛选是否是自己）
-        GlobalEventBus.Global.On<GameEventType.Global.UnitKilledEventData>(
-            GameEventType.Global.UnitKilled, OnKilled);
+        GlobalEventBus.Global.On<GameEventType.Unit.KilledEventData>(
+            GameEventType.Unit.Killed, OnKilled);
         // 示例:订阅局部事件（仅在实体内部组件间通信）
         Events.On<GameEventType.Unit.DamagedEventData>(
             GameEventType.Unit.Damaged, OnDamaged);
@@ -82,8 +82,8 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
     public void OnPoolRelease()
     {
         // 取消全局事件订阅
-        GlobalEventBus.Global.Off<GameEventType.Global.UnitKilledEventData>(
-            GameEventType.Global.UnitKilled, OnKilled);
+        GlobalEventBus.Global.Off<GameEventType.Unit.KilledEventData>(
+            GameEventType.Unit.Killed, OnKilled);
         // 示例:重置物理状态
         Velocity = Vector2.Zero;
     }
@@ -101,7 +101,7 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
 
     #region ================= 事件处理 =================
 
-    private void OnKilled(GameEventType.Global.UnitKilledEventData evt)
+    private void OnKilled(GameEventType.Unit.KilledEventData evt)
     {
         // 全局事件筛选：只处理自己被击杀的事件
         if (evt.Victim as Node != this) return;
