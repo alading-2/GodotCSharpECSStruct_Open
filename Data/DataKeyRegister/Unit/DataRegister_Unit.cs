@@ -55,9 +55,16 @@ public partial class DataRegister_Unit : Node
         DataRegistry.Register(new DataMeta { Key = DataKey.DeathCount, DisplayName = "死亡次数", Category = DataCategory_Unit.State, Type = typeof(int), DefaultValue = 0 });
         // 最大生存时间
         DataRegistry.Register(new DataMeta { Key = DataKey.MaxLifeTime, DisplayName = "最大生存时间", Category = DataCategory_Unit.State, Type = typeof(float), DefaultValue = -1f });
+        // === FollowComponent ===
+        // 跟随速度
+        DataRegistry.Register(new DataMeta { Key = DataKey.FollowSpeed, DisplayName = "跟随速度", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 100f });
+        // 停止距离
+        DataRegistry.Register(new DataMeta { Key = DataKey.StopDistance, DisplayName = "停止距离", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 200f });
         // === VelocityComponent ===
         // 当前速度向量
         DataRegistry.Register(new DataMeta { Key = DataKey.Velocity, DisplayName = "当前速度向量", Category = DataCategory_Unit.Movement, Type = typeof(Vector2), DefaultValue = Vector2.Zero });
+        // 加速度
+        DataRegistry.Register(new DataMeta { Key = DataKey.Acceleration, DisplayName = "加速度", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 10f });
         // === HurtboxComponent ===
         // 无敌计时器
         DataRegistry.Register(new DataMeta { Key = DataKey.InvincibilityTimer, DisplayName = "无敌计时器", Category = DataCategory_Unit.State, Type = typeof(float), DefaultValue = 0f });

@@ -1,7 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://jx6dhoafnfft"]
+[gd_scene load_steps=3 format=3 uid="uid://jx6dhoafnfft"]
 
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/PickupComponent/PickupComponent.tscn" id="1_l1d4d"]
+[ext_resource type="PackedScene" uid="uid://sk7v2ipjvk1o" path="res://Src/ECS/Component/Player/VelocityComponent/VelocityComponent.tscn" id="2_5sp1r"]
 
 [node name="PlayerPreset" type="Node"]
 
 [node name="PickupComponent" parent="." instance=ExtResource("1_l1d4d")]
+
+[node name="VelocityComponent" parent="." instance=ExtResource("2_5sp1r")]

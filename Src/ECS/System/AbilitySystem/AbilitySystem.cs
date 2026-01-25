@@ -103,10 +103,18 @@ public static class AbilitySystem
         }
 
         // 事件驱动:请求启动冷却
-        ability.Events.Emit(
-            GameEventType.Ability.StartCooldown,
-            new GameEventType.Ability.StartCooldownEventData(ability)
-        );
+        // 注意：如果是 Periodic (周期性) 技能，由 TriggerComponent 负责循环控制频率，
+        // 这里不应该再启动 CooldownComponent 的冷却计时，否则会导致 TriggerComponent 下次循环时
+        // 技能还在冷却中 (Race Condition) 或 刚结束冷却但 CanUse 检查失败。
+        // 因此：周期性技能跳过冷却启动。
+        var triggerMode = (AbilityTriggerMode)ability.Data.Get<int>(DataKey.AbilityTriggerMode);
+        if (!triggerMode.HasFlag(AbilityTriggerMode.Periodic))
+        {
+            ability.Events.Emit(
+                GameEventType.Ability.StartCooldown,
+                new GameEventType.Ability.StartCooldownEventData(ability)
+            );
+        }
 
         // 事件驱动:请求消耗成本 (魔法/能量等)
         var costContext = new EventContext();
@@ -197,7 +205,7 @@ public static class AbilitySystem
 
         switch (selection)
         {
-            case AbilityTargetSelection.Unit:
+            case AbilityTargetSelection.Entity:
                 if (!context.HasPreselectedTargets)
                 {
                     _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [Unit] 但上下文无目标单位！");
@@ -213,7 +221,7 @@ public static class AbilitySystem
                 }
                 break;
 
-            case AbilityTargetSelection.UnitOrPoint:
+            case AbilityTargetSelection.EntityOrPoint:
                 if (!context.HasPreselectedTargets && !context.HasPreselectedPosition)
                 {
                     _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [UnitOrPoint] 但上下文无任何输入！");

@@ -1,121 +1,88 @@
-# ResourceRegistry 资源管理系统
+# ResourceManagement 资源管理系统
 
-**ResourceRegistry** 是项目中统一管理 **游戏资产 (Assets)**（如场景预制体）的核心系统。
-> ⚠️ **注意**：游戏数值数据（如敌人属性、生成规则）和配置已移至纯 C# 类（`EnemyData`, `PlayerData`）管理，不再通过此系统加载。
+**ResourceManagement** 是项目中统一管理 **游戏资产 (Assets)**（如场景预制体）路径的核心系统。
 
-相比硬编码路径，本系统采用 **Godot 原生 Export 模式**，具有以下优势：
-
-- 🎨 **可视化配置**：直接在 Godot 编辑器中拖拽资源，无需编写代码。
-- 🛡️ **路径安全**：文件移动或重命名时，Godot 会自动更新引用（UID 机制），路径错误会立即报红。
-- 📦 **自动单例**：作为 AutoLoad 自动加载，全局可用。
+> ⚠️ **注意**：
+> 1. 本系统已重构为 **纯 C#** 静态工具类，不再依赖 Godot 引擎。
+> 2. 资源路径由 `Tools/ResourceGenerator` 工具扫描生成到 `Data/ResourceManagement/ResourcePaths.cs` 中。
+> 3. `ResourceManagement` 仅提供查询服务，**不维护任何运行时缓存**，直接读取预生成的数据。**。
 
 ---
 
 ## 🚀 快速开始
 
-### 1. 配置资源
+### 1. 生成资源索引
 
-所有的资源注册都在 Godot 编辑器中完成，无需修改 C# 代码。
+每次添加或移动 `.tscn` 文件后，需要运行资源生成工具来更新索引：
 
-1. 在 Godot 编辑器中，打开场景 **`Data/ResourceRegistry.tscn`**。
-2. 选中根节点 **ResourceRegistry**。
-3. 在右侧 **Inspector (检查器)** 面板中，找到 **Resources** 数组。
-4. 点击 **Add Element**（添加元素）。
-5. 在新增的 **ResourceEntry** 中填写：
-  - **Name**: **必须与 C# 类名完全一致**（如 `Player`, `Enemy`, `HealthComponent`）。
-  - **Category**: 选择资源分类（Entity 或 Component）。
-  - **Data**: 拖入对应的 `.tscn` 文件。
-6. 保存场景 (`Ctrl + S`)。
-
-> [!IMPORTANT]
-> **命名规范**：Name 字段必须与 C# 类名完全一致，这样才能使用类型安全的 `LoadScene<T>()` 方法。
+1. 运行 `Tools/ResourceGenerator` 项目（或者通过 IDE 运行生成工具）。
+2. 工具会自动扫描项目目录，生成 `ResourcePaths.cs`。
 
 ### 2. 代码调用
 
-使用 `ResourceRegistry` 类的静态 API 进行加载。
+#### 获取资源路径（类型安全，推荐）
 
-#### 加载场景预制体（类型安全，推荐）
-
-```csharp
-// ✅ 推荐：类型安全，自动使用类名查找
-var playerScene = ResourceRegistry.LoadScene<Player>();
-var playerNode = playerScene.Instantiate<Player>();
-```
-
-#### 加载场景预制体（字符串名称）
+建议使用与资源同名的类作为泛型参数来获取路径：
 
 ```csharp
-// 指定名称加载
- var enemyScene = ResourceRegistry.Load<PackedScene>("Enemy");
-var enemyNode = enemyScene.Instantiate<Enemy>();
-```
+// 1. 获取路径
+string path = ResourceManagement.GetPath<Player>();
 
-#### 检查资源是否存在
-
-```csharp
-if (ResourceRegistry.Has(nameof(Player)))
+// 2. 加载资源 (自行使用 Godot API)
+if (path != null)
 {
-    // ...
+    var playerScene = GD.Load<PackedScene>(path);
+    var player = playerScene.Instantiate<Player>();
 }
+```
+
+#### 获取资源路径（指定名称）
+
+```csharp
+string path = ResourceManagement.GetPath("Enemy");
+if (path != null)
+{
+    // Load...
+}
+```
+
+#### 按分类获取
+
+```csharp
+// 获取所有 "Unit" 分类的资源路径
+var unitPaths = ResourceManagement.GetPathsByCategory(ResourceCategory.Entity);
 ```
 
 ---
 
 ## 📚 API 参考
 
-### `ResourceRegistry.LoadScene<TEntity>()`
+### `ResourceManagement.GetPath<T>()`
+- **描述**: 获取与类型 T 同名的资源路径。
+- **返回**: `string?` (res://...)
 
-- **描述**: 类型安全的场景加载，自动使用 `typeof(TEntity).Name` 作为资源名称。
-- **要求**: ResourceRegistry.tscn 中的 Name 必须与类名完全一致。
-- **返回**: `PackedScene?`，失败返回 `null`。
+### `ResourceManagement.GetPath(string name)`
+- **描述**: 获取指定名称资源的路径。
+- **返回**: `string?`
 
-### `ResourceRegistry.Load<T>(string name)`
-
-- **描述**: 根据名称加载指定类型的资源。
-- **参数**:
-  - `name`: 资源的简写名称（在编辑器中配置的 Name）。
-- **返回**: 成功返回资源实例，失败（未找到或类型不匹配）返回 `null`。
-
-### `ResourceRegistry.LoadAllInCategory<T>(ResourceCategory category)`
-
-- **描述**: 加载指定分类下的所有资源。
-- **参数**:
-  - `category`: 资源分类枚举（`Unit`, `SpawnRule`, `Item`, `Weapon`）。
-- **返回**: 资源列表 `List<T>`。如果分类为空，返回空列表。
-
-### `ResourceRegistry.GetNamesInCategory(ResourceCategory category)`
-
-- **描述**: 获取指定分类下的所有资源名称列表。
-- **返回**: `List<string>`。
+### `ResourceManagement.GetPathsByCategory(ResourceCategory category)`
+- **描述**: 获取指定分类下的所有资源路径。
+- **返回**: `List<string>`
 
 ---
 
 ## 🛠️ 维护指南
 
 ### 添加新的资源分类
-
-如果需要新的分类（例如 "Skill"），请修改 `Data/ResourceEntry.cs` 中的 `ResourceCategory` 枚举：
-
-```csharp
-public enum ResourceCategory
-{
-    Unit,
-    SpawnRule,
-    Item,
-    Weapon,
-    Skill, // 新增分类
-}
-```
-
-修改后，重新编译项目，Godot 编辑器的下拉菜单会自动更新。
+修改 `Data/ResourceManagement/ResourceCategory.cs` 枚举即可。
 
 ### 常见问题
 
-**Q: 代码中加载返回 null？**
+**Q: `GetPath` 返回 null？**
 A: 请检查：
-1. 是否忘记在 `ResourceRegistry.tscn` 中保存？
-2. `Name` 字符串是否拼写正确（区分大小写）？
-3. 泛型类型 `<T>` 是否与实际资源类型匹配？
+1. 是否运行了 `ResourceGenerator` 工具？
+2. 资源文件 (`.tscn`) 是否存在于扫描目录下？
+3. 名字拼写是否正确？
 
-**Q: 移动了 .tres 文件怎么办？**
-A: 无需做任何事！Godot 会自动更新 `ResourceRegistry.tscn` 中的引用路径。这是本系统的最大优势。
+**Q: 为什么不再直接返回 Loaded Resource？**
+A: 解耦。`ResourceManagement` 应该只负责“我在哪里”，而不负责“怎么加载”。这样可以更好地支持异步加载、流式加载或即时加载等不同策略，完全由调用方决定。

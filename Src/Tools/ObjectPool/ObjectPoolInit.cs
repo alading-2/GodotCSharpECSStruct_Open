@@ -80,7 +80,7 @@ public partial class ObjectPoolInit : Node
         // 2. 初始化 EnemyPool (Node 对象池)
         // 注意：必须使用 ObjectPool<Enemy> 而不是 ObjectPool<Node>，否则 SpawnSystem 无法通过 GetPool<Enemy> 获取
         new ObjectPool<EnemyEntity>(
-            () => (EnemyEntity)ResourceRegistry.LoadScene<EnemyEntity>().Instantiate(),
+            () => (EnemyEntity)GD.Load<PackedScene>(ResourceManagement.GetPath<EnemyEntity>()).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.EnemyPool,
@@ -93,7 +93,7 @@ public partial class ObjectPoolInit : Node
         // 3. 初始化 AbilityPool (技能实体对象池)
         // 支持敌人技能等高频生成场景
         new ObjectPool<AbilityEntity>(
-            () => (AbilityEntity)ResourceRegistry.LoadScene<AbilityEntity>().Instantiate(),
+            () => (AbilityEntity)GD.Load<PackedScene>(ResourceManagement.GetPath<AbilityEntity>()).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.AbilityPool,
@@ -105,7 +105,7 @@ public partial class ObjectPoolInit : Node
 
         // 4. 初始化 HealthBarPool (头顶血条对象池)
         new ObjectPool<HealthBarUI>(
-            () => (HealthBarUI)ResourceRegistry.LoadScene<HealthBarUI>().Instantiate(),
+            () => (HealthBarUI)GD.Load<PackedScene>(ResourceManagement.GetPath<HealthBarUI>()).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.HealthBarPool,
@@ -117,7 +117,7 @@ public partial class ObjectPoolInit : Node
 
         // 5. 初始化 DamageNumberUIPool (伤害数字对象池)
         new ObjectPool<DamageNumberUI>(
-            () => (DamageNumberUI)ResourceRegistry.LoadScene<DamageNumberUI>().Instantiate(),
+            () => (DamageNumberUI)GD.Load<PackedScene>(ResourceManagement.GetPath<DamageNumberUI>()).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.DamageNumberUIPool,

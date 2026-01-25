@@ -1,0 +1,194 @@
+[gd_scene load_steps=57 format=3 uid="uid://dpaa82ggxeqa3"]
+
+[ext_resource type="Script" uid="uid://joghfrdjf2sr" path="res://Data/ResourceManagement/ResourceManagement.cs" id="1_script"]
+[ext_resource type="Script" uid="uid://csg055em5kn2s" path="res://Data/ResourceManagement/ResourceEntry.cs" id="2_o8sbl"]
+[ext_resource type="PackedScene" uid="uid://b4aioasnwsfb0" path="res://assets/Unit/Enemy/豺狼人/AnimatedSprite2D/豺狼人.tscn" id="3_u1bq0"]
+[ext_resource type="PackedScene" uid="uid://cvx83guqqptmk" path="res://assets/Unit/Enemy/鱼人/AnimatedSprite2D/鱼人.tscn" id="4_rew4v"]
+[ext_resource type="PackedScene" uid="uid://dyaqs3f5hg1h8" path="res://assets/Unit/Player/德鲁伊/AnimatedSprite2D/德鲁伊.tscn" id="5_pgd60"]
+[ext_resource type="PackedScene" path="res://Src/UI/UI/DamageNumberUI/DamageNumberUI.tscn" id="6_4qhjq"]
+[ext_resource type="PackedScene" uid="uid://bl0bicmobwpip" path="res://Src/UI/UI/HealthBarUI/HealthBarUI.tscn" id="7_inntm"]
+[ext_resource type="PackedScene" uid="uid://dj5xc3qx1jfgt" path="res://Src/ECS/Entity/Ability/AbilityEntity.tscn" id="8_5ud12"]
+[ext_resource type="PackedScene" uid="uid://c7a7uoxm8i6t8" path="res://Src/ECS/Entity/Unit/Enemy/EnemyEntity.tscn" id="9_uk3j7"]
+[ext_resource type="PackedScene" uid="uid://bqu6n71cx1env" path="res://Src/ECS/Entity/Unit/Player/PlayerEntity.tscn" id="10_ygdjr"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/ChargeComponent/ChargeComponent.tscn" id="11_ucvk7"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn" id="12_ucogv"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn" id="13_wxr6x"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.tscn" id="14_jqk4o"]
+[ext_resource type="PackedScene" uid="uid://sk7v2ipjvk1o" path="res://Src/ECS/Component/Player/VelocityComponent/VelocityComponent.tscn" id="15_snfsu"]
+[ext_resource type="PackedScene" uid="uid://l758gjfhuxjf" path="res://Src/ECS/Component/Presets/Ability/AbilityPreset.tscn" id="16_a5004"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Presets/Unit/CombatPreset.tscn" id="17_qgy6g"]
+[ext_resource type="PackedScene" uid="uid://cgixcuwqqfvep" path="res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn" id="18_uccqj"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Presets/Unit/FollowPreset.tscn" id="19_gvcqs"]
+[ext_resource type="PackedScene" uid="uid://jx6dhoafnfft" path="res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn" id="20_w55w7"]
+[ext_resource type="PackedScene" uid="uid://d0e7kth57lvet" path="res://Src/ECS/Component/Presets/Unit/UnitCorePreset.tscn" id="21_pcgeq"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/FollowComponent/FollowComponent.tscn" id="22_mgq63"]
+[ext_resource type="PackedScene" uid="uid://cfvwgjvdxn0af" path="res://Src/ECS/Component/Unit/HealthComponent/HealthComponent.tscn" id="23_d3suj"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/HitboxComponent/HitboxComponent.tscn" id="24_iki7r"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/HurtboxComponent/HurtboxComponent.tscn" id="25_3rlnl"]
+[ext_resource type="PackedScene" uid="uid://bl7rk0v5m2t0p" path="res://Src/ECS/Component/Unit/LifecycleComponent/LifecycleComponent.tscn" id="26_qlvo0"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/PickupComponent/PickupComponent.tscn" id="27_vksle"]
+[ext_resource type="PackedScene" uid="uid://dq8m5nvk2r7wp" path="res://Src/ECS/Component/Unit/RecoveryComponent/RecoveryComponent.tscn" id="28_slim3"]
+[ext_resource type="PackedScene" uid="uid://bpd8k5x3qcfmr" path="res://Src/ECS/Component/Unit/UnitStateComponent/UnitStateComponent.tscn" id="29_hgjb6"]
+
+[sub_resource type="Resource" id="Resource_o8sbl"]
+script = ExtResource("2_o8sbl")
+Name = "豺狼人"
+Category = 3
+Data = ExtResource("3_u1bq0")
+
+[sub_resource type="Resource" id="Resource_u1bq0"]
+script = ExtResource("2_o8sbl")
+Name = "鱼人"
+Category = 3
+Data = ExtResource("4_rew4v")
+
+[sub_resource type="Resource" id="Resource_rew4v"]
+script = ExtResource("2_o8sbl")
+Name = "德鲁伊"
+Category = 3
+Data = ExtResource("5_pgd60")
+
+[sub_resource type="Resource" id="Resource_pgd60"]
+script = ExtResource("2_o8sbl")
+Name = "DamageNumberUI"
+Category = 2
+Data = ExtResource("6_4qhjq")
+
+[sub_resource type="Resource" id="Resource_4qhjq"]
+script = ExtResource("2_o8sbl")
+Name = "HealthBarUI"
+Category = 2
+Data = ExtResource("7_inntm")
+
+[sub_resource type="Resource" id="Resource_inntm"]
+script = ExtResource("2_o8sbl")
+Name = "AbilityEntity"
+Data = ExtResource("8_5ud12")
+
+[sub_resource type="Resource" id="Resource_5ud12"]
+script = ExtResource("2_o8sbl")
+Name = "EnemyEntity"
+Data = ExtResource("9_uk3j7")
+
+[sub_resource type="Resource" id="Resource_uk3j7"]
+script = ExtResource("2_o8sbl")
+Name = "PlayerEntity"
+Data = ExtResource("10_ygdjr")
+
+[sub_resource type="Resource" id="Resource_ygdjr"]
+script = ExtResource("2_o8sbl")
+Name = "ChargeComponent"
+Category = 1
+Data = ExtResource("11_ucvk7")
+
+[sub_resource type="Resource" id="Resource_ucvk7"]
+script = ExtResource("2_o8sbl")
+Name = "CooldownComponent"
+Category = 1
+Data = ExtResource("12_ucogv")
+
+[sub_resource type="Resource" id="Resource_ucogv"]
+script = ExtResource("2_o8sbl")
+Name = "CostComponent"
+Category = 1
+Data = ExtResource("13_wxr6x")
+
+[sub_resource type="Resource" id="Resource_wxr6x"]
+script = ExtResource("2_o8sbl")
+Name = "TriggerComponent"
+Category = 1
+Data = ExtResource("14_jqk4o")
+
+[sub_resource type="Resource" id="Resource_jqk4o"]
+script = ExtResource("2_o8sbl")
+Name = "VelocityComponent"
+Category = 1
+Data = ExtResource("15_snfsu")
+
+[sub_resource type="Resource" id="Resource_snfsu"]
+script = ExtResource("2_o8sbl")
+Name = "AbilityPreset"
+Category = 1
+Data = ExtResource("16_a5004")
+
+[sub_resource type="Resource" id="Resource_a5004"]
+script = ExtResource("2_o8sbl")
+Name = "CombatPreset"
+Category = 1
+Data = ExtResource("17_qgy6g")
+
+[sub_resource type="Resource" id="Resource_qgy6g"]
+script = ExtResource("2_o8sbl")
+Name = "EnemyPreset"
+Category = 1
+Data = ExtResource("18_uccqj")
+
+[sub_resource type="Resource" id="Resource_uccqj"]
+script = ExtResource("2_o8sbl")
+Name = "FollowPreset"
+Category = 1
+Data = ExtResource("19_gvcqs")
+
+[sub_resource type="Resource" id="Resource_gvcqs"]
+script = ExtResource("2_o8sbl")
+Name = "PlayerPreset"
+Category = 1
+Data = ExtResource("20_w55w7")
+
+[sub_resource type="Resource" id="Resource_w55w7"]
+script = ExtResource("2_o8sbl")
+Name = "UnitCorePreset"
+Category = 1
+Data = ExtResource("21_pcgeq")
+
+[sub_resource type="Resource" id="Resource_pcgeq"]
+script = ExtResource("2_o8sbl")
+Name = "FollowComponent"
+Category = 1
+Data = ExtResource("22_mgq63")
+
+[sub_resource type="Resource" id="Resource_mgq63"]
+script = ExtResource("2_o8sbl")
+Name = "HealthComponent"
+Category = 1
+Data = ExtResource("23_d3suj")
+
+[sub_resource type="Resource" id="Resource_d3suj"]
+script = ExtResource("2_o8sbl")
+Name = "HitboxComponent"
+Category = 1
+Data = ExtResource("24_iki7r")
+
+[sub_resource type="Resource" id="Resource_iki7r"]
+script = ExtResource("2_o8sbl")
+Name = "HurtboxComponent"
+Category = 1
+Data = ExtResource("25_3rlnl")
+
+[sub_resource type="Resource" id="Resource_3rlnl"]
+script = ExtResource("2_o8sbl")
+Name = "LifecycleComponent"
+Category = 1
+Data = ExtResource("26_qlvo0")
+
+[sub_resource type="Resource" id="Resource_qlvo0"]
+script = ExtResource("2_o8sbl")
+Name = "PickupComponent"
+Category = 1
+Data = ExtResource("27_vksle")
+
+[sub_resource type="Resource" id="Resource_vksle"]
+script = ExtResource("2_o8sbl")
+Name = "RecoveryComponent"
+Category = 1
+Data = ExtResource("28_slim3")
+
+[sub_resource type="Resource" id="Resource_slim3"]
+script = ExtResource("2_o8sbl")
+Name = "UnitStateComponent"
+Category = 1
+Data = ExtResource("29_hgjb6")
+
+[node name="ResourceManagement" type="Node"]
+script = ExtResource("1_script")
+Resources = Array[ExtResource("2_o8sbl")]([SubResource("Resource_o8sbl"), SubResource("Resource_u1bq0"), SubResource("Resource_rew4v"), SubResource("Resource_pgd60"), SubResource("Resource_4qhjq"), SubResource("Resource_inntm"), SubResource("Resource_5ud12"), SubResource("Resource_uk3j7"), SubResource("Resource_ygdjr"), SubResource("Resource_ucvk7"), SubResource("Resource_ucogv"), SubResource("Resource_wxr6x"), SubResource("Resource_jqk4o"), SubResource("Resource_snfsu"), SubResource("Resource_a5004"), SubResource("Resource_qgy6g"), SubResource("Resource_uccqj"), SubResource("Resource_gvcqs"), SubResource("Resource_w55w7"), SubResource("Resource_pcgeq"), SubResource("Resource_mgq63"), SubResource("Resource_d3suj"), SubResource("Resource_iki7r"), SubResource("Resource_3rlnl"), SubResource("Resource_qlvo0"), SubResource("Resource_vksle"), SubResource("Resource_slim3")])

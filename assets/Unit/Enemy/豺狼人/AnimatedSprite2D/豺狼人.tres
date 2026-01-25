@@ -1,0 +1,449 @@
+[gd_resource type="SpriteFrames" load_steps=102 format=3 uid="uid://cg7vmf3gqtelw"]
+
+[ext_resource type="Texture2D" uid="uid://cpdjmkm74p82b" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_00.png" id="1_l4qph"]
+[ext_resource type="Texture2D" uid="uid://c15k4snnhrrjv" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_01.png" id="2_qdscd"]
+[ext_resource type="Texture2D" uid="uid://c0lntrsbaw6he" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_02.png" id="3_i68mn"]
+[ext_resource type="Texture2D" uid="uid://dq57sunxyqn6w" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_03.png" id="4_jmb70"]
+[ext_resource type="Texture2D" uid="uid://3mpk5w7horb5" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_04.png" id="5_y1nbt"]
+[ext_resource type="Texture2D" uid="uid://dxr1dkka840kg" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_05.png" id="6_r88br"]
+[ext_resource type="Texture2D" uid="uid://denpgvw4mjpem" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_06.png" id="7_0sdsh"]
+[ext_resource type="Texture2D" uid="uid://jbta3ao5kg2u" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_07.png" id="8_6vv3r"]
+[ext_resource type="Texture2D" uid="uid://bya5ss5828f11" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_08.png" id="9_haaun"]
+[ext_resource type="Texture2D" uid="uid://dp0fbs40qtyb0" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_09.png" id="10_nedi4"]
+[ext_resource type="Texture2D" uid="uid://hw022jqu5vtq" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_10.png" id="11_8nrm8"]
+[ext_resource type="Texture2D" uid="uid://ctetw62bqjmhm" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_11.png" id="12_dwb3l"]
+[ext_resource type="Texture2D" uid="uid://r1j2nwhj07pr" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_12.png" id="13_bvs8w"]
+[ext_resource type="Texture2D" uid="uid://bs0lf3jfjiq7y" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_13.png" id="14_h0c8h"]
+[ext_resource type="Texture2D" uid="uid://dv0t4ef6jlpwy" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_14.png" id="15_nf62i"]
+[ext_resource type="Texture2D" uid="uid://cryh0fbbalor8" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_15.png" id="16_ee6ah"]
+[ext_resource type="Texture2D" uid="uid://b73awwdg2s8dm" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_16.png" id="17_7wviv"]
+[ext_resource type="Texture2D" uid="uid://dpv415nj8ugby" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_17.png" id="18_2kqrk"]
+[ext_resource type="Texture2D" uid="uid://dksa63b7wnkkq" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_0.png" id="19_en0vl"]
+[ext_resource type="Texture2D" uid="uid://c00av3wykp6t1" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_1.png" id="20_sgm6g"]
+[ext_resource type="Texture2D" uid="uid://b0c8b6gohncyb" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_2.png" id="21_oay4f"]
+[ext_resource type="Texture2D" uid="uid://meu1jj851axj" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_3.png" id="22_vyo6i"]
+[ext_resource type="Texture2D" uid="uid://c6k0kaem6wgq6" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_4.png" id="23_7p7x0"]
+[ext_resource type="Texture2D" uid="uid://oshf7qbii0j7" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_5.png" id="24_lpoqn"]
+[ext_resource type="Texture2D" uid="uid://emf44rfpigmx" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-BeAttacked_6.png" id="25_htscu"]
+[ext_resource type="Texture2D" uid="uid://dvv18788la6oy" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-CastingIdle_0.png" id="26_w00t7"]
+[ext_resource type="Texture2D" uid="uid://dyoqf8fwc0aox" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-CastingIdle_1.png" id="27_pfuxb"]
+[ext_resource type="Texture2D" uid="uid://ddx40do2k7tst" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-CastingIdle_2.png" id="28_udxut"]
+[ext_resource type="Texture2D" uid="uid://biax16xjgkj7x" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-CastingIdle_3.png" id="29_0ej8c"]
+[ext_resource type="Texture2D" uid="uid://452sw72rmoue" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_00.png" id="30_movvc"]
+[ext_resource type="Texture2D" uid="uid://bd47bohg6bnee" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_01.png" id="31_hr42m"]
+[ext_resource type="Texture2D" uid="uid://uomf3bm2ygbe" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_02.png" id="32_h5kbp"]
+[ext_resource type="Texture2D" uid="uid://cf73wvbbl776f" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_03.png" id="33_x3gl1"]
+[ext_resource type="Texture2D" uid="uid://dblrruh0syyui" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_04.png" id="34_7ec0o"]
+[ext_resource type="Texture2D" uid="uid://jjd5w08x0sy6" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_05.png" id="35_d28gq"]
+[ext_resource type="Texture2D" uid="uid://b3x2eavm53a0x" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_06.png" id="36_ka4vg"]
+[ext_resource type="Texture2D" uid="uid://daq1422q1lpr" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_07.png" id="37_x84yj"]
+[ext_resource type="Texture2D" uid="uid://bmdwak648uuol" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_08.png" id="38_0r7rs"]
+[ext_resource type="Texture2D" uid="uid://1dlku8k765a7" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_09.png" id="39_8m8f0"]
+[ext_resource type="Texture2D" uid="uid://juqsv4h7llat" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_10.png" id="40_mchrk"]
+[ext_resource type="Texture2D" uid="uid://bhm7dcgyvjck2" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_11.png" id="41_0l8ls"]
+[ext_resource type="Texture2D" uid="uid://dgdgi51sugst7" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_12.png" id="42_1vp5i"]
+[ext_resource type="Texture2D" uid="uid://dgnyms63ii2qj" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_13.png" id="43_lh1cj"]
+[ext_resource type="Texture2D" uid="uid://bunnwifjrd7r" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_14.png" id="44_7qjfx"]
+[ext_resource type="Texture2D" uid="uid://bptyhp6m7d40m" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_15.png" id="45_8qv42"]
+[ext_resource type="Texture2D" uid="uid://dcj6gb854d30d" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_16.png" id="46_57g4k"]
+[ext_resource type="Texture2D" uid="uid://45l2pmbnbsyh" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_17.png" id="47_rdwsb"]
+[ext_resource type="Texture2D" uid="uid://djgu8cx84yv3g" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_18.png" id="48_m8crq"]
+[ext_resource type="Texture2D" uid="uid://qqmq6gahyyxm" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_19.png" id="49_5xpm5"]
+[ext_resource type="Texture2D" uid="uid://tt1v433t6ltd" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_20.png" id="50_wdop1"]
+[ext_resource type="Texture2D" uid="uid://bl5j7bsyqkdpe" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_21.png" id="51_5xcnx"]
+[ext_resource type="Texture2D" uid="uid://bepp32munmwa2" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Celebrate_22.png" id="52_63ejm"]
+[ext_resource type="Texture2D" uid="uid://ci2c7bd2aupo5" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_00.png" id="53_yjnp6"]
+[ext_resource type="Texture2D" uid="uid://dxxfoxi7kvuu7" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_01.png" id="54_u6upf"]
+[ext_resource type="Texture2D" uid="uid://6q8ue2gff0m3" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_02.png" id="55_7cv8h"]
+[ext_resource type="Texture2D" uid="uid://c7ojuxd2hhft0" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_03.png" id="56_b2buf"]
+[ext_resource type="Texture2D" uid="uid://ciu8phiqm17f0" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_04.png" id="57_bf4e2"]
+[ext_resource type="Texture2D" uid="uid://d3qhar8ip2w2b" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_05.png" id="58_yv6rj"]
+[ext_resource type="Texture2D" uid="uid://bxb11er7yjvc0" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_06.png" id="59_n3ic2"]
+[ext_resource type="Texture2D" uid="uid://cao45r1kimydr" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_07.png" id="60_7o5c2"]
+[ext_resource type="Texture2D" uid="uid://c02ksds1fx1kc" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_08.png" id="61_ca855"]
+[ext_resource type="Texture2D" uid="uid://dpmtvhelo5lpu" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_09.png" id="62_jae4y"]
+[ext_resource type="Texture2D" uid="uid://b21hluppvso5d" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_10.png" id="63_708ns"]
+[ext_resource type="Texture2D" uid="uid://d2aft2msg7ome" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_11.png" id="64_2olkl"]
+[ext_resource type="Texture2D" uid="uid://bvqjp5y1fwdk6" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_12.png" id="65_f4mvo"]
+[ext_resource type="Texture2D" uid="uid://cd327wsaprv0u" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_13.png" id="66_12j5a"]
+[ext_resource type="Texture2D" uid="uid://3llikbbdpuir" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_14.png" id="67_dt7vf"]
+[ext_resource type="Texture2D" uid="uid://bp7m8cctqu55r" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_15.png" id="68_x5bkv"]
+[ext_resource type="Texture2D" uid="uid://2u1tjosuttuf" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Dead_16.png" id="69_x5g7c"]
+[ext_resource type="Texture2D" uid="uid://dbc4he4nyl1ff" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_0.png" id="70_ik5fs"]
+[ext_resource type="Texture2D" uid="uid://b0x6c6rvi2j57" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_1.png" id="71_jtafa"]
+[ext_resource type="Texture2D" uid="uid://c7uvvfw5ve67n" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_2.png" id="72_4h1og"]
+[ext_resource type="Texture2D" uid="uid://nuoemxc5vxub" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_3.png" id="73_4qb0p"]
+[ext_resource type="Texture2D" uid="uid://cq8mas54pkd4b" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_4.png" id="74_qflna"]
+[ext_resource type="Texture2D" uid="uid://dhqflgxianoe5" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_5.png" id="75_0htwe"]
+[ext_resource type="Texture2D" uid="uid://bmiys0ple0x22" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_6.png" id="76_bwunf"]
+[ext_resource type="Texture2D" uid="uid://41slno0078ob" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Idle_7.png" id="77_dnn32"]
+[ext_resource type="Texture2D" uid="uid://diqyxp6sc5vrt" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-run_0.png" id="78_5472o"]
+[ext_resource type="Texture2D" uid="uid://cvis2227r3byj" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-run_1.png" id="79_lrciq"]
+[ext_resource type="Texture2D" uid="uid://bt08abstbs54b" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-run_2.png" id="80_mpmum"]
+[ext_resource type="Texture2D" uid="uid://dkeb7lma7xm5q" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-run_3.png" id="81_d2gxc"]
+[ext_resource type="Texture2D" uid="uid://8yjpltg5ryqc" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-run_4.png" id="82_xxfky"]
+[ext_resource type="Texture2D" uid="uid://b2e3vfv7ptdde" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-run_5.png" id="83_afb41"]
+[ext_resource type="Texture2D" uid="uid://bn44eh5x7swgv" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_00.png" id="84_pjmbu"]
+[ext_resource type="Texture2D" uid="uid://dmscf3j02b3el" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_01.png" id="85_ojd6d"]
+[ext_resource type="Texture2D" uid="uid://boifap2ggnoy3" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_02.png" id="86_r4n4d"]
+[ext_resource type="Texture2D" uid="uid://tyg6h1ujftgy" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_03.png" id="87_hai2q"]
+[ext_resource type="Texture2D" uid="uid://minukk5ghoac" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_04.png" id="88_wrnky"]
+[ext_resource type="Texture2D" uid="uid://bl6dqgrtumm38" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_05.png" id="89_e2eyb"]
+[ext_resource type="Texture2D" uid="uid://dk85thn2olgke" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_06.png" id="90_7f3fj"]
+[ext_resource type="Texture2D" uid="uid://f2r54iaxqn1r" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_07.png" id="91_5ji7j"]
+[ext_resource type="Texture2D" uid="uid://q8xv18m1kbtp" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_08.png" id="92_p2fus"]
+[ext_resource type="Texture2D" uid="uid://dgmw3316vvk4o" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_09.png" id="93_8ngnf"]
+[ext_resource type="Texture2D" uid="uid://cvl8u10ad12di" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_10.png" id="94_qnpk6"]
+[ext_resource type="Texture2D" uid="uid://7xjjwp1aht5y" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_11.png" id="95_ctiri"]
+[ext_resource type="Texture2D" uid="uid://bok4ge5rwjr8x" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_12.png" id="96_j0jf8"]
+[ext_resource type="Texture2D" uid="uid://lq3634d7v4uj" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_13.png" id="97_jxfkq"]
+[ext_resource type="Texture2D" uid="uid://cvcrpyyh70hvl" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_14.png" id="98_hnu82"]
+[ext_resource type="Texture2D" uid="uid://k3vg30jsw8x8" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_15.png" id="99_6jo66"]
+[ext_resource type="Texture2D" uid="uid://c8dvsnyvjhphp" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_16.png" id="100_8nbt5"]
+[ext_resource type="Texture2D" uid="uid://dhn36ldkgddrb" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Skill_17.png" id="101_cwo53"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_l4qph")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_qdscd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_i68mn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_jmb70")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_y1nbt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_r88br")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_0sdsh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_6vv3r")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_haaun")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_nedi4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_8nrm8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_dwb3l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_bvs8w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_h0c8h")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_nf62i")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_ee6ah")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_7wviv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_2kqrk")
+}],
+"loop": true,
+"name": &"attack1",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("19_en0vl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_sgm6g")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_oay4f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_vyo6i")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_7p7x0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_lpoqn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_htscu")
+}],
+"loop": true,
+"name": &"beattacked",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("26_w00t7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_pfuxb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_udxut")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_0ej8c")
+}],
+"loop": true,
+"name": &"castingidle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("30_movvc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_hr42m")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_h5kbp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_x3gl1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_7ec0o")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_d28gq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_ka4vg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_x84yj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_0r7rs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_8m8f0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_mchrk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("41_0l8ls")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42_1vp5i")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43_lh1cj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44_7qjfx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45_8qv42")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46_57g4k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47_rdwsb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48_m8crq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("49_5xpm5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("50_wdop1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("51_5xcnx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("52_63ejm")
+}],
+"loop": true,
+"name": &"celebrate",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("53_yjnp6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("54_u6upf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("55_7cv8h")
+}, {
+"duration": 1.0,
+"texture": ExtResource("56_b2buf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("57_bf4e2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("58_yv6rj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("59_n3ic2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("60_7o5c2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("61_ca855")
+}, {
+"duration": 1.0,
+"texture": ExtResource("62_jae4y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("63_708ns")
+}, {
+"duration": 1.0,
+"texture": ExtResource("64_2olkl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("65_f4mvo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("66_12j5a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("67_dt7vf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("68_x5bkv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("69_x5g7c")
+}],
+"loop": true,
+"name": &"dead",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("70_ik5fs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("71_jtafa")
+}, {
+"duration": 1.0,
+"texture": ExtResource("72_4h1og")
+}, {
+"duration": 1.0,
+"texture": ExtResource("73_4qb0p")
+}, {
+"duration": 1.0,
+"texture": ExtResource("74_qflna")
+}, {
+"duration": 1.0,
+"texture": ExtResource("75_0htwe")
+}, {
+"duration": 1.0,
+"texture": ExtResource("76_bwunf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("77_dnn32")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("78_5472o")
+}, {
+"duration": 1.0,
+"texture": ExtResource("79_lrciq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("80_mpmum")
+}, {
+"duration": 1.0,
+"texture": ExtResource("81_d2gxc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("82_xxfky")
+}, {
+"duration": 1.0,
+"texture": ExtResource("83_afb41")
+}],
+"loop": true,
+"name": &"run",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("84_pjmbu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("85_ojd6d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("86_r4n4d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("87_hai2q")
+}, {
+"duration": 1.0,
+"texture": ExtResource("88_wrnky")
+}, {
+"duration": 1.0,
+"texture": ExtResource("89_e2eyb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("90_7f3fj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("91_5ji7j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("92_p2fus")
+}, {
+"duration": 1.0,
+"texture": ExtResource("93_8ngnf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("94_qnpk6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("95_ctiri")
+}, {
+"duration": 1.0,
+"texture": ExtResource("96_j0jf8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("97_jxfkq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("98_hnu82")
+}, {
+"duration": 1.0,
+"texture": ExtResource("99_6jo66")
+}, {
+"duration": 1.0,
+"texture": ExtResource("100_8nbt5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("101_cwo53")
+}],
+"loop": true,
+"name": &"skill",
+"speed": 10.0
+}]

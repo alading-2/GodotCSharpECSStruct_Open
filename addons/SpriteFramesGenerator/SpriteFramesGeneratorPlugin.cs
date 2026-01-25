@@ -77,7 +77,7 @@ namespace BrotatoMy.Addons
             // --- 注册：批量扫描路径 (String Array) ---
             if (!ProjectSettings.HasSetting(SETTING_BATCH_PATHS))
             {
-                string[] defaultPaths = { "res://assets/Unit/ememy", "res://assets/Unit/player" };
+                string[] defaultPaths = { "res://assets/Unit/Enemy", "res://assets/Unit/Player" }; // Fixed typo: ememy -> Enemy
                 ProjectSettings.SetSetting(SETTING_BATCH_PATHS, defaultPaths);
             }
             ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
@@ -206,13 +206,13 @@ namespace BrotatoMy.Addons
         }
 
         /// <summary>
-        /// 批量处理预设路径下的所有角色文件夹
+        /// 批量处理预设路径下的所有角色文件夹（递归扫描）
         /// </summary>
         private void GenerateAllFromPredefinedPaths()
         {
             int totalGenerated = 0;
-            // 从项目设置中获取批量路径
             string[] batchPaths = ProjectSettings.GetSetting(SETTING_BATCH_PATHS).AsStringArray();
+            var validFolders = new List<string>();
 
             foreach (var basePath in batchPaths)
             {
@@ -222,111 +222,85 @@ namespace BrotatoMy.Addons
                     continue;
                 }
 
-                using var dir = DirAccess.Open(basePath);
-                if (dir == null) continue;
-
-                dir.ListDirBegin();
-                string subDirName = dir.GetNext();
-                while (subDirName != "")
-                {
-                    // 排除隐藏文件夹（以.开头）
-                    if (dir.CurrentIsDir() && !subDirName.StartsWith("."))
-                    {
-                        string fullSubPath = basePath.PathJoin(subDirName);
-                        // 仅当目录下存在 PNG 文件时才进行处理
-                        if (HasPngFiles(fullSubPath))
-                        {
-                            GenerateSpriteFrames(fullSubPath, false); // 批量模式下暂不执行文件系统扫描
-                            totalGenerated++;
-                        }
-                    }
-                    subDirName = dir.GetNext();
-                }
-                dir.ListDirEnd();
+                // 递归扫描所有子文件夹
+                ScanFolderRecursively(basePath, validFolders);
             }
 
-            if (totalGenerated > 0)
+            if (validFolders.Count > 0)
             {
-                // 批量完成后统一执行一次文件系统扫描，更新编辑器视图
+                foreach (var folder in validFolders)
+                {
+                    // 批量模式下暂不每次都触发资源扫描，最后统一触发
+                    GenerateSpriteFrames(folder, false);
+                    totalGenerated++;
+                }
+
                 EditorInterface.Singleton.GetResourceFilesystem().Scan();
                 GD.PrintRich($"[color=cyan]批量生成完成！共处理 {totalGenerated} 个角色目录。[/color]");
             }
             else
             {
-                GD.PrintRich("[color=yellow]未在预设路径下发现可处理的资源。[/color]");
+                GD.PrintRich("[color=yellow]未在预设路径下发现可处理的序列帧资源。[/color]");
             }
         }
 
         /// <summary>
-        /// 动画名称规范化：转换大小写并应用名称映射表
+        /// 递归查找包含有效序列帧的文件夹
         /// </summary>
-        private string NormalizeName(string rawName)
+        private void ScanFolderRecursively(string dirPath, List<string> results)
         {
-            string cleanName = rawName.ToLower().Trim();
-
-            // 从项目设置读取动态映射表
-            if (ProjectSettings.HasSetting(SETTING_NAME_MAP))
+            // 1. 检查当前文件夹是否包含有效序列帧
+            if (HasPngFiles(dirPath))
             {
-                var nameMap = ProjectSettings.GetSetting(SETTING_NAME_MAP).AsGodotDictionary();
-                if (nameMap.ContainsKey(cleanName))
+                // 预检：如果能提取出动画分组，则认为是一个有效的角色文件夹
+                var groups = FindSpriteSequences(dirPath);
+                if (groups != null && groups.Count > 0)
                 {
-                    return nameMap[cleanName].AsString();
+                    results.Add(dirPath);
+                    // 如果当前文件夹已经是角色文件夹（包含序列帧），
+                    // 通常不需要再深入扫描它的子文件夹（除非是分层结构），
+                    // 但为了保险起见，这里选择继续深入，但要避免生成的 AnimatedSprite2D 文件夹。
                 }
             }
 
-            return cleanName;
+            // 2. 遍历子文件夹
+            using var dir = DirAccess.Open(dirPath);
+            if (dir == null) return;
+
+            dir.ListDirBegin();
+            string subDirName = dir.GetNext();
+            while (subDirName != "")
+            {
+                if (dir.CurrentIsDir() && !subDirName.StartsWith("."))
+                {
+                    // 跳过插件生成的输出目录，避免递归死循环或误判
+                    if (subDirName != "AnimatedSprite2D")
+                    {
+                        ScanFolderRecursively(dirPath.PathJoin(subDirName), results);
+                    }
+                }
+                subDirName = dir.GetNext();
+            }
+            dir.ListDirEnd();
         }
 
         /// <summary>
-        /// 检查目录下是否存在 PNG 文件
+        /// 解析文件夹中的序列帧并分组
         /// </summary>
-        private bool HasPngFiles(string path)
+        private Dictionary<string, List<(int index, string path)>> FindSpriteSequences(string folderPath)
         {
-            using var dir = DirAccess.Open(path);
-            if (dir == null) return false;
-
-            foreach (var file in dir.GetFiles())
-            {
-                // 过滤掉 .import 文件，只查找原始图片
-                if (file.EndsWith(".png") && !file.EndsWith(".import")) return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 核心逻辑：扫描文件夹并生成 SpriteFrames 资源和场景
-        /// </summary>
-        /// <param name="folderPath">目标文件夹路径</param>
-        /// <param name="triggerScan">完成后是否立即触发编辑器资源扫描</param>
-        private void GenerateSpriteFrames(string folderPath, bool triggerScan = true)
-        {
-            GD.Print($"正在扫描文件夹: {folderPath}");
-            using var dir = DirAccess.Open(folderPath);
-            string[] files = dir.GetFiles();
-
-            // 获取所有 PNG 文件
-            var pngFiles = files.Where(f => f.EndsWith(".png") && !f.EndsWith(".import")).ToList();
-
-            if (pngFiles.Count == 0)
-            {
-                GD.PushWarning("该文件夹下没有 PNG 文件。");
-                return;
-            }
-
-            // --- 读取增强配置 ---
-            float defaultFps = (float)ProjectSettings.GetSetting(SETTING_DEFAULT_FPS).AsDouble();
-            bool defaultLoop = ProjectSettings.GetSetting(SETTING_DEFAULT_LOOP).AsBool();
-
-            // 逻辑：兼容多种常见的序列帧命名格式
-            // 1. Spine 导出格式示例: hero_guangfa-Attack1_00.png (解析为：动作=Attack1, frameIndex=0)
             var animGroups = new Dictionary<string, List<(int index, string path)>>();
 
-            // 正则匹配模式
+            using var dir = DirAccess.Open(folderPath);
+            if (dir == null) return animGroups;
+
             var regexComplex = new Regex(@".*-(.*)_(\d+)\.png");
             var regexSimple = new Regex(@"(.*)_(\d+)\.png");
 
-            foreach (var fileName in pngFiles)
+            foreach (var fileName in dir.GetFiles())
             {
+                if (!fileName.EndsWith(".png") || fileName.EndsWith(".import")) continue;
+
                 string animName = "";
                 int frameIndex = 0;
                 bool matched = false;
@@ -357,12 +331,87 @@ namespace BrotatoMy.Addons
                     animGroups[animName].Add((frameIndex, fullPath));
                 }
             }
+            return animGroups;
+        }
+
+        /// <summary>
+        /// 动画名称规范化：转换大小写并应用名称映射表
+        /// </summary>
+        private string NormalizeName(string rawName)
+        {
+            string cleanName = rawName.ToLower().Trim();
+
+            // 从项目设置读取动态映射表
+            if (ProjectSettings.HasSetting(SETTING_NAME_MAP))
+            {
+                var nameMap = ProjectSettings.GetSetting(SETTING_NAME_MAP).AsGodotDictionary();
+                if (nameMap.ContainsKey(cleanName))
+                {
+                    return nameMap[cleanName].AsString();
+                }
+            }
+
+            return cleanName;
+        }
+
+        /// <summary>
+        /// 检查目录下是否存在 PNG 文件
+        /// </summary>
+        private bool HasPngFiles(string path)
+        {
+            using var dir = DirAccess.Open(path);
+            if (dir == null) return false;
+
+            dir.ListDirBegin();
+            string fileName = dir.GetNext();
+            while (fileName != "")
+            {
+                if (!dir.CurrentIsDir() && fileName.EndsWith(".png") && !fileName.EndsWith(".import"))
+                {
+                    dir.ListDirEnd();
+                    return true;
+                }
+                fileName = dir.GetNext();
+            }
+            dir.ListDirEnd();
+            return false;
+        }
+
+        /// <summary>
+        /// 核心逻辑：扫描文件夹并生成 SpriteFrames 资源和场景
+        /// </summary>
+        /// <param name="folderPath">目标文件夹路径</param>
+        /// <param name="triggerScan">完成后是否立即触发编辑器资源扫描</param>
+        private void GenerateSpriteFrames(string folderPath, bool triggerScan = true)
+        {
+            // 复用解析逻辑
+            var animGroups = FindSpriteSequences(folderPath);
 
             if (animGroups.Count == 0)
             {
-                GD.PushWarning("未识别到有效的序列帧命名格式");
+                // 如果是手动选择单个文件夹触发，才显示警告。批量模式下这只是“未命中”的文件夹。
+                // 由于 GenerateSpriteFrames 现在既被单选调用也被批量调用，
+                // 我们通过 triggerScan 参数（单选为 true，批量为此 false）简单区分一下日志级别，或者干脆在这里如果不匹配就静默退出。
+                // 考虑到用户单选时需要反馈，保留警告。但在批量扫描中，我们在 ScanFolderRecursively 已经做过预检，
+                // 所以理论上批量调用时 animGroups 不会为空。
+                if (triggerScan)
+                    GD.PushWarning($"[{folderPath}] 未识别到有效的序列帧命名格式 (示例: attack_0.png)");
                 return;
             }
+
+            GD.Print($"正在处理文件夹: {folderPath}");
+
+            // 获取当前文件夹名称，用作资源名和节点名
+            // 例如 .../Unit/Enemy/豺狼人 -> 豺狼人
+            string folderName = folderPath.GetFile();
+            if (string.IsNullOrEmpty(folderName))
+            {
+                folderName = "AnimatedSprite2D"; // 兜底
+            }
+
+            // --- 读取增强配置 ---
+            float defaultFps = (float)ProjectSettings.GetSetting(SETTING_DEFAULT_FPS).AsDouble();
+            bool defaultLoop = ProjectSettings.GetSetting(SETTING_DEFAULT_LOOP).AsBool();
 
             // --- 阶段 1: 构建 SpriteFrames 资源 ---
             SpriteFrames spriteFrames = new SpriteFrames();
@@ -402,7 +451,8 @@ namespace BrotatoMy.Addons
                 }
             }
 
-            string resPath = subFolderPath.PathJoin("AnimatedSprite2D.tres");
+            // 使用文件夹名作为资源文件名: "豺狼人.tres"
+            string resPath = subFolderPath.PathJoin($"{folderName}.tres");
             spriteFrames.ResourcePath = resPath; // 设置资源路径，确保序列化时引用正确
             Error resErr = ResourceSaver.Save(spriteFrames, resPath);
 
@@ -413,36 +463,30 @@ namespace BrotatoMy.Addons
             }
 
             // --- 阶段 3: 创建并保存 AnimatedSprite2D 场景 (.tscn) ---
-            // 目标路径：在子文件夹中生成 AnimatedSprite2D.tscn
-            string scenePath = subFolderPath.PathJoin("AnimatedSprite2D.tscn");
+            // 目标路径：在子文件夹中生成 "豺狼人.tscn"
+            string scenePath = subFolderPath.PathJoin($"{folderName}.tscn");
             AnimatedSprite2D? spriteNode = null;
             bool isNewScene = true;
 
             // -------------------------------------------------------------------------
             // 智能更新逻辑 (Smart Update Logic)
-            // 目的：如果场景已存在，我们希望保留用户手动修改过的属性（如 Position, Scale, Script 等），
-            //       仅更新其中的 SpriteFrames 引用。
             // -------------------------------------------------------------------------
             if (FileAccess.FileExists(scenePath))
             {
                 try
                 {
-                    // 加载现有的场景资源
                     var existingScene = GD.Load<PackedScene>(scenePath);
                     if (existingScene != null)
                     {
-                        // 实例化场景以检查其根节点类型
                         var instance = existingScene.Instantiate();
                         if (instance is AnimatedSprite2D existingSprite)
                         {
-                            // 成功获取到现有的 AnimatedSprite2D 节点
                             spriteNode = existingSprite;
-                            isNewScene = false; // 标记为非新场景
+                            isNewScene = false;
                             GD.PrintRich($"[color=cyan][Generator] 智能更新现有场景: {folderPath} (属性已保留)[/color]");
                         }
                         else
                         {
-                            // 如果根节点类型不对（不是 AnimatedSprite2D），则无法保留，只能销毁
                             instance.Free();
                         }
                     }
@@ -455,31 +499,34 @@ namespace BrotatoMy.Addons
 
             // -------------------------------------------------------------------------
             // 场景创建逻辑 (New Scene Creation)
-            // 如果上述加载失败或文件不存在，则创建一个全新的 AnimatedSprite2D 节点
             // -------------------------------------------------------------------------
             if (spriteNode == null)
             {
                 spriteNode = new AnimatedSprite2D();
-                spriteNode.Name = "AnimatedSprite2D";
-
-                // 仅对新创建的节点应用默认变换，避免覆盖现有场景的自定义变换
+                // 设置节点名称为文件夹名，方便调试 (如 "豺狼人")
+                spriteNode.Name = folderName;
                 spriteNode.Transform = Transform2D.Identity;
                 spriteNode.Centered = true;
 
                 GD.Print($"[Generator] 创建全新场景: {folderPath}");
             }
+            else
+            {
+                // 即使是旧场景，也强制更新节点名称，确保一致性
+                if (spriteNode.Name != folderName)
+                {
+                    spriteNode.Name = folderName;
+                }
+            }
 
             // -------------------------------------------------------------------------
             // 统一更新逻辑 (Unified Update)
-            // 无论新旧，强制更新 SpriteFrames 引用指向最新的 .tres 资源
             // -------------------------------------------------------------------------
             spriteNode.SpriteFrames = spriteFrames;
 
             // 检查当前设置的动画名是否依然有效
-            // （例如原场景记录播放 "attack"，但新资源中可能只有 "idle"）
             if (!spriteFrames.HasAnimation(spriteNode.Animation))
             {
-                // 如果当前动画无效，尝试智能回退到 'idle' 或列表中的第一个动画
                 if (spriteFrames.HasAnimation("idle"))
                     spriteNode.Animation = "idle";
                 else if (spriteFrames.GetAnimationNames().Length > 0)
@@ -489,15 +536,11 @@ namespace BrotatoMy.Addons
             // -------------------------------------------------------------------------
             // 保存场景 (Save Scene)
             // -------------------------------------------------------------------------
-            // 将节点及其属性“打包”进一个新的 PackedScene 对象
             PackedScene packedScene = new PackedScene();
             Error packErr = packedScene.Pack(spriteNode);
 
             if (packErr == Error.Ok)
             {
-                // 保存 PackedScene 到磁盘
-                // 注意：如果文件已存在，ResourceSaver.Save 会直接覆盖它。
-                // 这正是我们想要的：用包含最新 SpriteFrames 引用（但保留了旧属性）的 PackardScene 覆盖旧文件。
                 Error sceneSaveErr = ResourceSaver.Save(packedScene, scenePath);
 
                 if (sceneSaveErr == Error.Ok)
@@ -516,10 +559,9 @@ namespace BrotatoMy.Addons
             }
 
             // 释放节点内存
-            // 注意：spriteNode (无论是 new 出来的还是 Instantiate 出来的) 此时都是悬空节点，需要手动释放
             spriteNode.QueueFree();
 
-            // 如果需要，触发资源系统扫描以便编辑器立即显示新文件
+            // 触发资源扫描
             if (triggerScan)
             {
                 EditorInterface.Singleton.GetResourceFilesystem().Scan();

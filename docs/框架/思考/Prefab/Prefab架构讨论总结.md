@@ -133,7 +133,7 @@ public partial class Enemy : CharacterBody2D, ITargetable, IPoolable { ... }
 ```csharp
 // ObjectPoolInit.cs
 new ObjectPool<EnemyEntity>(
-    () => (EnemyEntity)ResourceRegistry.LoadScene<EnemyEntity>().Instantiate(),
+    () => (EnemyEntity)ResourceManagement.LoadScene<EnemyEntity>().Instantiate(),
     new ObjectPoolConfig
     {
         Name = ObjectPoolNames.EnemyPool,

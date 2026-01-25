@@ -71,7 +71,7 @@ public partial class VelocityComponent : Node, IComponent
         _log.Trace("移动组件退出场景树");
     }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         if (_entity is not CharacterBody2D body) return;
 

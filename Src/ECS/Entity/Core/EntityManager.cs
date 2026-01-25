@@ -76,7 +76,7 @@ public readonly record struct EntitySpawnConfig
 /// });
 /// 
 /// // 生成 Entity (场景) - 类型安全，无需指定 SceneName
-/// // 自动使用 typeof(T).Name (即 "Player") 查找 ResourceRegistry
+/// // 自动使用 typeof(T).Name (即 "Player") 查找 ResourceManagement
 /// var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
 /// {
 ///     Config = playerData,
@@ -119,7 +119,7 @@ public static partial class EntityManager
     /// var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
     /// {
     ///     Config = playerData,
-    ///     UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceRegistry
+    ///     UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceManagement
     ///     Position = new Vector2(500, 300),
     ///     Rotation = Mathf.Pi / 4
     /// });
@@ -153,12 +153,19 @@ public static partial class EntityManager
         }
         else
         {
-            // 路径 2: 场景 Entity（通过 ResourceRegistry 加载）
+            // 路径 2: 场景 Entity（通过 ResourceManagement 加载）
             // 强制使用类型名作为资源名称
-            var scene = ResourceRegistry.LoadScene<T>();
+            var path = ResourceManagement.GetPath<T>();
+            if (string.IsNullOrEmpty(path))
+            {
+                _log.Error($"场景路径未找到: {typeof(T).Name} (请检查 ResourceGenerator 是否运行)");
+                return null;
+            }
+
+            var scene = GD.Load<PackedScene>(path);
             if (scene == null)
             {
-                _log.Error($"场景加载失败: {typeof(T).Name} (请检查 ResourceRegistry.tscn 配置)");
+                _log.Error($"场景加载失败: {path}");
                 return null;
             }
             entity = scene.Instantiate<T>();
@@ -389,6 +396,12 @@ public static partial class EntityManager
             // 如果节点已经无效（已被引擎释放），仅执行注销逻辑
             UnregisterEntity(entity);
             return;
+        }
+
+        // 发送销毁事件（在注销前发送，以便监听者仍能访问实体的 Data/Id）
+        if (entity is IEntity iEntity)
+        {
+            GlobalEventBus.Global.Emit(GameEventType.Unit.Destroyed, new GameEventType.Unit.DestroyedEventData(iEntity));
         }
 
         // 1. 注销（内部已清理 Component、关系、Data、Events）

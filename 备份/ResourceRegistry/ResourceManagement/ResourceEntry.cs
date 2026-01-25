@@ -11,11 +11,15 @@ public enum ResourceCategory
     Component,
     /// <summary>UI</summary>
     UI,
+    /// <summary>Asset 资源</summary>
+    Asset,
+    /// <summary>Other 其他</summary>
+    Other,
 }
 
 /// <summary>
 /// 资源条目 - 用于在 Godot 编辑器中配置单个资源
-/// 在 ResourceRegistry 的 Inspector 中使用
+/// 在 ResourceManagement 的 Inspector 中使用
 /// </summary>
 [GlobalClass]
 public partial class ResourceEntry : Resource

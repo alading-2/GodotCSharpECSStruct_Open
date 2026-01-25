@@ -144,6 +144,7 @@ public class ObjectPool<T> where T : class
         Warmup(config.InitialSize);
         // 自动注册到全局管理器
         ObjectPoolManager.Register(this);
+        _log.Info($"创建对象池: {config.Name}, 初始大小: {config.InitialSize}, 最大大小: {config.MaxSize}, 父节点路径: {config.ParentPath}");
     }
 
     /// <summary>

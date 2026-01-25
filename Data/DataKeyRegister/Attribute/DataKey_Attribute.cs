@@ -85,10 +85,6 @@ public static partial class DataKey
     public const string MoveSpeedBonus = "MoveSpeedBonus"; // 移动速度加成（百分比）
     public const string FinalMoveSpeed = "FinalMoveSpeed"; // 最终移动速度（计算属性）
 
-    public const string Acceleration = "Acceleration"; // 加速度
-    public const string FollowSpeed = "FollowSpeed"; // 跟随速度
-    public const string StopDistance = "StopDistance"; // 停止距离
-
     // ========== 闪避相关 ==========
     // 闪避率
     public const string DodgeChance = "DodgeChance"; // 闪避率

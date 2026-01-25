@@ -31,10 +31,17 @@ public static partial class DataKey
     public const string CanRevive = "CanRevive"; // 是否可以复活
     public const string DeathCount = "DeathCount"; // 死亡次数
     public const string MaxLifeTime = "MaxLifeTime"; // 最大生存时间
+
+    // === FollowComponent ===
+    public const string FollowSpeed = "FollowSpeed"; // 跟随速度
+    public const string StopDistance = "StopDistance"; // 停止距离
+
     // === VelocityComponent ===
     public const string Velocity = "Velocity"; // 当前速度向量
+    public const string Acceleration = "Acceleration"; // 加速度
     // === HurtboxComponent ===
     public const string InvincibilityTimer = "InvincibilityTimer"; // 无敌计时器
+
     // === 伤害统计（受击方） ===
     public const string TotalDamageTaken = "TotalDamageTaken"; // 累计受到的伤害
     public const string WaveDamageTaken = "WaveDamageTaken"; // 本波次受到的伤害

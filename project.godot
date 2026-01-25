@@ -164,3 +164,7 @@ BtnSelect={
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
+
+[resource_registry]
+
+config/registry_file_path="uid://dpaa82ggxeqa3"

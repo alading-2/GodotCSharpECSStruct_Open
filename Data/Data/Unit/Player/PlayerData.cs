@@ -14,7 +14,7 @@ public static class PlayerData
             { DataKey.Team, Team.Player }, // 阵营
             { DataKey.EntityType, EntityType.Unit }, // 实体类型
             { DataKey.VisualScenePath, "res://assets/Unit/Player/德鲁伊/AnimatedSprite2D/AnimatedSprite2D.tscn" }, // 视觉场景路径
-            { DataKey.HealthBarHeight, 60f }, // 血条高度（Y轴偏移）
+            { DataKey.HealthBarHeight, 120f }, // 血条高度（Y轴偏移）
             
             // === 生命属性 ===
             { DataKey.BaseHp, 100f }, // 基础生命值

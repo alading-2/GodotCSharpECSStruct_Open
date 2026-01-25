@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://damage_number"]
+[gd_scene load_steps=4 format=3 uid="uid://damage_number"]
 
 [ext_resource type="Script" path="res://Src/UI/UI/DamageNumberUI/DamageNumberUI.cs" id="1"]
 
@@ -30,6 +30,11 @@ tracks/1/keys = {
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
 }
 
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_default"]
+_data = {
+"float_up": SubResource("Animation_float_up")
+}
+
 [node name="DamageNumberUI" type="Control"]
 layout_mode = 3
 anchors_preset = 0
@@ -48,5 +53,5 @@ vertical_alignment = 1
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
-"": SubResource("Animation_float_up")
+"": SubResource("AnimationLibrary_default")
 }

@@ -49,12 +49,12 @@ public enum AbilityTargetSelection
 {
     /// <summary>无目标（直接使用）</summary>
     None = 0,
-    /// <summary>指定目标单位</summary>
-    Unit = 1,
+    /// <summary>指定Entity</summary>
+    Entity = 1,
     /// <summary>指定地点</summary>
     Point = 2,
-    /// <summary>单位/地点</summary>
-    UnitOrPoint = 3,
+    /// <summary>Entity/地点</summary>
+    EntityOrPoint = 3,
 }
 
 /// <summary>

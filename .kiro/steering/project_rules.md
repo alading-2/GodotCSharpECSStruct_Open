@@ -65,17 +65,17 @@ entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
   2. **Data**：`data.Get()`
   3. **GetComponent** (最后手段)：`EntityManager.GetComponent<T>()`
 
-### 2.3 ResourceRegistry (资源管理)
+### 2.3 ResourceManagement (资源管理)
 
 详见：[Data/ResourceManagement/ResourceManagement.md](Data/ResourceManagement/ResourceManagement.md)
 
 - **废弃**：`ECSIndex` 已移除。
-- **新机制**：使用 `ResourceRegistry` 加载场景预制体。
-- **配置**：在 `Data/ResourceRegistry.tscn` 中配置资源映射。
+- **新机制**：使用 `ResourceManagement` 加载场景预制体。
+- **配置**：在 `Data/ResourceManagement.tscn` 中配置资源映射。
 
 ```csharp
 // 加载资源
-var scene = ResourceRegistry.Load<PackedScene>("EnemyBasic");
+var scene = ResourceManagement.Load<PackedScene>("EnemyBasic");
 ```
 
 ## 3. C# 脚本规范

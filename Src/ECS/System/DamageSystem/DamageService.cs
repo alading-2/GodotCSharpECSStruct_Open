@@ -9,7 +9,7 @@ using Godot;
 public partial class DamageService : Node
 {
     // 日志系统实例
-    private static readonly Log _log = new("DamageService");
+    private static readonly Log _log = new("DamageService", LogLevel.Warning);
 
     /// <summary>
     /// 自动注册到引导器 (AutoLoad)

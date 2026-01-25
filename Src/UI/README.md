@@ -79,7 +79,7 @@ public partial class MyCustomUI : UIBase
 ```csharp
 // ObjectPoolInit.cs
 new ObjectPool<MyCustomUI>(
-    () => (MyCustomUI)ResourceRegistry.LoadScene<MyCustomUI>().Instantiate(),
+    () => (MyCustomUI)ResourceManagement.LoadScene<MyCustomUI>().Instantiate(),
     new ObjectPoolConfig { 
         Name = ObjectPoolNames.MyCustomUIPool, 
         ParentPath = "UI/MyContainer" // UI 挂载的父节点路径

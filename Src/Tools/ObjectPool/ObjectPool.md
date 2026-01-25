@@ -70,7 +70,7 @@ public override void _Ready()
 {
     // 使用 PoolNames 常量避免字符串硬编码
     new ObjectPool<EnemyEntity>(
-        () => (EnemyEntity)ResourceRegistry.LoadScene<EnemyEntity>().Instantiate(),
+        () => (EnemyEntity)ResourceManagement.LoadScene<EnemyEntity>().Instantiate(),
         new ObjectPoolConfig
         {
             Name = ObjectPoolNames.EnemyPool,

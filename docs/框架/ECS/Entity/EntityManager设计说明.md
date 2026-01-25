@@ -153,7 +153,7 @@ public static T? Spawn<T>(EntitySpawnConfig config) where T : Node, IEntity
 - `Config`：**必填**。配置数据字典（`Dictionary<string, object>`）
 - `UsingObjectPool`：是否使用对象池
   - `true`：从对象池获取（适用于 Enemy, Bullet, Effect）
-  - `false`：通过 ResourceRegistry 加载场景实例化（适用于 Player, UniqueBoss）
+  - `false`：通过 ResourceManagement 加载场景实例化（适用于 Player, UniqueBoss）
 - `PoolName`：**必填**（当 `UsingObjectPool` 为 true 时）。对象池名称（如 `ObjectPoolNames.EnemyPool`）
 - `Position`：（可选）初始位置 `Vector2`
 - `Rotation`：（可选）初始旋转角度（弧度）
@@ -179,8 +179,8 @@ public static T? Spawn<T>(EntitySpawnConfig config) where T : Node, IEntity
     }
     else
     {
-        // 场景实例化模式（通过 ResourceRegistry 加载）
-        var scene = ResourceRegistry.LoadScene<T>();
+        // 场景实例化模式（通过 ResourceManagement 加载）
+        var scene = ResourceManagement.LoadScene<T>();
         entity = scene.Instantiate<T>();
         // 注意：EntityManager.Spawn 内部会自动 AddChild 到场景树（通常通过注册逻辑间接处理）
     }

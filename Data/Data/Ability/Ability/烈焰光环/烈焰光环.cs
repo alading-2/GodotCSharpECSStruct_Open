@@ -27,9 +27,33 @@ public class CircleDamageExecutor : IAbilityExecutor
         if (caster == null || ability == null) return new AbilityExecutedResult();
 
         // 1. 获取目标
-        // AbilitySystem 已经根据 AbilityTargetGeometry=Circle, AbilityRange=..., AbilityTargetTeamFilter=...
-        // 筛选出了范围内的所有有效目标，并放入 context.Targets
+        // 由于 AbilitySystem 不再自动为 None 模式选择目标，我们需要手动查询
+        // 或者如果 AbilitySystem 传递了目标（预选模式），则使用传递的
         var targets = context.Targets;
+
+        if (targets == null || targets.Count == 0)
+        {
+            // 手动构建查询
+            var range = ability.Data.Get<float>(DataKey.AbilityRange);
+            var geometry = ability.Data.Get<AbilityTargetGeometry>(DataKey.AbilityTargetGeometry);
+            var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
+
+            var query = new TargetSelectorQuery
+            {
+                Geometry = geometry,
+                Range = range,
+                Origin = (caster as Node2D)?.GlobalPosition ?? Vector2.Zero, // 以施法者为中心
+                CenterEntity = caster,
+                TeamFilter = teamFilter,
+                Sorting = AbilityTargetSorting.Nearest, // 按距离排序
+                MaxTargets = 999 // 攻击所有范围内敌人
+            };
+
+            targets = TargetSelector.Query(query);
+            context.Targets = targets; // 回填到上下文
+        }
+
+        _log.Info($"[烈焰光环] 触发! 范围: {ability.Data.Get<float>(DataKey.AbilityRange)}, 找到目标: {targets?.Count ?? 0}");
 
         if (targets == null || targets.Count == 0)
         {

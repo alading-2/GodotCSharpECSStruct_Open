@@ -293,8 +293,8 @@ public partial class LifecycleComponent : Node, IComponent
         // 通过 EntityManager 统一回收或释放节点，保证对象池与节点树一致性
         if (_entity is Node entityNode)
         {
-            EntityManager.Destroy(entityNode);
             _log.Debug($"实体已销毁，死亡类型：{DeathType}");
+            EntityManager.Destroy(entityNode);
         }
     }
 

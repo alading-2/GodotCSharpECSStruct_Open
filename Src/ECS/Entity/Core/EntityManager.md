@@ -75,7 +75,7 @@ var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
 {
     Config = playerData,
-    UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceRegistry
+    UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceManagement
     Position = startPos
 });
 
@@ -336,7 +336,7 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 - `Config`：**必填**。配置数据字典（`Dictionary<string, object>`）。
 - `UsingObjectPool`：是否使用对象池。
   - `true`：从对象池获取（适用于 Enemy, Bullet, Effect）。
-  - `false`：通过 ResourceRegistry 加载场景实例化（适用于 Player, UniqueBoss）。
+  - `false`：通过 ResourceManagement 加载场景实例化（适用于 Player, UniqueBoss）。
 - `PoolName`：**必填** (当 `UsingObjectPool` 为 true 时)。对象池名称（如 `ObjectPoolNames.EnemyPool`）。
 - `Position`：(可选) 初始位置 `Vector2`。
 - `Rotation`：(可选) 初始旋转角度（弧度）。
@@ -357,7 +357,7 @@ var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
 var player = EntityManager.Spawn<Player>(new EntitySpawnConfig
 {
     Config = playerData,
-    UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceRegistry
+    UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceManagement
     Position = Vector2.Zero
 });
 ```

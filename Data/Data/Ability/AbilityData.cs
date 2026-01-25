@@ -26,7 +26,7 @@ public static class AbilityData
             // 目标配置:圆形、敌人
             { DataKey.AbilityTargetSelection, AbilityTargetSelection.None }, // 目标选取
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Circle }, // 目标几何形状
-            { DataKey.AbilityRange, 500f }, // 技能作用范围
+            { DataKey.AbilityRange, 1500f }, // 技能作用范围
             { DataKey.AbilityTargetTeamFilter, AbilityTargetTeamFilter.Enemy }, // 目标队伍过滤器
             
             // 伤害配置
@@ -52,7 +52,7 @@ public static class AbilityData
             { DataKey.AbilityCooldown, 0.5f }, // 冲刺之间的最小间隔
             
             // 目标配置
-            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Unit }, // 目标选取
+            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Entity }, // 目标选取
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Line }, // 目标几何形状
             { DataKey.AbilityLength, 300f }, // 目标长度
             { DataKey.AbilityWidth, 100f }, // 目标宽度
@@ -76,7 +76,7 @@ public static class AbilityData
             { DataKey.AbilityCooldown, 8.0f }, // 技能冷却时间
 
             // 目标配置
-            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Unit }, // 目标选取
+            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Entity }, // 目标选取
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Circle }, // 目标几何形状
             { DataKey.AbilityRange, 200f }, // 目标范围
             { DataKey.AbilityTargetTeamFilter, AbilityTargetTeamFilter.Enemy }, // 目标队伍过滤器
@@ -96,7 +96,7 @@ public static class AbilityData
             { DataKey.AbilityTriggerMode, AbilityTriggerMode.Periodic }, // 技能触发模式
             { DataKey.AbilityCooldown, 1.0f }, // 技能冷却时间
 
-            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Unit }, // 目标选取
+            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Entity }, // 目标选取
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Circle }, // 目标几何形状
             { DataKey.AbilityRange, 300f }, // 目标范围
             { DataKey.AbilityTargetTeamFilter, AbilityTargetTeamFilter.FriendlyAndSelf }, // 目标队伍过滤器
@@ -121,7 +121,7 @@ public static class AbilityData
             { DataKey.AbilityChargeTime, -1f }, // 不自动恢复！
             { DataKey.AbilityCooldown, 0f }, // 技能冷却时间
 
-            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Unit }, // 目标选取
+            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Entity }, // 目标选取
         },
 
         // ================= 链式闪电 (复杂目标选择示例) =================
@@ -142,7 +142,7 @@ public static class AbilityData
             { DataKey.AbilityCooldown, 6.0f }, // 技能冷却时间
             
             // 目标配置 - 展示Chain几何形状
-            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Unit }, // 目标选取
+            { DataKey.AbilityTargetSelection, AbilityTargetSelection.Entity }, // 目标选取
             { DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Chain }, // 目标几何形状
             { DataKey.AbilityTargetTeamFilter, AbilityTargetTeamFilter.Enemy }, // 目标队伍过滤器
             { DataKey.AbilityTargetSorting, AbilityTargetSorting.Nearest },  // 优先选择最近的目标

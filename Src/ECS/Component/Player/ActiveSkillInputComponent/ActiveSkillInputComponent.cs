@@ -49,13 +49,13 @@ public partial class ActiveSkillInputComponent : Node, IComponent
 
     // ================= Godot 生命周期 =================
 
-    public override void _Process(double delta)
-    {
-        // 确保实体和数据有效
-        if (_entity == null || _data == null) return;
+    // public override void _Process(double delta)
+    // {
+    //     // 确保实体和数据有效
+    //     if (_entity == null || _data == null) return;
 
-        HandleActiveAbilityInput();
-    }
+    //     HandleActiveAbilityInput();
+    // }
 
     // ================= 核心输入处理逻辑 =================
 
@@ -92,6 +92,10 @@ public partial class ActiveSkillInputComponent : Node, IComponent
         _log.Debug($"切换主动技能: {abilityName} (索引: {newIndex})");
 
         // TODO: 此处可发射事件用于通知 UI 更新（如：GameEventType.UI.ActiveSkillChanged）
+        _entity!.Events.Emit(
+            GameEventType.UI.ActiveSkillSelected,
+            new GameEventType.UI.ActiveSkillSelectedEventData(newIndex, abilityName)
+        );
     }
 
     /// <summary>
@@ -161,7 +165,7 @@ public partial class ActiveSkillInputComponent : Node, IComponent
 
         switch (selection)
         {
-            case AbilityTargetSelection.Unit:
+            case AbilityTargetSelection.Entity:
                 // 【模式：单位目标】执行智能索敌，选取范围内最近的敌方单位
                 var range = ability.Data.Get<float>(DataKey.AbilityRange);
                 context.Targets = TargetSelector.Query(new TargetSelectorQuery
@@ -182,7 +186,7 @@ public partial class ActiveSkillInputComponent : Node, IComponent
                 context.TargetPosition = origin + GetCastDirection() * (pointRange > 0 ? pointRange : 200f);
                 break;
 
-            case AbilityTargetSelection.UnitOrPoint:
+            case AbilityTargetSelection.EntityOrPoint:
                 // 【模式：混合】优先尝试索敌，若无目标则降级为位置释放
                 var unitRange = ability.Data.Get<float>(DataKey.AbilityRange);
                 var targets = TargetSelector.Query(new TargetSelectorQuery

@@ -36,18 +36,18 @@
 - **示例**：`Enemy.tscn` (敌人实体模板), `HealthComponent.tscn`.
 - **注意**：纯数值数据（如敌人属性）不再使用 `.tres` 文件，而是使用 `.cs` 静态类定义。
 
-### 5. [ResourceRegistry](ResourceRegistry.cs)
+### 5. [ResourceManagement](ResourceManagement.cs)
 
 **资源注册表** - 统一管理项目中所有 **资产 (Assets)** 的引用。
 
 > 📖 **详细文档**：请参阅 [资源管理系统手册](ResourceManagement.md)
 
 - **核心功能**：管理场景预制体等 Godot 资源。
-- **配置方式**：在 `Data/ResourceRegistry.tscn` 场景中直接配置。
+- **配置方式**：在 `Data/ResourceManagement.tscn` 场景中直接配置。
 - **API 示例**：
     ```csharp
     // 加载场景
-    ResourceRegistry.Load<PackedScene>("EnemyEntity");
+    ResourceManagement.Load<PackedScene>("EnemyEntity");
     ```
 
 ### 6. 纯数据类 (Pure Data Classes)

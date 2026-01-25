@@ -493,8 +493,11 @@ public static class TargetSelector
     private static IEnumerable<IEntity> GetAllNode2DEntities()
     {
         // 使用新的 EntityManager API，获取所有实现 Node2D 的 Entity
+        // 注意：这里使用 OfType<IEntity>() 而不是 Cast<IEntity>()，
+        // 因为有些 Node2D 可能不是 Entity (例如一些纯视觉组件或 PickupComponent)，
+        // Cast<T> 会抛出 InvalidCastException，而 OfType<T> 会安全地忽略不匹配的项。
         return NodeLifecycleManager.GetNodesByInterface<Node2D>()
-            .Cast<IEntity>();
+            .OfType<IEntity>();
     }
 
     /// <summary>

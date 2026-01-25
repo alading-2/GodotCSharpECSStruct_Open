@@ -106,11 +106,17 @@ public partial class UIManager : Node
         }
         else
         {
-            // 从 ResourceRegistry 实例化
-            var scene = ResourceRegistry.LoadScene<T>();
+            // 从 ResourceManagement 实例化
+            var path = ResourceManagement.GetPath<T>();
+            if (string.IsNullOrEmpty(path))
+            {
+                _log.Error($"UI路径未找到: {typeof(T).Name}");
+                return null;
+            }
+            var scene = GD.Load<PackedScene>(path);
             if (scene == null)
             {
-                _log.Error($"场景加载失败: {typeof(T).Name}");
+                _log.Error($"场景加载失败: {path}");
                 return null;
             }
             ui = scene.Instantiate<T>();

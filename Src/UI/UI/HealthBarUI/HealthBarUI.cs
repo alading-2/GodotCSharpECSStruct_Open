@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 public partial class HealthBarUI : UIBase
 {
     // 静态日志（用于系统级事件监听）
-    private static readonly Log _log = new("HealthBarUI");
+    private static readonly Log _log = new("HealthBarUI", LogLevel.Warning);
 
     private ProgressBar _healthBar = null!;
 
@@ -25,6 +25,8 @@ public partial class HealthBarUI : UIBase
     [ModuleInitializer]
     public static void Initialize()
     {
+        _log.Info("[ModuleInitializer] HealthBarUI.Initialize() 开始执行");
+
         // 订阅全局实体生成事件
         GlobalEventBus.Global.On<GameEventType.Global.EntitySpawnedEventData>(
             GameEventType.Global.EntitySpawned,
@@ -37,7 +39,7 @@ public partial class HealthBarUI : UIBase
             OnUnitDestroyed
         );
 
-        _log.Info("HealthBarUI 全局事件监听已初始化");
+        _log.Info("[ModuleInitializer] HealthBarUI 全局事件监听已初始化完成");
     }
 
     // ============================================================
@@ -46,14 +48,34 @@ public partial class HealthBarUI : UIBase
 
     public override void _Ready()
     {
-        // 获取子节点
-        _healthBar = GetNode<ProgressBar>("HealthBarUI");
+        // 关键：在这里获取子节点，因为 _Ready 保证了子节点已准备就绪
+        _healthBar = GetNode<ProgressBar>("HealthBar");
+        _healthBar.ShowPercentage = false;
 
-        // 初始化为隐藏
+        // 提高层级，防止被玩家遮挡
+        ZIndex = 100;
+
+        // 初始状态隐藏
         Visible = false;
 
-        // 确保进度条不显示文字
-        _healthBar.ShowPercentage = false;
+        // 如果在 _Ready 之前就已经执行了 OnBind (此时 _entity 已赋值)，则补上样式更新
+        if (_entity != null)
+        {
+            ApplyInitialState();
+        }
+    }
+
+    /// <summary>
+    /// 应用初始视觉状态
+    /// 解决 Godot 时序问题：确保在 _healthBar 就绪后再执行视觉更新
+    /// </summary>
+    private void ApplyInitialState()
+    {
+        if (_healthBar == null) return;
+
+        UpdateStyle();
+        UpdateHealthBar();
+        Visible = true;
     }
 
     public override void _Process(double delta)
@@ -77,24 +99,34 @@ public partial class HealthBarUI : UIBase
     private static void OnUnitCreated(GameEventType.Global.EntitySpawnedEventData evt)
     {
         var entity = evt.Entity;
+        var entityTypeName = entity.GetType().Name;
+        _log.Info($"[事件回调] OnUnitCreated 被调用: EntityType={entityTypeName}");
 
         // 只处理 IUnit 类型的实体
         if (entity is not IUnit)
         {
+            _log.Debug($"[事件回调] 跳过非 IUnit 实体: {entityTypeName}");
             return;
         }
 
         // 只为有 HP 的单位创建血条
         if (!entity.Data.Has(DataKey.CurrentHp))
         {
+            _log.Debug($"[事件回调] 跳过无 HP 的实体: {entityTypeName}");
             return;
         }
+
+        _log.Info($"[事件回调] 准备为 {entityTypeName} 绑定血条");
 
         // 使用 UIManager 从对象池获取并绑定血条
         var healthBar = UIManager.BindUI<HealthBarUI>(entity, ObjectPoolNames.HealthBarPool);
         if (healthBar == null)
         {
             _log.Error($"绑定血条失败: Entity {entity.Data.Get<string>(DataKey.Id)}");
+        }
+        else
+        {
+            _log.Info($"[事件回调] 成功为 {entityTypeName} 绑定血条");
         }
     }
 
@@ -119,14 +151,12 @@ public partial class HealthBarUI : UIBase
             OnHealthChanged
         );
 
-        // 初始化样式（颜色）
-        UpdateStyle();
-
-        // 立即刷新显示
-        UpdateHealthBar();
-
-        // 显示UI
-        Visible = true;
+        // 如果节点还未就绪（_healthBar 为空），ApplyInitialState 将在 _Ready 中被调用
+        // 如果节点已就绪（对象池复用），则手动调用
+        if (_healthBar != null)
+        {
+            ApplyInitialState();
+        }
     }
 
     protected override void OnUnbind()
