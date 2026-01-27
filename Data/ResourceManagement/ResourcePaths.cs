@@ -59,8 +59,8 @@ public static class ResourcePaths
 
     public static readonly Dictionary<string, ResourceData> EnemyConfigs = new()
     {
-        { "豺狼人Config", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/豺狼人Config.tres") },
-        { "鱼人Config", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/鱼人Config.tres") },
+        { "豺狼人", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/豺狼人.tres") },
+        { "鱼人", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/鱼人.tres") },
     };
 
     public static readonly Dictionary<string, ResourceData> Entities = new()
@@ -80,7 +80,7 @@ public static class ResourcePaths
 
     public static readonly Dictionary<string, ResourceData> PlayerConfigs = new()
     {
-        { "德鲁伊Config", new ResourceData(ResourceCategory.PlayerConfig, "res://Data/Data/Resources/Players/德鲁伊Config.tres") },
+        { "德鲁伊", new ResourceData(ResourceCategory.PlayerConfig, "res://Data/Data/Resources/Players/德鲁伊.tres") },
     };
 
     public static readonly Dictionary<string, ResourceData> UI = new()

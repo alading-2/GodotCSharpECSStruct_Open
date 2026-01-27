@@ -20,7 +20,7 @@ public partial class MainTest : Node
 
         // 1. 生成玩家
         _log.Info("步骤 1: 生成玩家");
-        var playerConfig = ResourceManagement.Load<Brotato.Data.Config.Units.PlayerConfig>("德鲁伊Config", ResourceCategory.PlayerConfig);
+        var playerConfig = ResourceManagement.Load<Brotato.Data.Config.Units.PlayerConfig>("德鲁伊", ResourceCategory.PlayerConfig);
         var player = EntityManager.Spawn<PlayerEntity>(new EntitySpawnConfig
         {
             Config = playerConfig,

@@ -69,7 +69,8 @@ class ResourceGenerator
 
         Console.WriteLine($"项目根目录: {projectRoot}");
 
-        var resources = new Dictionary<string, string>();
+        // 修改：使用嵌套字典存储资源 [Category -> [Name -> Path]]
+        var resourcesByCategory = new Dictionary<string, Dictionary<string, string>>();
         var duplicates = new List<string>();
 
         // 2. 扫描目录
@@ -82,16 +83,19 @@ class ResourceGenerator
                 continue;
             }
 
-            ScanDirectory(fullPath, projectRoot, resources, duplicates);
+            ScanDirectory(fullPath, projectRoot, resourcesByCategory, duplicates);
         }
 
         // 3. 生成代码
-        GenerateCode(projectRoot, resources);
+        GenerateCode(projectRoot, resourcesByCategory);
 
-        Console.WriteLine($"处理完成! 共找到 {resources.Count} 个资源。");
+        // 统计总数
+        int totalResources = resourcesByCategory.Sum(x => x.Value.Count);
+        Console.WriteLine($"处理完成! 共找到 {totalResources} 个资源。");
+
         if (duplicates.Count > 0)
         {
-            Console.WriteLine($"[警告] 发现 {duplicates.Count} 个重名资源 (已跳过):");
+            Console.WriteLine($"[警告] 发现 {duplicates.Count} 个分类内重名资源 (已跳过):");
             foreach (var dup in duplicates)
             {
                 Console.WriteLine($"  - {dup}");
@@ -113,7 +117,7 @@ class ResourceGenerator
         return null;
     }
 
-    private static void ScanDirectory(string dirPath, string projectRoot, Dictionary<string, string> resources, List<string> duplicates)
+    private static void ScanDirectory(string dirPath, string projectRoot, Dictionary<string, Dictionary<string, string>> resourcesByCategory, List<string> duplicates)
     {
         var files = Directory.GetFiles(dirPath);
         foreach (var file in files)
@@ -134,8 +138,6 @@ class ResourceGenerator
             bool isExcluded = false;
             foreach (var exclude in ExcludePaths)
             {
-                // 简单的字符串匹配，如果 resPath 以 exclude 开头则排除
-                // 这里的逻辑比较简单：如果 relativePath 以排除项开头，则忽略
                 if (relativePath.StartsWith(exclude))
                 {
                     isExcluded = true;
@@ -145,7 +147,18 @@ class ResourceGenerator
 
             if (isExcluded) continue;
 
-            if (resources.TryGetValue(name, out var existingPath))
+            // 获取分类
+            string category = GetCategoryFromPath(resPath);
+
+            // 确保分类字典存在
+            if (!resourcesByCategory.ContainsKey(category))
+            {
+                resourcesByCategory[category] = new Dictionary<string, string>();
+            }
+
+            var categoryResources = resourcesByCategory[category];
+
+            if (categoryResources.TryGetValue(name, out var existingPath))
             {
                 // 冲突解决策略：优先保留 .tscn 文件 (通常是场景)，覆盖 .tres 文件 (可能是资源或 SpriteFrames)
                 bool existingIsScene = existingPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase);
@@ -154,23 +167,22 @@ class ResourceGenerator
                 if (existingIsScene && !newIsScene)
                 {
                     // 已有的是 .tscn，新的是 .tres -> 忽略新的
-                    duplicates.Add($"{name} ({resPath}) [Skipped: Prefer .tscn]");
+                    duplicates.Add($"[{category}] {name} ({resPath}) [Skipped: Prefer .tscn]");
                 }
                 else if (!existingIsScene && newIsScene)
                 {
                     // 已有的是 .tres，新的是 .tscn -> 覆盖旧的
-                    resources[name] = resPath;
-                    // (可选) 可以记录一下被覆盖的文件，但这里简单处理
+                    categoryResources[name] = resPath;
                 }
                 else
                 {
                     // 同样扩展名或无法判断优先级，视为真正冲突
-                    duplicates.Add($"{name} ({resPath})");
+                    duplicates.Add($"[{category}] {name} ({resPath})");
                 }
             }
             else
             {
-                resources[name] = resPath;
+                categoryResources[name] = resPath;
             }
         }
 
@@ -193,11 +205,11 @@ class ResourceGenerator
             }
             if (isExcluded) continue;
 
-            ScanDirectory(subDir, projectRoot, resources, duplicates);
+            ScanDirectory(subDir, projectRoot, resourcesByCategory, duplicates);
         }
     }
 
-    private static void GenerateCode(string projectRoot, Dictionary<string, string> resources)
+    private static void GenerateCode(string projectRoot, Dictionary<string, Dictionary<string, string>> resourcesByCategory)
     {
         var sb = new StringBuilder();
         sb.AppendLine("//------------------------------------------------------------------------------");
@@ -225,13 +237,6 @@ class ResourceGenerator
         sb.AppendLine("public static class ResourcePaths");
         sb.AppendLine("{");
 
-        // 按类别分组资源
-        var categorized = resources
-            .Select(kvp => new { Name = kvp.Key, Path = kvp.Value, Category = GetCategoryFromPath(kvp.Value) })
-            .GroupBy(x => x.Category)
-            .OrderBy(g => g.Key)
-            .ToList();
-
         // 为每个类别生成字典
         var categoryDicts = new Dictionary<string, string>
         {
@@ -250,16 +255,15 @@ class ResourceGenerator
         {
             var category = dictPair.Key;
             var dictName = dictPair.Value;
-            var items = categorized.FirstOrDefault(g => g.Key == category);
 
             sb.AppendLine($"    public static readonly Dictionary<string, ResourceData> {dictName} = new()");
             sb.AppendLine("    {");
 
-            if (items != null)
+            if (resourcesByCategory.TryGetValue(category, out var items))
             {
-                foreach (var item in items.OrderBy(x => x.Name))
+                foreach (var kvp in items.OrderBy(x => x.Key))
                 {
-                    sb.AppendLine($"        {{ \"{item.Name}\", new ResourceData(ResourceCategory.{category}, \"{item.Path}\") }},");
+                    sb.AppendLine($"        {{ \"{kvp.Key}\", new ResourceData(ResourceCategory.{category}, \"{kvp.Value}\") }},");
                 }
             }
 

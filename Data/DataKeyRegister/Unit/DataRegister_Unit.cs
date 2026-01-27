@@ -34,7 +34,7 @@ public partial class DataRegister_Unit : Node
 
         // ================ Spawn ================
         // 是否启用SpawnRule
-        DataRegistry.Register(new DataMeta { Key = DataKey.IsEnableSpawnRule, DisplayName = "是否启用SpawnRule", Category = DataCategory_Unit.Spawn, Type = typeof(bool), DefaultValue = true });
+        DataRegistry.Register(new DataMeta { Key = DataKey.IsEnableSpawnRule, DisplayName = "是否启用SpawnRule", Category = DataCategory_Unit.Spawn, Type = typeof(bool), DefaultValue = false });
         // SpawnStrategy
         DataRegistry.Register(new DataMeta { Key = DataKey.SpawnStrategy, DisplayName = "生成策略", Category = DataCategory_Unit.Spawn, Type = typeof(SpawnPositionStrategy), DefaultValue = SpawnPositionStrategy.Rectangle });
         // SpawnMinWave
