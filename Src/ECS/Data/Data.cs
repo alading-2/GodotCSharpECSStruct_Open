@@ -460,6 +460,52 @@ public class Data
     }
 
     /// <summary>
+    /// 从 Resource 加载数据到容器
+    /// 自动遍历 Resource 的属性并设置到 Data 中
+    /// </summary>
+    public void LoadFromResource(Resource resource)
+    {
+        if (resource == null) return;
+
+        var resourceType = resource.GetType();
+        // 获取所有公共实例属性
+        var properties = resourceType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+
+        foreach (var prop in properties)
+        {
+            // 跳过 Godot 内部属性和 Resource 基类属性
+            // (ResourceName, ResourcePath 等由 Node 自动处理，Data 不需要存)
+            // Resource 是 Godot.RefCounted, GodotObject是基类
+            if (typeof(Resource).IsAssignableFrom(prop.DeclaringType) ||
+                typeof(GodotObject).IsAssignableFrom(prop.DeclaringType))
+                continue;
+
+            if (!prop.CanRead)
+                continue;
+
+            try
+            {
+                var value = prop.GetValue(resource);
+                // 允许 null 值，但也可能跳过
+                if (value == null) continue;
+
+                // 特殊处理：如果是 PackedScene 类型，且属性名为 VisualScenePath (UnitConfig中定义)，则值本身就是 PackedScene
+                // 但 DataKey.VisualScenePath 期望通常是路径字符串或PackedScene对象
+                // 我们直接设置，让 EntityManager 处理
+
+                string key = prop.Name;
+                Set(key, value);
+
+                // _log.Debug($"从 Resource 加载: {key} = {value}");
+            }
+            catch (Exception ex)
+            {
+                _log.Warn($"加载属性 {prop.Name} 失败: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
     /// 重置数据容器（用于对象池复用）
     /// </summary>
     public void Reset()

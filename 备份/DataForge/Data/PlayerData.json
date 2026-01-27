@@ -1,0 +1,30 @@
+[
+  {
+    "RowID": "德鲁伊",
+    "Name": "德鲁伊",
+    "Team": "Player",
+    "EntityType": "Unit",
+    "VisualScenePath": "德鲁伊",
+    "HealthBarHeight": "120",
+    "BaseHp": "100",
+    "CurrentHp": "100",
+    "BaseHpRegen": "1",
+    "LifeSteal": "0",
+    "BaseMana": "50",
+    "CurrentMana": "50",
+    "BaseManaRegen": "2",
+    "BaseAttack": "10",
+    "BaseAttackSpeed": "100",
+    "Range": "150",
+    "CritRate": "5",
+    "CritDamage": "150",
+    "Penetration": "0",
+    "BaseDefense": "5",
+    "DamageReduction": "0",
+    "BaseSkillDamage": "100",
+    "CooldownReduction": "0",
+    "MoveSpeed": "200",
+    "PickupRange": "100",
+    "DodgeChance": "0"
+  }
+]

@@ -13,7 +13,8 @@ class ResourceGenerator
         "assets",
         "Src/UI",
         "Src/ECS/Entity",
-        "Src/ECS/Component"
+        "Src/ECS/Component",
+        "Data/DataNew/Resources"  // 新增：扫描 Resource 配置目录
     };
 
     private static readonly string[] ExcludePaths = {
@@ -29,13 +30,22 @@ class ResourceGenerator
     {
         if (string.IsNullOrEmpty(path)) return "Other";
 
-        // 1. 快速前缀匹配 (标准项目结构)
+        // 1. Resource 配置优先匹配（.tres 文件）
+        if (path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
+        {
+            if (path.Contains("/Enemies/", StringComparison.OrdinalIgnoreCase)) return "EnemyConfig";
+            if (path.Contains("/Players/", StringComparison.OrdinalIgnoreCase)) return "PlayerConfig";
+            if (path.Contains("/Abilities/", StringComparison.OrdinalIgnoreCase)) return "AbilityConfig";
+            if (path.Contains("/Items/", StringComparison.OrdinalIgnoreCase)) return "ItemConfig";
+        }
+
+        // 2. 场景文件匹配（.tscn 文件）
         if (path.StartsWith("res://Src/UI/", StringComparison.OrdinalIgnoreCase)) return "UI";
         if (path.StartsWith("res://Src/ECS/Component/", StringComparison.OrdinalIgnoreCase)) return "Component";
         if (path.StartsWith("res://Src/ECS/Entity/", StringComparison.OrdinalIgnoreCase)) return "Entity";
         if (path.StartsWith("res://assets/", StringComparison.OrdinalIgnoreCase)) return "Asset";
 
-        // 2. 启发式包含匹配 (后备方案)
+        // 3. 启发式包含匹配 (后备方案)
         if (path.Contains("/UI/", StringComparison.OrdinalIgnoreCase)) return "UI";
         if (path.Contains("/Component/", StringComparison.OrdinalIgnoreCase)) return "Component";
         if (path.Contains("/Entity/", StringComparison.OrdinalIgnoreCase)) return "Entity";
@@ -108,8 +118,8 @@ class ResourceGenerator
         var files = Directory.GetFiles(dirPath);
         foreach (var file in files)
         {
-            // 只处理 .tscn
-            if (!file.EndsWith(".tscn")) continue;
+            // 处理 .tscn 和 .tres 文件
+            if (!file.EndsWith(".tscn") && !file.EndsWith(".tres")) continue;
 
             // 排除 ResourceManagement 本身
             if (file.EndsWith("ResourceManagement.tscn")) continue;
@@ -135,9 +145,28 @@ class ResourceGenerator
 
             if (isExcluded) continue;
 
-            if (resources.ContainsKey(name))
+            if (resources.TryGetValue(name, out var existingPath))
             {
-                duplicates.Add($"{name} ({resPath})");
+                // 冲突解决策略：优先保留 .tscn 文件 (通常是场景)，覆盖 .tres 文件 (可能是资源或 SpriteFrames)
+                bool existingIsScene = existingPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase);
+                bool newIsScene = resPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase);
+
+                if (existingIsScene && !newIsScene)
+                {
+                    // 已有的是 .tscn，新的是 .tres -> 忽略新的
+                    duplicates.Add($"{name} ({resPath}) [Skipped: Prefer .tscn]");
+                }
+                else if (!existingIsScene && newIsScene)
+                {
+                    // 已有的是 .tres，新的是 .tscn -> 覆盖旧的
+                    resources[name] = resPath;
+                    // (可选) 可以记录一下被覆盖的文件，但这里简单处理
+                }
+                else
+                {
+                    // 同样扩展名或无法判断优先级，视为真正冲突
+                    duplicates.Add($"{name} ({resPath})");
+                }
             }
             else
             {
@@ -195,17 +224,67 @@ class ResourceGenerator
         sb.AppendLine();
         sb.AppendLine("public static class ResourcePaths");
         sb.AppendLine("{");
-        sb.AppendLine("    public static readonly Dictionary<string, ResourceData> All = new()");
-        sb.AppendLine("    {");
 
-        // 按分类排序，然后按名称排序，保证生成的代码整洁且稳定
-        foreach (var kvp in resources.OrderBy(x => GetCategoryFromPath(x.Value)).ThenBy(x => x.Key))
+        // 按类别分组资源
+        var categorized = resources
+            .Select(kvp => new { Name = kvp.Key, Path = kvp.Value, Category = GetCategoryFromPath(kvp.Value) })
+            .GroupBy(x => x.Category)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        // 为每个类别生成字典
+        var categoryDicts = new Dictionary<string, string>
         {
-            var category = GetCategoryFromPath(kvp.Value);
-            sb.AppendLine($"        {{ \"{kvp.Key}\", new ResourceData(ResourceCategory.{category}, \"{kvp.Value}\") }},");
+            { "Entity", "Entities" },
+            { "Component", "Components" },
+            { "UI", "UI" },
+            { "Asset", "Assets" },
+            { "EnemyConfig", "EnemyConfigs" },
+            { "PlayerConfig", "PlayerConfigs" },
+            { "AbilityConfig", "AbilityConfigs" },
+            { "ItemConfig", "ItemConfigs" },
+            { "Other", "Other" }
+        };
+
+        foreach (var dictPair in categoryDicts.OrderBy(x => x.Key))
+        {
+            var category = dictPair.Key;
+            var dictName = dictPair.Value;
+            var items = categorized.FirstOrDefault(g => g.Key == category);
+
+            sb.AppendLine($"    public static readonly Dictionary<string, ResourceData> {dictName} = new()");
+            sb.AppendLine("    {");
+
+            if (items != null)
+            {
+                foreach (var item in items.OrderBy(x => x.Name))
+                {
+                    sb.AppendLine($"        {{ \"{item.Name}\", new ResourceData(ResourceCategory.{category}, \"{item.Path}\") }},");
+                }
+            }
+
+            sb.AppendLine("    };");
+            sb.AppendLine();
         }
 
-        sb.AppendLine("    };");
+        // 生成合并的 All 字典（兼容性）
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine("    /// 所有资源的合并字典（兼容性保留，建议使用分类字典）");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine("    public static readonly Dictionary<string, ResourceData> All = new();");
+        sb.AppendLine();
+        sb.AppendLine("    static ResourcePaths()");
+        sb.AppendLine("    {");
+        sb.AppendLine("        // 合并所有分类到 All 字典");
+        sb.AppendLine("        foreach (var dict in new[] { Entities, Components, UI, Assets, EnemyConfigs, PlayerConfigs, AbilityConfigs, ItemConfigs, Other })");
+        sb.AppendLine("        {");
+        sb.AppendLine("            foreach (var kvp in dict)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                if (!All.ContainsKey(kvp.Key))");
+        sb.AppendLine("                    All[kvp.Key] = kvp.Value;");
+        sb.AppendLine("            }");
+        sb.AppendLine("        }");
+        sb.AppendLine("    }");
         sb.AppendLine("}");
 
         var outputPath = Path.Combine(projectRoot, OutputFile);
@@ -218,5 +297,6 @@ class ResourceGenerator
         File.WriteAllText(outputPath, sb.ToString());
         Console.WriteLine($"已生成文件: {OutputFile}");
     }
+
 
 }

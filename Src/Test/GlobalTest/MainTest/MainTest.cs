@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Threading.Tasks;
+using Brotato.Data.ResourceManagement;
 
 public partial class MainTest : Node
 {
@@ -19,7 +20,7 @@ public partial class MainTest : Node
 
         // 1. 生成玩家
         _log.Info("步骤 1: 生成玩家");
-        var playerConfig = PlayerData.Configs["Player1"];
+        var playerConfig = ResourceManagement.Load<Brotato.Data.Config.Units.PlayerConfig>("德鲁伊Config", ResourceCategory.PlayerConfig);
         var player = EntityManager.Spawn<PlayerEntity>(new EntitySpawnConfig
         {
             Config = playerConfig,
@@ -36,7 +37,7 @@ public partial class MainTest : Node
         _log.Info($"玩家生成成功: {player.Name} at {player.GlobalPosition}");
 
         // 添加技能
-        var abilityConfig = AbilityData.Configs["CircleDamage"];
+        var abilityConfig = ResourceManagement.Load<Brotato.Data.Config.Abilities.AbilityConfig>("CircleDamageConfig", ResourceCategory.AbilityConfig);
         var ability = EntityManager.AddAbility(player, abilityConfig);
 
         if (ability == null)

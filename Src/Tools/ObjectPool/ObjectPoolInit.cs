@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Brotato.Data.ResourceManagement;
 
 
 /// <summary>
@@ -80,7 +81,7 @@ public partial class ObjectPoolInit : Node
         // 2. 初始化 EnemyPool (Node 对象池)
         // 注意：必须使用 ObjectPool<Enemy> 而不是 ObjectPool<Node>，否则 SpawnSystem 无法通过 GetPool<Enemy> 获取
         new ObjectPool<EnemyEntity>(
-            () => (EnemyEntity)GD.Load<PackedScene>(ResourceManagement.GetPath<EnemyEntity>()).Instantiate(),
+            () => (EnemyEntity)ResourceManagement.Load<PackedScene>(typeof(EnemyEntity).Name, ResourceCategory.Entity).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.EnemyPool,
@@ -93,7 +94,7 @@ public partial class ObjectPoolInit : Node
         // 3. 初始化 AbilityPool (技能实体对象池)
         // 支持敌人技能等高频生成场景
         new ObjectPool<AbilityEntity>(
-            () => (AbilityEntity)GD.Load<PackedScene>(ResourceManagement.GetPath<AbilityEntity>()).Instantiate(),
+            () => (AbilityEntity)ResourceManagement.Load<PackedScene>(typeof(AbilityEntity).Name, ResourceCategory.Entity).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.AbilityPool,
@@ -105,7 +106,7 @@ public partial class ObjectPoolInit : Node
 
         // 4. 初始化 HealthBarPool (头顶血条对象池)
         new ObjectPool<HealthBarUI>(
-            () => (HealthBarUI)GD.Load<PackedScene>(ResourceManagement.GetPath<HealthBarUI>()).Instantiate(),
+            () => (HealthBarUI)ResourceManagement.Load<PackedScene>(typeof(HealthBarUI).Name, ResourceCategory.UI).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.HealthBarPool,
@@ -117,7 +118,7 @@ public partial class ObjectPoolInit : Node
 
         // 5. 初始化 DamageNumberUIPool (伤害数字对象池)
         new ObjectPool<DamageNumberUI>(
-            () => (DamageNumberUI)GD.Load<PackedScene>(ResourceManagement.GetPath<DamageNumberUI>()).Instantiate(),
+            () => (DamageNumberUI)ResourceManagement.Load<PackedScene>(typeof(DamageNumberUI).Name, ResourceCategory.UI).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.DamageNumberUIPool,

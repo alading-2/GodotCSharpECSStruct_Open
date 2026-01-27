@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Brotato.Data.ResourceManagement;
 
 /// <summary>
 /// UI 管理器 (AutoLoad)
@@ -107,16 +108,12 @@ public partial class UIManager : Node
         else
         {
             // 从 ResourceManagement 实例化
-            var path = ResourceManagement.GetPath<T>();
-            if (string.IsNullOrEmpty(path))
-            {
-                _log.Error($"UI路径未找到: {typeof(T).Name}");
-                return null;
-            }
-            var scene = GD.Load<PackedScene>(path);
+            // 使用 ResourceManagement.Load 直接加载 PackedScene，避免手动 GetPath + Load
+            // 使用 typeof(T).Name 作为资源名称，确保类型和资源名一致
+            var scene = ResourceManagement.Load<PackedScene>(typeof(T).Name, ResourceCategory.UI);
             if (scene == null)
             {
-                _log.Error($"场景加载失败: {path}");
+                _log.Error($"UI场景加载失败: {typeof(T).Name} (请检查 ResourcePaths)");
                 return null;
             }
             ui = scene.Instantiate<T>();

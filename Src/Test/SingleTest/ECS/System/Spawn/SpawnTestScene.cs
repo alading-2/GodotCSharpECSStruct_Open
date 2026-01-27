@@ -24,7 +24,7 @@ namespace BrotatoMy.Test
         private SpawnPositionStrategy _currentStrategy = SpawnPositionStrategy.Rectangle;
         private readonly SpawnPositionParams _previewParams = new(); // 用于绘图预览参数，保持默认值与 SpawnSystem 一致
         // 敌人资源
-        private Dictionary<string, object>? _testEnemy;
+        private Resource? _testEnemy;
 
         public override void _Ready()
         {
@@ -41,7 +41,11 @@ namespace BrotatoMy.Test
         private void SetupEnvironment()
         {
             // 从数据类直接获取敌人配置
-            _testEnemy = EnemyData.Configs.GetValueOrDefault("豺狼人") as Dictionary<string, object>;
+            // _testEnemy = EnemyData.Configs.GetValueOrDefault("豺狼人") as Dictionary<string, object>;
+
+            // 改为加载 Resource
+            _testEnemy = GD.Load<Resource>("res://Data/DataNew/Resources/Enemies/豺狼人.tres");
+
             if (_testEnemy == null) _log.Error("Failed to load test enemy resource!");
 
             // 添加相机以便观察 Offscreen 策略

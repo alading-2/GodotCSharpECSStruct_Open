@@ -1,0 +1,42 @@
+[
+  {
+    "RowID": "鱼人",
+    "Name": "鱼人",
+    "Team": "Enemy",
+    "EntityType": "Unit",
+    "VisualScenePath": "鱼人",
+    "HealthBarHeight": "100",
+    "ExpReward": "2",
+    "BaseHp": "20",
+    "CurrentHp": "20",
+    "BaseAttack": "5",
+    "BaseAttackSpeed": "80",
+    "Range": "50",
+    "BaseDefense": "1",
+    "MoveSpeed": "80",
+    "DetectionRange": "400",
+    "AttackRange": "50",
+    "SpawnRule": "MinWave:1,MaxWave:-1,SpawnInterval:2.0,SingleSpawnCount:3,SingleSpawnVariance:1,StartDelay:0,Strategy:Circle"
+  },
+  {
+    "RowID": "豺狼人",
+    "Name": "豺狼人",
+    "Team": "Enemy",
+    "EntityType": "Unit",
+    "VisualScenePath": "豺狼人",
+    "HealthBarHeight": "200",
+    "ExpReward": "5",
+    "BaseHp": "50",
+    "CurrentHp": "50",
+    "BaseAttack": "10",
+    "BaseAttackSpeed": "100",
+    "Range": "60",
+    "CritRate": "5",
+    "CritDamage": "150",
+    "BaseDefense": "3",
+    "MoveSpeed": "100",
+    "DetectionRange": "500",
+    "AttackRange": "60",
+    "SpawnRule": "MinWave:3,MaxWave:-1,SpawnInterval:3.0,SingleSpawnCount:2,SingleSpawnVariance:0,StartDelay:5,Strategy:Perimeter"
+  }
+]

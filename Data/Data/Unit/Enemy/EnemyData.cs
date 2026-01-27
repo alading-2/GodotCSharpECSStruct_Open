@@ -1,5 +1,6 @@
-using System.Collections.Generic;
-
+﻿using System.Collections.Generic;
+using Brotato.Data.ResourceManagement;
+using Godot;
 /// <summary>
 /// 敌人数据（纯数据，无逻辑）
 /// </summary>
@@ -13,7 +14,7 @@ public static class EnemyData
             { DataKey.Name, "鱼人" }, // Name
             { DataKey.Team, Team.Enemy }, // 阵营
             { DataKey.EntityType, EntityType.Unit }, // 实体类型
-            { DataKey.VisualScenePath, "res://assets/Unit/Enemy/鱼人/AnimatedSprite2D/AnimatedSprite2D.tscn" }, // 视觉场景路径
+            { DataKey.VisualScenePath, ResourceManagement.Load<PackedScene>("鱼人", ResourceCategory.Asset) }, // 视觉场景路径
             { DataKey.HealthBarHeight, 100f }, // 血条高度（Y轴偏移）
             { DataKey.ExpReward, 2 }, // 经验奖励
             
@@ -56,7 +57,7 @@ public static class EnemyData
             { DataKey.Name, "豺狼人" }, // Name
             { DataKey.Team, Team.Enemy }, // 阵营
             { DataKey.EntityType, EntityType.Unit }, // 实体类型
-            { DataKey.VisualScenePath, "res://assets/Unit/Enemy/豺狼人/AnimatedSprite2D/AnimatedSprite2D.tscn" }, // 视觉场景路径
+            { DataKey.VisualScenePath, ResourceManagement.Load<PackedScene>("豺狼人", ResourceCategory.Asset) }, // 视觉场景路径
             { DataKey.HealthBarHeight, 200f }, // 血条高度（Y轴偏移）
             { DataKey.ExpReward, 5 }, // 经验奖励
             

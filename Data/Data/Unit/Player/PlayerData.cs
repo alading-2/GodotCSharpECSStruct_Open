@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-
+using Brotato.Data.ResourceManagement;
+using Godot;
 /// <summary>
 /// 玩家数据（纯数据，无逻辑）
 /// </summary>
@@ -7,13 +8,13 @@ public static class PlayerData
 {
     public static readonly Dictionary<string, Dictionary<string, object>> Configs = new()
     {
-        ["Player1"] = new()
+        ["德鲁伊"] = new()
         {
             // === 基础信息 ===
-            { DataKey.Name, "Player1" }, // Name
+            { DataKey.Name, "德鲁伊" }, // Name
             { DataKey.Team, Team.Player }, // 阵营
             { DataKey.EntityType, EntityType.Unit }, // 实体类型
-            { DataKey.VisualScenePath, "res://assets/Unit/Player/德鲁伊/AnimatedSprite2D/AnimatedSprite2D.tscn" }, // 视觉场景路径
+            { DataKey.VisualScenePath, ResourceManagement.Load<PackedScene>("德鲁伊", ResourceCategory.Asset) }, // 视觉场景路径
             { DataKey.HealthBarHeight, 120f }, // 血条高度（Y轴偏移）
             
             // === 生命属性 ===

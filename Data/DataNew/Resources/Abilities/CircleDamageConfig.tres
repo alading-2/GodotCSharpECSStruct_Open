@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/DataNew/Abilities/AbilityConfig.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+Name = "CircleDamage"
+Description = "每秒对周围敌人造成伤害"
+AbilityLevel = 1
+AbilityMaxLevel = 5
+EntityType = 3
+AbilityType = 1
+AbilityTriggerMode = 2
+AbilityCostType = 0
+AbilityCostAmount = 0.0
+AbilityCooldown = 1.0
+IsAbilityUsesCharges = false
+AbilityMaxCharges = 0
+AbilityChargeTime = 0.0
+AbilityTargetSelection = 0
+AbilityTargetGeometry = 1
+AbilityTargetTeamFilter = 1
+AbilityTargetSorting = 0
+AbilityRange = 1500.0
+AbilityLength = 0.0
+AbilityWidth = 0.0
+AbilityChainCount = 0
+AbilityChainRange = 0.0
+AbilityMaxTargets = 0
+AbilityDamage = 10.0

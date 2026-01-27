@@ -22,9 +22,9 @@ public static partial class EntityManager
     /// 为单位添加技能
     /// </summary>
     /// <param name="owner">技能拥有者</param>
-    /// <param name="config">技能配置数据</param>
+    /// <param name="config">技能配置资源</param>
     /// <returns>创建的技能实体，失败返回 null</returns>
-    public static AbilityEntity? AddAbility(IEntity owner, Dictionary<string, object> config)
+    public static AbilityEntity? AddAbility(IEntity owner, Resource config)
     {
         if (owner == null)
         {
@@ -32,11 +32,17 @@ public static partial class EntityManager
             return null;
         }
 
-        // 检查技能名称
-        string abilityName = config.GetValueOrDefault(DataKey.Name) as string ?? "";
+        // 尝试通过反射获取 Name
+        string abilityName = "";
+        var prop = config.GetType().GetProperty(DataKey.Name);
+        if (prop != null)
+        {
+            abilityName = prop.GetValue(config) as string ?? "";
+        }
+
         if (string.IsNullOrEmpty(abilityName))
         {
-            _abilityLog.Error("无法添加技能：缺少 Name");
+            _abilityLog.Error("无法添加技能：Resource 缺少 Name 属性");
             return null;
         }
 

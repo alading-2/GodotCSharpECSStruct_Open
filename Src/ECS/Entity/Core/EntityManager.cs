@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Brotato.Data.ResourceManagement;
 
 /// <summary>
 /// Entity 生成配置参数
@@ -9,8 +10,8 @@ using System.Linq;
 /// </summary>
 public readonly record struct EntitySpawnConfig
 {
-    /// <summary>单位配置数据（必填）</summary>
-    public required Dictionary<string, object> Config { get; init; }
+    /// <summary>单位配置资源（必填，如 EnemyConfig, PlayerConfig）</summary>
+    public required Resource Config { get; init; }
 
     /// <summary>是否使用对象池（默认 false）</summary>
     public bool UsingObjectPool { get; init; }
@@ -155,17 +156,11 @@ public static partial class EntityManager
         {
             // 路径 2: 场景 Entity（通过 ResourceManagement 加载）
             // 强制使用类型名作为资源名称
-            var path = ResourceManagement.GetPath<T>();
-            if (string.IsNullOrEmpty(path))
-            {
-                _log.Error($"场景路径未找到: {typeof(T).Name} (请检查 ResourceGenerator 是否运行)");
-                return null;
-            }
-
-            var scene = GD.Load<PackedScene>(path);
+            // 使用 ResourceManagement.Load 直接加载 PackedScene
+            var scene = ResourceManagement.Load<PackedScene>(typeof(T).Name, ResourceCategory.Entity);
             if (scene == null)
             {
-                _log.Error($"场景加载失败: {path}");
+                _log.Error($"场景加载失败: {typeof(T).Name} (请检查 ResourceGenerator 是否运行)");
                 return null;
             }
             entity = scene.Instantiate<T>();
@@ -178,18 +173,9 @@ public static partial class EntityManager
         string entityType = typeof(T).Name;
         string id = entity.GetInstanceId().ToString();
         entity.Data.Set(DataKey.Id, id);
-        // 2. 数据注入（核心: 将配置字典写入 Data），需要放在Component注册之前，因为可能包含Component初始数据，不过初始数据一般是spawn后再修改
-        // 2. 数据注入（核心: 将配置字典写入 Data）
-        // ⚠️  重要时序说明:
-        //    - 此时注入的是"预设配置数据"(如敌人基础属性: HP, Speed, Damage 等)
-        //    - OnComponentRegistered 会在步骤 4 中执行,此时 Component 可以访问这些配置数据
-        //    - 实际的"运行时初始数据"(如SkillLevel, Target)通常是 Spawn 之后才设置
-        //    - Component 如需响应后续数据变化,应在 OnComponentRegistered 中监听 PropertyChanged 事件
-        //
-        // 典型场景示例:
-        //   var enemy = EntityManager.Spawn<Enemy>(config);  // ← config 包含 HP, Speed 等
-        //   enemy.Data.Set(DataKey.SkillLevel, 5);          // ← 这才是"初始数据"
-        entity.Data.LoadFromConfig(config.Config);
+
+        // 2. 数据注入 (从 Resource)
+        entity.Data.LoadFromResource(config.Config);
 
         // 3. IUnitEntity 自动加载 VisualScene (如有)
         if (entity is IUnit)
@@ -207,22 +193,10 @@ public static partial class EntityManager
         // 5. 设置位置和旋转（仅对 Node2D 生效）
         if (entity is Node2D entity2D)
         {
-            if (config.Position.HasValue)
-            {
-                entity2D.GlobalPosition = config.Position.Value;
-                _log.Debug($"设置 Entity 位置: {typeof(T).Name} at {config.Position.Value}");
-            }
-
-            if (config.Rotation.HasValue)
-            {
-                entity2D.GlobalRotation = config.Rotation.Value;
-                _log.Debug($"设置 Entity 旋转: {typeof(T).Name} rotation {config.Rotation.Value}");
-            }
+            if (config.Position.HasValue) entity2D.GlobalPosition = config.Position.Value;
+            if (config.Rotation.HasValue) entity2D.GlobalRotation = config.Rotation.Value;
         }
 
-        _log.Debug($"生成 Entity 完成: {typeof(T).Name}");
-
-        // 6. 发送全局 Entity 生成事件 (供 UI 和其他系统监听)
         GlobalEventBus.Global.Emit(GameEventType.Global.EntitySpawned, new GameEventType.Global.EntitySpawnedEventData(entity));
 
         return entity;
@@ -250,40 +224,35 @@ public static partial class EntityManager
     }
 
 
-    /// <summary>
-    /// 自动加载 VisualScene (AnimatedSprite2D)
-    /// 从配置字典中读取 VisualScenePath，加载并挂载到 Entity 下
-    /// 统一设置 ZIndex 以保证显示层级
-    /// </summary>
-    private static void InjectVisualScene(Node entity, Dictionary<string, object> config)
-    {
-        // 检查 VisualScenePath 是否存在
-        var visualPath = config.GetValueOrDefault(DataKey.VisualScenePath) as string;
-        var name = config.GetValueOrDefault(DataKey.Name) as string ?? "Unknown";
 
-        if (string.IsNullOrEmpty(visualPath))
+    /// <summary>
+    /// 自动加载 VisualScene
+    /// </summary>
+    private static void InjectVisualScene(Node entity, Resource config)
+    {
+        PackedScene? scene = null;
+
+        // 尝试通过反射获取 VisualScenePath 属性 (UnitConfig)
+        var prop = config.GetType().GetProperty(DataKey.VisualScenePath);
+        if (prop != null)
         {
-            _log.Warn($"配置 {name} 未设置 VisualScenePath，跳过加载视觉场景");
-            return;
+            var value = prop.GetValue(config);
+            if (value is PackedScene ps) scene = ps;
+            else if (value is string path && !string.IsNullOrEmpty(path)) scene = GD.Load<PackedScene>(path);
         }
 
-        // 加载场景
-        var scene = GD.Load<PackedScene>(visualPath);
         if (scene == null)
         {
-            _log.Error($"无法加载 VisualScene: {visualPath}");
+            // 如果反射没找到，也可以尝试从 Data 中读取（因为 LoadFromResource 已经执行）
+            // 但这需要 IEntity.Data 支持获取对象，目前 Data 主要存值类型和路径字符串
             return;
         }
 
-        // 1. 清理旧的 VisualRoot (对象池复用时)
-        // 使用 Free() 立即释放，防止同帧内命名冲突
+        // 清理旧的
         var existingVisual = entity.GetNodeOrNull("VisualRoot");
-        if (existingVisual != null)
-        {
-            existingVisual.Free();
-        }
+        if (existingVisual != null) existingVisual.Free();
 
-        // 2. 实例化并挂载
+        // 实例化
         var visual = scene.Instantiate();
         visual.Name = "VisualRoot";
         entity.AddChild(visual);
@@ -295,7 +264,7 @@ public static partial class EntityManager
             visual2D.ZIndex = 10;
         }
 
-        _log.Debug($"已加载 VisualScene: {visualPath}");
+        _log.Debug($"已加载 VisualScene: {scene.ResourcePath}");
     }
 
 

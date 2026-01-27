@@ -1,88 +1,88 @@
 # ResourceManagement 资源管理系统
 
-**ResourceManagement** 是项目中统一管理 **游戏资产 (Assets)**（如场景预制体）路径的核心系统。
+**ResourceManagement** 是项目中统一管理 **游戏资产 (Assets)** 和 **资源配置 (Config)** 的核心系统。
 
-> ⚠️ **注意**：
-> 1. 本系统已重构为 **纯 C#** 静态工具类，不再依赖 Godot 引擎。
-> 2. 资源路径由 `Tools/ResourceGenerator` 工具扫描生成到 `Data/ResourceManagement/ResourcePaths.cs` 中。
-> 3. `ResourceManagement` 仅提供查询服务，**不维护任何运行时缓存**，直接读取预生成的数据。**。
+> ⚠️ **核心概念**：
+> 1. **ResourcePaths**：由 `Tools/ResourceGenerator` 自动生成的静态字典，包含所有资源路径。
+> 2. **ResourceCategories**：资源被分为 `Entity`, `Component`, `UI`, `Asset`, `EnemyConfig` 等分类。
+> 3. **Config vs Asset**：
+>    - **Config (.tres)**：数据配置文件（如 EnemyConfig），名称通常以 `Config` 结尾（如 `豺狼人Config`）。
+>    - **Asset (.tscn)**：场景文件（如 视觉表现），名称通常为原始名称（如 `豺狼人`）。
 
 ---
 
 ## 🚀 快速开始
 
-### 1. 生成资源索引
+### 1. 加载资源配置 (Configs)
 
-每次添加或移动 `.tscn` 文件后，需要运行资源生成工具来更新索引：
-
-1. 运行 `Tools/ResourceGenerator` 项目（或者通过 IDE 运行生成工具）。
-2. 工具会自动扫描项目目录，生成 `ResourcePaths.cs`。
-
-### 2. 代码调用
-
-#### 获取资源路径（类型安全，推荐）
-
-建议使用与资源同名的类作为泛型参数来获取路径：
+使用 `Load<T>` 或 `LoadAll<T>` 加载 `.tres` 配置文件。
 
 ```csharp
-// 1. 获取路径
-string path = ResourceManagement.GetPath<Player>();
+// 1. 加载单个配置
+var config = ResourceManagement.Load<EnemyConfig>("豺狼人Config", ResourceCategory.EnemyConfig);
 
-// 2. 加载资源 (自行使用 Godot API)
-if (path != null)
+// 2. 加载分类下所有配置
+var allEnemies = ResourceManagement.LoadAll<EnemyConfig>(ResourceCategory.EnemyConfig);
+foreach (var enemy in allEnemies)
 {
-    var playerScene = GD.Load<PackedScene>(path);
-    var player = playerScene.Instantiate<Player>();
+    GD.Print($"已加载: {enemy.Name}");
 }
 ```
 
-#### 获取资源路径（指定名称）
+### 2. 加载场景/预制体 (Assets/Entities)
+
+推荐使用 `Load<T>` 配合 `typeof(T).Name` 进行类型安全的加载：
 
 ```csharp
-string path = ResourceManagement.GetPath("Enemy");
-if (path != null)
-{
-    // Load...
-}
+// 1. 直接加载并实例化 (推荐)
+// 使用 typeof(T).Name 作为资源名称，确保代码重构与资源同步
+var scene = ResourceManagement.Load<PackedScene>(typeof(EnemyEntity).Name, ResourceCategory.Entity);
+var enemy = scene.Instantiate<EnemyEntity>();
+
+// 2. 配合 ObjectPool (内部实现)
+EntityManager.Spawn<EnemyEntity>(...);
 ```
 
-#### 按分类获取
+### 3. 使用资源生成器
 
-```csharp
-// 获取所有 "Unit" 分类的资源路径
-var unitPaths = ResourceManagement.GetPathsByCategory(ResourceCategory.Entity);
+当添加新的 `.tscn` 或 `.tres` 文件后，必须运行生成器更新索引：
+
+```bash
+dotnet run --project Tools/ResourceGenerator/ResourceGenerator.csproj
 ```
 
 ---
 
 ## 📚 API 参考
 
-### `ResourceManagement.GetPath<T>()`
-- **描述**: 获取与类型 T 同名的资源路径。
-- **返回**: `string?` (res://...)
+### `Load<T>(string name, ResourceCategory category)`
+- **描述**: 从指定分类字典加载资源文件（通常用于 Config）。
+- **示例**: `ResourceManagement.Load<EnemyConfig>("豺狼人Config", ResourceCategory.EnemyConfig)`
 
-### `ResourceManagement.GetPath(string name)`
-- **描述**: 获取指定名称资源的路径。
-- **返回**: `string?`
+### `LoadAll<T>(ResourceCategory category)`
+- **描述**: 加载指定分类下的所有资源。
+- **示例**: `ResourceManagement.LoadAll<AbilityConfig>(ResourceCategory.AbilityConfig)`
 
-### `ResourceManagement.GetPathsByCategory(ResourceCategory category)`
-- **描述**: 获取指定分类下的所有资源路径。
-- **返回**: `List<string>`
+### `GetPath(string name, ResourceCategory category)`
+- **描述**: 获取资源的路径字符串（不加载）。常用于场景文件或需要延迟加载的资源。
+- **示例**: `ResourceManagement.GetPath("HealthBarUI", ResourceCategory.UI)`
+
+### `GetNames(ResourceCategory category)`
+- **描述**: 获取该分类下所有注册的资源名称列表。
 
 ---
 
-## 🛠️ 维护指南
+## 🛠️ 最佳实践
 
-### 添加新的资源分类
-修改 `Data/ResourceManagement/ResourceCategory.cs` 枚举即可。
+### 文件命名规范
+为避免 `.tscn` (Asset) 与 `.tres` (Config) 重名冲突，建议：
+- **配置文件**：使用 `Config` 后缀，如 `豺狼人Config.tres`
+- **资源文件**：直接使用名称，如 `豺狼人.tscn`
 
-### 常见问题
-
-**Q: `GetPath` 返回 null？**
-A: 请检查：
-1. 是否运行了 `ResourceGenerator` 工具？
-2. 资源文件 (`.tscn`) 是否存在于扫描目录下？
-3. 名字拼写是否正确？
-
-**Q: 为什么不再直接返回 Loaded Resource？**
-A: 解耦。`ResourceManagement` 应该只负责“我在哪里”，而不负责“怎么加载”。这样可以更好地支持异步加载、流式加载或即时加载等不同策略，完全由调用方决定。
+### 分类说明
+- `Entity`: 游戏实体预制体 (EnemyEntity.tscn)
+- `Component`: 组件预制体 (HealthComponent.tscn)
+- `UI`: 界面预制体 (HealthBarUI.tscn)
+- `Asset`: 美术资源场景 (豺狼人.tscn - 仅包含动画/视觉)
+- `EnemyConfig`: 敌人数据配置 (.tres)
+- `PlayerConfig`: 玩家数据配置 (.tres)

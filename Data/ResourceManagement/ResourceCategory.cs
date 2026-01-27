@@ -13,6 +13,17 @@ public enum ResourceCategory
     UI,
     /// <summary>Asset 资源</summary>
     Asset,
+
+    // Resource 配置分类
+    /// <summary>敌人配置 (.tres)</summary>
+    EnemyConfig,
+    /// <summary>玩家配置 (.tres)</summary>
+    PlayerConfig,
+    /// <summary>技能配置 (.tres)</summary>
+    AbilityConfig,
+    /// <summary>道具配置 (预留)</summary>
+    ItemConfig,
+
     /// <summary>Other 其他</summary>
     Other,
 }

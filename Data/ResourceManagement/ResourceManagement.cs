@@ -9,6 +9,10 @@ using Brotato.Data.ResourceManagement;
 /// 【定位说明】
 /// - 这是一个 **纯C#** 静态工具类，不依赖 Godot 引擎 API。
 /// - 仅负责提供资源路径查询，不负责资源加载。
+/// <example>
+/// ResourceManagement.GetPath<EnemyEntity>()
+/// ResourceManagement.GetPath("德鲁伊")
+/// </example>
 /// -数据源来自自动生成的 <see cref="ResourcePaths"/> 类。
 /// </summary>
 public static class ResourceManagement
@@ -24,57 +28,72 @@ public static class ResourceManagement
     // ========================================
 
     /// <summary>
-    /// 获取资源的加载路径
+    /// 从指定分类加载资源
     /// </summary>
-    /// <param name="name">资源名称 (类名或文件名)</param>
-    /// <returns>资源路径 (res://...)，未找到返回 null</returns>
-    /// <summary>
-    /// 获取资源的加载路径 (泛型版本)
-    /// </summary>
-    /// <typeparam name="T">资源对应的类型 (使用类名作为 Key)</typeparam>
-    /// <returns>资源路径</returns>
-    public static string? GetPath<T>()
+    /// <typeparam name="T">资源类型</typeparam>
+    /// <param name="name">资源名称</param>
+    /// <param name="category">资源分类</param>
+    /// <returns>加载的资源，失败返回 null</returns>
+    public static T? Load<T>(string name, ResourceCategory category) where T : class
     {
-        return GetPath(typeof(T).Name);
-    }
-
-    public static string? GetPath(string name)
-    {
-        if (ResourcePaths.All.TryGetValue(name, out var data))
+        var dict = GetDictionaryByCategory(category);
+        if (dict.TryGetValue(name, out var data))
         {
-            return data.Path;
+            return Godot.GD.Load<T>(data.Path);
         }
 
-        _log.Error($"未能在 ResourcePaths 中找到名为 '{name}' 的资源路径。请检查 ResourceGenerator 是否运行。");
+        _log.Error($"未找到资源: {category}/{name}");
         return null;
     }
 
     /// <summary>
-    /// 获取指定分类下的所有资源路径
+    /// 加载指定分类下的所有资源
     /// </summary>
+    /// <typeparam name="T">资源类型</typeparam>
     /// <param name="category">资源分类</param>
-    /// <returns>资源路径列表</returns>
-    public static List<string> GetPathsByCategory(ResourceCategory category)
+    /// <returns>资源列表</returns>
+    public static List<T> LoadAll<T>(ResourceCategory category) where T : class
     {
-        return ResourcePaths.All.Values
-            .Where(data => data.Category == category)
-            .Select(data => data.Path)
-            .ToList();
-    }
+        var dict = GetDictionaryByCategory(category);
+        var results = new List<T>();
 
-    public static List<string> GetNamesByCategory(ResourceCategory category)
-    {
-        return ResourcePaths.All
-            .Where(kvp => kvp.Value.Category == category)
-            .Select(kvp => kvp.Key)
-            .ToList();
+        foreach (var kvp in dict)
+        {
+            var resource = Godot.GD.Load<T>(kvp.Value.Path);
+            if (resource != null)
+                results.Add(resource);
+            else
+                _log.Warn($"加载失败: {category}/{kvp.Key} ({kvp.Value.Path})");
+        }
+
+        return results;
     }
 
     /// <summary>
-    /// 快速检查是否存在指定名称的资源
+    /// 获取分类下所有资源名称
     /// </summary>
-    public static bool Has(string name)
+    public static List<string> GetNames(ResourceCategory category)
     {
-        return ResourcePaths.All.ContainsKey(name);
+        var dict = GetDictionaryByCategory(category);
+        return dict.Keys.ToList();
+    }
+
+    /// <summary>
+    /// 根据分类获取对应的字典
+    /// </summary>
+    private static Dictionary<string, ResourceData> GetDictionaryByCategory(ResourceCategory category)
+    {
+        return category switch
+        {
+            ResourceCategory.Entity => ResourcePaths.Entities,
+            ResourceCategory.Component => ResourcePaths.Components,
+            ResourceCategory.UI => ResourcePaths.UI,
+            ResourceCategory.Asset => ResourcePaths.Assets,
+            ResourceCategory.EnemyConfig => ResourcePaths.EnemyConfigs,
+            ResourceCategory.PlayerConfig => ResourcePaths.PlayerConfigs,
+            ResourceCategory.AbilityConfig => ResourcePaths.AbilityConfigs,
+            ResourceCategory.ItemConfig => ResourcePaths.ItemConfigs,
+            _ => ResourcePaths.Other
+        };
     }
 }

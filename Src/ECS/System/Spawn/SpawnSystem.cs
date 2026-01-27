@@ -2,6 +2,9 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Godot.Collections;
+using Brotato.Data.Config.Units;
+using Brotato.Data.ResourceManagement;
 
 /// <summary>
 /// 敌人生成系统 - 核心的"敌人生成与波次管理系统"。
@@ -47,9 +50,10 @@ public partial class SpawnSystem : Node
     private GameTimer? _checkTimer;      // 核心轮询计时器(替代大量独立的 Rule Timer)）
     private const float CheckInterval = 0.1f;
     // 运行时状态跟踪 - 使用 struct 避免每波生成大量状态对象导致的 GC 压力
+    // 运行时状态跟踪 - 使用 struct 避免每波生成大量状态对象导致的 GC 压力
     private struct RuleRuntimeState
     {
-        public Dictionary<string, object> Data;  // EnemyData
+        public Resource Config;  // EnemyConfig (Resource)
         public SpawnRule Rule;     // 生成规则
         public float AccumulatedTime; // 累积时间
     }
@@ -65,8 +69,11 @@ public partial class SpawnSystem : Node
         // 监听游戏事件
         GlobalEventBus.Global.On(GameEventType.Global.GameStart, OnGameStart);
         GlobalEventBus.Global.On<GameEventType.Global.GameOverEventData>(GameEventType.Global.GameOver, OnGameOver);
+
         _log.Info("SpawnSystem (TimerManager Architecture) 初始化完成");
     }
+
+
 
     /// <summary>
     /// 清理系统资源：解绑事件、清理单例、停止计时器。
@@ -140,18 +147,20 @@ public partial class SpawnSystem : Node
             .WithTag("SpawnSystem")
             .OnComplete(OnWaveTimeout);
 
-        // 2. 初始化规则状态 - 从 EnemyData 中提取生成规则
+        // 2. 初始化规则状态
         _activeStates.Clear();
 
-        // 遍历所有敌人配置，提取激活的生成规则
-        foreach (var data in EnemyData.Configs.Values)
+        // 从 ResourceManagement 加载所有敌人配置
+        var allEnemyConfigs = ResourceManagement.LoadAll<EnemyConfig>(ResourceCategory.EnemyConfig);
+
+        foreach (var config in allEnemyConfigs)
         {
-            var rule = data[DataKey.SpawnRule] as SpawnRule;
+            var rule = config.SpawnRule;
             if (rule != null && IsRuleActiveForWave(rule, waveIndex))
             {
                 _activeStates.Add(new RuleRuntimeState
                 {
-                    Data = data,
+                    Config = config,
                     Rule = rule,
                     // 首个敌人生成的延迟时间
                     AccumulatedTime = rule.StartDelay > 0 ? -rule.StartDelay : 0
@@ -223,7 +232,7 @@ public partial class SpawnSystem : Node
                 if (count > 0)
                 {
                     // 直接使用 state 中的 Config 配置和 Rule 中的策略
-                    SpawnBatch(count, state.Data, state.Rule.Strategy);
+                    SpawnBatch(count, state.Config, state.Rule.Strategy);
                 }
             }
 
@@ -240,9 +249,9 @@ public partial class SpawnSystem : Node
     /// 手动批量生成敌人（用于测试或特殊事件）
     /// </summary>
     /// <param name="count">数量</param>
-    /// <param name="enemyConfig">敌人配置字典</param>
+    /// <param name="enemyConfig">敌人配置资源</param>
     /// <param name="strategy">生成策略</param>
-    public void SpawnBatch(int count, Dictionary<string, object> enemyConfig, SpawnPositionStrategy strategy)
+    public void SpawnBatch(int count, Resource enemyConfig, SpawnPositionStrategy strategy)
     {
         // 1. 计算位置
         // 获取当前视口（Viewport），用于确定屏幕边界和相机位置，确保敌人能正确生成在玩家视野外
