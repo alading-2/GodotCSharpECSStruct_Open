@@ -24,7 +24,7 @@ public static class ResourcePaths
 {
     public static readonly Dictionary<string, ResourceData> AbilityConfigs = new()
     {
-        { "CircleDamageConfig", new ResourceData(ResourceCategory.AbilityConfig, "res://Data/DataNew/Resources/Abilities/CircleDamageConfig.tres") },
+        { "CircleDamageConfig", new ResourceData(ResourceCategory.AbilityConfig, "res://Data/Data/Resources/Abilities/CircleDamageConfig.tres") },
     };
 
     public static readonly Dictionary<string, ResourceData> Assets = new()
@@ -59,8 +59,8 @@ public static class ResourcePaths
 
     public static readonly Dictionary<string, ResourceData> EnemyConfigs = new()
     {
-        { "豺狼人Config", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/DataNew/Resources/Enemies/豺狼人Config.tres") },
-        { "鱼人Config", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/DataNew/Resources/Enemies/鱼人Config.tres") },
+        { "豺狼人Config", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/豺狼人Config.tres") },
+        { "鱼人Config", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/鱼人Config.tres") },
     };
 
     public static readonly Dictionary<string, ResourceData> Entities = new()
@@ -80,7 +80,7 @@ public static class ResourcePaths
 
     public static readonly Dictionary<string, ResourceData> PlayerConfigs = new()
     {
-        { "德鲁伊Config", new ResourceData(ResourceCategory.PlayerConfig, "res://Data/DataNew/Resources/Players/德鲁伊Config.tres") },
+        { "德鲁伊Config", new ResourceData(ResourceCategory.PlayerConfig, "res://Data/Data/Resources/Players/德鲁伊Config.tres") },
     };
 
     public static readonly Dictionary<string, ResourceData> UI = new()

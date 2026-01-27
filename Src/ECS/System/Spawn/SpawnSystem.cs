@@ -50,11 +50,9 @@ public partial class SpawnSystem : Node
     private GameTimer? _checkTimer;      // 核心轮询计时器(替代大量独立的 Rule Timer)）
     private const float CheckInterval = 0.1f;
     // 运行时状态跟踪 - 使用 struct 避免每波生成大量状态对象导致的 GC 压力
-    // 运行时状态跟踪 - 使用 struct 避免每波生成大量状态对象导致的 GC 压力
     private struct RuleRuntimeState
     {
-        public Resource Config;  // EnemyConfig (Resource)
-        public SpawnRule Rule;     // 生成规则
+        public EnemyConfig Config; // 敌人配置
         public float AccumulatedTime; // 累积时间
     }
     private List<RuleRuntimeState> _activeStates = new();
@@ -155,15 +153,14 @@ public partial class SpawnSystem : Node
 
         foreach (var config in allEnemyConfigs)
         {
-            var rule = config.SpawnRule;
-            if (rule != null && IsRuleActiveForWave(rule, waveIndex))
+            // 检查规则是否在当前波次激活，且规则本身被启用
+            if (config.IsEnableSpawnRule && IsConfigActiveForWave(config, waveIndex))
             {
                 _activeStates.Add(new RuleRuntimeState
                 {
                     Config = config,
-                    Rule = rule,
                     // 首个敌人生成的延迟时间
-                    AccumulatedTime = rule.StartDelay > 0 ? -rule.StartDelay : 0
+                    AccumulatedTime = config.SpawnStartDelay > 0 ? -config.SpawnStartDelay : 0
                 });
             }
         }
@@ -216,23 +213,23 @@ public partial class SpawnSystem : Node
             // 检查是否达到生成间隔
             // 追赶机制：如果卡顿导致时间跳跃，会一次性补足（但限制单帧最大次数以防卡死）
             int loopGuard = 0;
-            while (state.AccumulatedTime >= state.Rule.SpawnInterval && loopGuard < 10)
+            while (state.AccumulatedTime >= state.Config.SpawnInterval && loopGuard < 10)
             {
-                state.AccumulatedTime -= state.Rule.SpawnInterval;
+                state.AccumulatedTime -= state.Config.SpawnInterval;
                 loopGuard++;
 
                 // 执行生成逻辑
-                int count = state.Rule.SingleSpawnCount;
+                int count = state.Config.SingleSpawnCount;
                 // 每次生成时的随机波动
-                if (state.Rule.SingleSpawnVariance > 0)
+                if (state.Config.SingleSpawnVariance > 0)
                 {
-                    count += GD.RandRange(-state.Rule.SingleSpawnVariance, state.Rule.SingleSpawnVariance);
+                    count += GD.RandRange(-state.Config.SingleSpawnVariance, state.Config.SingleSpawnVariance);
                 }
 
                 if (count > 0)
                 {
-                    // 直接使用 state 中的 Config 配置和 Rule 中的策略
-                    SpawnBatch(count, state.Config, state.Rule.Strategy);
+                    // 直接使用 state.Config
+                    SpawnBatch(count, state.Config, state.Config.SpawnStrategy);
                 }
             }
 
@@ -289,21 +286,21 @@ public partial class SpawnSystem : Node
     // ========================================
 
     /// <summary>
-    /// 判断指定的生成规则在当前波次是否激活。
+    /// 判断指定的生成配置在当前波次是否激活。
     /// </summary>
-    /// <param name="rule">生成规则配置</param>
+    /// <param name="config">敌人配置</param>
     /// <param name="waveIndex">当前波次索引 (1-based)</param>
-    /// <returns>如果当前波次在规则设定的 [MinWave, MaxWave] 范围内且数据合法，则返回 true</returns>
-    private bool IsRuleActiveForWave(SpawnRule rule, int waveIndex)
+    /// <returns>如果当前波次在规则设定的 [SpawnMinWave, SpawnMaxWave] 范围内，则返回 true</returns>
+    private bool IsConfigActiveForWave(EnemyConfig config, int waveIndex)
     {
         // 基础安全性检查
-        if (rule == null) return false;
+        if (config == null) return false;
 
         // 逻辑判断：
-        // 1. waveIndex >= rule.MinWave: 当前波次必须达到规则要求的起始波次
-        // 2. rule.MaxWave == -1: 表示该规则在起始波次后永久生效
-        // 3. waveIndex <= rule.MaxWave: 如果设置了结束波次，当前波次不能超过它
-        return waveIndex >= rule.MinWave && (rule.MaxWave == -1 || waveIndex <= rule.MaxWave);
+        // 1. waveIndex >= config.SpawnMinWave: 当前波次必须达到规则要求的起始波次
+        // 2. config.SpawnMaxWave == -1: 表示该规则在起始波次后永久生效
+        // 3. waveIndex <= config.SpawnMaxWave: 如果设置了结束波次，当前波次不能超过它
+        return waveIndex >= config.SpawnMinWave && (config.SpawnMaxWave == -1 || waveIndex <= config.SpawnMaxWave);
     }
 
     /// <summary>

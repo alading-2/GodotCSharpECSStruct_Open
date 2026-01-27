@@ -37,18 +37,9 @@ public static class EnemyData
             { DataKey.DetectionRange, 400f }, // 索敌范围
             { DataKey.AttackRange, 50f }, // AI攻击判定范围
             
-            // === 生成规则 ===
-            { DataKey.SpawnRule, new SpawnRule
-                {
-                    MinWave = 1,
-                    MaxWave = -1,
-                    SpawnInterval = 2.0f,
-                    SingleSpawnCount = 3,
-                    SingleSpawnVariance = 1,
-                    StartDelay = 0f,
-                    Strategy = SpawnPositionStrategy.Circle
-                }
-            }
+            // === AI配置 ===
+            { DataKey.DetectionRange, 400f }, // 索敌范围
+            { DataKey.AttackRange, 50f }, // AI攻击判定范围
         },
 
         ["豺狼人"] = new()
@@ -82,18 +73,9 @@ public static class EnemyData
             { DataKey.DetectionRange, 500f }, // 索敌范围
             { DataKey.AttackRange, 60f }, // AI攻击判定范围
             
-            // === 生成规则 ===
-            { DataKey.SpawnRule, new SpawnRule
-                {
-                    MinWave = 3,
-                    MaxWave = -1,
-                    SpawnInterval = 3.0f,
-                    SingleSpawnCount = 2,
-                    SingleSpawnVariance = 0,
-                    StartDelay = 5f,
-                    Strategy = SpawnPositionStrategy.Perimeter
-                }
-            }
+            // === AI配置 ===
+            { DataKey.DetectionRange, 500f }, // 索敌范围
+            { DataKey.AttackRange, 60f }, // AI攻击判定范围
         }
     };
 }

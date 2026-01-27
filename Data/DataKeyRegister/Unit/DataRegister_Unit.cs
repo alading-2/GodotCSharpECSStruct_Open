@@ -31,7 +31,30 @@ public partial class DataRegister_Unit : Node
         // DisableManaRecovery
         DataRegistry.Register(new DataMeta { Key = DataKey.IsDisableManaRecovery, DisplayName = "是否禁止魔法恢复", Description = "是否禁止魔法恢复", Category = DataCategory_Unit.Recovery, Type = typeof(bool), DefaultValue = false });
 
-        // === 状态标记 ===
+
+        // ================ Spawn ================
+        // 是否启用SpawnRule
+        DataRegistry.Register(new DataMeta { Key = DataKey.IsEnableSpawnRule, DisplayName = "是否启用SpawnRule", Category = DataCategory_Unit.Spawn, Type = typeof(bool), DefaultValue = true });
+        // SpawnStrategy
+        DataRegistry.Register(new DataMeta { Key = DataKey.SpawnStrategy, DisplayName = "生成策略", Category = DataCategory_Unit.Spawn, Type = typeof(SpawnPositionStrategy), DefaultValue = SpawnPositionStrategy.Rectangle });
+        // SpawnMinWave
+        DataRegistry.Register(new DataMeta { Key = DataKey.SpawnMinWave, DisplayName = "最小波次", Category = DataCategory_Unit.Spawn, Type = typeof(int), DefaultValue = 0 });
+        // SpawnMaxWave
+        DataRegistry.Register(new DataMeta { Key = DataKey.SpawnMaxWave, DisplayName = "最大波次", Category = DataCategory_Unit.Spawn, Type = typeof(int), DefaultValue = -1 });
+        // SpawnInterval
+        DataRegistry.Register(new DataMeta { Key = DataKey.SpawnInterval, DisplayName = "生成间隔", Category = DataCategory_Unit.Spawn, Type = typeof(float), DefaultValue = 1.0f });
+        // SpawnMaxCountPerWave
+        DataRegistry.Register(new DataMeta { Key = DataKey.SpawnMaxCountPerWave, DisplayName = "单波最大数", Category = DataCategory_Unit.Spawn, Type = typeof(int), DefaultValue = -1 });
+        // SingleSpawnCount
+        DataRegistry.Register(new DataMeta { Key = DataKey.SingleSpawnCount, DisplayName = "单次数量", Category = DataCategory_Unit.Spawn, Type = typeof(int), DefaultValue = 1 });
+        // SingleSpawnVariance
+        DataRegistry.Register(new DataMeta { Key = DataKey.SingleSpawnVariance, DisplayName = "数量波动", Category = DataCategory_Unit.Spawn, Type = typeof(int), DefaultValue = 0 });
+        // SpawnStartDelay
+        DataRegistry.Register(new DataMeta { Key = DataKey.SpawnStartDelay, DisplayName = "开始延迟", Category = DataCategory_Unit.Spawn, Type = typeof(float), DefaultValue = 0f });
+        // SpawnWeight
+        DataRegistry.Register(new DataMeta { Key = DataKey.SpawnWeight, DisplayName = "生成权重", Category = DataCategory_Unit.Spawn, Type = typeof(int), DefaultValue = 10 });
+
+        // ================ 状态标记 ================
         // 是否死亡
         DataRegistry.Register(new DataMeta { Key = DataKey.IsDead, DisplayName = "是否死亡", Category = DataCategory_Unit.State, Type = typeof(bool), DefaultValue = false });
         // 是否无敌
@@ -40,11 +63,9 @@ public partial class DataRegister_Unit : Node
         DataRegistry.Register(new DataMeta { Key = DataKey.IsImmune, DisplayName = "是否免疫", Category = DataCategory_Unit.State, Type = typeof(bool), DefaultValue = false });
         // 是否眩晕
         DataRegistry.Register(new DataMeta { Key = DataKey.IsStunned, DisplayName = "是否眩晕", Category = DataCategory_Unit.State, Type = typeof(bool), DefaultValue = false });
-        // 是否沉默
-        DataRegistry.Register(new DataMeta { Key = DataKey.IsSilenced, DisplayName = "是否沉默", Category = DataCategory_Unit.State, Type = typeof(bool), DefaultValue = false });
         // 是否隐身
         DataRegistry.Register(new DataMeta { Key = DataKey.IsInvisible, DisplayName = "是否隐身", Category = DataCategory_Unit.State, Type = typeof(bool), DefaultValue = false });
-        // === LifecycleComponent ===
+        // ================ LifecycleComponent ================
         // 生命周期状态
         DataRegistry.Register(new DataMeta { Key = DataKey.LifecycleState, DisplayName = "生命周期状态", Category = DataCategory_Unit.State, Type = typeof(LifecycleState), DefaultValue = LifecycleState.Alive });
         // 死亡类型
@@ -55,17 +76,18 @@ public partial class DataRegister_Unit : Node
         DataRegistry.Register(new DataMeta { Key = DataKey.DeathCount, DisplayName = "死亡次数", Category = DataCategory_Unit.State, Type = typeof(int), DefaultValue = 0 });
         // 最大生存时间
         DataRegistry.Register(new DataMeta { Key = DataKey.MaxLifeTime, DisplayName = "最大生存时间", Category = DataCategory_Unit.State, Type = typeof(float), DefaultValue = -1f });
-        // === FollowComponent ===
+
+        // ================ FollowComponent ================
         // 跟随速度
         DataRegistry.Register(new DataMeta { Key = DataKey.FollowSpeed, DisplayName = "跟随速度", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 100f });
         // 停止距离
         DataRegistry.Register(new DataMeta { Key = DataKey.StopDistance, DisplayName = "停止距离", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 200f });
-        // === VelocityComponent ===
+        // ================ VelocityComponent ================
         // 当前速度向量
         DataRegistry.Register(new DataMeta { Key = DataKey.Velocity, DisplayName = "当前速度向量", Category = DataCategory_Unit.Movement, Type = typeof(Vector2), DefaultValue = Vector2.Zero });
         // 加速度
         DataRegistry.Register(new DataMeta { Key = DataKey.Acceleration, DisplayName = "加速度", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 10f });
-        // === HurtboxComponent ===
+        // ================ HurtboxComponent ================
         // 无敌计时器
         DataRegistry.Register(new DataMeta { Key = DataKey.InvincibilityTimer, DisplayName = "无敌计时器", Category = DataCategory_Unit.State, Type = typeof(float), DefaultValue = 0f });
     }

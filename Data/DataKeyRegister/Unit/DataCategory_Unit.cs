@@ -17,4 +17,9 @@ public enum DataCategory_Unit
     /// 移动相关（速度、加速度等）
     /// </summary>
     Movement,
+
+    /// <summary>
+    /// 生成规则相关
+    /// </summary>
+    Spawn,
 }

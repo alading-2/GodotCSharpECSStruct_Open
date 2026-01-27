@@ -476,8 +476,12 @@ public class Data
             // 跳过 Godot 内部属性和 Resource 基类属性
             // (ResourceName, ResourcePath 等由 Node 自动处理，Data 不需要存)
             // Resource 是 Godot.RefCounted, GodotObject是基类
-            if (typeof(Resource).IsAssignableFrom(prop.DeclaringType) ||
-                typeof(GodotObject).IsAssignableFrom(prop.DeclaringType))
+            // 跳过 Godot 内部属性 (ResourceName, ResourcePath 等)
+            // 修正：严谨检查 DeclaringType，防止误杀子类属性
+            var declaringType = prop.DeclaringType;
+            if (declaringType == typeof(Resource) ||
+                declaringType == typeof(Godot.RefCounted) ||
+                declaringType == typeof(Godot.GodotObject))
                 continue;
 
             if (!prop.CanRead)

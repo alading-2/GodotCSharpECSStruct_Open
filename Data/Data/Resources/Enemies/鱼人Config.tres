@@ -1,29 +1,25 @@
-[gd_resource type="Resource" script_class="EnemyConfig" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=3 format=3]
 
 [ext_resource type="PackedScene" uid="uid://cvx83guqqptmk" path="res://assets/Unit/Enemy/鱼人/AnimatedSprite2D/鱼人.tscn" id="1_visual"]
-[ext_resource type="Script" path="res://Data/DataNew/Units/EnemyConfig.cs" id="2_script"]
-[ext_resource type="Script" path="res://Data/Data/Unit/Enemy/SpawnRule.cs" id="3_spawnrule"]
-
-[sub_resource type="Resource" id="Resource_spawn"]
-script = ExtResource("3_spawnrule")
-Strategy = 0
-MinWave = 1
-MaxWave = -1
-SpawnInterval = 2.0
-MaxCountPerWave = -1
-SingleSpawnCount = 3
-SingleSpawnVariance = 1
-StartDelay = 0.0
-Weight = 10
+[ext_resource type="Script" path="res://Data/Data/Units/EnemyConfig.cs" id="2_script"]
 
 [resource]
 script = ExtResource("2_script")
+IsEnableSpawnRule = true
+SpawnStrategy = 0
+SpawnMinWave = 1
+SpawnMaxWave = -1
+SpawnInterval = 2.0
+SpawnMaxCountPerWave = -1
+SingleSpawnCount = 3
+SingleSpawnVariance = 1
+SpawnStartDelay = 0.0
+SpawnWeight = 10
 ExpReward = 2
 DetectionRange = 400.0
 AttackRange = 50.0
-SpawnRule = SubResource("Resource_spawn")
 Name = "鱼人"
-Team = 1
+Team = 2
 VisualScenePath = ExtResource("1_visual")
 HealthBarHeight = 100.0
 BaseHp = 20.0

@@ -14,7 +14,7 @@ class ResourceGenerator
         "Src/UI",
         "Src/ECS/Entity",
         "Src/ECS/Component",
-        "Data/DataNew/Resources"  // 新增：扫描 Resource 配置目录
+        "Data/Data/Resources"  // 新增：扫描 Resource 配置目录
     };
 
     private static readonly string[] ExcludePaths = {

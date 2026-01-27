@@ -8,6 +8,18 @@ public static partial class DataKey
     public const string Level = "Level"; // 等级
     public const string VisualScenePath = "VisualScenePath"; // 视觉场景路径
     public const string UnitRank = "UnitRank"; // 单位品阶 (Enum: UnitRank)
+    // === Spawn ===
+    public const string IsEnableSpawnRule = "IsEnableSpawnRule"; // 是否启用生成规则
+    public const string SpawnStrategy = "SpawnStrategy"; // 生成策略
+    public const string SpawnMinWave = "SpawnMinWave"; // 最小波次
+    public const string SpawnMaxWave = "SpawnMaxWave"; // 最大波次
+    public const string SpawnInterval = "SpawnInterval"; // 生成间隔
+    public const string SpawnMaxCountPerWave = "SpawnMaxCountPerWave"; // 单波次最大数量
+    public const string SingleSpawnCount = "SingleSpawnCount"; // 单次生成数量
+    public const string SingleSpawnVariance = "SingleSpawnVariance"; // 单次随机波动
+    public const string SpawnStartDelay = "SpawnStartDelay"; // 开始延迟
+    public const string SpawnWeight = "SpawnWeight"; // 权重
+
     // === Enemy ===
     public const string ExpReward = "ExpReward"; // 经验奖励
     public const string SpawnRule = "SpawnRule"; // 生成规则

@@ -1,9 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://xe0xker8n1lx"]
+[gd_scene format=3 uid="uid://xe0xker8n1lx"]
 
-[ext_resource type="Script" path="res://Src/Test/GlobalTest/MainTest/MainTest.cs" id="1_gqao1"]
+[ext_resource type="Script" uid="uid://ocl1y7lmtv7" path="res://Src/Test/GlobalTest/MainTest/MainTest.cs" id="1_gqao1"]
 
-[node name="MainTest" type="Node"]
+[node name="MainTest" type="Node" unique_id=2074250790]
 script = ExtResource("1_gqao1")
 
-[node name="Camera2D" type="Camera2D" parent="."]
-zoom = Vector2(1, 1)
+[node name="Camera2D" type="Camera2D" parent="." unique_id=149236896]

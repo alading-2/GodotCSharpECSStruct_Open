@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 public partial class HealthBarUI : UIBase
 {
     // 静态日志（用于系统级事件监听）
-    private static readonly Log _log = new("HealthBarUI", LogLevel.Warning);
+    private static readonly Log _log = new("HealthBarUI", LogLevel.Debug);
 
     private ProgressBar _healthBar = null!;
 
