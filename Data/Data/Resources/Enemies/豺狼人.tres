@@ -18,7 +18,6 @@ Team = 2
 VisualScenePath = ExtResource("1_visual")
 HealthBarHeight = 200.0
 BaseHp = 50.0
-CurrentHp = 50.0
 Range = 60.0
 CritRate = 5.0
 BaseDefense = 3.0

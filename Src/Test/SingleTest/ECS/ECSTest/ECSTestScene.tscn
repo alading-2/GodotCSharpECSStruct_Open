@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://c5x8l3m2oap0"]
+[gd_scene format=3 uid="uid://c5x8l3m2oap0"]
 
-[ext_resource type="Script" path="res://Src/Test/SingleTest/ECS/ECSTest/ECSTest.cs" id="1_ecs_test"]
-[ext_resource type="PackedScene" uid="uid://b8y4k2q1w7z9" path="res://Src/Test/SingleTest/ECS/ECSTest/Entity/TestEntity.tscn" id="2_entity"]
+[ext_resource type="Script" uid="uid://davrawfbyw58b" path="res://Src/Test/SingleTest/ECS/ECSTest/ECSTest.cs" id="1_ecs_test"]
+[ext_resource type="PackedScene" uid="uid://b8y4k2q1w71a" path="res://Src/Test/SingleTest/ECS/ECSTest/Entity/TestEntity.tscn" id="2_entity"]
+
 
 [node name="ECSTestScene" type="Node" node_paths=PackedStringArray("_statusLabel", "_runButton")]
 script = ExtResource("1_ecs_test")

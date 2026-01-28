@@ -17,4 +17,3 @@
 [node name="RecoveryComponent" parent="." unique_id=1746390251 instance=ExtResource("5_bplmq")]
 
 [node name="DataInitComponent" parent="." unique_id=1151160750 instance=ExtResource("5_44gbc")]
-

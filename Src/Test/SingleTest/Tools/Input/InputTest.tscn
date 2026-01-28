@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://cc54vrkw10iy0"]
+[gd_scene format=3 uid="uid://cc54vrkw10iy0"]
 
 [ext_resource type="Script" uid="uid://dpv5ksg4ophhc" path="res://Src/Test/SingleTest/Tools/Input/InputTest.cs" id="1_wcmj6"]
 

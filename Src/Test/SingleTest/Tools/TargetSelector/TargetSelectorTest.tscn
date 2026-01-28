@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://targetselectortest"]
+[gd_scene format=3 uid="uid://b2m8cgc6tsovn"]
 
-[ext_resource type="Script" path="res://Src/Test/SingleTest/Tools/TargetSelector/TargetSelectorTest.cs" id="1_target"]
+[ext_resource type="Script" uid="uid://ddgg66uqkny6c" path="res://Src/Test/SingleTest/Tools/TargetSelector/TargetSelectorTest.cs" id="1_target"]
+
 
 [node name="TargetSelectorTest" type="Node"]
 script = ExtResource("1_target")
