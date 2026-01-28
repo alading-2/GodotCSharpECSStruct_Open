@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="EnemyConfig" format=3 uid="uid://fsgm31sfgumo"]
 
 [ext_resource type="PackedScene" uid="uid://b4aioasnwsfb0" path="res://assets/Unit/Enemy/豺狼人/AnimatedSprite2D/豺狼人.tscn" id="1_visual"]
-[ext_resource type="Script" uid="uid://ce7cjavr7yk8u" path="res://Data/Data/Units/EnemyConfig.cs" id="2_script"]
+[ext_resource type="Script" uid="uid://ce7cjavr7yk8u" path="res://Data/Data/Unit/Enemy/EnemyConfig.cs" id="2_script"]
 
 [resource]
 script = ExtResource("2_script")

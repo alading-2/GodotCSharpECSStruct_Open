@@ -15,7 +15,7 @@ class ResourceGenerator
         "Src/UI",
         "Src/ECS/Entity",
         "Src/ECS/Component",
-        "Data/Data/Resources"  // 新增：扫描 Resource 配置目录
+        "Data/Data"  // 新增：扫描 Resource 配置目录
     };
 
     private static readonly string[] ExcludePaths = {
@@ -34,10 +34,10 @@ class ResourceGenerator
         // 1. Resource 配置优先匹配（.tres 文件）
         if (path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
         {
-            if (path.Contains("/Enemies/", StringComparison.OrdinalIgnoreCase)) return "EnemyConfig";
-            if (path.Contains("/Players/", StringComparison.OrdinalIgnoreCase)) return "PlayerConfig";
-            if (path.Contains("/Abilities/", StringComparison.OrdinalIgnoreCase)) return "AbilityConfig";
-            if (path.Contains("/Items/", StringComparison.OrdinalIgnoreCase)) return "ItemConfig";
+            if (path.Contains("/Enemy/", StringComparison.OrdinalIgnoreCase)) return "EnemyConfig";
+            if (path.Contains("/Player/", StringComparison.OrdinalIgnoreCase)) return "PlayerConfig";
+            if (path.Contains("/Ability/", StringComparison.OrdinalIgnoreCase)) return "AbilityConfig";
+            if (path.Contains("/Item/", StringComparison.OrdinalIgnoreCase)) return "ItemConfig";
         }
 
         // 2. 场景文件匹配（.tscn 文件）

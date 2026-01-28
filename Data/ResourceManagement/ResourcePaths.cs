@@ -38,6 +38,7 @@ public static class ResourcePaths
                 { "CombatPreset", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/CombatPreset.tscn") },
                 { "CooldownComponent", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn") },
                 { "CostComponent", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn") },
+                { "DataInitComponent", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/DataInitComponent/DataInitComponent.tscn") },
                 { "EnemyPreset", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn") },
                 { "FollowComponent", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/FollowComponent/FollowComponent.tscn") },
                 { "FollowPreset", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/FollowPreset.tscn") },
@@ -69,18 +70,18 @@ public static class ResourcePaths
         },
         { ResourceCategory.EnemyConfig, new Dictionary<string, ResourceData>
             {
-                { "豺狼人", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/豺狼人.tres") },
-                { "鱼人", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Resources/Enemies/鱼人.tres") },
+                { "豺狼人", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Unit/Enemy/Resource/豺狼人.tres") },
+                { "鱼人", new ResourceData(ResourceCategory.EnemyConfig, "res://Data/Data/Unit/Enemy/Resource/鱼人.tres") },
             }
         },
         { ResourceCategory.PlayerConfig, new Dictionary<string, ResourceData>
             {
-                { "德鲁伊", new ResourceData(ResourceCategory.PlayerConfig, "res://Data/Data/Resources/Players/德鲁伊.tres") },
+                { "德鲁伊", new ResourceData(ResourceCategory.PlayerConfig, "res://Data/Data/Unit/Player/Resource/德鲁伊.tres") },
             }
         },
         { ResourceCategory.AbilityConfig, new Dictionary<string, ResourceData>
             {
-                { "CircleDamageConfig", new ResourceData(ResourceCategory.AbilityConfig, "res://Data/Data/Resources/Abilities/CircleDamageConfig.tres") },
+                { "CircleDamageConfig", new ResourceData(ResourceCategory.AbilityConfig, "res://Data/Data/Ability/Resource/CircleDamageConfig.tres") },
             }
         },
         { ResourceCategory.ItemConfig, new Dictionary<string, ResourceData>
