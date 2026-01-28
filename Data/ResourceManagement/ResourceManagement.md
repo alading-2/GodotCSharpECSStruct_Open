@@ -3,11 +3,12 @@
 **ResourceManagement** 是项目中统一管理 **游戏资产 (Assets)** 和 **资源配置 (Config)** 的核心系统。
 
 > ⚠️ **核心概念**：
-> 1. **ResourcePaths**：由 `Tools/ResourceGenerator` 自动生成的静态字典，包含所有资源路径。
+>
+> 1. **ResourcePaths**：由 `Tools/ResourceGenerator` 自动生成的静态类，包含一个按 `ResourceCategory` 分类的嵌套字典 `Resources`。
 > 2. **ResourceCategories**：资源被分为 `Entity`, `Component`, `UI`, `Asset`, `EnemyConfig` 等分类。
 > 3. **Config vs Asset**：
->    - **Config (.tres)**：数据配置文件（如 EnemyConfig），名称通常以 `Config` 结尾（如 `豺狼人Config`）。
->    - **Asset (.tscn)**：场景文件（如 视觉表现），名称通常为原始名称（如 `豺狼人`）。
+>    - **Config (.tres)**：数据配置文件（如 EnemyConfig），名称通常为原始名称（如 `豺狼人`），存储在 `Data/Data/Resources` 下。
+>    - **Asset (.tscn)**：场景文件（如 视觉表现/动画），名称通常为原始名称（如 `豺狼人`）。
 
 ---
 
@@ -56,18 +57,22 @@ dotnet run --project Tools/ResourceGenerator/ResourceGenerator.csproj
 ## 📚 API 参考
 
 ### `Load<T>(string name, ResourceCategory category)`
+
 - **描述**: 从指定分类字典加载资源文件（通常用于 Config）。
 - **示例**: `ResourceManagement.Load<EnemyConfig>("豺狼人Config", ResourceCategory.EnemyConfig)`
 
 ### `LoadAll<T>(ResourceCategory category)`
+
 - **描述**: 加载指定分类下的所有资源。
 - **示例**: `ResourceManagement.LoadAll<AbilityConfig>(ResourceCategory.AbilityConfig)`
 
 ### `GetPath(string name, ResourceCategory category)`
+
 - **描述**: 获取资源的路径字符串（不加载）。常用于场景文件或需要延迟加载的资源。
 - **示例**: `ResourceManagement.GetPath("HealthBarUI", ResourceCategory.UI)`
 
 ### `GetNames(ResourceCategory category)`
+
 - **描述**: 获取该分类下所有注册的资源名称列表。
 
 ---
@@ -75,11 +80,14 @@ dotnet run --project Tools/ResourceGenerator/ResourceGenerator.csproj
 ## 🛠️ 最佳实践
 
 ### 文件命名规范
+
 为避免 `.tscn` (Asset) 与 `.tres` (Config) 重名冲突，建议：
+
 - **配置文件**：使用 `Config` 后缀，如 `豺狼人Config.tres`
 - **资源文件**：直接使用名称，如 `豺狼人.tscn`
 
 ### 分类说明
+
 - `Entity`: 游戏实体预制体 (EnemyEntity.tscn)
 - `Component`: 组件预制体 (HealthComponent.tscn)
 - `UI`: 界面预制体 (HealthBarUI.tscn)

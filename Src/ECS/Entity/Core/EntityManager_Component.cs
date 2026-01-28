@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Brotato.Data.ResourceManagement;
 
 /// <summary>
 /// EntityManager 的 Component 扩展
@@ -11,7 +12,97 @@ using Godot;
 /// </summary>
 public static partial class EntityManager
 {
-    private static readonly Log _componentLog = new("EntityManager_Component", LogLevel.Warning);
+    // ==================== Component 缓存 ====================
+
+    private static readonly Log _componentLog = new("EntityManager_Component", LogLevel.Debug);
+
+    /// <summary>
+    /// Component 结构缓存
+    /// Key: Entity 场景文件的路径 (scene.ResourcePath) 或 Entity 类型名称
+    /// Value: 该 Entity 原型中 Component 的相对路径列表
+    /// </summary>
+    private static readonly Dictionary<string, List<NodePath>> _componentPathCache = new();
+
+    /// <summary>
+    /// [优化] 预热 Component 缓存
+    /// 遍历所有 Entity 资源，实例化并扫描 Component 结构，存入缓存。
+    /// 避免在游戏运行时频繁进行 FindChildren 查找。
+    /// </summary>
+    public static void PrewarmComponentCache()
+    {
+        _componentLog.Info("🔥 开始预热 Entity Component 缓存...");
+        int entityCount = 0;
+        int totalComponentCount = 0;
+
+        // 1. 加载所有 Entity 资源
+        var entities = ResourceManagement.LoadAll<PackedScene>(ResourceCategory.Entity);
+
+        foreach (var scene in entities)
+        {
+            try
+            {
+                // 暂时实例化以扫描结构 (不放入 SceneTree，开销较小)
+                Node instance = scene.Instantiate();
+                string cacheKey = instance.SceneFilePath;
+
+                if (string.IsNullOrEmpty(cacheKey))
+                {
+                    // 如果没有文件路径（理论上 LoadAll 出来的都有），尝试用类型名
+                    cacheKey = instance.GetType().Name;
+                }
+
+                if (_componentPathCache.ContainsKey(cacheKey))
+                {
+                    instance.Free(); // 释放
+                    continue;
+                }
+
+                var componentPaths = new List<NodePath>();
+
+                // 执行与 RegisterComponents 相同的查找逻辑
+                // 注意：FindChildren 在未添加到 SceneTree 的节点上工作正常 (owned=false)
+                var allChildren = instance.FindChildren("*", "Node", true, false);
+                foreach (Node child in allChildren)
+                {
+                    bool isComponent = false;
+                    string typeName = child.GetType().Name;
+
+                    if (child is IComponent || typeName.EndsWith("Component"))
+                    {
+                        isComponent = true;
+                    }
+
+                    if (isComponent)
+                    {
+                        // 记录相对路径
+                        componentPaths.Add(instance.GetPathTo(child));
+                    }
+                }
+
+                // 仅当找到 Component 时才缓存，避免缓存错误状态导致后续跳过查找
+                if (componentPaths.Count > 0)
+                {
+                    _componentPathCache[cacheKey] = componentPaths;
+                    entityCount++;
+                    totalComponentCount += componentPaths.Count;
+                    _componentLog.Debug($"  - 缓存 {cacheKey}: {componentPaths.Count} components");
+                }
+                else
+                {
+                    _componentLog.Warn($"  - 预热警告: {cacheKey} 未找到任何 Component (可能结构特殊)");
+                }
+
+                // 立即释放实例
+                instance.Free();
+            }
+            catch (Exception ex)
+            {
+                _componentLog.Error($"预热失败: {ex.Message}");
+            }
+        }
+
+        _componentLog.Info($"✅ 缓存预热完成: {entityCount} 个 Entity, 共 {totalComponentCount} 个 Component 路径已缓存。");
+    }
 
     // ==================== Component 注册 ====================
 
@@ -23,66 +114,92 @@ public static partial class EntityManager
     /// 
     /// 自动建立 Entity-Component 关系（通过 EntityRelationshipManager）
     /// 
-    /// 注意：使用 FindChildren() 递归查找，支持任意层级的 Component
-    /// 注意：此方法现在为 public，可供 ObjectPoolInit 等外部模块调用
+    /// 注意：优先使用预热缓存(_componentPathCache)，命中失败则回退到 FindChildren()
     /// </summary>
     public static void RegisterComponents(Node entity)
     {
         int registeredCount = 0;
         string entityId = entity.GetInstanceId().ToString();
 
-        // 使用 FindChildren 递归查找所有层级的子节点
-        // 参数: pattern="*" (匹配所有名字), type="" (所有类型), recursive=true (递归), owned=false (包括非拥有节点)
-        var allChildren = entity.FindChildren("*", "Node", true, false);
+        // 尝试从缓存获取
+        string cacheKey = entity.SceneFilePath;
+        if (string.IsNullOrEmpty(cacheKey)) cacheKey = entity.GetType().Name;
 
-        foreach (Node child in allChildren)
+        IList<Node> componentsToRegister = new List<Node>();
+
+        // Check if cache exists AND has content
+        if (_componentPathCache.TryGetValue(cacheKey, out var cachedPaths) && cachedPaths.Count > 0)
         {
-            bool isComponent = false;
-            string componentType = child.GetType().Name;
-
-            // 规则 1：实现了 IComponent 接口（优先级最高）
-            if (child is IComponent)
+            // [Hit Cache] 使用缓存路径直接获取节点
+            foreach (var path in cachedPaths)
             {
-                isComponent = true;
-            }
-            // 规则 2：类名以 "Component" 结尾（兼容旧代码）
-            else if (componentType.EndsWith("Component"))
-            {
-                isComponent = true;
-                _componentLog.Debug($"通过命名约定识别 Component: {componentType}");
-            }
-
-            // 注册 Component 并建立关系
-            if (isComponent)
-            {
-                // 1. 注册 Component
-                Register(child);
-
-                // 2. 建立 Entity-Component 关系（必须在回调之前）
-                string componentId = child.GetInstanceId().ToString();
-                EntityRelationshipManager.AddRelationship(
-                    entityId,
-                    componentId,
-                    EntityRelationshipType.ENTITY_TO_COMPONENT
-                );
-
-                // 3. 触发 IComponent 回调（此时关系已建立，可安全查询）
-                if (child is IComponent component)
+                var node = entity.GetNodeOrNull(path);
+                if (node != null)
                 {
-                    try
-                    {
-                        component.OnComponentRegistered(entity);
-                        _componentLog.Debug($"触发 IComponent 回调: {componentType}");
-                    }
-                    catch (Exception ex)
-                    {
-                        _componentLog.Error($"Component 回调失败: {componentType}, 错误: {ex.Message}");
-                    }
+                    componentsToRegister.Add(node);
+                }
+                else
+                {
+                    _componentLog.Warn($"[Cache Warn] Entity {entity.Name} 缓存路径失效: {path}");
+                }
+            }
+            // _componentLog.Debug($"[Cache Hit] {entity.Name} ({componentsToRegister.Count})");
+        }
+        else
+        {
+            // [Miss Cache] 回退到递归查找
+            // _componentLog.Debug($"[Cache Miss] Entity {entity.Name} (Key: {cacheKey})"); 
+            var allChildren = entity.FindChildren("*", "Node", true, false);
+
+            foreach (Node child in allChildren)
+            {
+                bool isComponent = false;
+                string componentType = child.GetType().Name;
+
+                if (child is IComponent || componentType.EndsWith("Component"))
+                {
+                    isComponent = true;
                 }
 
-                registeredCount++;
-                _componentLog.Info($"已注册 Component: {componentType} 到 Entity: {entity.Name}");
+                if (isComponent)
+                {
+                    componentsToRegister.Add(child);
+                }
             }
+        }
+
+        // 统一处理注册
+        foreach (var child in componentsToRegister)
+        {
+            string componentType = child.GetType().Name;
+
+            // 1. 注册 Component
+            Register(child);
+
+            // 2. 建立 Entity-Component 关系（必须在回调之前）
+            string componentId = child.GetInstanceId().ToString();
+            EntityRelationshipManager.AddRelationship(
+                entityId,
+                componentId,
+                EntityRelationshipType.ENTITY_TO_COMPONENT
+            );
+
+            // 3. 触发 IComponent 回调（此时关系已建立，可安全查询）
+            if (child is IComponent component)
+            {
+                try
+                {
+                    component.OnComponentRegistered(entity);
+                    _componentLog.Debug($"触发 IComponent 回调: {componentType}");
+                }
+                catch (Exception ex)
+                {
+                    _componentLog.Error($"Component 回调失败: {componentType}, 错误: {ex.Message}");
+                }
+            }
+
+            registeredCount++;
+            _componentLog.Info($"已注册 Component: {componentType} 到 Entity: {entity.Name}");
         }
 
         if (registeredCount > 0)

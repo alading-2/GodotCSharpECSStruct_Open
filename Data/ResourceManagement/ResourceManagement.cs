@@ -83,17 +83,11 @@ public static class ResourceManagement
     /// </summary>
     private static Dictionary<string, ResourceData> GetDictionaryByCategory(ResourceCategory category)
     {
-        return category switch
+        if (ResourcePaths.Resources.TryGetValue(category, out var dict))
         {
-            ResourceCategory.Entity => ResourcePaths.Entities,
-            ResourceCategory.Component => ResourcePaths.Components,
-            ResourceCategory.UI => ResourcePaths.UI,
-            ResourceCategory.Asset => ResourcePaths.Assets,
-            ResourceCategory.EnemyConfig => ResourcePaths.EnemyConfigs,
-            ResourceCategory.PlayerConfig => ResourcePaths.PlayerConfigs,
-            ResourceCategory.AbilityConfig => ResourcePaths.AbilityConfigs,
-            ResourceCategory.ItemConfig => ResourcePaths.ItemConfigs,
-            _ => ResourcePaths.Other
-        };
+            return dict;
+        }
+        _log.Error($"未找到分类字典: {category}");
+        return new Dictionary<string, ResourceData>();
     }
 }

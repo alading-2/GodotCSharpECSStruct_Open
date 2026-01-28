@@ -54,8 +54,10 @@ public partial class AutoLoad : Node
     {
         /// <summary> 全局唯一标识名（建议与类名一致） </summary>
         public required string Name { get; init; }
-        /// <summary> 资源路径 (.tscn 或 .cs) </summary>
-        public required string Path { get; init; }
+        /// <summary> 资源路径 (.tscn 或 .cs)，如果是纯代码初始化则为 null </summary>
+        public string? Path { get; init; }
+        /// <summary> 纯代码初始化委托（无场景/节点） </summary>
+        public Action? InitAction { get; init; }
         /// <summary> 加载优先级 (Priority 常量) </summary>
         public required int Priority { get; init; }
         /// <summary> 父节点路径 (例如 "AutoLoad/DataRegistry")，默认为 "AutoLoad" </summary>
@@ -73,6 +75,11 @@ public partial class AutoLoad : Node
     /// 运行时容器，存储已实例化的单例节点引用。
     /// </summary>
     private readonly Dictionary<string, Node> _singletons = new();
+
+    /// <summary>
+    /// 已加载模块集合 (包含纯代码模块)
+    /// </summary>
+    private readonly HashSet<string> _loadedModules = new();
 
 
 
@@ -154,7 +161,7 @@ public partial class AutoLoad : Node
         // 加载完成后清空静态配置，释放引用
         _staticConfigs.Clear();
 
-        _log.Success($"✅ 初始化序列完成! 共激活 {_singletons.Count} 个全局模块。");
+        _log.Success($"✅ 初始化序列完成! 共激活 {_singletons.Count} 个节点模块, {_loadedModules.Count} 个总模块。");
     }
 
     /// <summary>
@@ -162,19 +169,42 @@ public partial class AutoLoad : Node
     /// </summary>
     private void LoadOne(AutoLoadConfig config)
     {
-        if (_singletons.ContainsKey(config.Name)) return;
+        if (_loadedModules.Contains(config.Name)) return;
 
         // 依赖检查
         if (config.Dependencies != null)
         {
             foreach (var dep in config.Dependencies)
             {
-                if (!_singletons.ContainsKey(dep))
+                if (!_loadedModules.Contains(dep))
                 {
                     _log.Error($"💥 [{config.Name}] 加载失败: 依赖项 [{dep}] 未就绪。");
                     return;
                 }
             }
+        }
+
+        // 1. 优先处理纯代码初始化
+        if (config.InitAction != null)
+        {
+            try
+            {
+                config.InitAction.Invoke();
+                _loadedModules.Add(config.Name);
+                _log.Info($"⚡ [Init] {config.Name} 初始化完成 (Code), Priority: {config.Priority}");
+            }
+            catch (Exception e)
+            {
+                _log.Error($"❌ 模块 [{config.Name}] 初始化异常: {e.Message}");
+            }
+            return; // 纯代码模式不继续执行 Path 加载
+        }
+
+        // 2. 检查 Path 有效性
+        if (string.IsNullOrEmpty(config.Path))
+        {
+            _log.Error($"❌ 模块 [{config.Name}] 配置错误: Path 和 InitAction 不能同时为空。");
+            return;
         }
 
         if (!ResourceLoader.Exists(config.Path))
@@ -185,10 +215,10 @@ public partial class AutoLoad : Node
 
         try
         {
-            // 1. 加载资源 (支持 .tscn 场景或 .cs 脚本)
+            // 3. 加载资源 (支持 .tscn 场景或 .cs 脚本)
             var res = GD.Load(config.Path);
 
-            // 2. 根据资源类型进行实例化
+            // 4. 根据资源类型进行实例化
             Node? instance = res switch
             {
                 // 如果是场景文件，直接实例化节点树
@@ -200,7 +230,7 @@ public partial class AutoLoad : Node
 
             if (instance == null) throw new Exception("无法创建节点实例。类型不符合要求或实例化失败。");
 
-            // 3. 设置节点名称（在场景树中显示的唯一标识）
+            // 5. 设置节点名称（在场景树中显示的唯一标识）
             instance.Name = config.Name;
 
             // 处理挂载点
@@ -210,8 +240,9 @@ public partial class AutoLoad : Node
 
             parent.AddChild(instance);
             _singletons[config.Name] = instance;
+            _loadedModules.Add(config.Name);
 
-            _log.Info($"📦 [Loaded] {config.Name} 注册成功，AutoLoadPriority：{config.Priority}");
+            _log.Info($"📦 [Loaded] {config.Name} 注册成功 (Node), Priority: {config.Priority}");
         }
         catch (Exception e)
         {

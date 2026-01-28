@@ -4,5 +4,3 @@
 
 [node name="MainTest" type="Node" unique_id=2074250790]
 script = ExtResource("1_gqao1")
-
-[node name="Camera2D" type="Camera2D" parent="." unique_id=149236896]

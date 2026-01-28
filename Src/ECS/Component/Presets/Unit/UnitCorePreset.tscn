@@ -1,16 +1,20 @@
-[gd_scene load_steps=5 format=3 uid="uid://d0e7kth57lvet"]
+[gd_scene format=3 uid="uid://d0e7kth57lvet"]
 
 [ext_resource type="PackedScene" uid="uid://cfvwgjvdxn0af" path="res://Src/ECS/Component/Unit/HealthComponent/HealthComponent.tscn" id="1_health"]
 [ext_resource type="PackedScene" uid="uid://bl7rk0v5m2t0p" path="res://Src/ECS/Component/Unit/LifecycleComponent/LifecycleComponent.tscn" id="2_lifecycle"]
 [ext_resource type="PackedScene" uid="uid://bpd8k5x3qcfmr" path="res://Src/ECS/Component/Unit/UnitStateComponent/UnitStateComponent.tscn" id="3_state"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/DataInitComponent/DataInitComponent.tscn" id="5_44gbc"]
 [ext_resource type="PackedScene" uid="uid://dq8m5nvk2r7wp" path="res://Src/ECS/Component/Unit/RecoveryComponent/RecoveryComponent.tscn" id="5_bplmq"]
 
-[node name="UnitCorePreset" type="Node"]
+[node name="UnitCorePreset" type="Node" unique_id=292361174]
 
-[node name="HealthComponent" parent="." instance=ExtResource("1_health")]
+[node name="HealthComponent" parent="." unique_id=1934858435 instance=ExtResource("1_health")]
 
-[node name="LifecycleComponent" parent="." instance=ExtResource("2_lifecycle")]
+[node name="LifecycleComponent" parent="." unique_id=872616940 instance=ExtResource("2_lifecycle")]
 
-[node name="UnitStateComponent" parent="." instance=ExtResource("3_state")]
+[node name="UnitStateComponent" parent="." unique_id=922538416 instance=ExtResource("3_state")]
 
-[node name="RecoveryComponent" parent="." instance=ExtResource("5_bplmq")]
+[node name="RecoveryComponent" parent="." unique_id=1746390251 instance=ExtResource("5_bplmq")]
+
+[node name="DataInitComponent" parent="." unique_id=1151160750 instance=ExtResource("5_44gbc")]
+

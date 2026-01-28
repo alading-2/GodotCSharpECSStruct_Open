@@ -474,10 +474,6 @@ public class Data
         foreach (var prop in properties)
         {
             // 跳过 Godot 内部属性和 Resource 基类属性
-            // (ResourceName, ResourcePath 等由 Node 自动处理，Data 不需要存)
-            // Resource 是 Godot.RefCounted, GodotObject是基类
-            // 跳过 Godot 内部属性 (ResourceName, ResourcePath 等)
-            // 修正：严谨检查 DeclaringType，防止误杀子类属性
             var declaringType = prop.DeclaringType;
             if (declaringType == typeof(Resource) ||
                 declaringType == typeof(Godot.RefCounted) ||
@@ -493,14 +489,23 @@ public class Data
                 // 允许 null 值，但也可能跳过
                 if (value == null) continue;
 
-                // 特殊处理：如果是 PackedScene 类型，且属性名为 VisualScenePath (UnitConfig中定义)，则值本身就是 PackedScene
-                // 但 DataKey.VisualScenePath 期望通常是路径字符串或PackedScene对象
-                // 我们直接设置，让 EntityManager 处理
-
                 string key = prop.Name;
-                Set(key, value);
 
-                // _log.Debug($"从 Resource 加载: {key} = {value}");
+                // 优先使用 [DataKey] 特性映射
+                var attribute = Attribute.GetCustomAttribute(prop, typeof(DataKeyAttribute)) as DataKeyAttribute;
+                if (attribute != null)
+                {
+                    key = attribute.Key;
+                }
+                else
+                {
+                    // 如果没有特性，检查属性名是否是有效的 DataKey
+                    // 如果不是有效 Key 且名字不像自定义属性，可以输出警告
+                    // 这里为了兼容性，暂时不强制报错，只在 Debug 模式提示
+                    // if (!DataRegistry.HasKey(key)) _log.Warn($"属性 {prop.Name} 未映射到已知 DataKey");
+                }
+
+                Set(key, value);
             }
             catch (Exception ex)
             {

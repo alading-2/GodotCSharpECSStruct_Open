@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using Brotato.Data.ResourceManagement; // Add this line
 
 namespace ResourceGenerator;
 
@@ -237,58 +238,31 @@ class ResourceGenerator
         sb.AppendLine("public static class ResourcePaths");
         sb.AppendLine("{");
 
-        // 为每个类别生成字典
-        var categoryDicts = new Dictionary<string, string>
+        // 生成统一的 Resources 字典
+        sb.AppendLine("    public static readonly Dictionary<ResourceCategory, Dictionary<string, ResourceData>> Resources = new()");
+        sb.AppendLine("    {");
+
+        // 确保所有枚举值都在字典中，即使为空
+        var allCategories = Enum.GetNames(typeof(Brotato.Data.ResourceManagement.ResourceCategory));
+
+        foreach (var categoryName in allCategories)
         {
-            { "Entity", "Entities" },
-            { "Component", "Components" },
-            { "UI", "UI" },
-            { "Asset", "Assets" },
-            { "EnemyConfig", "EnemyConfigs" },
-            { "PlayerConfig", "PlayerConfigs" },
-            { "AbilityConfig", "AbilityConfigs" },
-            { "ItemConfig", "ItemConfigs" },
-            { "Other", "Other" }
-        };
+            sb.AppendLine($"        {{ ResourceCategory.{categoryName}, new Dictionary<string, ResourceData>");
+            sb.AppendLine("            {");
 
-        foreach (var dictPair in categoryDicts.OrderBy(x => x.Key))
-        {
-            var category = dictPair.Key;
-            var dictName = dictPair.Value;
-
-            sb.AppendLine($"    public static readonly Dictionary<string, ResourceData> {dictName} = new()");
-            sb.AppendLine("    {");
-
-            if (resourcesByCategory.TryGetValue(category, out var items))
+            if (resourcesByCategory.TryGetValue(categoryName, out var items))
             {
                 foreach (var kvp in items.OrderBy(x => x.Key))
                 {
-                    sb.AppendLine($"        {{ \"{kvp.Key}\", new ResourceData(ResourceCategory.{category}, \"{kvp.Value}\") }},");
+                    sb.AppendLine($"                {{ \"{kvp.Key}\", new ResourceData(ResourceCategory.{categoryName}, \"{kvp.Value}\") }},");
                 }
             }
 
-            sb.AppendLine("    };");
-            sb.AppendLine();
+            sb.AppendLine("            }");
+            sb.AppendLine("        },");
         }
 
-        // 生成合并的 All 字典（兼容性）
-        sb.AppendLine("    /// <summary>");
-        sb.AppendLine("    /// 所有资源的合并字典（兼容性保留，建议使用分类字典）");
-        sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    public static readonly Dictionary<string, ResourceData> All = new();");
-        sb.AppendLine();
-        sb.AppendLine("    static ResourcePaths()");
-        sb.AppendLine("    {");
-        sb.AppendLine("        // 合并所有分类到 All 字典");
-        sb.AppendLine("        foreach (var dict in new[] { Entities, Components, UI, Assets, EnemyConfigs, PlayerConfigs, AbilityConfigs, ItemConfigs, Other })");
-        sb.AppendLine("        {");
-        sb.AppendLine("            foreach (var kvp in dict)");
-        sb.AppendLine("            {");
-        sb.AppendLine("                if (!All.ContainsKey(kvp.Key))");
-        sb.AppendLine("                    All[kvp.Key] = kvp.Value;");
-        sb.AppendLine("            }");
-        sb.AppendLine("        }");
-        sb.AppendLine("    }");
+        sb.AppendLine("    };");
         sb.AppendLine("}");
 
         var outputPath = Path.Combine(projectRoot, OutputFile);
