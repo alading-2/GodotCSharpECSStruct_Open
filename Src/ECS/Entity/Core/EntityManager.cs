@@ -2,7 +2,8 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Brotato.Data.ResourceManagement;
+
+
 
 /// <summary>
 /// Entity 生成配置参数

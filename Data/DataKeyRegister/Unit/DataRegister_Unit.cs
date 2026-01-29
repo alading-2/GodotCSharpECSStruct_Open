@@ -2,7 +2,7 @@
 using Godot;
 using System.Runtime.CompilerServices;
 
-public partial class DataRegister_Unit : Node
+public static class DataRegister_Unit
 {
     private static readonly Log _log = new Log("DataRegister_Unit");
 
@@ -11,14 +11,13 @@ public partial class DataRegister_Unit : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "DataRegister_Unit",
-            Path = "res://Data/DataKeyRegister/Unit/DataRegister_Unit.cs",
-            Priority = AutoLoad.Priority.Core,
-            ParentPath = "AutoLoad/DataRegistry"
+            Name = nameof(DataRegister_Unit),
+            InitAction = Init,
+            Priority = AutoLoad.Priority.Core
         });
     }
 
-    public override void _Ready()
+    public static void Init()
     {
         _log.Info("注册Unit数据...");
         // 等级

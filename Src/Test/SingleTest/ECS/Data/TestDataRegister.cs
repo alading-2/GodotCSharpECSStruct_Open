@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 /// <summary>
 /// 测试数据注册器
 /// </summary>
-public partial class TestDataRegister : Node
+public partial class TestDataRegister
 {
     private static readonly Log _log = new Log("TestDataRegister");
 
@@ -14,14 +14,16 @@ public partial class TestDataRegister : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "TestDataRegister",
-            Path = "res://Src/Test/SingleTest/ECS/Data/TestDataRegister.cs",
+            Name = nameof(TestDataRegister),
+            InitAction = () => Init(),
             Priority = AutoLoad.Priority.Game,
-            ParentPath = "AutoLoad/DataRegistry"
         });
     }
 
-    public override void _Ready()
+    /// <summary>
+    /// 初始化测试数据注册
+    /// </summary>
+    public static void Init()
     {
         _log.Info("注册测试数据...");
 

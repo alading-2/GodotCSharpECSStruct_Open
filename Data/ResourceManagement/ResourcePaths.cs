@@ -7,7 +7,6 @@
 //------------------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Brotato.Data.ResourceManagement;
 
 public struct ResourceData
 {
@@ -34,6 +33,7 @@ public static class ResourcePaths
         { ResourceCategory.Component, new Dictionary<string, ResourceData>
             {
                 { "AbilityPreset", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Ability/AbilityPreset.tscn") },
+                { "ActiveSkillInputComponent", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/ActiveSkillInputComponent/ActiveSkillInputComponent.tscn") },
                 { "ChargeComponent", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/ChargeComponent/ChargeComponent.tscn") },
                 { "CombatPreset", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/CombatPreset.tscn") },
                 { "CooldownComponent", new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn") },
@@ -57,8 +57,11 @@ public static class ResourcePaths
         },
         { ResourceCategory.UI, new Dictionary<string, ResourceData>
             {
+                { "ActiveSkillBarUI", new ResourceData(ResourceCategory.UI, "res://Src/UI/UI/SkillUI/ActiveSkillBarUI.tscn") },
+                { "ActiveSkillSlotUI", new ResourceData(ResourceCategory.UI, "res://Src/UI/UI/SkillUI/ActiveSkillSlotUI.tscn") },
                 { "DamageNumberUI", new ResourceData(ResourceCategory.UI, "res://Src/UI/UI/DamageNumberUI/DamageNumberUI.tscn") },
                 { "HealthBarUI", new ResourceData(ResourceCategory.UI, "res://Src/UI/UI/HealthBarUI/HealthBarUI.tscn") },
+                { "UIManager", new ResourceData(ResourceCategory.UI, "res://Src/UI/Core/UIManager.tscn") },
             }
         },
         { ResourceCategory.Asset, new Dictionary<string, ResourceData>
@@ -66,6 +69,20 @@ public static class ResourcePaths
                 { "豺狼人", new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/豺狼人/AnimatedSprite2D/豺狼人.tscn") },
                 { "德鲁伊", new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Player/德鲁伊/AnimatedSprite2D/德鲁伊.tscn") },
                 { "鱼人", new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/鱼人/AnimatedSprite2D/鱼人.tscn") },
+            }
+        },
+        { ResourceCategory.System, new Dictionary<string, ResourceData>
+            {
+                { "DamageService", new ResourceData(ResourceCategory.System, "res://Src/ECS/System/DamageSystem/DamageService.tscn") },
+                { "DamageStatisticsSystem", new ResourceData(ResourceCategory.System, "res://Src/ECS/System/DamageSystem/DamageStatisticsSystem.tscn") },
+                { "RecoverySystem", new ResourceData(ResourceCategory.System, "res://Src/ECS/System/RecoverySystem/RecoverySystem.tscn") },
+                { "SpawnSystem", new ResourceData(ResourceCategory.System, "res://Src/ECS/System/Spawn/SpawnSystem.tscn") },
+            }
+        },
+        { ResourceCategory.Tools, new Dictionary<string, ResourceData>
+            {
+                { "ObjectPoolInit", new ResourceData(ResourceCategory.Tools, "res://Src/Tools/ObjectPool/ObjectPoolInit.tscn") },
+                { "TimerManager", new ResourceData(ResourceCategory.Tools, "res://Src/Tools/Timer/TimerManager.tscn") },
             }
         },
         { ResourceCategory.EnemyConfig, new Dictionary<string, ResourceData>
@@ -82,10 +99,32 @@ public static class ResourcePaths
         { ResourceCategory.AbilityConfig, new Dictionary<string, ResourceData>
             {
                 { "CircleDamageConfig", new ResourceData(ResourceCategory.AbilityConfig, "res://Data/Data/Ability/Resource/CircleDamageConfig.tres") },
+                { "TargetEntitySkillConfig", new ResourceData(ResourceCategory.AbilityConfig, "res://Data/Data/Ability/Resource/TargetEntitySkillConfig.tres") },
+                { "TargetPointSkillConfig", new ResourceData(ResourceCategory.AbilityConfig, "res://Data/Data/Ability/Resource/TargetPointSkillConfig.tres") },
             }
         },
         { ResourceCategory.ItemConfig, new Dictionary<string, ResourceData>
             {
+            }
+        },
+        { ResourceCategory.Test, new Dictionary<string, ResourceData>
+            {
+                { "ActiveSkillInputTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/System/ActiveSkillInputTest/ActiveSkillInputTest.tscn") },
+                { "DamageSystemTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/System/DamageSystemTest/DamageSystemTest.tscn") },
+                { "DataTestScene", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/Data/DataTestScene.tscn") },
+                { "ECSTestScene", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/ECSTest/ECSTestScene.tscn") },
+                { "ExportTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Test/ExportTest/ExportTest.tscn") },
+                { "InputTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Tools/Input/InputTest.tscn") },
+                { "LogTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Tools/Log/LogTest.tscn") },
+                { "MainTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/GlobalTest/MainTest/MainTest.tscn") },
+                { "MyMathTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Tools/Math/MyMathTest.tscn") },
+                { "NodeExtensionsTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Test/NodeExtensionsTest.tscn") },
+                { "ObjectPoolManagerTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Tools/ObjectPool/ObjectPoolManagerTest.tscn") },
+                { "ObjectPoolVisualTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Tools/ObjectPool/ObjectPoolVisualTest.tscn") },
+                { "SpawnTestScene", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/System/Spawn/SpawnTestScene.tscn") },
+                { "TargetSelectorTest", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/Tools/TargetSelector/TargetSelectorTest.tscn") },
+                { "TestDataKeyMapping", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/Data/TestDataKeyMapping.tscn") },
+                { "TestEntity", new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/ECSTest/Entity/TestEntity.tscn") },
             }
         },
         { ResourceCategory.Other, new Dictionary<string, ResourceData>

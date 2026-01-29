@@ -18,10 +18,9 @@ public partial class EntityManager
             // 使用 InitAction 进行纯代码初始化，不需要加载场景或脚本资源
             AutoLoad.Register(new AutoLoad.AutoLoadConfig
             {
-                Name = "EntityManagerPrewarm",
+                Name = nameof(EntityManager),
                 Priority = AutoLoad.Priority.System, // 在 Core 之后，Game 之前
-                InitAction = () => PrewarmComponentCache(),
-                Path = null // 纯代码模式
+                InitAction = () => PrewarmComponentCache()
             });
         }
     }

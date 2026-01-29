@@ -3,7 +3,7 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 // 说明：百分比存的是1-100，需要除以100再使用
-public partial class DataRegister_Attribute : Node
+public static class DataRegister_Attribute
 {
     private static readonly Log _log = new Log("DataRegister_Attribute");
 
@@ -12,14 +12,13 @@ public partial class DataRegister_Attribute : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "DataRegister_Attribute",
-            Path = "res://Data/DataKeyRegister/Attribute/DataRegister_Attribute.cs",
-            Priority = AutoLoad.Priority.Core,
-            ParentPath = "AutoLoad/DataRegistry"
+            Name = nameof(DataRegister_Attribute),
+            InitAction = Init,
+            Priority = AutoLoad.Priority.Core
         });
     }
 
-    public override void _Ready()
+    public static void Init()
     {
         _log.Info("DataRegister_Attribute注册属性数据...");
         // ========================================

@@ -2,6 +2,8 @@ using System;
 using System.Runtime.CompilerServices;
 using Godot;
 
+
+
 /// <summary>
 /// 全局定时器管理器 (TimerManager)
 /// 
@@ -30,14 +32,14 @@ public partial class TimerManager : Node
     /// 这样可以确保它在游戏启动时作为单例存在。
     /// </summary>
     [ModuleInitializer]
-    public static void Initialize()
+    internal static void Initialize()
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "TimerManager",
-            Path = "res://Src/Tools/Timer/TimerManager.cs",
-            Priority = AutoLoad.Priority.Tool,
-            Dependencies = ["ObjectPoolInit"] // 依赖对象池初始化
+            Name = nameof(TimerManager),
+            Scene = ResourceManagement.Load<PackedScene>(nameof(TimerManager), ResourceCategory.Tools),
+            Priority = AutoLoad.Priority.Core,
+            Dependencies = new[] { nameof(ObjectPoolInit) }
         });
     }
 

@@ -2,7 +2,7 @@
 using Godot;
 using System.Runtime.CompilerServices;
 
-public partial class DataRegister_Base : Node
+public static class DataRegister_Base
 {
     private static readonly Log _log = new Log("DataRegister_Base");
 
@@ -11,14 +11,13 @@ public partial class DataRegister_Base : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "DataRegister_Base",
-            Path = "res://Data/DataKeyRegister/Base/DataRegister_Base.cs",
-            Priority = AutoLoad.Priority.Core,
-            ParentPath = "AutoLoad/DataRegistry"
+            Name = nameof(DataRegister_Base),
+            InitAction = Init,
+            Priority = AutoLoad.Priority.Core
         });
     }
 
-    public override void _Ready()
+    public static void Init()
     {
         _log.Info("注册基础数据...");
         // === 基础信息 ===

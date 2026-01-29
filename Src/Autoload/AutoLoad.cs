@@ -4,36 +4,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
+
 /// <summary>
 /// AutoLoad - 游戏启动引导器 (去中心化版)
 /// <para>核心职责：</para>
 /// <para>1. 统一管理全局单例：项目在 Godot 设置中只需注册这一个 Autoload。</para>
 /// <para>2. 自动注册机制：各系统通过 [ModuleInitializer] 自行向引导器注册，实现解耦。</para>
 /// <para>3. 加载顺序控制：通过 Priority (数值越小越先加载) 确保底层服务先于业务逻辑启动。</para>
-/// <para>4. 类型安全访问：提供泛型接口 AutoLoad.Instance.Get<T>()，消除字符串硬编码。</para>
+/// <para>4. 类型安全访问：提供泛型接口 AutoLoad.Instance.Get&lt;T&gt;()，消除字符串硬编码。</para>
 /// </summary>
 /// <example>
 /// 推荐的系统注册方式（在各自系统中实现）：
 /// <code>
 /// [ModuleInitializer]
-/// using System.Runtime.CompilerServices;
-/// public partial class MySystem : Node
+/// public static void Initialize()
 /// {
-///     [ModuleInitializer]
-///     public static void Initialize()
+///     // 方式1：纯代码初始化 (推荐用于 DataRegister 等无需节点的对象)
+///     // 必须使用 nameof() 确保名称与类名一致，避免字符串硬编码。
+///     AutoLoad.Register(new AutoLoad.AutoLoadConfig
 ///     {
-///         AutoLoad.Register(new AutoLoad.AutoLoadConfig
-///         {
-///             Name = nameof(MySystem),
-///             Path = "res://Src/Systems/MySystem.cs", // 或 .tscn 路径
-///             Priority = AutoLoad.Priority.System,
-///             // 可选：指定挂载父节点，默认为 "AutoLoad"
-///             ParentPath = "AutoLoad/MySystems",
-///             // 可选：指定依赖项，确保依赖模块先加载
-///             Dependencies = new[] { "OtherSystem" }
-//         });
-//     }
-// }
+///         Name = nameof(TestDataRegister),
+///         InitAction = () => TestDataRegister.Init(), // 纯代码逻辑，不创建 Node
+///         Priority = Priority.Game
+///     });
+///     
+///     // 方式2：节点/场景加载 (推荐用于需要生命周期的系统)
+///     // 必须通过 ResourceManagement.LoadScene 加载 PackedScene，严禁传递硬编码字符串路径。
+///     AutoLoad.Register(new AutoLoad.AutoLoadConfig
+///     {
+///         Name = nameof(MySystem),
+///         Scene = ResourceManagement.LoadScene<PackedScene>(nameof(MySystem), ResourceCategory.System), 
+///         Priority = Priority.System,
+///         Dependencies = new[] { nameof(TimerManager) }
+///     });
+/// }
 /// </code>
 /// </example>
 public partial class AutoLoad : Node
@@ -54,8 +58,8 @@ public partial class AutoLoad : Node
     {
         /// <summary> 全局唯一标识名（建议与类名一致） </summary>
         public required string Name { get; init; }
-        /// <summary> 资源路径 (.tscn 或 .cs)，如果是纯代码初始化则为 null </summary>
-        public string? Path { get; init; }
+        /// <summary> 预加载的场景资源 (由 AutoLoad 负责实例化) </summary>
+        public PackedScene? Scene { get; init; }
         /// <summary> 纯代码初始化委托（无场景/节点） </summary>
         public Action? InitAction { get; init; }
         /// <summary> 加载优先级 (Priority 常量) </summary>
@@ -184,7 +188,7 @@ public partial class AutoLoad : Node
             }
         }
 
-        // 1. 优先处理纯代码初始化
+        // 1. 优先处理纯代码初始化 (InitAction)
         if (config.InitAction != null)
         {
             try
@@ -197,40 +201,24 @@ public partial class AutoLoad : Node
             {
                 _log.Error($"❌ 模块 [{config.Name}] 初始化异常: {e.Message}");
             }
-            return; // 纯代码模式不继续执行 Path 加载
-        }
-
-        // 2. 检查 Path 有效性
-        if (string.IsNullOrEmpty(config.Path))
-        {
-            _log.Error($"❌ 模块 [{config.Name}] 配置错误: Path 和 InitAction 不能同时为空。");
             return;
         }
 
-        if (!ResourceLoader.Exists(config.Path))
+        // 2. 检查 Scene 有效性
+        if (config.Scene == null)
         {
-            _log.Error($"❌ 路径不存在: {config.Path}");
+            _log.Error($"❌ 模块 [{config.Name}] 配置错误: Scene 和 InitAction 不能同时为空。");
             return;
         }
 
         try
         {
-            // 3. 加载资源 (支持 .tscn 场景或 .cs 脚本)
-            var res = GD.Load(config.Path);
-
-            // 4. 根据资源类型进行实例化
-            Node? instance = res switch
-            {
-                // 如果是场景文件，直接实例化节点树
-                PackedScene scene => scene.Instantiate(),
-                // 如果是纯 C# 脚本，创建脚本对象并转换为 Node（要求该类必须继承自 Node）
-                CSharpScript script => script.New().As<Node>(),
-                _ => null
-            };
+            // 3. 实例化场景
+            Node instance = config.Scene.Instantiate();
 
             if (instance == null) throw new Exception("无法创建节点实例。类型不符合要求或实例化失败。");
 
-            // 5. 设置节点名称（在场景树中显示的唯一标识）
+            // 4. 设置节点名称（在场景树中显示的唯一标识）
             instance.Name = config.Name;
 
             // 处理挂载点
@@ -242,11 +230,11 @@ public partial class AutoLoad : Node
             _singletons[config.Name] = instance;
             _loadedModules.Add(config.Name);
 
-            _log.Info($"📦 [Loaded] {config.Name} 注册成功 (Node), Priority: {config.Priority}");
+            _log.Info($"📦 [Loaded] {config.Name} 注册成功 (Scene), Priority: {config.Priority}");
         }
         catch (Exception e)
         {
-            _log.Error($"❌ 模块 [{config.Name}] 实例化异常: {e.Message}");
+            _log.Error($"❌ 模块 [{config.Name}] 挂载异常: {e.Message}");
         }
     }
 

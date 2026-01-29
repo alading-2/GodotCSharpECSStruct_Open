@@ -72,10 +72,7 @@ public partial class ECSTest : Node
         // Setup a local object pool
         if (_testEntityScene == null)
         {
-            // If not assigned in inspector, try to load it or create a placeholder
-            // For this test script, we assume it's assigned or we load it.
-            // Let's assume we load it from a known path if null
-            _testEntityScene = GD.Load<PackedScene>("res://Src/Test/SingleTest/ECS/ECSTest/Entity/TestEntity.tscn");
+            _testEntityScene = ResourceManagement.Load<PackedScene>(nameof(TestEntity), ResourceCategory.Entity);
         }
 
         if (_testEntityScene == null)

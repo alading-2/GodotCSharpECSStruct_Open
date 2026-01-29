@@ -2,7 +2,7 @@
 using Godot;
 using System.Runtime.CompilerServices;
 
-public partial class DataRegister_AI : Node
+public static class DataRegister_AI
 {
     private static readonly Log _log = new Log("DataRegister_AI");
 
@@ -11,14 +11,13 @@ public partial class DataRegister_AI : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "DataRegister_AI",
-            Path = "res://Data/DataKeyRegister/AI/DataRegister_AI.cs",
-            Priority = AutoLoad.Priority.Core,
-            ParentPath = "AutoLoad/DataRegistry"
+            Name = nameof(DataRegister_AI),
+            InitAction = Init,
+            Priority = AutoLoad.Priority.Core
         });
     }
 
-    public override void _Ready()
+    public static void Init()
     {
         _log.Info("注册AI数据...");
         // === AI ===

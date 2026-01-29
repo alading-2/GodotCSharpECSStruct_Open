@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityConfig" format=3 uid="uid://target_entity_skill"]
+
+[ext_resource type="Script" uid="uid://djyj4vnndpdaq" path="res://Data/Data/Ability/AbilityConfig.cs" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dqgqp2hepv1xt" path="res://icon.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_script")
+Name = "TargetStrike"
+Description = "选择一个敌人进行打击"
+AbilityIcon = ExtResource("2_icon")
+EntityType = 3
+AbilityType = 0
+AbilityTriggerMode = 1
+AbilityCostType = 1
+AbilityCostAmount = 30.0
+AbilityCooldown = 2.0
+AbilityTargetSelection = 1
+AbilityTargetGeometry = 0
+AbilityTargetTeamFilter = 2
+AbilityRange = 500.0
+AbilityDamage = 50.0

@@ -1,8 +1,9 @@
 using Godot;
 using System;
+
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Brotato.Data.ResourceManagement;
+
 
 
 /// <summary>
@@ -32,7 +33,7 @@ public struct ObjectPoolNames
 /// 负责统一管理和预初始化游戏中的核心对象池（如 Player, Enemy, Bullet 等）。
 /// 采用去中心化注册机制，通过 AutoLoad 确保全局单例存在。
 /// </summary>
-public partial class ObjectPoolInit : Node
+public partial class ObjectPoolInit
 {
     private static readonly Log _log = new Log("ObjectPoolInit");
 
@@ -45,26 +46,13 @@ public partial class ObjectPoolInit : Node
         // 对象池初始化需要早一点
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "ObjectPoolInit",
-            Path = "res://Src/Tools/ObjectPool/ObjectPoolInit.cs",
+            Name = nameof(ObjectPoolInit),
+            InitAction = InitPools,
             Priority = AutoLoad.Priority.Core,
-
         });
     }
 
-
-    // ============================================================
-    // 生命周期
-    // ============================================================
-
-    public override void _EnterTree()
-    {
-        // 关键：必须在 _EnterTree 中初始化，因为其他系统可能在它们的 _EnterTree 中就需要获取对象池
-        // 如果放在 _Ready 中，会导致时序问题（_EnterTree 先于 _Ready 执行）
-        InitPools();
-    }
-
-    private void InitPools()
+    private static void InitPools()
     {
         // 1. 初始化 TimerPool (纯 C# 对象池)
         new ObjectPool<GameTimer>(

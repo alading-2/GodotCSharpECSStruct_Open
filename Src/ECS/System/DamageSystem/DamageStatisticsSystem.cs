@@ -1,6 +1,8 @@
 using Godot;
 using System.Runtime.CompilerServices;
 
+
+
 /// <summary>
 /// 伤害统计系统 - 负责波次统计重置和击杀统计
 /// <para>监听波次开始事件重置玩家的波次统计数据。</para>
@@ -20,8 +22,8 @@ public partial class DamageStatisticsSystem : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "DamageStatisticsSystem",
-            Path = "res://Src/ECS/System/DamageSystem/DamageStatisticsSystem.cs",
+            Name = nameof(DamageStatisticsSystem),
+            Scene = ResourceManagement.Load<PackedScene>(nameof(DamageStatisticsSystem), ResourceCategory.System),
             Priority = AutoLoad.Priority.System
         });
     }

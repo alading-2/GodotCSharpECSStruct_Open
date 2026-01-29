@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Godot.Collections;
 using Brotato.Data.Config.Units;
-using Brotato.Data.ResourceManagement;
+
+
 
 /// <summary>
 /// 敌人生成系统 - 核心的"敌人生成与波次管理系统"。
@@ -19,14 +20,13 @@ public partial class SpawnSystem : Node
     [ModuleInitializer]
     public static void Initialize()
     {
-        // 注册到 AutoLoad，现在使用 .tscn 场景文件而非 .cs 脚本
-        // 添加对 ObjectPoolInit 的依赖，确保敌人对象池先于生成系统初始化
+        // 注册到 AutoLoad，传递 PackedScene 由 AutoLoad 负责实例化
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "SpawnSystem",
-            Path = "res://Src/ECS/System/Spawn/SpawnSystem.tscn",
+            Name = nameof(SpawnSystem),
+            Scene = ResourceManagement.Load<PackedScene>(nameof(SpawnSystem), ResourceCategory.System),
             Priority = AutoLoad.Priority.System,
-            Dependencies = ["TimerManager"]
+            Dependencies = [nameof(TimerManager)]
         });
     }
 

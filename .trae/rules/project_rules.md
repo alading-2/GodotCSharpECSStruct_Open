@@ -144,6 +144,29 @@ EntityManager.Destroy(bullet); // 自动归还对象池
 
 ---
 
+### 2.6 ResourceManagement - 资源加载系统
+
+**禁止**: ❌ `GD.Load<T>("res://...")` / ❌ `ResourceLoader.Load("res://...")` / ❌ 硬编码字符串路径  
+**理由**: 路径变更会导致多处失效，难以维护。统一入口提供性能优化和重命名兼容性。
+
+**例外**: 
+- `.tscn` 内部的资源引用 (Godot 自动管理)
+- 导出属性 `[Export]` 指向的资源
+- 特殊底层工具（如 ResourceGenerator）
+
+**最简示例**:
+```csharp
+// 加载场景
+var scene = ResourceManagement.Load<PackedScene>("EnemyEntity", ResourceCategory.Entity);
+
+// 加载配置
+var config = ResourceManagement.Load<Resource>("德鲁伊", ResourceCategory.PlayerConfig);
+```
+
+**详细文档**: [Data/ResourceManagement/README.md](../../Data/ResourceManagement/README.md)
+
+---
+
 ## 3. 核心系统使用规范
 
 ### 3.1 EntityManager - 实体生命周期管理

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Godot;
+
+
 /// <summary>
 /// 伤害服务 (Singleton)
 /// 负责管理伤害处理管道 (Pipeline) 并对外提供统一的伤害入口，并统一设置优先级。
@@ -20,8 +22,8 @@ public partial class DamageService : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "DamageService",
-            Path = "res://Src/ECS/System/DamageSystem/DamageService.cs",
+            Name = nameof(DamageService),
+            Scene = ResourceManagement.Load<PackedScene>(nameof(DamageService), ResourceCategory.System),
             Priority = AutoLoad.Priority.System
         });
     }

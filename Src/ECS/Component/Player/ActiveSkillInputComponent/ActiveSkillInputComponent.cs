@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// TODO 这个组件应该做完简单UI再做，现在不知道怎么做
 /// 主动技能输入组件 (Active Skill Input Component)
 /// 职责：通过监听手柄/键盘输入，触发主动技能。
 /// 通过监听手柄/键盘输入，触发主动技能（LB/RB 切换、X 释放、右摇杆/左摇杆/默认方向目标解析）。
@@ -49,13 +48,13 @@ public partial class ActiveSkillInputComponent : Node, IComponent
 
     // ================= Godot 生命周期 =================
 
-    // public override void _Process(double delta)
-    // {
-    //     // 确保实体和数据有效
-    //     if (_entity == null || _data == null) return;
+    public override void _Process(double delta)
+    {
+        // 确保实体和数据有效
+        if (_entity == null || _data == null) return;
 
-    //     HandleActiveAbilityInput();
-    // }
+        HandleActiveAbilityInput();
+    }
 
     // ================= 核心输入处理逻辑 =================
 

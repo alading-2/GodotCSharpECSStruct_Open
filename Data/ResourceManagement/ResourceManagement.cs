@@ -1,19 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Brotato.Data.ResourceManagement;
-
 /// <summary>
-/// 资源注册表 - 统一管理项目中所有 **资产 (Assets)** 的路径索引
+/// 资源管理器 - 统一管理项目中所有 **资产 (Assets)** 和 **配置 (Configs)** 的加载
 /// 
-/// 【定位说明】
-/// - 这是一个 **纯C#** 静态工具类，不依赖 Godot 引擎 API。
-/// - 仅负责提供资源路径查询，不负责资源加载。
-/// <example>
-/// ResourceManagement.GetPath<EnemyEntity>()
-/// ResourceManagement.GetPath("德鲁伊")
-/// </example>
-/// -数据源来自自动生成的 <see cref="ResourcePaths"/> 类。
+/// 【说明】
+/// - 这是一个静态工具类，封装了 Godot 的加载逻辑。
+/// - 强制使用 ResourceCategory 分类管理，禁止硬编码 res:// 路径。
+/// - 数据源来自自动生成的 <see cref="ResourcePaths"/> 类。
 /// </summary>
 public static class ResourceManagement
 {
@@ -28,7 +22,7 @@ public static class ResourceManagement
     // ========================================
 
     /// <summary>
-    /// 从指定分类加载资源
+    /// 从指定分类加载资源，能够获取.tscn,.tres
     /// </summary>
     /// <typeparam name="T">资源类型</typeparam>
     /// <param name="name">资源名称</param>
@@ -45,6 +39,8 @@ public static class ResourceManagement
         _log.Error($"未找到资源: {category}/{name}");
         return null;
     }
+
+
 
     /// <summary>
     /// 加载指定分类下的所有资源

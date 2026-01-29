@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Brotato.Data.ResourceManagement;
+
+
 
 /// <summary>
 /// EntityManager 的 Component 扩展

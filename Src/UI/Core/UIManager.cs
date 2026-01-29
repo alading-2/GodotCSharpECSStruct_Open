@@ -2,7 +2,8 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Brotato.Data.ResourceManagement;
+
+
 
 /// <summary>
 /// UI 管理器 (AutoLoad)
@@ -29,8 +30,8 @@ public partial class UIManager : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "UIManager",
-            Path = "res://Src/UI/Core/UIManager.cs",
+            Name = nameof(UIManager),
+            Scene = ResourceManagement.Load<PackedScene>(nameof(UIManager), ResourceCategory.UI),
             Priority = AutoLoad.Priority.System
         });
     }

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://timer_manager_placeholder"]
+
+[ext_resource type="Script" path="res://Src/Tools/Timer/TimerManager.cs" id="1_timer"]
+
+[node name="TimerManager" type="Node"]
+script = ExtResource("1_timer")

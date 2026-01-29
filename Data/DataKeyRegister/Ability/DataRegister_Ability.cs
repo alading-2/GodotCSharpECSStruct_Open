@@ -5,7 +5,7 @@ using Godot;
 /// <summary>
 /// 技能系统 DataKey 元数据注册
 /// </summary>
-public partial class DataRegister_Ability : Node
+public static class DataRegister_Ability
 {
     private static readonly Log _log = new Log("DataRegister_Ability");
 
@@ -14,14 +14,13 @@ public partial class DataRegister_Ability : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "DataRegister_Ability",
-            Path = "res://Data/DataKeyRegister/Ability/DataRegister_Ability.cs",
-            Priority = AutoLoad.Priority.Core,
-            ParentPath = "AutoLoad/DataRegistry"
+            Name = nameof(DataRegister_Ability),
+            InitAction = Init,
+            Priority = AutoLoad.Priority.Core
         });
     }
 
-    public override void _Ready()
+    public static void Init()
     {
         _log.Info("DataRegister_Ability注册技能数据...");
 

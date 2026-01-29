@@ -3,9 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System;
-using Brotato.Data.ResourceManagement; // Add this line
 
-namespace ResourceGenerator;
 
 class ResourceGenerator
 {
@@ -15,44 +13,60 @@ class ResourceGenerator
         "Src/UI",
         "Src/ECS/Entity",
         "Src/ECS/Component",
-        "Data/Data"  // 新增：扫描 Resource 配置目录
+        "Data/Data",  // 新增：扫描 Resource 配置目录
+        "Src/ECS/System",
+        "Src/Tools",
+        "Src/Test" // 新增：扫描测试资源
     };
 
     private static readonly string[] ExcludePaths = {
         "addons",
         ".godot",
-        "Src/Test",
-        "Src/Tools"
     };
 
     private const string OutputFile = "Data/ResourceManagement/ResourcePaths.cs";
 
-    private static string GetCategoryFromPath(string path)
+    private static ResourceCategory GetCategoryFromPath(string path)
     {
-        if (string.IsNullOrEmpty(path)) return "Other";
+        if (string.IsNullOrEmpty(path)) return ResourceCategory.Other;
 
-        // 1. Resource 配置优先匹配（.tres 文件）
+        // 1. Resource 配置优先匹配（.tres 文件，必须在 Data/Data/ 路径下）
         if (path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
         {
-            if (path.Contains("/Enemy/", StringComparison.OrdinalIgnoreCase)) return "EnemyConfig";
-            if (path.Contains("/Player/", StringComparison.OrdinalIgnoreCase)) return "PlayerConfig";
-            if (path.Contains("/Ability/", StringComparison.OrdinalIgnoreCase)) return "AbilityConfig";
-            if (path.Contains("/Item/", StringComparison.OrdinalIgnoreCase)) return "ItemConfig";
+            // 只有 Data/Data/ 路径下的 .tres 才是真正的配置文件
+            if (path.Contains("Data/Data/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (path.Contains("/Enemy/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.EnemyConfig;
+                if (path.Contains("/Player/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.PlayerConfig;
+                if (path.Contains("/Ability/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.AbilityConfig;
+                if (path.Contains("/Item/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.ItemConfig;
+            }
+            // assets 下的 .tres 文件（如 SpriteFrames）归类为 Asset
+            else if (path.StartsWith("res://assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                return ResourceCategory.Asset;
+            }
         }
 
         // 2. 场景文件匹配（.tscn 文件）
-        if (path.StartsWith("res://Src/UI/", StringComparison.OrdinalIgnoreCase)) return "UI";
-        if (path.StartsWith("res://Src/ECS/Component/", StringComparison.OrdinalIgnoreCase)) return "Component";
-        if (path.StartsWith("res://Src/ECS/Entity/", StringComparison.OrdinalIgnoreCase)) return "Entity";
-        if (path.StartsWith("res://assets/", StringComparison.OrdinalIgnoreCase)) return "Asset";
+        if (path.StartsWith("res://Src/UI/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.UI;
+        if (path.StartsWith("res://Src/ECS/Component/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Component;
+        if (path.StartsWith("res://Src/ECS/Entity/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Entity;
+        if (path.StartsWith("res://assets/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Asset;
+        if (path.StartsWith("res://Src/ECS/System/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.System;
+        if (path.StartsWith("res://Src/Tools/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Tools;
+        if (path.StartsWith("res://Src/Test/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Test;
 
         // 3. 启发式包含匹配 (后备方案)
-        if (path.Contains("/UI/", StringComparison.OrdinalIgnoreCase)) return "UI";
-        if (path.Contains("/Component/", StringComparison.OrdinalIgnoreCase)) return "Component";
-        if (path.Contains("/Entity/", StringComparison.OrdinalIgnoreCase)) return "Entity";
-        if (path.Contains("/assets/", StringComparison.OrdinalIgnoreCase)) return "Asset";
+        if (path.Contains("/UI/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.UI;
+        if (path.Contains("/Component/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Component;
+        if (path.Contains("/Entity/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Entity;
+        if (path.Contains("/assets/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Asset;
+        if (path.Contains("/System/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.System;
+        if (path.Contains("/Tools/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Tools;
+        if (path.Contains("/Test/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Test;
 
-        return "Other";
+        return ResourceCategory.Other;
     }
 
     static void Main(string[] args)
@@ -71,7 +85,7 @@ class ResourceGenerator
         Console.WriteLine($"项目根目录: {projectRoot}");
 
         // 修改：使用嵌套字典存储资源 [Category -> [Name -> Path]]
-        var resourcesByCategory = new Dictionary<string, Dictionary<string, string>>();
+        var resourcesByCategory = new Dictionary<ResourceCategory, Dictionary<string, string>>();
         var duplicates = new List<string>();
 
         // 2. 扫描目录
@@ -118,12 +132,12 @@ class ResourceGenerator
         return null;
     }
 
-    private static void ScanDirectory(string dirPath, string projectRoot, Dictionary<string, Dictionary<string, string>> resourcesByCategory, List<string> duplicates)
+    private static void ScanDirectory(string dirPath, string projectRoot, Dictionary<ResourceCategory, Dictionary<string, string>> resourcesByCategory, List<string> duplicates)
     {
         var files = Directory.GetFiles(dirPath);
         foreach (var file in files)
         {
-            // 处理 .tscn 和 .tres 文件
+            // 处理 .tscn, .tres 和 .cs 文件 (System/Manager 可能是 .cs)
             if (!file.EndsWith(".tscn") && !file.EndsWith(".tres")) continue;
 
             // 排除 ResourceManagement 本身
@@ -149,7 +163,7 @@ class ResourceGenerator
             if (isExcluded) continue;
 
             // 获取分类
-            string category = GetCategoryFromPath(resPath);
+            ResourceCategory category = GetCategoryFromPath(resPath);
 
             // 确保分类字典存在
             if (!resourcesByCategory.ContainsKey(category))
@@ -210,7 +224,7 @@ class ResourceGenerator
         }
     }
 
-    private static void GenerateCode(string projectRoot, Dictionary<string, Dictionary<string, string>> resourcesByCategory)
+    private static void GenerateCode(string projectRoot, Dictionary<ResourceCategory, Dictionary<string, string>> resourcesByCategory)
     {
         var sb = new StringBuilder();
         sb.AppendLine("//------------------------------------------------------------------------------");
@@ -222,7 +236,6 @@ class ResourceGenerator
         sb.AppendLine("//------------------------------------------------------------------------------");
         sb.AppendLine();
         sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine("using Brotato.Data.ResourceManagement;");
         sb.AppendLine();
         sb.AppendLine("public struct ResourceData");
         sb.AppendLine("{");
@@ -243,14 +256,14 @@ class ResourceGenerator
         sb.AppendLine("    {");
 
         // 确保所有枚举值都在字典中，即使为空
-        var allCategories = Enum.GetNames(typeof(Brotato.Data.ResourceManagement.ResourceCategory));
+        var allCategories = Enum.GetNames(typeof(ResourceCategory));
 
         foreach (var categoryName in allCategories)
         {
             sb.AppendLine($"        {{ ResourceCategory.{categoryName}, new Dictionary<string, ResourceData>");
             sb.AppendLine("            {");
 
-            if (resourcesByCategory.TryGetValue(categoryName, out var items))
+            if (resourcesByCategory.TryGetValue(Enum.Parse<ResourceCategory>(categoryName), out var items))
             {
                 foreach (var kvp in items.OrderBy(x => x.Key))
                 {

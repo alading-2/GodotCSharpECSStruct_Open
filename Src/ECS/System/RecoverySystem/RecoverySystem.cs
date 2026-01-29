@@ -1,7 +1,9 @@
 using System;
+
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Godot;
+
 
 /// <summary>
 /// 全局恢复系统 (RecoverySystem)
@@ -29,8 +31,8 @@ public partial class RecoverySystem : Node
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
-            Name = "RecoverySystem",
-            Path = "res://Src/ECS/System/RecoverySystem/RecoverySystem.cs",
+            Name = nameof(RecoverySystem),
+            Scene = ResourceManagement.Load<PackedScene>(nameof(RecoverySystem), ResourceCategory.System),
             Priority = AutoLoad.Priority.System,
         });
     }
