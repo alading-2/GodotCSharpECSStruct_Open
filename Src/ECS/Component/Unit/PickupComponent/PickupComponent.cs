@@ -10,7 +10,7 @@ using Godot;
 /// </summary>
 public partial class PickupComponent : Area2D, IComponent
 {
-    private static readonly Log Log = new("PickupComponent");
+    private static readonly Log Log = new(nameof(PickupComponent));
 
     // ================= IComponent 实现 =================
 

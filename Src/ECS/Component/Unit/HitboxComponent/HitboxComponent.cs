@@ -6,7 +6,7 @@ using Godot;
 /// </summary>
 public partial class HitboxComponent : Area2D, IComponent
 {
-    private static readonly Log Log = new("HitboxComponent");
+    private static readonly Log Log = new(nameof(HitboxComponent));
 
     // ================= IComponent 实现 =================
 

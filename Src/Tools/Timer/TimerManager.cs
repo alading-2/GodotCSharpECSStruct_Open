@@ -46,7 +46,7 @@ public partial class TimerManager : Node
     /// <summary> 全局唯一单例访问点 </summary>
     public static TimerManager Instance;
 
-    private static readonly Log _log = new("TimerManager");
+    private static readonly Log _log = new(nameof(TimerManager));
 
     /// <summary> 
     /// 内部维护的 GameTimer 对象池。

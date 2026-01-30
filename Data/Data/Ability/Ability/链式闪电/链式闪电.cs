@@ -14,7 +14,7 @@ using Godot;
 /// </summary>
 public class ChainLightningExecutor : IAbilityExecutor
 {
-    private static readonly Log _log = new("ChainLightningExecutor");
+    private static readonly Log _log = new(nameof(ChainLightningExecutor));
 
     [ModuleInitializer]
     public static void Initialize()

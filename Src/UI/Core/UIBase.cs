@@ -26,7 +26,7 @@ using Godot;
 /// }
 /// </code>
 /// </summary>
-public abstract partial class UIBase : Control, IBindableUI, IPoolable
+public abstract partial class UIBase : Control, IBindableUI
 {
     private static readonly Log _log = new Log("UIBase");
 
@@ -86,33 +86,4 @@ public abstract partial class UIBase : Control, IBindableUI, IPoolable
     /// 子类在此处取消订阅（可选，EventBus会自动清理）
     /// </summary>
     protected virtual void OnUnbind() { }
-
-    // ============================================================
-    // IPoolable 实现
-    // ============================================================
-
-    /// <summary>
-    /// 从对象池取出时调用
-    /// </summary>
-    public virtual void OnPoolAcquire()
-    {
-        // 子类可重写，添加额外逻辑
-    }
-
-    /// <summary>
-    /// 归还对象池时调用
-    /// </summary>
-    public virtual void OnPoolRelease()
-    {
-        // 归还时自动解绑
-        Unbind();
-    }
-
-    /// <summary>
-    /// 重置UI状态
-    /// </summary>
-    public virtual void OnPoolReset()
-    {
-        // 子类可重写，重置UI元素
-    }
 }

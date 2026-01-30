@@ -12,7 +12,7 @@ using Godot;
 /// </summary>
 public class RegenAuraExecutor : IAbilityExecutor
 {
-    private static readonly Log _log = new("RegenAuraExecutor");
+    private static readonly Log _log = new(nameof(RegenAuraExecutor));
 
     [ModuleInitializer]
     public static void Initialize()

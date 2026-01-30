@@ -98,7 +98,7 @@ _data.Add(DataKey.Score, 10);
 ```csharp
 public partial class MyComponent : Node, IComponent
 {
-    private static readonly Log _log = new("MyComponent");
+    private static readonly Log _log = new(nameof(MyComponent));
 
     // ================= 标准字段 =================
     private Data? _data;

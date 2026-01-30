@@ -10,7 +10,7 @@ using Godot;
 /// </summary>
 public partial class VelocityComponent : Node, IComponent
 {
-    private static readonly Log _log = new("VelocityComponent");
+    private static readonly Log _log = new(nameof(VelocityComponent));
 
     // ================= IComponent 实现 =================
 

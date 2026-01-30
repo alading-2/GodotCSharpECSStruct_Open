@@ -13,7 +13,7 @@ using Godot;
 /// </summary>
 public class SlamExecutor : IAbilityExecutor
 {
-    private static readonly Log _log = new("SlamExecutor");
+    private static readonly Log _log = new(nameof(SlamExecutor));
 
     [ModuleInitializer]
     public static void Initialize()

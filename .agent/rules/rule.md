@@ -2,7 +2,7 @@
 trigger: always_on
 ---
 
-# 项目规则 - Godot 4.5 C# (.NET 8.0)
+# 项目规则 - Godot 4.6 C# (.NET 8.0)
 
 > [!IMPORTANT]
 > 本文档是AI开发的**强制检查清单**,遇到不确定的问题优先查阅本文档。
@@ -15,7 +15,7 @@ trigger: always_on
 ## 2. C# 代码规范
 
 - **概率值**: 统一0-100(计算时/100)
-- **注释**: 使用 `<summary>` 而非转义字符
+- **注释**: 统一使用 `< >` 而非转义字符 `&lt;` `&gt;` (包括 XML 文档注释，以提高可读性)
 - **性能**: `_Process`中禁止`new`对象和LINQ
 
 ## 项目写功能
@@ -143,8 +143,31 @@ var bullet = EntityManager.Spawn<BulletEntity>(new EntitySpawnConfig
 
 EntityManager.Destroy(bullet); // 自动归还对象池
 ```
-
+- 对象池初始化：ObjectPoolInit.cs
 **详细文档**: [Src/Tools/ObjectPool/ObjectPool.md](../../Src/Tools/ObjectPool/ObjectPool.md)
+
+---
+
+### 2.6 ResourceManagement - 资源加载系统
+
+**禁止**: ❌ `GD.Load<T>("res://...")` / ❌ `ResourceLoader.Load("res://...")` / ❌ 硬编码字符串路径  
+**理由**: 路径变更会导致多处失效，难以维护。统一入口提供性能优化和重命名兼容性。
+
+**例外**: 
+- `.tscn` 内部的资源引用 (Godot 自动管理)
+- 导出属性 `[Export]` 指向的资源
+- 特殊底层工具（如 ResourceGenerator）
+
+**最简示例**:
+```csharp
+// 加载场景
+var scene = ResourceManagement.Load<PackedScene>("EnemyEntity", ResourceCategory.Entity);
+
+// 加载配置
+var config = ResourceManagement.Load<Resource>("德鲁伊", ResourceCategory.PlayerConfig);
+```
+
+**详细文档**: [Data/ResourceManagement/README.md](../../Data/ResourceManagement/README.md)
 
 ---
 
@@ -229,6 +252,42 @@ DamageService.Instance.Process(damageInfo);
 
 ---
 
+### 3.4 UI System - UI系统
+
+**核心原则**: ✅ UI不是Component，采用Bind模式绑定Entity  
+**禁止**: ❌ 将UI做成Component / ❌ 监听全局事件然后判断"是不是我的Entity"
+
+**最简示例**:
+```csharp
+// UI绑定Entity
+public class MyUI : UIBase
+{
+    protected override void OnBind()
+    {
+        // 订阅特定Entity的事件（不是全局事件！）
+        _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
+            GameEventType.Data.PropertyChanged,
+            OnDataChanged
+        );
+        
+        UpdateDisplay(); // 立即刷新
+    }
+    
+    private void OnDataChanged(GameEventType.Data.PropertyChangedEventData evt)
+    {
+        if (evt.Key == DataKey.CurrentHp) UpdateDisplay();
+    }
+}
+
+// 使用：由HUDManager自动管理
+var healthBar = pool.Spawn();
+healthBar.Bind(enemyEntity);  // 绑定到特定Entity
+```
+
+**详细架构**: [Docs/框架/UI/UI架构设计理念.md](../../Docs/框架/UI/UI架构设计理念.md)
+
+---
+
 ## 4. 架构模式核心规范
 
 ### 4.1 Entity 规范
@@ -260,5 +319,6 @@ DamageService.Instance.Process(damageInfo);
 | **目标选择** | [Src/Tools/TargetSelector/README.md](../../Src/Tools/TargetSelector/README.md) |
 | **技能系统(架构)** | [Docs/框架/ECS/Ability/技能系统架构设计理念.md](../../Docs/框架/ECS/Ability/技能系统架构设计理念.md) |
 | **伤害系统** | [Src/ECS/System/DamageSystem/README.md](../../Src/ECS/System/DamageSystem/README.md) |
+| **UI系统** | [Docs/框架/UI/UI架构设计理念.md](../../Docs/框架/UI/UI架构设计理念.md) |
 | **Entity规范** | [Src/ECS/Entity/Entity规范.md](../../Src/ECS/Entity/Entity规范.md) |
 | **Component规范** | [Src/ECS/Component/Component规范.md](../../Src/ECS/Component/Component规范.md) |

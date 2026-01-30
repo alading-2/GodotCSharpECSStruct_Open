@@ -24,6 +24,8 @@ public static class DataRegister_Unit
         DataRegistry.Register(new DataMeta { Key = DataKey.Level, DisplayName = "等级", Description = "实体的等级", Category = DataCategory_Base.Basic, Type = typeof(int), DefaultValue = 1, MinValue = 1, MaxValue = GlobalConfig.Maxlevel, SupportModifiers = false });
         // 单位品阶UnitRank
         DataRegistry.Register(new DataMeta { Key = DataKey.UnitRank, DisplayName = "单位品阶", Description = "单位品阶", Category = DataCategory_Base.Basic, Type = typeof(UnitRank), DefaultValue = UnitRank.Normal });
+        // 是否显示血条IsShowHealthBar
+        DataRegistry.Register(new DataMeta { Key = DataKey.IsShowHealthBar, DisplayName = "是否显示血条", Description = "是否显示血条", Category = DataCategory_Base.Basic, Type = typeof(bool), DefaultValue = true });
 
         // DisableHealthRecovery
         DataRegistry.Register(new DataMeta { Key = DataKey.IsDisableHealthRecovery, DisplayName = "是否禁止生命恢复", Description = "是否禁止生命恢复", Category = DataCategory_Unit.Recovery, Type = typeof(bool), DefaultValue = false });

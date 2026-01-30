@@ -14,7 +14,7 @@ using Godot;
 /// </summary>
 public partial class CooldownComponent : Node, IComponent
 {
-    private static readonly Log _log = new("CooldownComponent");
+    private static readonly Log _log = new(nameof(CooldownComponent));
 
     // ================= 标准字段 =================
     private Data? _data;
@@ -61,7 +61,8 @@ public partial class CooldownComponent : Node, IComponent
         // 监听请求检查可用性事件
         _entity.Events.On<GameEventType.Ability.CheckCanUseEventData>(
             GameEventType.Ability.CheckCanUse,
-            OnCheckCanUse
+            OnCheckCanUse,
+            (int)AbilityCheckPhase.Cooldown
         );
         // 监听请求启动冷却事件
         _entity.Events.On<GameEventType.Ability.StartCooldownEventData>(

@@ -25,7 +25,7 @@ using System.Linq;
 /// </summary>
 public static class TargetSelector
 {
-    private static readonly Log _log = new("TargetSelector");
+    private static readonly Log _log = new(nameof(TargetSelector));
 
     // ==================== 公共 API ====================
 

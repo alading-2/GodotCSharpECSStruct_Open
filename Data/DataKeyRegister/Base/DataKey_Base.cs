@@ -11,5 +11,4 @@ public static partial class DataKey
     public const string Id = "Id"; // ID
     public const string Team = "Team"; // 阵营 (Enum: Team)
     public const string EntityType = "EntityType"; // 实体类型 (Enum: EntityType)
-
 }

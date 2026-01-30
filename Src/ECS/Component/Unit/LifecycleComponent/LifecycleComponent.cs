@@ -44,7 +44,7 @@ public enum DeathType
 /// </summary>
 public partial class LifecycleComponent : Node, IComponent
 {
-    private static readonly Log _log = new("LifecycleComponent");
+    private static readonly Log _log = new(nameof(LifecycleComponent));
 
     // ================= 状态 =================
 

@@ -20,8 +20,18 @@ public partial class ActiveSkillBarUI : UIBase
     {
         _slotContainer = GetNode<HBoxContainer>("%SlotContainer");
 
-        // 创建4个技能槽位
-        CreateSkillSlots();
+        // 获取场景中静态放置的槽位
+        foreach (var child in _slotContainer.GetChildren())
+        {
+            if (child is ActiveSkillSlotUI slot)
+            {
+                _skillSlots.Add(slot);
+                slot.Visible = true; // 初始显示，但在 InitializeDisplay 前可能是空的
+                slot.ClearSlot();   // 初始清空
+            }
+        }
+
+        _log.Debug($"已通过静态布局加载 {_skillSlots.Count} 个技能槽位");
 
         // 如果已绑定实体，初始化显示
         if (_entity != null)
@@ -30,12 +40,21 @@ public partial class ActiveSkillBarUI : UIBase
         }
     }
 
+    /// <summary>
+    /// 绑定实体时的初始化
+    /// </summary>
     protected override void OnBind()
     {
         // 订阅技能添加事件
         _entity!.Events.On<GameEventType.Ability.AddedEventData>(
             GameEventType.Ability.Added,
             OnAbilityAdded
+        );
+
+        // 订阅技能移除事件
+        _entity!.Events.On<GameEventType.Ability.RemovedEventData>(
+            GameEventType.Ability.Removed,
+            OnAbilityRemoved
         );
 
         // 订阅技能切换事件
@@ -51,36 +70,15 @@ public partial class ActiveSkillBarUI : UIBase
         }
     }
 
+    /// <summary>
+    /// 解绑实体时的清理
+    /// </summary>
     protected override void OnUnbind()
     {
         ClearAllSlots();
     }
 
-    public override void OnPoolReset()
-    {
-        base.OnPoolReset();
-        ClearAllSlots();
-    }
 
-    private void CreateSkillSlots()
-    {
-        var slotScene = ResourceManagement.Load<PackedScene>(nameof(ActiveSkillSlotUI), ResourceCategory.UI);
-        if (slotScene == null)
-        {
-            _log.Error("无法加载 ActiveSkillSlotUI.tscn");
-            return;
-        }
-
-        for (int i = 0; i < MAX_SKILL_SLOTS; i++)
-        {
-            var slot = slotScene.Instantiate<ActiveSkillSlotUI>();
-            _slotContainer.AddChild(slot);
-            _skillSlots.Add(slot);
-            slot.Visible = false;
-        }
-
-        _log.Debug($"创建了 {MAX_SKILL_SLOTS} 个技能槽位");
-    }
 
     private void InitializeDisplay()
     {
@@ -97,8 +95,15 @@ public partial class ActiveSkillBarUI : UIBase
         UpdateAllSlots();
     }
 
+    private void OnAbilityRemoved(GameEventType.Ability.RemovedEventData evt)
+    {
+        _log.Debug($"检测到技能移除: {evt.abilityName}");
+        UpdateAllSlots();
+    }
+
     private void OnActiveSkillSelected(GameEventType.UI.ActiveSkillSelectedEventData evt)
     {
+        _log.Debug($"收到 ActiveSkillSelected 事件: Index {evt.SlotIndex}, Name: {evt.AbilityName}");
         HighlightSelectedSlot(evt.SlotIndex);
     }
 
@@ -112,17 +117,19 @@ public partial class ActiveSkillBarUI : UIBase
         // 更新每个槽位
         for (int i = 0; i < MAX_SKILL_SLOTS; i++)
         {
+            // 确保槽位可见
+            _skillSlots[i].Visible = true;
+
             if (i < activeAbilities.Count)
             {
                 // 有技能，显示并绑定到技能实体
                 var ability = activeAbilities[i];
-                _skillSlots[i].Visible = true;
-                _skillSlots[i].UpdateSlot(ability);  // 直接更新槽位显示的技能
+                _skillSlots[i].UpdateSlot(ability);
             }
             else
             {
-                // 无技能，隐藏
-                _skillSlots[i].Visible = false;
+                // 无技能，清空显示但保持占位
+                _skillSlots[i].ClearSlot();
             }
         }
 
@@ -133,12 +140,10 @@ public partial class ActiveSkillBarUI : UIBase
 
     private void HighlightSelectedSlot(int index)
     {
+        _log.Debug($"尝试高亮槽位: {index}");
         for (int i = 0; i < _skillSlots.Count; i++)
         {
-            if (_skillSlots[i].Visible)
-            {
-                _skillSlots[i].SetHighlight(i == index);
-            }
+            _skillSlots[i].SetHighlight(i == index);
         }
     }
 
@@ -146,7 +151,9 @@ public partial class ActiveSkillBarUI : UIBase
     {
         foreach (var slot in _skillSlots)
         {
-            slot.Visible = false;
+            slot.ClearSlot();
+            // 不再隐藏槽位，保持布局
+            // slot.Visible = false; 
         }
     }
 

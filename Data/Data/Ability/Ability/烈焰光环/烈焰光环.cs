@@ -11,7 +11,7 @@ using Godot;
 /// </summary>
 public class CircleDamageExecutor : IAbilityExecutor
 {
-    private static readonly Log _log = new("CircleDamageExecutor");
+    private static readonly Log _log = new(nameof(CircleDamageExecutor));
 
     [ModuleInitializer]
     public static void Initialize()

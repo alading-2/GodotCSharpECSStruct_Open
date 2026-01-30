@@ -16,7 +16,7 @@ using Godot;
 /// </summary>
 public class Data
 {
-    private static readonly Log _log = new("Data", LogLevel.Warning);
+    private static readonly Log _log = new(nameof(Data), LogLevel.Warning);
 
     private readonly IEntity? _owner;
 

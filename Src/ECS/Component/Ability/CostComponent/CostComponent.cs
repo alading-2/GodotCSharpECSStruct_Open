@@ -18,7 +18,7 @@ using Godot;
 /// </summary>
 public partial class CostComponent : Node, IComponent
 {
-    private static readonly Log _log = new("CostComponent");
+    private static readonly Log _log = new(nameof(CostComponent));
 
     // ================= 标准字段 =================
     private Data? _data;
@@ -64,7 +64,8 @@ public partial class CostComponent : Node, IComponent
         // 监听请求检查可用性事件
         _entity.Events.On<GameEventType.Ability.CheckCanUseEventData>(
             GameEventType.Ability.CheckCanUse,
-            OnCheckCanUse
+            OnCheckCanUse,
+            (int)AbilityCheckPhase.Cost
         );
 
         // 监听消耗成本请求事件

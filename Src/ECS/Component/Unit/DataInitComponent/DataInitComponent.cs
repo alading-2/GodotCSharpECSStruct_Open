@@ -10,7 +10,7 @@ using System;
 /// </summary>
 public partial class DataInitComponent : Node, IComponent
 {
-    private static readonly Log _log = new("DataInitComponent");
+    private static readonly Log _log = new(nameof(DataInitComponent));
 
     private IEntity? _entity;
     private Data? _data;
@@ -47,7 +47,6 @@ public partial class DataInitComponent : Node, IComponent
     private void InitializeData()
     {
         if (_data == null) return;
-
         // 规则 1: 初始化数据
         _data.Set(DataKey.CurrentHp, _data.Get<float>(DataKey.FinalHp));
     }

@@ -34,6 +34,8 @@ public enum EntityType
     Buff = 1 << 5,
     /// <summary>陷阱</summary>
     Trap = 1 << 6,
+    /// <summary>瞄准指示器（技能施法点标记）</summary>
+    TargetingIndicator = 1 << 7,
 
 
     // ============ 组合预设 ============

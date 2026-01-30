@@ -11,7 +11,7 @@ using System.Linq;
 /// </summary>
 public static class ResourceManagement
 {
-    private static readonly Log _log = new("ResourceManagement");
+    private static readonly Log _log = new(nameof(ResourceManagement));
 
     static ResourceManagement()
     {

@@ -44,7 +44,7 @@ namespace BrotatoMy.Test
             // _testEnemy = EnemyData.Configs.GetValueOrDefault("豺狼人") as Dictionary<string, object>;
 
             // 改为加载 Resource
-            _testEnemy = ResourceManagement.Load<Resource>("豺狼人", ResourceCategory.Asset);
+            _testEnemy = ResourceManagement.Load<Resource>(ResourcePaths.EnemyConfig.豺狼人, ResourceCategory.EnemyConfig);
 
             if (_testEnemy == null) _log.Error("Failed to load test enemy resource!");
 

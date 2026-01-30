@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 public partial class DamageStatisticsSystem : Node
 {
     /// <summary>日志处理实例</summary>
-    private static readonly Log _log = new("DamageStatisticsSystem");
+    private static readonly Log _log = new(nameof(DamageStatisticsSystem));
 
     /// <summary>
     /// 自动注册到引导器 (AutoLoad)
@@ -72,7 +72,7 @@ public partial class DamageStatisticsSystem : Node
             // 2. 重置玩家装备的所有武器/物品的波次统计
             var playerId = player.Data.Get<string>(DataKey.Id) ?? string.Empty;
             var itemIds = EntityRelationshipManager.GetChildEntitiesByParentAndType(
-                playerId, EntityRelationshipType.UNIT_TO_ITEM);
+                playerId, EntityRelationshipType.ENTITY_TO_ITEM);
 
             foreach (var itemId in itemIds)
             {

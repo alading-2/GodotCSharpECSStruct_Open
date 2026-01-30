@@ -17,7 +17,7 @@ using Godot;
 /// </summary>
 public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
 {
-    private static readonly Log _log = new("TemplateEntity");
+    private static readonly Log _log = new(nameof(TemplateEntity));
 
     #region ================= IEntity 实现 =================
 

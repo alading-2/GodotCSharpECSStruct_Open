@@ -16,7 +16,7 @@ using System;
 /// </summary>
 public partial class HealthComponent : Node, IComponent
 {
-    private static readonly Log _log = new("HealthComponent");
+    private static readonly Log _log = new(nameof(HealthComponent));
 
     // ================= 组件依赖 =================
 

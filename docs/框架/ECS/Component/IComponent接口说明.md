@@ -38,7 +38,7 @@ using System.Linq;
 
 public partial class HealthComponent : Node, IComponent
 {
-    private static readonly Log _log = new("HealthComponent");
+    private static readonly Log _log = new(nameof(HealthComponent));
 
     public event Action<float>? Damaged;
     public event Action? Died;

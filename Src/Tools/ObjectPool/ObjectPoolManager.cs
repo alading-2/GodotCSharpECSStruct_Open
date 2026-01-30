@@ -10,11 +10,11 @@ using Godot;
 /// </summary>
 public static class ObjectPoolManager
 {
-    private static readonly Log _log = new("ObjectPoolManager");
+    private static readonly Log _log = new(nameof(ObjectPoolManager));
 
     // 全局池字典，按 PoolName 索引（存储任意类型的池）
     private static readonly Dictionary<string, object> _pools = [];
-    
+
     // 非 Node 对象到池名称的映射（用于纯 C# 对象的静态归还）
     private static readonly Dictionary<object, string> _objectToPoolMap = [];
 
@@ -91,7 +91,7 @@ public static class ObjectPoolManager
             {
                 poolName = node.GetMeta("ObjectPoolName").AsString();
             }
-            
+
             if (poolName == null)
             {
                 _log.Warn($"Node {node.Name} 未找到 ObjectPoolName MetaData。将退回到 QueueFree。");

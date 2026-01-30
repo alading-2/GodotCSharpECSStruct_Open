@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 /// </summary>
 public class DashExecutor : IAbilityExecutor
 {
-    private static readonly Log _log = new("DashExecutor");
+    private static readonly Log _log = new(nameof(DashExecutor));
 
     [ModuleInitializer]
     public static void Initialize()

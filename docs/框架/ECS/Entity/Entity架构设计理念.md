@@ -142,7 +142,7 @@ public interface IComponent
 ```csharp
 public partial class HealthComponent : Node, IComponent
 {
-    private static readonly Log _log = new("HealthComponent");
+    private static readonly Log _log = new(nameof(HealthComponent));
 
     // ================= 标准字段 =================
     private Data? _data;

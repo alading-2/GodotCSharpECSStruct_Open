@@ -41,7 +41,7 @@ public partial class RecoverySystem : Node
     public static RecoverySystem Instance = null!;
 
     /// <summary>日志工具实例，用于输出该系统的运行信息</summary>
-    private static readonly Log _log = new("RecoverySystem");
+    private static readonly Log _log = new(nameof(RecoverySystem));
 
     // ================= 核心数据区域 =================
 

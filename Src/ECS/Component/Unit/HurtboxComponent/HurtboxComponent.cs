@@ -8,7 +8,7 @@ using Godot;
 /// </summary>
 public partial class HurtboxComponent : Area2D, IComponent
 {
-    private static readonly Log Log = new("HurtboxComponent");
+    private static readonly Log Log = new(nameof(HurtboxComponent));
 
     // ================= IComponent 实现 =================
 

@@ -15,7 +15,7 @@ using Godot;
 /// </summary>
 public static class AbilitySystem
 {
-    private static readonly Log _log = new("AbilitySystem");
+    private static readonly Log _log = new(nameof(AbilitySystem));
 
     // ==================== TryTrigger 入口 ====================
 
@@ -79,11 +79,17 @@ public static class AbilitySystem
             return false;
         }
 
-        // 验证输入是否符合配置 (移除自动 SelectTargets 逻辑)
-        if (!ValidateTargetInput(ability, context))
-        {
-            return false;
-        }
+        // 发送事件：进行目标解析
+        // 注意：这里是流水线的核心环节，AbilityTargetSelectionComponent 会在此处填充 context.Targets 或 context.TargetPosition
+        ability.Events.Emit(
+            GameEventType.Ability.SelectTargets,
+            new GameEventType.Ability.SelectTargetsEventData(context)
+        );
+
+        // 注意：如果目标选择失败且技能要求必须有目标，AbilityTargetSelectionComponent 应该负责
+        // 标记失败或在 SelectTargets 之后进行验证。
+        // 为保持灵活性，我们在系统层不再做强验证，而是在执行层由 Executor 判断或
+        // 在此处增加一个通用的就绪性二次检查（可选）。
 
         var consumeContext = new EventContext();
         // 事件驱动：请求消耗资源（充能等）
@@ -193,49 +199,7 @@ public static class AbilitySystem
         return true;
     }
 
-    // ==================== 目标/输入验证 ====================
 
-    /// <summary>
-    /// 验证施法上下文中的输入数据是否符合技能配置
-    /// 原则：既然配置了需要 Unit/Point，调用者(Input/Trigger)就必须设置好 CastContext。
-    /// </summary>
-    private static bool ValidateTargetInput(AbilityEntity ability, CastContext context)
-    {
-        var selection = ability.Data.Get<AbilityTargetSelection>(DataKey.AbilityTargetSelection);
-
-        switch (selection)
-        {
-            case AbilityTargetSelection.Entity:
-                if (!context.HasPreselectedTargets)
-                {
-                    _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [Unit] 但上下文无目标单位！");
-                    return false;
-                }
-                break;
-
-            case AbilityTargetSelection.Point:
-                if (!context.HasPreselectedPosition)
-                {
-                    _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [Point] 但上下文无目标位置！");
-                    return false;
-                }
-                break;
-
-            case AbilityTargetSelection.EntityOrPoint:
-                if (!context.HasPreselectedTargets && !context.HasPreselectedPosition)
-                {
-                    _log.Error($"技能 '{ability.Data.Get<string>(DataKey.Name)}' 配置为 [UnitOrPoint] 但上下文无任何输入！");
-                    return false;
-                }
-                break;
-
-            // None 模式不强制要求输入
-            case AbilityTargetSelection.None:
-                break;
-        }
-
-        return true;
-    }
 
 
     // ==================== 效果执行 ====================
@@ -250,8 +214,10 @@ public static class AbilitySystem
         var ability = context.Ability;
         var abilityName = ability.Data.Get<string>(DataKey.Name) ?? string.Empty;
 
+        _log.Debug($"[AbilitySystem] 开始执行技能效果: '{abilityName}'");
         // 调用执行器注册表
         var result = AbilityExecutorRegistry.Execute(abilityName, context);
+        _log.Debug($"[AbilitySystem] 技能效果执行完成: '{abilityName}', 命中: {result.TargetsHit}");
 
         // 发送执行完成事件
         ability.Events.Emit(

@@ -12,7 +12,7 @@ using Godot;
 /// </summary>
 public class ReviveScrollExecutor : IAbilityExecutor
 {
-    private static readonly Log _log = new("ReviveScrollExecutor");
+    private static readonly Log _log = new(nameof(ReviveScrollExecutor));
 
     [ModuleInitializer]
     public static void Initialize()

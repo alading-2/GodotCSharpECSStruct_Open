@@ -15,7 +15,7 @@ using Godot;
 /// </summary>
 public partial class RecoveryComponent : Node, IComponent
 {
-    private static readonly Log _log = new("RecoveryComponent");
+    private static readonly Log _log = new(nameof(RecoveryComponent));
 
     // ================= 组件依赖 =================
 

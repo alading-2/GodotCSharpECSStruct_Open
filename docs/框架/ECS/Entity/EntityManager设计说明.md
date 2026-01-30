@@ -750,7 +750,7 @@ using Godot;
 
 public partial class MyEntity : CharacterBody2D, IEntity, IPoolable
 {
-    private static readonly Log _log = new("MyEntity");
+    private static readonly Log _log = new(nameof(MyEntity));
 
     // ================= IEntity 实现 =================
 
@@ -796,7 +796,7 @@ using Godot;
 
 public partial class MyComponent : Node, IComponent
 {
-    private static readonly Log _log = new("MyComponent");
+    private static readonly Log _log = new(nameof(MyComponent));
 
     // 缓存数据引用
     private Data? _data;

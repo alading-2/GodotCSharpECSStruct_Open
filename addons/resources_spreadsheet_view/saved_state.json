@@ -1,5 +1,16 @@
 {
   "column_properties": {
+    "res://Data/Data/Ability/Resource/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0
+      },
+      "resource_name": {
+        "visibility": 0
+      }
+    },
     "res://Data/Data/Resources/": {
       "metadata/_custom_type_script": {
         "visibility": 0.0
@@ -59,7 +70,8 @@
   "recent_paths": [
     "res://Data/Data/Resources/Abilities/",
     "res://Data/Data/Resources/",
-    "res://Data/Data/Resources/Enemies/"
+    "res://Data/Data/Resources/Enemies/",
+    "res://Data/Data/Ability/Resource/"
   ],
   "table_functions": {
     "filter": [

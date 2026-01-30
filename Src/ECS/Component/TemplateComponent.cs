@@ -12,7 +12,7 @@ using Godot;
 /// </summary>
 public partial class TemplateComponent : Node, IComponent
 {
-    private static readonly Log _log = new("TemplateComponent");
+    private static readonly Log _log = new(nameof(TemplateComponent));
 
     // ================= 组件依赖 =================
 

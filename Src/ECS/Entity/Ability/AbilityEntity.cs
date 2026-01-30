@@ -11,7 +11,7 @@ using Godot;
 /// </summary>
 public partial class AbilityEntity : Node, IEntity, IPoolable
 {
-    private static readonly Log _log = new("AbilityEntity");
+    private static readonly Log _log = new(nameof(AbilityEntity));
 
     // ================= IEntity 实现 =================
 

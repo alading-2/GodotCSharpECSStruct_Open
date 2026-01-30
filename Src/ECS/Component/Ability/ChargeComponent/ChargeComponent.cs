@@ -11,7 +11,7 @@ using Godot;
 /// </summary>
 public partial class ChargeComponent : Node, IComponent
 {
-    private static readonly Log _log = new("ChargeComponent");
+    private static readonly Log _log = new(nameof(ChargeComponent));
 
     // ================= 标准字段 =================
 

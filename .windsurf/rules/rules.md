@@ -2,14 +2,13 @@
 trigger: always
 ---
 
-# 项目规则 - Godot 4.5 C# (.NET 8.0)
+# 项目规则 - Godot 4.6 C# (.NET 8.0)
 
 > [!IMPORTANT]
 > 本文档是AI开发的**强制检查清单**,遇到不确定的问题优先查阅本文档。
 > 详细架构文档: [项目索引](../../Docs/框架/项目索引.md)
 
 ## 1. 项目规则
-
 - 必须使用中文回复
 - 避免删除再创建文件，尽量修改文件
 
@@ -17,16 +16,14 @@ trigger: always
 
 - **概率值**: 统一0-100(计算时/100)
 - **注释**: 统一使用 `< >` 而非转义字符 `&lt;` `&gt;` (包括 XML 文档注释，以提高可读性)
-- **性能**: `_Process`中禁止 `new`对象和LINQ
+- **性能**: `_Process`中禁止`new`对象和LINQ
 
 ## 项目写功能
-
 - 更新项目索引文档[Docs/框架/项目索引.md](../../Docs/框架/项目索引.md)
 
 ## ⚡ 开发前必读检查清单
 
 在编写代码前,先问自己:
-
 - [ ] 需要定时器? → **TimerManager** | 详见: [§1.1](#11-timermanager---计时器系统)
 - [ ] 需要查找敌人/范围检测? → **TargetSelector** | 详见: [§1.2](#12-targetselector---目标选择工具)
 - [ ] 需要存储组件状态? → **Entity.Data** | 详见: [§1.3](#13-data---数据容器系统)
@@ -41,11 +38,10 @@ trigger: always
 
 ### 2.1 TimerManager - 计时器系统
 
-**禁止**: ❌ `new Timer()` / ❌ `GetTree().CreateTimer()`
+**禁止**: ❌ `new Timer()` / ❌ `GetTree().CreateTimer()`  
 **理由**: 不走对象池,GC压力大
 
 **最简示例**:
-
 ```csharp
 // 延迟执行
 TimerManager.Instance.Delay(2.0f).OnComplete(() => DoSomething());
@@ -63,11 +59,10 @@ public override void _ExitTree() { timer?.Cancel(); }
 
 ### 2.2 TargetSelector - 目标选择工具
 
-**禁止**: ❌ `GetTree().GetNodesInGroup()` / ❌ 手写距离计算
+**禁止**: ❌ `GetTree().GetNodesInGroup()` / ❌ 手写距离计算  
 **理由**: 已有高性能几何查询工具
 
 **最简示例**:
-
 ```csharp
 // 查找周围200范围内最近的5个敌人
 var targets = TargetSelector.Query(new TargetSelectorQuery
@@ -91,7 +86,6 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
 **核心原则**: ✅ Data是唯一数据源 | ❌ Component禁止私有状态字段
 
 **最简示例**:
-
 ```csharp
 // ✅ 正确: 数据存Data
 var hp = _entity.Data.Get<float>(DataKey.CurrentHp);
@@ -102,7 +96,6 @@ private float _currentHp; // 禁止!
 ```
 
 **事件监听**: ⚠️ 严禁使用 `Data.On`,必须用 `Entity.Events`:
-
 ```csharp
 // ✅ 正确
 entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
@@ -120,7 +113,6 @@ entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 **禁止**: ❌ 使用Godot Signal处理核心逻辑 / ❌ 直接调用其他组件方法
 
 **最简示例**:
-
 ```csharp
 // 发布事件
 _entity.Events.Emit(GameEventType.Ability.TryTrigger, eventData);
@@ -135,11 +127,10 @@ _entity.Events.On<EventDataType>(GameEventType.SomeEvent, OnEventHandler);
 
 ### 2.5 ObjectPool - 对象池系统
 
-**强制场景**: 子弹、伤害数字、特效、敌人
+**强制场景**: 子弹、伤害数字、特效、敌人  
 **禁止**: ❌ 手动 `new` + `QueueFree()`
 
 **最简示例**:
-
 ```csharp
 // 通过EntityManager使用对象池
 var bullet = EntityManager.Spawn<BulletEntity>(new EntitySpawnConfig
@@ -152,9 +143,31 @@ var bullet = EntityManager.Spawn<BulletEntity>(new EntitySpawnConfig
 
 EntityManager.Destroy(bullet); // 自动归还对象池
 ```
-
 - 对象池初始化：ObjectPoolInit.cs
-  **详细文档**: [Src/Tools/ObjectPool/ObjectPool.md](../../Src/Tools/ObjectPool/ObjectPool.md)
+**详细文档**: [Src/Tools/ObjectPool/ObjectPool.md](../../Src/Tools/ObjectPool/ObjectPool.md)
+
+---
+
+### 2.6 ResourceManagement - 资源加载系统
+
+**禁止**: ❌ `GD.Load<T>("res://...")` / ❌ `ResourceLoader.Load("res://...")` / ❌ 硬编码字符串路径  
+**理由**: 路径变更会导致多处失效，难以维护。统一入口提供性能优化和重命名兼容性。
+
+**例外**: 
+- `.tscn` 内部的资源引用 (Godot 自动管理)
+- 导出属性 `[Export]` 指向的资源
+- 特殊底层工具（如 ResourceGenerator）
+
+**最简示例**:
+```csharp
+// 加载场景
+var scene = ResourceManagement.Load<PackedScene>("EnemyEntity", ResourceCategory.Entity);
+
+// 加载配置
+var config = ResourceManagement.Load<Resource>("德鲁伊", ResourceCategory.PlayerConfig);
+```
+
+**详细文档**: [Data/ResourceManagement/README.md](../../Data/ResourceManagement/README.md)
 
 ---
 
@@ -164,10 +177,9 @@ EntityManager.Destroy(bullet); // 自动归还对象池
 
 **核心职责**: 统一管理Entity的生成(Spawn)、注册(Register)、销毁(Destroy)
 
-**禁止**: ❌ 直接 `new`实体 / ❌ 直接 `QueueFree()`销毁实体
+**禁止**: ❌ 直接`new`实体 / ❌ 直接`QueueFree()`销毁实体
 
 **最简示例**:
-
 ```csharp
 // 生成敌人(使用对象池)
 var enemy = EntityManager.Spawn<Enemy>(new EntitySpawnConfig
@@ -198,7 +210,6 @@ EntityManager.Destroy(enemy);
 **内置组件**: `CooldownComponent`、`ChargeComponent`、`TriggerComponent`
 
 **最简示例**:
-
 ```csharp
 // 通过Data配置技能,Component自动处理
 ability.Data.Set(DataKey.AbilityCooldown, 5.0f);  // CooldownComponent监听
@@ -217,10 +228,9 @@ AbilitySystem.TryTriggerAbility(owner, "FireballAbility", context);
 
 **核心职责**: 管道式伤害计算(闪避→暴击→护盾→护甲→结算)
 
-**禁止**: ❌ 直接修改 `CurrentHp` / ❌ 手写暴击/闪避判定
+**禁止**: ❌ 直接修改`CurrentHp` / ❌ 手写暴击/闪避判定
 
 **最简示例**:
-
 ```csharp
 // 构造伤害信息
 var damageInfo = new DamageInfo
@@ -244,11 +254,10 @@ DamageService.Instance.Process(damageInfo);
 
 ### 3.4 UI System - UI系统
 
-**核心原则**: ✅ UI不是Component，采用Bind模式绑定Entity
+**核心原则**: ✅ UI不是Component，采用Bind模式绑定Entity  
 **禁止**: ❌ 将UI做成Component / ❌ 监听全局事件然后判断"是不是我的Entity"
 
 **最简示例**:
-
 ```csharp
 // UI绑定Entity
 public class MyUI : UIBase
@@ -260,10 +269,10 @@ public class MyUI : UIBase
             GameEventType.Data.PropertyChanged,
             OnDataChanged
         );
-    
+        
         UpdateDisplay(); // 立即刷新
     }
-  
+    
     private void OnDataChanged(GameEventType.Data.PropertyChangedEventData evt)
     {
         if (evt.Key == DataKey.CurrentHp) UpdateDisplay();
@@ -299,17 +308,17 @@ healthBar.Bind(enemyEntity);  // 绑定到特定Entity
 
 ## 5. 完整文档索引
 
-| 类别                     | 文档路径                                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------------------- |
-| **架构总览**       | [Docs/框架/项目索引.md](../../Docs/框架/项目索引.md)                                                 |
-| **EntityManager**  | [Src/ECS/Entity/Core/EntityManager.md](../../Src/ECS/Entity/Core/EntityManager.md)                   |
-| **Data系统**       | [Src/ECS/Data/README.md](../../Src/ECS/Data/README.md)                                               |
-| **Event系统**      | [Src/ECS/Event/README_EventBus.md](../../Src/ECS/Event/README_EventBus.md)                           |
-| **Timer系统**      | [Src/Tools/Timer/TimerManager.md](../../Src/Tools/Timer/TimerManager.md)                             |
-| **对象池**         | [Src/Tools/ObjectPool/ObjectPool.md](../../Src/Tools/ObjectPool/ObjectPool.md)                       |
-| **目标选择**       | [Src/Tools/TargetSelector/README.md](../../Src/Tools/TargetSelector/README.md)                       |
+| 类别 | 文档路径 |
+|------|---------|
+| **架构总览** | [Docs/框架/项目索引.md](../../Docs/框架/项目索引.md) |
+| **EntityManager** | [Src/ECS/Entity/Core/EntityManager.md](../../Src/ECS/Entity/Core/EntityManager.md) |
+| **Data系统** | [Src/ECS/Data/README.md](../../Src/ECS/Data/README.md) |
+| **Event系统** | [Src/ECS/Event/README_EventBus.md](../../Src/ECS/Event/README_EventBus.md) |
+| **Timer系统** | [Src/Tools/Timer/TimerManager.md](../../Src/Tools/Timer/TimerManager.md) |
+| **对象池** | [Src/Tools/ObjectPool/ObjectPool.md](../../Src/Tools/ObjectPool/ObjectPool.md) |
+| **目标选择** | [Src/Tools/TargetSelector/README.md](../../Src/Tools/TargetSelector/README.md) |
 | **技能系统(架构)** | [Docs/框架/ECS/Ability/技能系统架构设计理念.md](../../Docs/框架/ECS/Ability/技能系统架构设计理念.md) |
-| **伤害系统**       | [Src/ECS/System/DamageSystem/README.md](../../Src/ECS/System/DamageSystem/README.md)                 |
-| **UI系统**         | [Docs/框架/UI/UI架构设计理念.md](../../Docs/框架/UI/UI架构设计理念.md)                               |
-| **Entity规范**     | [Src/ECS/Entity/Entity规范.md](../../Src/ECS/Entity/Entity规范.md)                                   |
-| **Component规范**  | [Src/ECS/Component/Component规范.md](../../Src/ECS/Component/Component规范.md)                       |
+| **伤害系统** | [Src/ECS/System/DamageSystem/README.md](../../Src/ECS/System/DamageSystem/README.md) |
+| **UI系统** | [Docs/框架/UI/UI架构设计理念.md](../../Docs/框架/UI/UI架构设计理念.md) |
+| **Entity规范** | [Src/ECS/Entity/Entity规范.md](../../Src/ECS/Entity/Entity规范.md) |
+| **Component规范** | [Src/ECS/Component/Component规范.md](../../Src/ECS/Component/Component规范.md) |

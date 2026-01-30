@@ -98,7 +98,7 @@ public readonly record struct EntitySpawnConfig
 /// </summary>
 public static partial class EntityManager
 {
-    private static readonly Log _log = new("EntityManager", LogLevel.Debug);
+    private static readonly Log _log = new(nameof(EntityManager), LogLevel.Debug);
 
     // ==================== 实体生成（核心功能）====================
 

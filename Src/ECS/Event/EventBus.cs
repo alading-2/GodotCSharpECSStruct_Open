@@ -20,7 +20,8 @@ public enum EventPriority
 
 /// <summary>
 /// 通用游戏事件总线
-/// 支持泛型数据传递、优先级排序、一次性订阅
+/// 支持泛型数据传递、优先级排序、一次性订阅。
+/// <para>详细设计与作用域划分规范请参考 README_EventBus.md</para>
 /// </summary>
 public class EventBus
 {
@@ -85,33 +86,33 @@ public class EventBus
     /// <summary>
     /// 订阅带参数的事件
     /// </summary>
-    public void On<T>(string eventName, Action<T> handler, EventPriority priority = EventPriority.Normal)
+    public void On<T>(string eventName, Action<T> handler, int priority = (int)EventPriority.Normal)
     {
-        Subscribe(eventName, handler, (int)priority, false);
+        Subscribe(eventName, handler, priority, false);
     }
 
     /// <summary>
     /// 订阅无参数的事件
     /// </summary>
-    public void On(string eventName, Action handler, EventPriority priority = EventPriority.Normal)
+    public void On(string eventName, Action handler, int priority = (int)EventPriority.Normal)
     {
-        Subscribe(eventName, handler, (int)priority, false);
+        Subscribe(eventName, handler, priority, false);
     }
 
     /// <summary>
     /// 订阅一次性事件（带参数）
     /// </summary>
-    public void Once<T>(string eventName, Action<T> handler, EventPriority priority = EventPriority.Normal)
+    public void Once<T>(string eventName, Action<T> handler, int priority = (int)EventPriority.Normal)
     {
-        Subscribe(eventName, handler, (int)priority, true);
+        Subscribe(eventName, handler, priority, true);
     }
 
     /// <summary>
     /// 订阅一次性事件（无参数）
     /// </summary>
-    public void Once(string eventName, Action handler, EventPriority priority = EventPriority.Normal)
+    public void Once(string eventName, Action handler, int priority = (int)EventPriority.Normal)
     {
-        Subscribe(eventName, handler, (int)priority, true);
+        Subscribe(eventName, handler, priority, true);
     }
 
     private void Subscribe(string eventName, Delegate handler, int priority, bool once)

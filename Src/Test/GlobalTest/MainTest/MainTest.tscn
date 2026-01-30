@@ -5,4 +5,4 @@
 [node name="MainTest" type="Node" unique_id=2074250790]
 script = ExtResource("1_gqao1")
 
-[node name="UILayer" type="CanvasLayer" parent="."]
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=1029634933]

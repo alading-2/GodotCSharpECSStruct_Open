@@ -7,7 +7,7 @@ using System;
 /// </summary>
 public static class DataRegistry
 {
-    private static readonly Log _log = new("DataRegistry");
+    private static readonly Log _log = new(nameof(DataRegistry));
 
     private static readonly Dictionary<string, DataMeta> _metaRegistry = new();
 

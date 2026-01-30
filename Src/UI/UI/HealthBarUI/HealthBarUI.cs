@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 /// 3. 支持平滑动画过渡
 /// 4. 根据阵营/品阶自动改变颜色
 /// </summary>
-public partial class HealthBarUI : UIBase
+public partial class HealthBarUI : UIBase, IPoolable
 {
     // 静态日志（用于系统级事件监听）
     private static readonly Log _log = new("HealthBarUI", LogLevel.Debug);
@@ -116,6 +116,14 @@ public partial class HealthBarUI : UIBase
             return;
         }
 
+        // 检查是否显示血条（新增）
+        bool showHealthBar = entity.Data.Get<bool>(DataKey.IsShowHealthBar);
+        if (!showHealthBar)
+        {
+            _log.Debug($"[事件回调] 跳过不显示血条的实体: {entityTypeName}");
+            return;
+        }
+
         _log.Info($"[事件回调] 准备为 {entityTypeName} 绑定血条");
 
         // 使用 UIManager 从对象池获取并绑定血条
@@ -166,9 +174,28 @@ public partial class HealthBarUI : UIBase
         Visible = false;
     }
 
-    public override void OnPoolReset()
+    /// <summary>
+    /// 从对象池取出时调用
+    /// </summary>
+    public void OnPoolAcquire()
     {
-        base.OnPoolReset();
+        // 从对象池取出时调用
+    }
+
+    /// <summary>
+    /// 归还对象池时调用
+    /// </summary>
+    public void OnPoolRelease()
+    {
+        // 归还时自动解绑
+        Unbind();
+    }
+
+    /// <summary>
+    /// 重置UI状态
+    /// </summary>
+    public void OnPoolReset()
+    {
         _displayedHpPercent = 0;
         _healthBar.Value = 0;
         _healthBar.SelfModulate = Colors.White; // 重置颜色

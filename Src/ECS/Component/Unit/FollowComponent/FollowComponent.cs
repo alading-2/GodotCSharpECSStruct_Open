@@ -9,7 +9,7 @@ using Godot;
 /// </summary>
 public partial class FollowComponent : Node, IComponent
 {
-    private static readonly Log Log = new("FollowComponent");
+    private static readonly Log Log = new(nameof(FollowComponent));
 
     // ================= IComponent 实现 =================
 

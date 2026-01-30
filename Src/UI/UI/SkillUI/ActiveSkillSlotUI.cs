@@ -14,7 +14,7 @@ using System.Linq;
 /// </summary>
 public partial class ActiveSkillSlotUI : UIBase
 {
-    private static readonly Log _log = new("ActiveSkillSlotUI", LogLevel.Debug);
+    private static readonly Log _log = new(nameof(ActiveSkillSlotUI), LogLevel.Debug);
 
     // ============================================================
     // UI 节点引用
@@ -79,11 +79,9 @@ public partial class ActiveSkillSlotUI : UIBase
 
     protected override void OnBind()
     {
-        // 订阅技能切换事件
-        _entity!.Events.On<GameEventType.UI.ActiveSkillSelectedEventData>(
-            GameEventType.UI.ActiveSkillSelected,
-            OnActiveSkillSelected
-        );
+        // Removed incorrect subscription to GameEventType.UI.ActiveSkillSelected
+        // ActiveSkillSlotUI should NOT change its ability based on global selection.
+        // The selection highlight is handled by ActiveSkillBarUI.
 
         // 初始化显示（如果节点已就绪）
         if (_skillIcon != null)
@@ -94,62 +92,29 @@ public partial class ActiveSkillSlotUI : UIBase
 
     protected override void OnUnbind()
     {
+        UnsubscribeAbilityEvents(); // Ensure events are unsubscribed
         _currentAbility = null;
         Visible = false;
     }
 
-    public override void OnPoolReset()
-    {
-        base.OnPoolReset();
-        UnsubscribeAbilityEvents();
-        _currentAbility = null;
-        _cooldownOverlay.Visible = false;
-        _chargeLabel.Visible = false;
-    }
+
 
     // ============================================================
     // 事件处理
     // ============================================================
 
-    private void OnActiveSkillSelected(GameEventType.UI.ActiveSkillSelectedEventData evt)
-    {
-        _log.Debug($"技能切换事件: {evt.AbilityName} (索引: {evt.SlotIndex})");
-        UpdateCurrentAbility(evt.AbilityName);
-    }
+    // Removed OnActiveSkillSelected - this was causing the bug where all slots showed the selected skill
 
     // ============================================================
     // 核心逻辑
     // ============================================================
 
     /// <summary>
-    /// 初始化显示：获取第一个主动技能
+    /// 初始化显示：不再自动获取，等待 ActiveSkillBarUI 分配
     /// </summary>
     private void InitializeDisplay()
     {
-        if (_entity == null) return;
-
-        // 获取所有主动技能
-        var activeAbilities = GetActiveAbilities();
-        if (activeAbilities.Count == 0)
-        {
-            _log.Debug("无主动技能，隐藏UI");
-            Visible = false;
-            return;
-        }
-
-        // 获取当前选中索引
-        int currentIndex = _entity.Data.Get<int>(DataKey.CurrentActiveAbilityIndex);
-        if (currentIndex < 0 || currentIndex >= activeAbilities.Count)
-        {
-            currentIndex = 0;
-            _entity.Data.Set(DataKey.CurrentActiveAbilityIndex, 0);
-        }
-
-        var ability = activeAbilities[currentIndex];
-        var abilityName = ability.Data.Get<string>(DataKey.Name);
-        UpdateCurrentAbility(abilityName);
-
-        Visible = true;
+        // Keep empty or minimal. ActiveSkillBarUI will call UpdateSlot.
     }
 
     /// <summary>
@@ -310,25 +275,22 @@ public partial class ActiveSkillSlotUI : UIBase
         float progress = cooldownComponent.GetCooldownProgress();
 
         // 遮罩高度：从满到空
-        float overlayHeight = _cooldownOverlayMaxHeight * (1f - progress);
-        _cooldownOverlay.Size = new Vector2(_cooldownOverlay.Size.X, overlayHeight);
+        // 使用 Scale 而不是 Size，以避免被 Container 布局强制重置
+        // 关键：设置基准点为底部中心 (或左下角)，使缩放产生 "向下流逝" 或 "向上揭开" 的效果
+        // 这里我们希望遮罩是黑色的，随着冷却结束，遮罩变小。
+        // 为了让遮罩 "向下消退" (露出顶部)，Pivot 应该在底部? 
+        // 不，如果 Scale Y 从 1 变 0:
+        // Pivot Top(0): Bottom edge moves Up. (Draining up)
+        // Pivot Bottom(1): Top edge moves Down. (Draining down)
+
+        // 强制设置 Pivot为左下角 (0, Size.Y)
+        _cooldownOverlay.PivotOffset = new Vector2(0, _cooldownOverlay.Size.Y);
+
+        _cooldownOverlay.Scale = new Vector2(1f, 1f - progress);
+        // _cooldownOverlay.Size = new Vector2(_cooldownOverlay.Size.X, overlayHeight);
     }
 
-    /// <summary>
-    /// 获取所有主动技能
-    /// </summary>
-    private List<AbilityEntity> GetActiveAbilities()
-    {
-        if (_entity == null) return new List<AbilityEntity>();
 
-        return EntityManager.GetAbilities(_entity)
-            .Where(a =>
-            {
-                var mode = (AbilityTriggerMode)a.Data.Get<int>(DataKey.AbilityTriggerMode);
-                return mode.HasFlag(AbilityTriggerMode.Manual);
-            })
-            .ToList();
-    }
 
     // ============================================================
     // 公共方法 (供 ActiveSkillBarUI 调用)
@@ -370,10 +332,38 @@ public partial class ActiveSkillSlotUI : UIBase
     }
 
     /// <summary>
+    /// 清空并重置槽位显示
+    /// </summary>
+    /// <summary>
+    /// 清空并重置槽位显示
+    /// </summary>
+    public void ClearSlot()
+    {
+        UnsubscribeAbilityEvents();
+        _currentAbility = null;
+
+        // 重置为默认状态
+        _skillIcon.Texture = null;
+        _skillNameLabel.Text = "";
+        _chargeLabel.Visible = false;
+        _cooldownOverlay.Visible = false;
+
+        // 关键修改：空槽位保持背景显示，作为占位符
+        if (_background != null)
+        {
+            _background.Visible = true;
+            // 确保重置为非高亮样式
+            SetHighlight(false);
+        }
+    }
+
+    /// <summary>
     /// 设置高亮状态
     /// </summary>
     public void SetHighlight(bool highlighted)
     {
+        // _log.Debug($"SetHighlight: {highlighted} (Ability: {_skillNameLabel.Text})"); // Optional excessive logging
+
         if (_background != null)
         {
             var stylebox = new StyleBoxFlat();
@@ -387,8 +377,19 @@ public partial class ActiveSkillSlotUI : UIBase
                 stylebox.BorderWidthBottom = 2;
                 stylebox.BorderColor = new Color(1, 1, 1, 1);
             }
+            else
+            {
+                stylebox.BorderWidthLeft = 0;
+                stylebox.BorderWidthRight = 0;
+                stylebox.BorderWidthTop = 0;
+                stylebox.BorderWidthBottom = 0;
+            }
 
             _background.AddThemeStyleboxOverride("panel", stylebox);
+        }
+        else
+        {
+            _log.Error("SetHighlight Failed: _background is null!");
         }
     }
 }

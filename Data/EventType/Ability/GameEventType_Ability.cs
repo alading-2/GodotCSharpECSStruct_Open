@@ -47,14 +47,19 @@ public static partial class GameEventType
         /// <summary>技能取消事件数据</summary>
         public readonly record struct CancelledEventData(AbilityEntity? Ability, string Reason);
 
-
-        // ================= TriggerComponent (触发组件) =================
+        // ================= AbilityTargetSelectionComponent (目标选择组件) =================================
 
         /// <summary>
-        /// 尝试激活技能。
-        /// 发送者：TriggerComponent (当满足触发条件时，如按下按键或周期已到)
-        /// 接收者：AbilitySystem (执行具体激活逻辑，如目标选择)
+        /// 请求选择目标（AbilitySystem -> 目标选择组件）
+        /// 接收者：AbilityTargetSelectionComponent
         /// </summary>
+        public const string SelectTargets = "ability:select_targets";
+        /// <summary>选择目标事件数据</summary>
+        public readonly record struct SelectTargetsEventData(CastContext Context);
+
+
+        // ================= TriggerComponent (触发组件) ===================================================
+
         /// <summary>
         /// 尝试激活技能。
         /// 发送者：TriggerComponent (当满足触发条件时，如按下按键或周期已到)

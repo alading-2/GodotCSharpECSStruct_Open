@@ -18,7 +18,7 @@ using System.Collections.Generic;
 /// </summary>
 public static class AbilityExecutorRegistry
 {
-    private static readonly Log _log = new("AbilityExecutorRegistry", LogLevel.Warning);
+    private static readonly Log _log = new(nameof(AbilityExecutorRegistry), LogLevel.Warning);
     private static readonly Dictionary<string, IAbilityExecutor> _executors = new();
     private static bool _initialized = false;
 
@@ -41,7 +41,7 @@ public static class AbilityExecutorRegistry
         }
 
         _executors[abilityName] = executor;
-        _log.Debug($"注册技能执行器: {abilityName}");
+        _log.Debug($"已注册技能执行器: {abilityName}");
     }
 
     /// <summary>
@@ -52,9 +52,11 @@ public static class AbilityExecutorRegistry
     /// <returns>执行结果，若未找到执行器则返回默认结果</returns>
     public static AbilityExecutedResult Execute(string abilityName, CastContext context)
     {
+        _log.Debug($"查找并执行技能执行器: '{abilityName}'");
+
         if (!_executors.TryGetValue(abilityName, out var executor))
         {
-            _log.Warn($"未找到技能执行器: {abilityName}，使用默认空执行");
+            _log.Warn($"未找到技能执行器: '{abilityName}'，已注册的核心执行器有 {string.Join(", ", _executors.Keys)}");
             return new AbilityExecutedResult
             {
                 TargetsHit = context.Targets?.Count ?? 0
@@ -63,7 +65,9 @@ public static class AbilityExecutorRegistry
 
         try
         {
-            return executor.Execute(context);
+            var result = executor.Execute(context);
+            _log.Info($"技能执行完成: '{abilityName}', 命中目标: {result.TargetsHit}");
+            return result;
         }
         catch (Exception ex)
         {

@@ -19,11 +19,12 @@ public static partial class DataKey
     public const string SingleSpawnVariance = "SingleSpawnVariance"; // 单次随机波动
     public const string SpawnStartDelay = "SpawnStartDelay"; // 开始延迟
     public const string SpawnWeight = "SpawnWeight"; // 权重
+    public const string HealthBarHeight = "HealthBarHeight"; // 血条高度（Y轴偏移）
+    public const string IsShowHealthBar = "IsShowHealthBar"; // 是否显示血条
 
     // === Enemy ===
     public const string ExpReward = "ExpReward"; // 经验奖励
     public const string SpawnRule = "SpawnRule"; // 生成规则
-    public const string HealthBarHeight = "HealthBarHeight"; // 血条高度（Y轴偏移）
 
     // === 状态标记 ===
     // 恢复

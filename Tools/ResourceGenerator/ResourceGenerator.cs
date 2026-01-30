@@ -38,6 +38,7 @@ class ResourceGenerator
             {
                 if (path.Contains("/Enemy/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.EnemyConfig;
                 if (path.Contains("/Player/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.PlayerConfig;
+                if (path.Contains("/Unit/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Unit; // New: General Unit config
                 if (path.Contains("/Ability/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.AbilityConfig;
                 if (path.Contains("/Item/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.ItemConfig;
             }
@@ -251,12 +252,28 @@ class ResourceGenerator
         sb.AppendLine("public static class ResourcePaths");
         sb.AppendLine("{");
 
-        // 生成统一的 Resources 字典
+        // 1. 生成静态类和常量 (强类型访问)
+        // 格式: ResourcePaths.EnemyConfig.Name
+        var allCategories = Enum.GetNames(typeof(ResourceCategory));
+        foreach (var categoryName in allCategories)
+        {
+            sb.AppendLine($"    public static class {categoryName}");
+            sb.AppendLine("    {");
+            if (resourcesByCategory.TryGetValue(Enum.Parse<ResourceCategory>(categoryName), out var items))
+            {
+                foreach (var kvp in items.OrderBy(x => x.Key))
+                {
+                    // 使用 nameof 风格的常量，值为 Key
+                    sb.AppendLine($"        public const string {kvp.Key} = \"{kvp.Key}\";");
+                }
+            }
+            sb.AppendLine("    }");
+            sb.AppendLine();
+        }
+
+        // 2. 生成统一的 Resources 字典 (运行时查找)
         sb.AppendLine("    public static readonly Dictionary<ResourceCategory, Dictionary<string, ResourceData>> Resources = new()");
         sb.AppendLine("    {");
-
-        // 确保所有枚举值都在字典中，即使为空
-        var allCategories = Enum.GetNames(typeof(ResourceCategory));
 
         foreach (var categoryName in allCategories)
         {
@@ -267,7 +284,8 @@ class ResourceGenerator
             {
                 foreach (var kvp in items.OrderBy(x => x.Key))
                 {
-                    sb.AppendLine($"                {{ \"{kvp.Key}\", new ResourceData(ResourceCategory.{categoryName}, \"{kvp.Value}\") }},");
+                    // 使用静态常量作为 Key，确保一致性
+                    sb.AppendLine($"                {{ {categoryName}.{kvp.Key}, new ResourceData(ResourceCategory.{categoryName}, \"{kvp.Value}\") }},");
                 }
             }
 

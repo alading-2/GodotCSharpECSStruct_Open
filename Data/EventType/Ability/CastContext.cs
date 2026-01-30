@@ -32,6 +32,11 @@ public class CastContext
     public Godot.Vector2? TargetPosition { get; set; }
 
     /// <summary>
+    /// 玩家的输入方向 (用于无目标时的默认指向)
+    /// </summary>
+    public Godot.Vector2 InputDirection { get; set; }
+
+    /// <summary>
     /// 触发源事件数据 (事件触发技能时携带)
     /// 例如：OnDamaged 触发时，携带 DamageEventData
     /// </summary>

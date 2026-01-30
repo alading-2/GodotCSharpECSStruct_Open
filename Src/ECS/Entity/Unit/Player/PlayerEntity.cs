@@ -9,7 +9,7 @@ using Godot;
 /// </summary>
 public partial class PlayerEntity : CharacterBody2D, IUnit
 {
-    private static readonly Log _log = new("Player");
+    private static readonly Log _log = new(nameof(PlayerEntity));
 
     // ================= IEntity 实现 =================
 

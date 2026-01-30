@@ -154,7 +154,7 @@ using Godot;
 /// </summary>
 public partial class HealthComponent : Node, IComponent
 {
-    private static readonly Log _log = new("HealthComponent");
+    private static readonly Log _log = new(nameof(HealthComponent));
 
     // ================= 标准字段 =================
     private Data? _data;
@@ -592,7 +592,7 @@ if (health != null)
 ```csharp
 public partial class SpawnSystem : Node
 {
-    private static readonly Log _log = new("SpawnSystem");
+    private static readonly Log _log = new(nameof(SpawnSystem));
 
     [Export] private EnemyResource _enemyResource;
 
