@@ -216,7 +216,7 @@ ability.Data.Set(DataKey.AbilityRange, 200f);
 AbilitySystem.TryTriggerAbility(owner, "FireballAbility", context);
 ```
 
-**详细架构**: [Docs/框架/ECS/Ability/技能系统架构设计理念.md](../../Docs/框架/ECS/Ability/技能系统架构设计理念.md)
+**详细架构**: [Docs/框架/ECS/Ability/技能系统架构设计理念.md](../../Docs/框架/ECS/Ability/技能系统架构设计理念.md) (唯一概念文档，涵盖架构、目标选择、输入、UI)
 
 ---
 

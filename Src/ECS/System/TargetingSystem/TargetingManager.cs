@@ -97,12 +97,13 @@ public static class TargetingManager
             CancelTargeting();
         }
 
-        // 保存状态
+        // 从 Context 提取所有信息
+        var context = evt.Context;
         IsTargeting = true;
-        CurrentCaster = evt.Caster;
-        CurrentAbility = evt.Ability;
-        CurrentContext = evt.Context;
-        CurrentRange = evt.Range;
+        CurrentCaster = context.Caster;
+        CurrentAbility = context.Ability;
+        CurrentContext = context;
+        CurrentRange = CurrentAbility!.Data.Get<float>(DataKey.AbilityRange);
 
         // 获取施法者位置
         Vector2 casterPos = Vector2.Zero;
@@ -136,9 +137,8 @@ public static class TargetingManager
         var abilityName = CurrentAbility.Data.Get<string>(DataKey.Name);
         _log.Info($"瞄准确认: {abilityName} -> {evt.TargetPosition}");
 
-        // 2. 调用技能系统完成释放
-        // 注意：此时 CanUseAbility 已在 StartTargeting 前检查过，这里直接触发
-        AbilitySystem.TryTriggerAbility(CurrentCaster!, abilityName, CurrentContext);
+        // 2. 恢复 AbilitySystem 流水线（CanUse 会重新检查，因为瞄准期间时间已过）
+        AbilitySystem.ResumeAfterTargeting(CurrentContext);
 
         // 3. 清理状态并销毁指示器
         EndTargeting(wasConfirmed: true, _currentIndicator);

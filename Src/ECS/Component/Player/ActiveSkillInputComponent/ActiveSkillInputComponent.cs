@@ -1,6 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 
 /// <summary>
 /// 主动技能输入组件 (Active Skill Input Component)
@@ -24,6 +23,11 @@ public partial class ActiveSkillInputComponent : Node, IComponent
     /// <summary> 所属实体的数据集引用 </summary>
     private Data? _data;
 
+    /// <summary> 缓存的主动技能列表，仅在技能增删时刷新 </summary>
+    private List<AbilityEntity> _cachedActiveAbilities = new();
+    /// <summary> 缓存是否需要刷新 </summary>
+    private bool _abilitiesDirty = true;
+
     // ================= IComponent 生命周期 =================
 
     /// <summary>
@@ -36,6 +40,15 @@ public partial class ActiveSkillInputComponent : Node, IComponent
         {
             _entity = iEntity;
             _data = iEntity.Data;
+
+            // 订阅技能增删事件，标记缓存失效
+            _entity.Events.On<GameEventType.Ability.AddedEventData>(
+                GameEventType.Ability.Added, _ => _abilitiesDirty = true
+            );
+            _entity.Events.On<GameEventType.Ability.RemovedEventData>(
+                GameEventType.Ability.Removed, _ => _abilitiesDirty = true
+            );
+
             _log.Info($"主动技能输入组件已注册到实体: {entity.Name}");
         }
     }
@@ -113,9 +126,8 @@ public partial class ActiveSkillInputComponent : Node, IComponent
 
     /// <summary>
     /// 执行当前选中的主动技能。
-    /// 流程：获取技能 -> 验证释放条件 -> 判断目标类型:
-    ///   - Entity类型: 直接触发（自动选目标）
-    ///   - Point类型: 进入瞄准模式，等待玩家确认位置
+    /// 统一入口：所有目标类型（Entity/Point/EntityOrPoint/None）
+    /// 均通过 AbilitySystem.TryTriggerAbility 处理，由流水线内部决定同步执行或异步瞄准。
     /// </summary>
     private void TryUseCurrentActiveAbility()
     {
@@ -138,76 +150,46 @@ public partial class ActiveSkillInputComponent : Node, IComponent
         var ability = activeAbilities[currentIndex];
         var abilityName = ability.Data.Get<string>(DataKey.Name);
 
-        // 1. 先检查技能是否可用（冷却、充能等）
-        if (!AbilitySystem.CanUseAbility(ability))
-        {
-            _log.Debug($"技能不可用: {abilityName}");
-            return;
-        }
-
-        // 2. 获取目标选择类型
-        var targetSelection = (AbilityTargetSelection)ability.Data.Get<int>(DataKey.AbilityTargetSelection);
-        _log.Debug($"触发技能: {abilityName}, 目标选择模式: {targetSelection} (int: {(int)targetSelection})");
-
-        // 3. 构建施法上下文
-        var context = new CastContext();
-
+        // 统一走 AbilitySystem 流水线（内部自动判断同步/异步）
         if (_entity is IEntity caster)
         {
-            // 4. 根据目标类型决定流程
-            if (targetSelection == AbilityTargetSelection.Point)
+            var context = new CastContext
             {
-                // Point类型技能 -> 进入瞄准模式
-                var range = ability.Data.Get<float>(DataKey.AbilityRange);
-                // 发送开始瞄准事件，由 TargetingManager 处理后续流程
-                GlobalEventBus.Global.Emit(
-                    GameEventType.Targeting.StartTargeting,
-                    new GameEventType.Targeting.StartTargetingEventData(
-                        Caster: caster,
-                        Ability: ability,
-                        Context: context,
-                        Range: range
-                    )
-                );
+                Ability = ability,
+                Caster = caster,
+                ResponseContext = new EventContext(),
+            };
+            ability.Events.Emit(
+                GameEventType.Ability.TryTrigger,
+                new GameEventType.Ability.TryTriggerEventData(context)
+            );
+            var result = context.ResponseContext?.HasResult == true
+                ? (TriggerResult)context.ResponseContext.GetResult<TriggerResult>()
+                : TriggerResult.Failed;
 
-                _log.Debug($"技能 {abilityName} 进入瞄准模式，射程: {range}");
+            if (result == TriggerResult.Failed)
+            {
+                _log.Debug($"技能触发失败: {abilityName}");
             }
-            else if (targetSelection == AbilityTargetSelection.Entity || targetSelection == AbilityTargetSelection.None)
+            else if (result == TriggerResult.WaitingForTarget)
             {
-                // Entity类型技能 -> 直接触发（自动选目标）
-                bool success = AbilitySystem.TryTriggerAbility(caster, abilityName, context);
-
-                if (!success)
-                {
-                    _log.Debug($"技能触发请求被拒绝: {abilityName}");
-                }
+                _log.Debug($"技能 {abilityName} 进入瞄准模式");
             }
         }
     }
 
     /// <summary>
-    /// 筛选当前实体拥有的所有支持“手动触发”模式的主动技能。
-    /// 过滤规则：
-    /// 1. TriggerMode 必须包含 Manual
-    /// 2. AbilityType 不能是 Passive (虽然通常 Manual 不会是 Passive，但防错)
+    /// 获取缓存的主动技能列表，仅在技能增删时刷新
     /// </summary>
-    /// <returns>符合条件的主动技能实体列表</returns>
     private List<AbilityEntity> GetActiveAbilities()
     {
         if (_entity == null) return new List<AbilityEntity>();
 
-        // 遍历实体拥有的所有技能集
-        return EntityManager.GetAbilities(_entity)
-            .Where(a =>
-            {
-                // 获取技能触发模式
-                var mode = (AbilityTriggerMode)a.Data.Get<int>(DataKey.AbilityTriggerMode);
-                // 获取技能类型
-                var type = (AbilityType)a.Data.Get<int>(DataKey.AbilityType);
-
-                // 必须同时满足：非被动技能 且 包含手动触发标记
-                return type != AbilityType.Passive && mode.HasFlag(AbilityTriggerMode.Manual);
-            })
-            .ToList();
+        if (_abilitiesDirty)
+        {
+            _cachedActiveAbilities = EntityManager.GetManualAbilities(_entity);
+            _abilitiesDirty = false;
+        }
+        return _cachedActiveAbilities;
     }
 }

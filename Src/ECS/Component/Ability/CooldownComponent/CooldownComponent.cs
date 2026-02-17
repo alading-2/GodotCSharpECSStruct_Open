@@ -121,7 +121,7 @@ public partial class CooldownComponent : Node, IComponent
 
                 _entity?.Events.Emit(
                     GameEventType.Ability.Ready,
-                    new GameEventType.Ability.ReadyEventData(_entity as AbilityEntity)
+                    new GameEventType.Ability.ReadyEventData()
                 );
 
                 _log.Debug($"技能冷却完成: {AbilityName}");

@@ -138,7 +138,7 @@ public partial class CostComponent : Node, IComponent
         {
             _entity.Events.Emit(
                 GameEventType.Ability.CostConsumed,
-                new GameEventType.Ability.CostConsumedEventData(abilityEntity, CostType, CostAmount)
+                new GameEventType.Ability.CostConsumedEventData(CostType, CostAmount)
             );
         }
 

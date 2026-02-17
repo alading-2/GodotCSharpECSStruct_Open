@@ -97,5 +97,10 @@ public static class DataRegister_Ability
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityEnabled, DisplayName = "已启用", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = true });
         // 执行中
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityIsActive, DisplayName = "执行中", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = false });
+
+        // ============ 主动技能输入 ============
+        // 当前激活技能索引
+        DataRegistry.Register(new DataMeta { Key = DataKey.CurrentActiveAbilityIndex, DisplayName = "当前激活技能索引", Category = DataCategory_Ability.Input, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
+
     }
 }

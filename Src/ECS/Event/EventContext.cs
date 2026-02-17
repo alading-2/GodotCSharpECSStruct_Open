@@ -53,4 +53,39 @@ public class EventContext
         // 记录第一个失败原因
         FailReason ??= reason;
     }
+
+    // ================= 通用结果返回 =================
+
+    /// <summary>
+    /// 通用结果存储（用于事件处理器返回强类型结果）
+    /// 使用示例：
+    /// <code>
+    /// var ctx = new EventContext();
+    /// Events.Emit("ability:try_trigger", ctx);
+    /// var result = ctx.GetResult&lt;TriggerResult&gt;();
+    /// </code>
+    /// </summary>
+    private object? _result;
+
+    /// <summary>
+    /// 设置强类型结果
+    /// </summary>
+    public void SetResult<T>(T result)
+    {
+        _result = result;
+        IsHandled = true;
+    }
+
+    /// <summary>
+    /// 获取强类型结果
+    /// </summary>
+    public T? GetResult<T>()
+    {
+        return _result is T typedResult ? typedResult : default;
+    }
+
+    /// <summary>
+    /// 检查是否有结果
+    /// </summary>
+    public bool HasResult => _result != null;
 }

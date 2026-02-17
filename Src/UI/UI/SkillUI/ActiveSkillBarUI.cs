@@ -1,6 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 
 
 /// <summary>
@@ -160,13 +159,6 @@ public partial class ActiveSkillBarUI : UIBase
     private List<AbilityEntity> GetActiveAbilities()
     {
         if (_entity == null) return new List<AbilityEntity>();
-
-        return EntityManager.GetAbilities(_entity)
-            .Where(a =>
-            {
-                var mode = (AbilityTriggerMode)a.Data.Get<int>(DataKey.AbilityTriggerMode);
-                return mode.HasFlag(AbilityTriggerMode.Manual);
-            })
-            .ToList();
+        return EntityManager.GetManualAbilities(_entity);
     }
 }

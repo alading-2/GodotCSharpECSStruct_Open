@@ -28,24 +28,24 @@ public static partial class GameEventType
         /// </summary>
         public const string CheckCanUse = "ability:check_can_use";
         /// <summary>检查可用性事件数据</summary>
-        public readonly record struct CheckCanUseEventData(AbilityEntity Ability, EventContext Context);
+        public readonly record struct CheckCanUseEventData(EventContext Context);
 
         // ================= AbilitySystem (技能系统核心流程) =================
 
         /// <summary>技能激活成功 (开始执行效果)</summary>
         public const string Activated = "ability:activated";
         /// <summary>技能激活事件数据</summary>
-        public readonly record struct ActivatedEventData(AbilityEntity? Ability, System.Collections.Generic.List<IEntity>? Targets);
+        public readonly record struct ActivatedEventData(CastContext Context);
 
         /// <summary>技能效果执行完成</summary>
         public const string Executed = "ability:executed";
         /// <summary>技能执行完成事件数据</summary>
-        public readonly record struct ExecutedEventData(AbilityEntity? Ability, AbilityExecutedResult? Result);
+        public readonly record struct ExecutedEventData(AbilityExecutedResult? Result);
 
         /// <summary>技能被取消 (如蓄力被打断)</summary>
         public const string Cancelled = "ability:cancelled";
         /// <summary>技能取消事件数据</summary>
-        public readonly record struct CancelledEventData(AbilityEntity? Ability, string Reason);
+        public readonly record struct CancelledEventData(string Reason);
 
         // ================= AbilityTargetSelectionComponent (目标选择组件) =================================
 
@@ -68,7 +68,7 @@ public static partial class GameEventType
         public const string TryTrigger = "ability:try_trigger";
         /// <summary>
         /// 尝试激活事件数据
-        /// 使用 CastContext 传递所有上下文信息，避免参数重复
+        /// Context: 施法上下文（包含 EventContext，用于回传 TriggerResult）
         /// </summary>
         public readonly record struct TryTriggerEventData(CastContext Context);
 
@@ -78,13 +78,8 @@ public static partial class GameEventType
         /// <summary>技能冷却完成</summary>
         public const string Ready = "ability:ready";
         /// <summary>技能冷却完成事件数据</summary>
-        public readonly record struct ReadyEventData(AbilityEntity? Ability);
+        public readonly record struct ReadyEventData();
 
-        /// <summary>
-        /// 请求启动冷却。
-        /// 发送者：AbilitySystem (技能激活后)
-        /// 接收者：CooldownComponent
-        /// </summary>
         /// <summary>
         /// 请求启动冷却。
         /// 发送者：AbilitySystem (技能激活后)
@@ -92,13 +87,8 @@ public static partial class GameEventType
         /// </summary>
         public const string StartCooldown = "ability:start_cooldown";
         /// <summary>启动冷却事件数据</summary>
-        public readonly record struct StartCooldownEventData(AbilityEntity Ability);
+        public readonly record struct StartCooldownEventData();
 
-        /// <summary>
-        /// 请求重置冷却（立即完成）。
-        /// 发送者：任意逻辑 (如刷新球效果)
-        /// 接收者：CooldownComponent
-        /// </summary>
         /// <summary>
         /// 请求重置冷却（立即完成）。
         /// 发送者：任意逻辑 (如刷新球效果)
@@ -106,7 +96,7 @@ public static partial class GameEventType
         /// </summary>
         public const string ResetCooldown = "ability:reset_cooldown";
         /// <summary>重置冷却事件数据</summary>
-        public readonly record struct ResetCooldownEventData(AbilityEntity Ability);
+        public readonly record struct ResetCooldownEventData();
 
         // ================= ChargeComponent (充能组件) =================
 
@@ -122,7 +112,7 @@ public static partial class GameEventType
         /// </summary>
         public const string ConsumeCharge = "ability:consume_charge";
         /// <summary>消耗充能事件数据</summary>
-        public readonly record struct ConsumeChargeEventData(AbilityEntity Ability, EventContext Context);
+        public readonly record struct ConsumeChargeEventData(EventContext Context);
 
         /// <summary>
         /// 请求增加充能事件。
@@ -142,7 +132,7 @@ public static partial class GameEventType
         /// </summary>
         public const string ConsumeCost = "ability:consume_cost";
         /// <summary>消耗成本请求事件数据</summary>
-        public readonly record struct ConsumeCostEventData(AbilityEntity Ability, EventContext Context);
+        public readonly record struct ConsumeCostEventData(EventContext Context);
 
         /// <summary>
         /// 成本消耗完成事件 (供 UI 监听)。
@@ -151,7 +141,7 @@ public static partial class GameEventType
         /// </summary>
         public const string CostConsumed = "ability:cost_consumed";
         /// <summary>成本消耗完成事件数据</summary>
-        public readonly record struct CostConsumedEventData(AbilityEntity Ability, AbilityCostType CostType, float Amount);
+        public readonly record struct CostConsumedEventData(AbilityCostType CostType, float Amount);
     }
 }
 

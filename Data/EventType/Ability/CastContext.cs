@@ -43,6 +43,12 @@ public class CastContext
     public object? SourceEventData { get; set; }
 
     /// <summary>
+    /// 事件请求-响应上下文
+    /// 用于跨事件处理器回传结果（如 TriggerResult）
+    /// </summary>
+    public EventContext? ResponseContext { get; set; }
+
+    /// <summary>
     /// 是否已预选目标
     /// true = 已由外部指定目标，AbilitySystem 跳过自动选取
     /// </summary>

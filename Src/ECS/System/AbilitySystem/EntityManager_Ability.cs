@@ -164,6 +164,26 @@ public static partial class EntityManager
     }
 
     /// <summary>
+    /// 获取单位的所有手动触发主动技能（供输入组件和UI共用）
+    /// 过滤规则：TriggerMode 包含 Manual 且 AbilityType 不是 Passive
+    /// </summary>
+    public static List<AbilityEntity> GetManualAbilities(IEntity owner)
+    {
+        var abilities = GetAbilities(owner);
+        var result = new List<AbilityEntity>();
+        foreach (var a in abilities)
+        {
+            var mode = (AbilityTriggerMode)a.Data.Get<int>(DataKey.AbilityTriggerMode);
+            var type = (AbilityType)a.Data.Get<int>(DataKey.AbilityType);
+            if (type != AbilityType.Passive && mode.HasFlag(AbilityTriggerMode.Manual))
+            {
+                result.Add(a);
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
     /// 根据名称获取技能
     /// </summary>
     public static AbilityEntity? GetAbilityByName(IEntity owner, string abilityName)

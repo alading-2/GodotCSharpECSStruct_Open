@@ -3,23 +3,33 @@ using System.Collections.Generic;
 
 /// <summary>
 /// 技能目标选择组件，只处理单位目标
-/// <para>职责：作为技能施法流水线的一环，响应 SelectTargets 事件，根据技能配置解析具体目标并填充 CastContext。</para>
-/// <para>接收：AbilitySystem 在施法逻辑中发出的 SelectTargets 事件</para>
+/// <para>职责：作为技能施法流水线（Cast Pipeline）的核心环节，负责响应 SelectTargets 事件。</para>
+/// <para>功能：根据技能的配置信息（如范围、几何形状、筛选规则等），利用 TargetSelector 检索有效目标并填充到 CastContext 中。</para>
+/// <para>协作：由 AbilitySystem 触发，计算结果供后续的 AbilityEffectComponent 使用。</para>
 /// </summary>
 public partial class AbilityTargetSelectionComponent : Node, IComponent
 {
+    /// <summary>
+    /// 日志工具，用于调试目标选择过程
+    /// </summary>
     private static readonly Log _log = new(nameof(AbilityTargetSelectionComponent));
+
+    /// <summary>
+    /// 绑定的实体引用
+    /// </summary>
     private IEntity? _entity;
 
     /// <summary>
-    /// 组件注册回调
+    /// 组件注册回调：当组件被添加到实体时调用
     /// </summary>
+    /// <param name="entity">所属的实体节点</param>
     public void OnComponentRegistered(Node entity)
     {
         if (entity is IEntity iEntity)
         {
             _entity = iEntity;
-            // 订阅目标选择事件
+            // 订阅实体层级的目标选择事件
+            // 当 AbilitySystem 流程进行到“选择目标”阶段时，会抛出此事件
             _entity.Events.On<GameEventType.Ability.SelectTargetsEventData>(
                 GameEventType.Ability.SelectTargets,
                 OnSelectTargets
@@ -29,7 +39,7 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
     }
 
     /// <summary>
-    /// 组件注销回调
+    /// 组件注销回调：清理引用，防止内存泄漏
     /// </summary>
     public void OnComponentUnregistered()
     {
@@ -37,49 +47,88 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
     }
 
     /// <summary>
-    /// 组件重置回调
+    /// 组件重置回调：处理对象池回收时的状态重置
     /// </summary>
     public void OnComponentReset() { }
 
     /// <summary>
-    /// 每帧更新：不再需要，目标选择改为事件驱动即时计算
+    /// 每帧更新：目前采用事件驱动架构，无需在 _Process 中轮询
     /// </summary>
     public override void _Process(double delta)
     {
     }
 
+    /// <summary>
+    /// 处理目标选择事件的核心回调
+    /// </summary>
+    /// <param name="evt">包含施法上下文（CastContext）的事件数据</param>
     private void OnSelectTargets(GameEventType.Ability.SelectTargetsEventData evt)
     {
         var context = evt.Context;
         var ability = context.Ability;
 
+        // 安全检查：如果技能对象为空，则无法进行目标选择
         if (ability == null) return;
 
-        // 1. 如果已有预设目标（来自 Context 初始化），通过
+        // 优先级检查：
+        // 1. 如果上下文已经有了预选目标（例如：指向性技能在发动时就已经确定了目标）
+        // 2. 或者已经有了预选位置（例如：某些范围技能直接施放在鼠标点击处）
+        // 则跳过自动解析逻辑，直接沿用已有数据
         if (context.HasPreselectedTargets || context.HasPreselectedPosition) return;
 
-        // 2. 执行目标解析 (ResolveTargets)
+        // 2. 执行自动目标解析 (ResolveTargets)
         ResolveTargets(context);
     }
 
     /// <summary>
-    /// 根据技能配置解析Entity目标
+    /// 根据技能的数据配置（Data）解析具体的 Entity 目标
     /// </summary>
+    /// <param name="context">施法上下文，解析出的目标将存入 context.Targets</param>
     private void ResolveTargets(CastContext context)
     {
         var ability = context.Ability;
+        // 从技能数据容器中获取目标选择模式（例如：实体、位置、自身等）
         var selection = ability.Data.Get<AbilityTargetSelection>(DataKey.AbilityTargetSelection);
 
-        // 获取施法者位置
+        // 获取施法者的全局位置，作为搜索的圆心/起点
         Vector2 origin = Vector2.Zero;
         if (context.Caster is Node2D node) origin = node.GlobalPosition;
 
+        // 根据不同的目标选择模式执行不同的查询逻辑
         switch (selection)
         {
             case AbilityTargetSelection.Entity:
                 {
+                    // 获取技能配置的攻击范围
                     var range = ability.Data.Get<float>(DataKey.AbilityRange);
-                    // 搜索范围内威胁值最高的敌人
+
+                    // 调用高性能目标选择工具 TargetSelector 进行空间查询
+                    // 这里默认搜索范围内“威胁值最高”的一个敌人
+                    var targets = TargetSelector.Query(new TargetSelectorQuery
+                    {
+                        Geometry = AbilityTargetGeometry.Circle, // 搜索形状：圆形
+                        Origin = origin,                         // 搜索中心
+                        Range = range,                          // 搜索半径
+                        CenterEntity = context.Caster,          // 施法者引用
+                        TeamFilter = AbilityTargetTeamFilter.Enemy, // 阵营过滤：只搜敌人
+                        Sorting = AbilityTargetSorting.HighestThreat, // 排序规则：威胁度优先
+                        MaxTargets = 1                          // 目标上限：1个
+                    });
+
+                    // 如果找到了符合条件的目标，填充到上下文中供后续流水线使用
+                    if (targets.Count > 0) context.Targets = targets;
+                }
+                break;
+
+            case AbilityTargetSelection.Point:
+                // Point 类型：位置由玩家异步瞄准指定（TargetingManager 填充 context.TargetPosition）
+                // 此处不做空间查询，可扩展位置合法性验证（如是否在可行走区域）
+                break;
+
+            case AbilityTargetSelection.EntityOrPoint:
+                {
+                    // EntityOrPoint：先尝试 Entity 自动索敌
+                    var range = ability.Data.Get<float>(DataKey.AbilityRange);
                     var targets = TargetSelector.Query(new TargetSelectorQuery
                     {
                         Geometry = AbilityTargetGeometry.Circle,
@@ -91,10 +140,12 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
                         MaxTargets = 1
                     });
 
+                    // 命中则填充 Entity 目标；未命中则留空，AbilitySystem 会回退到 Point 异步瞄准
                     if (targets.Count > 0) context.Targets = targets;
                 }
                 break;
 
+                // 后续可在此扩展更多模式，如 Directional(方向), Self(自身) 等
         }
     }
 }

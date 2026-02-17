@@ -46,5 +46,10 @@ public enum DataCategory_Ability
     /// <summary>
     /// 状态标记（解锁、启用、激活）
     /// </summary>
-    State
+    State,
+
+    /// <summary>
+    /// 输入（当前激活技能索引）
+    /// </summary>
+    Input
 }

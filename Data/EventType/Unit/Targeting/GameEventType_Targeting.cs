@@ -18,16 +18,8 @@ public static partial class GameEventType
         public const string StartTargeting = "targeting:start";
 
         /// <summary>开始瞄准事件数据</summary>
-        /// <param name="Caster">施法者实体</param>
-        /// <param name="Ability">待释放的技能</param>
-        /// <param name="Context">施法上下文(预填充)</param>
-        /// <param name="Range">技能射程(指示器移动范围)</param>
-        public readonly record struct StartTargetingEventData(
-            IEntity Caster,
-            AbilityEntity Ability,
-            CastContext Context,
-            float Range
-        );
+        /// <param name="Context">施法上下文（包含 Caster、Ability，Range 可从 Ability.Data 获取）</param>
+        public readonly record struct StartTargetingEventData(CastContext Context);
 
         /// <summary>
         /// 瞄准确认 - 玩家按下确认键
@@ -61,16 +53,5 @@ public static partial class GameEventType
         /// <param name="WasConfirmed">是否为确认(false表示取消)</param>
         public readonly record struct TargetingEndedEventData(bool WasConfirmed);
 
-        // ================= 指示器更新事件 =================
-
-        /// <summary>
-        /// 指示器位置更新 - 用于UI/范围预览同步
-        /// 发送者：TargetingIndicatorComponent (每帧移动时)
-        /// 接收者：UI系统(可选)
-        /// </summary>
-        public const string IndicatorMoved = "targeting:indicator_moved";
-
-        /// <summary>指示器移动事件数据</summary>
-        public readonly record struct IndicatorMovedEventData(Vector2 Position);
     }
 }

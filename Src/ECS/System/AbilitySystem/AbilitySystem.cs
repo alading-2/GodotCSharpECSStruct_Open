@@ -21,62 +21,37 @@ public static class AbilitySystem
 
     /// <summary>
     /// 处理 TryTrigger 事件 - 统一施法入口
-    /// 
-    /// 调用者：
-    /// - TriggerComponent 发送的 TryTrigger 事件
-    /// - 可直接调用（如输入系统、AI）
     /// </summary>
     public static void HandleTryTrigger(GameEventType.Ability.TryTriggerEventData eventData)
     {
-        // 直接使用传入的上下文
         var context = eventData.Context;
+        var resultContext = context.ResponseContext;
 
         if (context.Ability == null)
         {
             _log.Debug("TryTrigger 失败: Ability 为空");
+            resultContext?.SetResult(TriggerResult.Failed);
             return;
         }
 
-        TryTriggerAbilityWithContext(context);
+        var result = TryTriggerAbilityWithContext(context);
+        resultContext?.SetResult(result);
     }
 
     /// <summary>
-    /// 尝试触发技能（带预填充上下文）
-    /// 用于主动技能输入系统，外部预先填充目标/位置
+    /// 使用施法上下文触发技能（统一流水线入口）
+    /// <returns>触发结果：Success / Failed / WaitingForTarget</returns>
     /// </summary>
-    /// <param name="owner">技能拥有者</param>
-    /// <param name="abilityName">技能名称</param>
-    /// <param name="context">预填充的施法上下文</param>
-    /// <returns>是否成功触发</returns>
-    public static bool TryTriggerAbility(IEntity owner, string abilityName, CastContext context)
+    private static TriggerResult TryTriggerAbilityWithContext(CastContext context)
     {
-        var ability = EntityManager.GetAbilityByName(owner, abilityName);
-        if (ability == null)
-        {
-            _log.Debug($"技能不存在: {abilityName}");
-            return false;
-        }
-
-        context.Ability = ability;
-        context.Caster = owner;
-
-        return TryTriggerAbilityWithContext(context);
-    }
-
-    /// <summary>
-    /// 使用施法上下文触发技能
-    /// <returns>是否成功触发</returns>
-    /// </summary>
-    private static bool TryTriggerAbilityWithContext(CastContext context)
-    {
-        if (context.Ability == null) return false;
+        if (context.Ability == null) return TriggerResult.Failed;
 
         var ability = context.Ability;
 
         // 事件驱动：就绪检查
         if (!CanUseAbility(ability))
         {
-            return false;
+            return TriggerResult.Failed;
         }
 
         // 发送事件：进行目标解析
@@ -86,10 +61,33 @@ public static class AbilitySystem
             new GameEventType.Ability.SelectTargetsEventData(context)
         );
 
-        // 注意：如果目标选择失败且技能要求必须有目标，AbilityTargetSelectionComponent 应该负责
-        // 标记失败或在 SelectTargets 之后进行验证。
-        // 为保持灵活性，我们在系统层不再做强验证，而是在执行层由 Executor 判断或
-        // 在此处增加一个通用的就绪性二次检查（可选）。
+        // ==================== 目标解析阶段（统一处理 Entity / Point / EntityOrPoint） ====================
+        var targetSelection = (AbilityTargetSelection)ability.Data.Get<int>(DataKey.AbilityTargetSelection);
+
+        // Entity 类型：必须有目标，否则中止流水线（避免空放浪费充能/冷却）
+        if (targetSelection == AbilityTargetSelection.Entity
+            && !context.HasPreselectedTargets)
+        {
+            var abilityName = ability.Data.Get<string>(DataKey.Name);
+            _log.Debug($"目标验证失败: {abilityName} 需要 Entity 目标但未找到");
+            return TriggerResult.Failed;
+        }
+
+        // Point 类型：需要玩家指定位置，如果还没有则进入异步瞄准
+        if (targetSelection == AbilityTargetSelection.Point
+            && !context.HasPreselectedPosition)
+        {
+            RequestPlayerTargeting(context);
+            return TriggerResult.WaitingForTarget;
+        }
+
+        // EntityOrPoint 类型：先尝试 Entity 自动索敌，未命中则回退 Point 异步瞄准
+        if (targetSelection == AbilityTargetSelection.EntityOrPoint
+            && !context.HasPreselectedTargets && !context.HasPreselectedPosition)
+        {
+            RequestPlayerTargeting(context);
+            return TriggerResult.WaitingForTarget;
+        }
 
         var consumeContext = new EventContext();
         // 事件驱动：请求消耗资源（充能等）
@@ -97,7 +95,7 @@ public static class AbilitySystem
         {
             ability.Events.Emit(
                 GameEventType.Ability.ConsumeCharge,
-                new GameEventType.Ability.ConsumeChargeEventData(ability, consumeContext)
+                new GameEventType.Ability.ConsumeChargeEventData(consumeContext)
             );
         }
 
@@ -105,7 +103,7 @@ public static class AbilitySystem
         if (!consumeContext.Success)
         {
             _log.Debug($"消耗资源失败: {consumeContext.FailReason}");
-            return false;
+            return TriggerResult.Failed;
         }
 
         // 事件驱动:请求启动冷却
@@ -118,7 +116,7 @@ public static class AbilitySystem
         {
             ability.Events.Emit(
                 GameEventType.Ability.StartCooldown,
-                new GameEventType.Ability.StartCooldownEventData(ability)
+                new GameEventType.Ability.StartCooldownEventData()
             );
         }
 
@@ -126,23 +124,22 @@ public static class AbilitySystem
         var costContext = new EventContext();
         ability.Events.Emit(
             GameEventType.Ability.ConsumeCost,
-            new GameEventType.Ability.ConsumeCostEventData(ability, costContext)
+            new GameEventType.Ability.ConsumeCostEventData(costContext)
         );
 
         if (!costContext.Success)
         {
             _log.Debug($"消耗成本失败: {costContext.FailReason}");
-            return false;
+            return TriggerResult.Failed;
         }
 
         // 标记为执行中
         ability.Data.Set(DataKey.AbilityIsActive, true);
 
         // 发送激活事件
-        // 注意：这里直接传递上下文中的 targets，如果没有则传空列表
         ability.Events.Emit(
             GameEventType.Ability.Activated,
-            new GameEventType.Ability.ActivatedEventData(ability, context.Targets ?? new List<IEntity>())
+            new GameEventType.Ability.ActivatedEventData(context)
         );
 
         // 执行效果（通过 AbilityExecutorRegistry）
@@ -153,7 +150,44 @@ public static class AbilitySystem
 
         var name = ability.Data.Get<string>(DataKey.Name);
         _log.Debug($"激活技能: {name}");
-        return true;
+        return TriggerResult.Success;
+    }
+
+    // ==================== 异步瞄准支持 ====================
+
+    /// <summary>
+    /// 请求玩家异步瞄准（Point 类型技能）
+    /// 发送 StartTargeting 全局事件，由 TargetingManager 接管后续流程
+    /// </summary>
+    private static void RequestPlayerTargeting(CastContext context)
+    {
+        var ability = context.Ability!;
+        var range = ability.Data.Get<float>(DataKey.AbilityRange);
+        var abilityName = ability.Data.Get<string>(DataKey.Name);
+
+        _log.Debug($"技能 {abilityName} 需要玩家瞄准，进入异步模式，射程: {range}");
+
+        GlobalEventBus.Global.Emit(
+            GameEventType.Targeting.StartTargeting,
+            new GameEventType.Targeting.StartTargetingEventData(context)
+        );
+    }
+
+    /// <summary>
+    /// 瞄准完成后恢复流水线（由 TargetingManager 回调）
+    /// context.TargetPosition 已由 TargetingManager 填充
+    /// </summary>
+    public static TriggerResult ResumeAfterTargeting(CastContext context)
+    {
+        if (context.Ability == null || context.Caster == null)
+        {
+            _log.Warn("ResumeAfterTargeting: 上下文无效");
+            return TriggerResult.Failed;
+        }
+
+        // 重新走完整流水线（CanUse 会再次检查，因为瞄准期间时间已过）
+        // SelectTargets 事件仍会发出，但 HasPreselectedPosition=true 时组件会跳过
+        return TryTriggerAbilityWithContext(context);
     }
 
     // ==================== 就绪检查 ====================
@@ -187,7 +221,7 @@ public static class AbilitySystem
         var context = new EventContext();
         ability.Events.Emit(
             GameEventType.Ability.CheckCanUse,
-            new GameEventType.Ability.CheckCanUseEventData(ability, context)
+            new GameEventType.Ability.CheckCanUseEventData(context)
         );
 
         if (!context.Success)
@@ -222,7 +256,7 @@ public static class AbilitySystem
         // 发送执行完成事件
         ability.Events.Emit(
             GameEventType.Ability.Executed,
-            new GameEventType.Ability.ExecutedEventData(ability, result)
+            new GameEventType.Ability.ExecutedEventData(result)
         );
     }
 }

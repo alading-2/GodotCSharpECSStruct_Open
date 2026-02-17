@@ -15,6 +15,6 @@ AbilityCooldown = 2.0
 AbilityTargetSelection = 2
 AbilityTargetGeometry = 1
 AbilityTargetTeamFilter = 2
-AbilityRange = 800.0
+AbilityRange = 400.0
 AbilityLength = 200.0
 AbilityDamage = 10.0

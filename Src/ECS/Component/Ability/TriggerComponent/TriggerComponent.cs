@@ -1,3 +1,4 @@
+
 using System.Linq;
 using Godot;
 using System.Collections.Generic;
@@ -242,11 +243,6 @@ public partial class TriggerComponent : Node, IComponent
 
     /// <summary>
     /// 核心触发逻辑：发送 TryTrigger 请求，由 AbilitySystem 统一处理。
-    /// 
-    /// 修改说明（2026-01-20）：
-    /// - 移除直接启动冷却的逻辑（由 AbilitySystem 处理）
-    /// - 移除直接发送 Activated 事件（由 AbilitySystem 处理）
-    /// - 改为只发送 TryTrigger 请求
     /// </summary>
     /// <param name="sourceEventData">触发源事件数据（事件触发时携带）</param>
     private void TriggerAbility(object? sourceEventData = null)
@@ -266,7 +262,8 @@ public partial class TriggerComponent : Node, IComponent
         {
             Ability = ability,
             Caster = caster,
-            SourceEventData = sourceEventData
+            SourceEventData = sourceEventData,
+            ResponseContext = new EventContext()
             // RequestedTargets 默认为 null，表示自动选取
         };
 

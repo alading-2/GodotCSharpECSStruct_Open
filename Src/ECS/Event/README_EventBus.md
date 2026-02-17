@@ -218,6 +218,72 @@ UI 组件如何处理这种分层关系？
 
 ---
 
+## 5. EventContext 请求-响应模式
+
+`EventContext` 支持通过事件传递返回值，适用于"请求-响应"场景。
+
+### 使用场景
+
+当事件发送者需要从处理器获取结果时（如技能触发结果、检查结果等）。
+
+### 基本用法
+
+```csharp
+// 发送方：将 EventContext 放入业务上下文
+var context = new CastContext
+{
+    Ability = ability,
+    Caster = caster,
+    EventContext = new EventContext()
+};
+ability.Events.Emit(
+    GameEventType.Ability.TryTrigger,
+    new GameEventType.Ability.TryTriggerEventData(context)
+);
+
+// 读取强类型结果
+var result = context.EventContext?.HasResult == true
+    ? (TriggerResult)context.EventContext.GetResult<TriggerResult>()
+    : TriggerResult.Failed;
+
+if (result == TriggerResult.Success) {
+    _log.Info("技能触发成功");
+}
+```
+
+```csharp
+// 接收方：写入结果到 EventContext
+public static void HandleTryTrigger(GameEventType.Ability.TryTriggerEventData eventData)
+{
+    var context = eventData.Context;
+    var resultContext = context.EventContext;
+    
+    var result = TryTriggerAbilityWithContext(context);
+    resultContext?.SetResult(result);  // 写入强类型结果
+}
+```
+
+### EventContext API
+
+| 方法 | 说明 |
+|:---|:---|
+| `SetResult<T>(T result)` | 设置强类型结果 |
+| `GetResult<T>()` | 获取强类型结果（返回 `T?`） |
+| `HasResult` | 检查是否有结果 |
+| `Success` | 操作是否成功（bool） |
+| `SetFailed(string reason)` | 标记失败并记录原因 |
+
+### 为什么不创建专用 Context 类？
+
+`EventContext` 已经足够通用：
+- ✅ 通过泛型支持任意返回类型
+- ✅ 内置 `Success`/`FailReason` 字段
+- ✅ 避免为每个事件创建新的 Context 类
+
+**推荐做法**：优先使用 `EventContext`，只在需要额外字段时才继承。
+
+---
+
 ## 高级特性
 
 ### 优先级订阅

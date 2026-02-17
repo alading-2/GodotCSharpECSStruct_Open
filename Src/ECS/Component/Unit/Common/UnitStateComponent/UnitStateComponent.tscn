@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://bpd8k5x3qcfmr"]
+
+[ext_resource type="Script" uid="uid://cd4l5dj867x6n" path="res://Src/ECS/Component/Unit/Common/UnitStateComponent/UnitStateComponent.cs" id="1_state"]
+
+
+[node name="UnitStateComponent" type="Node"]
+script = ExtResource("1_state")
