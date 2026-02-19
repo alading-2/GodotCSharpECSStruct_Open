@@ -1,8 +1,478 @@
-[gd_scene load_steps=2 format=3 uid="uid://cvx83guqqptmk"]
+[gd_scene format=3 uid="uid://cvx83guqqptmk"]
 
-[ext_resource type="SpriteFrames" uid="uid://bq8drhxoiufm5" path="res://assets/Unit/Enemy/鱼人/AnimatedSprite2D/鱼人.tres" id="1_ub5gb"]
+[ext_resource type="Texture2D" uid="uid://bacisvyxndfwt" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_00.png" id="1_h01cp"]
+[ext_resource type="Texture2D" uid="uid://dpcggy2p6qbgx" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_01.png" id="2_6u6l3"]
+[ext_resource type="Texture2D" uid="uid://bsw7oq1xinxn1" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_02.png" id="3_r5cmr"]
+[ext_resource type="Texture2D" uid="uid://xdsqtrhkhral" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_03.png" id="4_bfmdk"]
+[ext_resource type="Texture2D" uid="uid://ckdxa2ujrhm8e" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_04.png" id="5_d0hn5"]
+[ext_resource type="Texture2D" uid="uid://vag5r8sjsafr" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_05.png" id="6_cepjb"]
+[ext_resource type="Texture2D" uid="uid://c6u5u7mphg213" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_06.png" id="7_dot75"]
+[ext_resource type="Texture2D" uid="uid://b82wx3e8im1kj" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_07.png" id="8_qfxip"]
+[ext_resource type="Texture2D" uid="uid://pv4imuhpailo" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_08.png" id="9_o8i01"]
+[ext_resource type="Texture2D" uid="uid://d3cm434oeffx8" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_09.png" id="10_fqk4n"]
+[ext_resource type="Texture2D" uid="uid://47qlex0rqven" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_10.png" id="11_ndtd0"]
+[ext_resource type="Texture2D" uid="uid://b4q5toxkhjjtr" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_11.png" id="12_phbwg"]
+[ext_resource type="Texture2D" uid="uid://cjdpn04vxo18v" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_12.png" id="13_e7iss"]
+[ext_resource type="Texture2D" uid="uid://vca2h0kl2xgh" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_13.png" id="14_epkws"]
+[ext_resource type="Texture2D" uid="uid://wt7r214ecvxw" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_14.png" id="15_i7uma"]
+[ext_resource type="Texture2D" uid="uid://bga3ndl80vkow" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_15.png" id="16_vxi3v"]
+[ext_resource type="Texture2D" uid="uid://b1rwxjbkwm2cw" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_16.png" id="17_ycoyg"]
+[ext_resource type="Texture2D" uid="uid://de0mnqttvnffw" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_17.png" id="18_omveh"]
+[ext_resource type="Texture2D" uid="uid://bxig5xhol7gpc" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_00.png" id="19_o8idu"]
+[ext_resource type="Texture2D" uid="uid://d1dbx50iepa4y" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_01.png" id="20_ahxvc"]
+[ext_resource type="Texture2D" uid="uid://cm1q8qqvycc83" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_02.png" id="21_cj52t"]
+[ext_resource type="Texture2D" uid="uid://bdq4jljm7qyiv" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_03.png" id="22_mgwue"]
+[ext_resource type="Texture2D" uid="uid://c5rf48fyql7wr" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_04.png" id="23_ugidp"]
+[ext_resource type="Texture2D" uid="uid://levs2u6yxpc7" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_05.png" id="24_8vtgg"]
+[ext_resource type="Texture2D" uid="uid://bnhl01ogxcqx7" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_06.png" id="25_qsc4j"]
+[ext_resource type="Texture2D" uid="uid://bcy8c8s72tmp6" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_07.png" id="26_2jikx"]
+[ext_resource type="Texture2D" uid="uid://c2s322do60ujv" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_08.png" id="27_xxotf"]
+[ext_resource type="Texture2D" uid="uid://dqxpa4p4xnbfq" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_09.png" id="28_piirl"]
+[ext_resource type="Texture2D" uid="uid://58q5pabccm7y" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_10.png" id="29_kdfab"]
+[ext_resource type="Texture2D" uid="uid://6qvtsokeudgn" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_11.png" id="30_kcrgy"]
+[ext_resource type="Texture2D" uid="uid://di7q4aq1rlios" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack2_12.png" id="31_ki2xb"]
+[ext_resource type="Texture2D" uid="uid://cgxyk024q13fr" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-BeAttacked_0.png" id="32_v1eah"]
+[ext_resource type="Texture2D" uid="uid://doannevfk6x4j" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-BeAttacked_1.png" id="33_u58cc"]
+[ext_resource type="Texture2D" uid="uid://q0274gsdy4ws" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-BeAttacked_2.png" id="34_dvify"]
+[ext_resource type="Texture2D" uid="uid://db5dux2m4hkao" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-BeAttacked_3.png" id="35_5omm5"]
+[ext_resource type="Texture2D" uid="uid://bhwiylssq84f8" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-BeAttacked_4.png" id="36_jqc1c"]
+[ext_resource type="Texture2D" uid="uid://ex3ieeom2vse" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-BeAttacked_5.png" id="37_aw228"]
+[ext_resource type="Texture2D" uid="uid://c81nhgh1g4jik" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-BeAttacked_6.png" id="38_us8jn"]
+[ext_resource type="Texture2D" uid="uid://dlclsbtnr4is6" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_00.png" id="39_n1j4x"]
+[ext_resource type="Texture2D" uid="uid://0pgf4j46ttot" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_01.png" id="40_dcgrp"]
+[ext_resource type="Texture2D" uid="uid://dc3mnbljkf232" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_02.png" id="41_jmuk6"]
+[ext_resource type="Texture2D" uid="uid://du1y13kw4uiwq" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_03.png" id="42_d6qw0"]
+[ext_resource type="Texture2D" uid="uid://dp23qr4t33u1s" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_04.png" id="43_rx4fq"]
+[ext_resource type="Texture2D" uid="uid://dn80tnu4sc8li" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_05.png" id="44_7h4jw"]
+[ext_resource type="Texture2D" uid="uid://dck83icu6q7ul" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_06.png" id="45_1henp"]
+[ext_resource type="Texture2D" uid="uid://dggpw3okec3se" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_07.png" id="46_hw7xn"]
+[ext_resource type="Texture2D" uid="uid://c1yu1dagrmu3t" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_08.png" id="47_emb8i"]
+[ext_resource type="Texture2D" uid="uid://dx5ln7r8ckt4d" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_09.png" id="48_bca7y"]
+[ext_resource type="Texture2D" uid="uid://df7bnq636y47g" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_10.png" id="49_pmk2j"]
+[ext_resource type="Texture2D" uid="uid://b7di2lerltqj0" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_11.png" id="50_bb4nx"]
+[ext_resource type="Texture2D" uid="uid://dsuxq6yfvncnr" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_12.png" id="51_h23fl"]
+[ext_resource type="Texture2D" uid="uid://cvqcsmmexwax3" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_13.png" id="52_m61m0"]
+[ext_resource type="Texture2D" uid="uid://b6lmkn2tevcoy" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_14.png" id="53_8n3ww"]
+[ext_resource type="Texture2D" uid="uid://do4l7l571uxl7" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_15.png" id="54_p6p4i"]
+[ext_resource type="Texture2D" uid="uid://dhqefewmlgy24" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_16.png" id="55_r8doh"]
+[ext_resource type="Texture2D" uid="uid://cpwuccva01s6a" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_17.png" id="56_wm1gx"]
+[ext_resource type="Texture2D" uid="uid://5mbk5fuupx4x" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Celebrate_18.png" id="57_kxwso"]
+[ext_resource type="Texture2D" uid="uid://ctw0yh42yk0yq" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_00.png" id="58_kvcj0"]
+[ext_resource type="Texture2D" uid="uid://ue1k43cnvqtv" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_01.png" id="59_aieuj"]
+[ext_resource type="Texture2D" uid="uid://dmimc7pfih37c" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_02.png" id="60_bvufg"]
+[ext_resource type="Texture2D" uid="uid://cof5lq2584xo1" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_03.png" id="61_6vava"]
+[ext_resource type="Texture2D" uid="uid://cwv5ba2qlippg" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_04.png" id="62_db1ba"]
+[ext_resource type="Texture2D" uid="uid://btje4b2ua3r17" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_05.png" id="63_f8axt"]
+[ext_resource type="Texture2D" uid="uid://cuhicmka2ful7" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_06.png" id="64_0po8o"]
+[ext_resource type="Texture2D" uid="uid://b4d536o5ug15v" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_07.png" id="65_pc2na"]
+[ext_resource type="Texture2D" uid="uid://01sn1guoeclc" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_08.png" id="66_fmi75"]
+[ext_resource type="Texture2D" uid="uid://ceg70fjra23nr" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_09.png" id="67_j8tx5"]
+[ext_resource type="Texture2D" uid="uid://c82sfpgliagcf" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_10.png" id="68_03mpk"]
+[ext_resource type="Texture2D" uid="uid://c7qot3mybl2th" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_11.png" id="69_7fgrq"]
+[ext_resource type="Texture2D" uid="uid://c23demhhr0cbd" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_12.png" id="70_ii313"]
+[ext_resource type="Texture2D" uid="uid://cuyogre2oypyw" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Deaded_13.png" id="71_3vp2s"]
+[ext_resource type="Texture2D" uid="uid://d0c6rljwgmv7j" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_00.png" id="72_3a2ph"]
+[ext_resource type="Texture2D" uid="uid://bm1hcng0j2s6y" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_01.png" id="73_nu34t"]
+[ext_resource type="Texture2D" uid="uid://dfkc53c3ik5c2" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_02.png" id="74_1li2g"]
+[ext_resource type="Texture2D" uid="uid://b3uwmvujiar3b" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_03.png" id="75_qqwb0"]
+[ext_resource type="Texture2D" uid="uid://20k7rweqc0k" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_04.png" id="76_a5ks2"]
+[ext_resource type="Texture2D" uid="uid://cb5xng68cehr0" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_05.png" id="77_cl77a"]
+[ext_resource type="Texture2D" uid="uid://dqtc8ag5bjpn5" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_06.png" id="78_e2hn1"]
+[ext_resource type="Texture2D" uid="uid://ujrx4riuyc8q" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_07.png" id="79_inwn1"]
+[ext_resource type="Texture2D" uid="uid://qiv4tavhx7lm" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_08.png" id="80_071kb"]
+[ext_resource type="Texture2D" uid="uid://dn31w7jpivxlw" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Idle_09.png" id="81_w2yi5"]
+[ext_resource type="Texture2D" uid="uid://bforpkfida6ua" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_0.png" id="82_7dy7q"]
+[ext_resource type="Texture2D" uid="uid://ci1igaii4kqcr" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_1.png" id="83_1wjai"]
+[ext_resource type="Texture2D" uid="uid://dxfv1unjpm1y2" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_2.png" id="84_yi2yk"]
+[ext_resource type="Texture2D" uid="uid://b4h2lyyjx1d1n" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_3.png" id="85_g7nka"]
+[ext_resource type="Texture2D" uid="uid://wnn03wp8e8uc" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_4.png" id="86_8f0np"]
+[ext_resource type="Texture2D" uid="uid://mt3oyh266ou" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_5.png" id="87_o6liq"]
+[ext_resource type="Texture2D" uid="uid://bghptx84qk0rc" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_6.png" id="88_0vgb6"]
+[ext_resource type="Texture2D" uid="uid://dww4ug4lss06y" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Movement_7.png" id="89_p313o"]
+[ext_resource type="Texture2D" uid="uid://iqh65xwb5vq4" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_00.png" id="90_jm0bf"]
+[ext_resource type="Texture2D" uid="uid://dygx5nseqrgwg" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_01.png" id="91_qkafd"]
+[ext_resource type="Texture2D" uid="uid://ciuixypee3hom" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_02.png" id="92_1mabg"]
+[ext_resource type="Texture2D" uid="uid://we1357yauq86" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_03.png" id="93_btuuk"]
+[ext_resource type="Texture2D" uid="uid://cocfg06xhx0sj" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_04.png" id="94_u3cd6"]
+[ext_resource type="Texture2D" uid="uid://cdyscm0lldngw" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_05.png" id="95_26gwy"]
+[ext_resource type="Texture2D" uid="uid://j0jfqrpa03a8" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_06.png" id="96_5pskn"]
+[ext_resource type="Texture2D" uid="uid://yafjbpqdanv4" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_07.png" id="97_3b5ql"]
+[ext_resource type="Texture2D" uid="uid://8lk3428uav28" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_08.png" id="98_oidc1"]
+[ext_resource type="Texture2D" uid="uid://bhwhkw5vmf6s7" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_09.png" id="99_t88p8"]
+[ext_resource type="Texture2D" uid="uid://d4klqq8kmqmdc" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_10.png" id="100_7h3cq"]
+[ext_resource type="Texture2D" uid="uid://bb0bc0qh51g1e" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_11.png" id="101_4g3xp"]
+[ext_resource type="Texture2D" uid="uid://8js0bwu2a1u0" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_12.png" id="102_jjdtk"]
+[ext_resource type="Texture2D" uid="uid://swdx2e4r85e" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_13.png" id="103_r8cf0"]
+[ext_resource type="Texture2D" uid="uid://b7pw3yifwce7t" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_14.png" id="104_i4eg7"]
+[ext_resource type="Texture2D" uid="uid://l2hhhuh0ttd" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_15.png" id="105_s0w8s"]
+[ext_resource type="Texture2D" uid="uid://drkd6ej7f4aof" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_16.png" id="106_tu68p"]
+[ext_resource type="Texture2D" uid="uid://5j8thekncrn1" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Skill_17.png" id="107_4ipjg"]
 
-[node name="鱼人" type="AnimatedSprite2D"]
+[sub_resource type="SpriteFrames" id="SpriteFrames_7jgvc"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_h01cp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_6u6l3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_r5cmr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_bfmdk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_d0hn5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_cepjb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_dot75")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_qfxip")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_o8i01")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_fqk4n")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_ndtd0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_phbwg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_e7iss")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_epkws")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_i7uma")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_vxi3v")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_ycoyg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_omveh")
+}],
+"loop": false,
+"name": &"attack1",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("19_o8idu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_ahxvc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_cj52t")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_mgwue")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_ugidp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_8vtgg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_qsc4j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26_2jikx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_xxotf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_piirl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_kdfab")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_kcrgy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_ki2xb")
+}],
+"loop": false,
+"name": &"attack2",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("32_v1eah")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_u58cc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_dvify")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_5omm5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_jqc1c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_aw228")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_us8jn")
+}],
+"loop": false,
+"name": &"beattacked",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("39_n1j4x")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_dcgrp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("41_jmuk6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42_d6qw0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43_rx4fq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44_7h4jw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45_1henp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46_hw7xn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47_emb8i")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48_bca7y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("49_pmk2j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("50_bb4nx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("51_h23fl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("52_m61m0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("53_8n3ww")
+}, {
+"duration": 1.0,
+"texture": ExtResource("54_p6p4i")
+}, {
+"duration": 1.0,
+"texture": ExtResource("55_r8doh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("56_wm1gx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("57_kxwso")
+}],
+"loop": false,
+"name": &"celebrate",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("58_kvcj0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("59_aieuj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("60_bvufg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("61_6vava")
+}, {
+"duration": 1.0,
+"texture": ExtResource("62_db1ba")
+}, {
+"duration": 1.0,
+"texture": ExtResource("63_f8axt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("64_0po8o")
+}, {
+"duration": 1.0,
+"texture": ExtResource("65_pc2na")
+}, {
+"duration": 1.0,
+"texture": ExtResource("66_fmi75")
+}, {
+"duration": 1.0,
+"texture": ExtResource("67_j8tx5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("68_03mpk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("69_7fgrq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("70_ii313")
+}, {
+"duration": 1.0,
+"texture": ExtResource("71_3vp2s")
+}],
+"loop": false,
+"name": &"dead",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("72_3a2ph")
+}, {
+"duration": 1.0,
+"texture": ExtResource("73_nu34t")
+}, {
+"duration": 1.0,
+"texture": ExtResource("74_1li2g")
+}, {
+"duration": 1.0,
+"texture": ExtResource("75_qqwb0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("76_a5ks2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("77_cl77a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("78_e2hn1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("79_inwn1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("80_071kb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("81_w2yi5")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("82_7dy7q")
+}, {
+"duration": 1.0,
+"texture": ExtResource("83_1wjai")
+}, {
+"duration": 1.0,
+"texture": ExtResource("84_yi2yk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("85_g7nka")
+}, {
+"duration": 1.0,
+"texture": ExtResource("86_8f0np")
+}, {
+"duration": 1.0,
+"texture": ExtResource("87_o6liq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("88_0vgb6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("89_p313o")
+}],
+"loop": true,
+"name": &"run",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("90_jm0bf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("91_qkafd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("92_1mabg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("93_btuuk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("94_u3cd6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("95_26gwy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("96_5pskn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("97_3b5ql")
+}, {
+"duration": 1.0,
+"texture": ExtResource("98_oidc1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("99_t88p8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("100_7h3cq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("101_4g3xp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("102_jjdtk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("103_r8cf0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("104_i4eg7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("105_s0w8s")
+}, {
+"duration": 1.0,
+"texture": ExtResource("106_tu68p")
+}, {
+"duration": 1.0,
+"texture": ExtResource("107_4ipjg")
+}],
+"loop": false,
+"name": &"skill",
+"speed": 10.0
+}]
+
+[node name="鱼人" type="AnimatedSprite2D" unique_id=1894225626]
 position = Vector2(0, -40)
-sprite_frames = ExtResource("1_ub5gb")
+sprite_frames = SubResource("SpriteFrames_7jgvc")
 animation = &"attack1"

@@ -2,103 +2,127 @@
 
 ## 概述
 
-技能系统由两部分组成：
+技能系统由两层组成：
 
-1. **`EntityManager` (Ability 扩展)**：管理技能的生命周期（CRUD）
-2. **`AbilitySystem`**：提供技能的激活逻辑（检查 → 消耗 → 冷却 → 执行）
+1. **EntityManager_Ability**：技能生命周期管理（增删查 + 关系绑定）
+2. **AbilitySystem**：施法流水线编排（检查 -> 目标 -> 消耗 -> 执行）
 
-> **架构风格**：Pseudo-ECS + 静态逻辑类
-> - **数据管理**：`EntityManager.AddAbility/RemoveAbility/GetAbilities`
-> - **业务中心**：`AbilitySystem.TryActivateAbility/CanUseAbility`
+系统核心是事件驱动：
+
+- 触发层发送 `TryTrigger`
+- `AbilitySystem` 统一处理
+- 组件通过 `EventContext` 协作检查和消耗
+- 结果通过 `CastContext.ResponseContext` 回传 `TriggerResult`
 
 ---
 
 ## 目录结构
 
-```
-Src/ECS/Entity/Ability/
-├── AbilityEntity.cs          # 技能实体（实现 IEntity + IPoolable）
-└── AbilityEntity.tscn        # 技能场景（对象池使用）
-
+```text
 Src/ECS/System/AbilitySystem/
-├── AbilitySystem.cs          # 激活逻辑（静态类）
-├── EntityManager_Ability.cs  # 增删查（EntityManager partial 扩展）
+├── AbilitySystem.cs          # 施法流水线（统一入口）
+├── EntityManager_Ability.cs  # 技能 CRUD + 事件接线
+├── AbilityCheckPhase.cs      # CheckCanUse 检查优先级
+├── TriggerResult.cs          # Success/Failed/WaitingForTarget
 └── README.md                 # 本文档
 ```
 
 ---
 
-## 核心流程 (Trigger -> Cast -> Execute)
+## 核心流程（Trigger -> Cast -> Execute）
 
-### 1. 触发 (Trigger)
-由 `TriggerComponent`、AI 或玩家输入发起：
+### 1) Trigger（触发）
+
+触发源：
+
+- `ActiveSkillInputComponent`（玩家手动）
+- `TriggerComponent`（事件触发 / 周期触发）
+
+统一方式：向技能实体发 `TryTrigger` 事件，并携带 `CastContext`。
+
 ```csharp
-// 只表达“想放”，不处理逻辑
-// 这里的 Utility Method 实际上是包装了 TryTrigger 的逻辑或直接调用处理入口
-AbilitySystem.TryActivateAbility(player, "Fireball");
+var context = new CastContext
+{
+    Ability = ability,
+    Caster = caster,
+    ResponseContext = new EventContext()
+};
+
+ability.Events.Emit(
+    GameEventType.Ability.TryTrigger,
+    new GameEventType.Ability.TryTriggerEventData(context)
+);
 ```
 
-### 2. 施法 (Cast)
-`AbilitySystem` 执行核心检查:
-1.  **Check**: `CheckCanUse` (CD? 充能? 成本? 标签?)
-2.  **Target**: 获取或选择目标
-3.  **Cost**: `ConsumeCharge` & `ConsumeCost` & `StartCooldown`
+### 2) Cast（施法）
 
-### 3. 执行 (Execute)
-若施法成功，发出 `Activated` 事件，Payload 包含完整上下文：
-```csharp
-ability.Events.Emit(GameEventType.Ability.Activated, new ActivatedEventData(
-    caster, ability, targets, triggerContext
-));
-```
-具体的伤害、特效逻辑应监听此事件执行。
+`AbilitySystem.TryTriggerAbilityWithContext(context)` 内部流水线：
+
+1. `CanUseAbility`（触发 `CheckCanUse`）
+2. `SelectTargets`（触发 `AbilityTargetSelectionComponent`）
+3. 目标解析分流：`Entity` / `Point` / `EntityOrPoint` / `None`
+4. `ConsumeCharge`
+5. `StartCooldown`（周期技能跳过）
+6. `ConsumeCost`
+
+其中 Point / EntityOrPoint 在无预选位置时会进入异步瞄准：
+
+- `AbilitySystem` 发 `Targeting.StartTargeting`
+- `TargetingManager` 接管输入与状态
+- 确认后调用 `ResumeAfterTargeting(context)` 回到流水线
+
+### 3) Execute（执行）
+
+施法通过后：
+
+- 发送 `Ability.Activated`（UI 等监听）
+- 调用 `AbilityExecutorRegistry.Execute(...)`
+- 发送 `Ability.Executed`
 
 ---
 
-## 系统接口 (API)
+## 返回值与请求-响应
 
-### EntityManager (Ability 扩展)
+`TryTrigger` 的结果不通过额外参数传递，而是放在 `CastContext.ResponseContext`：
+
+```csharp
+var result = context.ResponseContext?.HasResult == true
+    ? (TriggerResult)context.ResponseContext.GetResult<TriggerResult>()
+    : TriggerResult.Failed;
+```
+
+`AbilitySystem.HandleTryTrigger` 负责写入结果：
+
+```csharp
+context.ResponseContext?.SetResult(result);
+```
+
+---
+
+## 关键 API
+
+### EntityManager_Ability
+
 | 方法 | 说明 |
 | :--- | :--- |
-| `AddAbility` | 为单位添加技能（自动处理关系和对象池） |
-| `RemoveAbility` | 移除技能 |
+| `AddAbility` | 添加技能、建立 Owner 关系、接线 `TryTrigger -> AbilitySystem.HandleTryTrigger` |
+| `RemoveAbility` | 移除技能与关系 |
 | `GetAbilities` | 获取单位所有技能 |
+| `GetManualAbilities` | 获取可手动施放技能（输入与 UI 共用） |
+| `GetAbilityByName` | 按名称查询技能 |
 
-### AbilitySystem (Static)
+### AbilitySystem
+
 | 方法 | 说明 |
 | :--- | :--- |
-| `TryActivateAbility` | 尝试激活（包含完整检查流程） |
-| `CanUseAbility` | 仅检查是否可用 (不消耗) |
-| `SelectTargets` | 执行目标选择逻辑 (基于 DataKey 配置) |
+| `HandleTryTrigger` | `TryTrigger` 事件入口；写入 `ResponseContext` |
+| `ResumeAfterTargeting` | 异步瞄准确认后恢复流水线 |
+| `CanUseAbility` | 仅检查可用性（不消耗） |
 
 ---
 
-## 事件驱动机制
+## 相关文档
 
-**核心原则**：`AbilitySystem` 是调度器，`Component` 是响应器。
-
-| 事件名称 | 方向 |Payload 核心数据 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `CheckCanUse` | Sys->Cmp | `EventContext` (可设置失败原因) | 询问组件是否允许施法 |
-| `ConsumeCharge` | Sys->Cmp | `EventContext` | 请求扣除次数 |
-| `StartCooldown`| Sys->Cmp | - | 请求开始冷却 |
-| `Activated` | Sys->Exec | `List<IEntity> Targets` | 施法成功，开始执行业务 |
-
----
-
-## 架构特性
-
-### 1. 静态化逻辑
-`AbilitySystem` 是纯静态类，无状态。所有状态存储在 `AbilityEntity` 的 `Data` 中。
-
-### 2. 选择性封装 (Selective Encapsulation)
-组件使用 `Data.Get<T>` 读写数据，但对于高频核心数据（如 `CurrentCharges`, `IsOnCooldown`），推荐使用 C# 属性封装以提高代码可读性。
-
-### 3. 统一关系管理
-技能归属权统一由 `EntityRelationshipManager` 维护，不依赖组件内的 `_owner` 字段序列化。
-
----
-
-**维护者**：项目团队  
-**文档版本**：v3.0  
-**更新日期**：2026-01-20
+- 架构总览：`Docs/框架/ECS/Ability/技能系统架构设计理念.md`
+- 瞄准子系统：`Src/ECS/System/TargetingSystem/README.md`
+- 事件总线：`Src/ECS/Event/README_EventBus.md`

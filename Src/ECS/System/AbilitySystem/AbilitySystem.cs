@@ -89,6 +89,7 @@ public static class AbilitySystem
             return TriggerResult.WaitingForTarget;
         }
 
+        // ==================== 资源消耗阶段 ====================
         var consumeContext = new EventContext();
         // 事件驱动：请求消耗资源（充能等）
         if (ability.Data.Get<bool>(DataKey.IsAbilityUsesCharges))
@@ -120,6 +121,7 @@ public static class AbilitySystem
             );
         }
 
+        // ==================== 消耗阶段 ====================
         // 事件驱动:请求消耗成本 (魔法/能量等)
         var costContext = new EventContext();
         ability.Events.Emit(
@@ -136,7 +138,7 @@ public static class AbilitySystem
         // 标记为执行中
         ability.Data.Set(DataKey.AbilityIsActive, true);
 
-        // 发送激活事件
+        // 发送激活事件，技能UI使用
         ability.Events.Emit(
             GameEventType.Ability.Activated,
             new GameEventType.Ability.ActivatedEventData(context)

@@ -438,27 +438,6 @@ public class Data
         return new Dictionary<string, object>(_data);
     }
 
-
-
-    /// <summary>
-    /// 从配置字典加载数据到容器
-    /// </summary>
-    public void LoadFromConfig(Dictionary<string, object> config)
-    {
-        if (config == null) return;
-
-        // 直接复制字典中的所有属性到 Data
-        foreach (var kvp in config)
-        {
-            // 跳过 SpawnRule，它不是 Data 的数据
-            if (kvp.Key == DataKey.SpawnRule) continue;
-            Set(kvp.Key, kvp.Value);
-        }
-
-        var name = config.GetValueOrDefault(DataKey.Name) as string ?? "Unknown";
-        _log.Debug($"已加载配置: ({name})");
-    }
-
     /// <summary>
     /// 从 Resource 加载数据到容器
     /// 自动遍历 Resource 的属性并设置到 Data 中

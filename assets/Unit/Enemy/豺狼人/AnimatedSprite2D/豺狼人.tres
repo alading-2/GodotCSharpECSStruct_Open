@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" load_steps=102 format=3 uid="uid://cg7vmf3gqtelw"]
+[gd_resource type="SpriteFrames" format=3 uid="uid://cg7vmf3gqtelw"]
 
 [ext_resource type="Texture2D" uid="uid://cpdjmkm74p82b" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_00.png" id="1_l4qph"]
 [ext_resource type="Texture2D" uid="uid://c15k4snnhrrjv" path="res://assets/Unit/Enemy/豺狼人/hero_chailangren-Attack1_01.png" id="2_qdscd"]
@@ -159,7 +159,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("18_2kqrk")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack1",
 "speed": 10.0
 }, {
@@ -185,7 +185,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("25_htscu")
 }],
-"loop": true,
+"loop": false,
 "name": &"beattacked",
 "speed": 10.0
 }, {
@@ -202,7 +202,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("29_0ej8c")
 }],
-"loop": true,
+"loop": false,
 "name": &"castingidle",
 "speed": 10.0
 }, {
@@ -276,7 +276,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("52_63ejm")
 }],
-"loop": true,
+"loop": false,
 "name": &"celebrate",
 "speed": 10.0
 }, {
@@ -332,7 +332,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("69_x5g7c")
 }],
-"loop": true,
+"loop": false,
 "name": &"dead",
 "speed": 10.0
 }, {
@@ -443,7 +443,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("101_cwo53")
 }],
-"loop": true,
+"loop": false,
 "name": &"skill",
 "speed": 10.0
 }]

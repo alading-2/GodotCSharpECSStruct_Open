@@ -212,8 +212,22 @@ ability.Data.Set(DataKey.AbilityCooldown, 5.0f);  // CooldownComponent监听
 ability.Data.Set(DataKey.AbilityTargetGeometry, AbilityTargetGeometry.Circle);  // 自动使用TargetSelector
 ability.Data.Set(DataKey.AbilityRange, 200f);
 
-// 触发技能(AbilitySystem会自动处理冷却、充能、目标选择)
-AbilitySystem.TryTriggerAbility(owner, "FireballAbility", context);
+// 触发技能（统一走 TryTrigger 事件入口）
+var context = new CastContext
+{
+    Ability = ability,
+    Caster = owner,
+    ResponseContext = new EventContext()
+};
+ability.Events.Emit(
+    GameEventType.Ability.TryTrigger,
+    new GameEventType.Ability.TryTriggerEventData(context)
+);
+
+// 可选：读取触发结果
+var result = context.ResponseContext?.HasResult == true
+    ? (TriggerResult)context.ResponseContext.GetResult<TriggerResult>()
+    : TriggerResult.Failed;
 ```
 
 **详细架构**: [Docs/框架/ECS/Ability/技能系统架构设计理念.md](../../Docs/框架/ECS/Ability/技能系统架构设计理念.md) (唯一概念文档，涵盖架构、目标选择、输入、UI)

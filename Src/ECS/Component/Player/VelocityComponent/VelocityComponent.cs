@@ -16,6 +16,7 @@ public partial class VelocityComponent : Node, IComponent
 
     private Data _data;
     private IEntity _entity;
+    private AnimatedSprite2D? _sprite;
 
     public void OnComponentRegistered(Node entity)
     {
@@ -25,6 +26,11 @@ public partial class VelocityComponent : Node, IComponent
             _data = iEntity.Data;
             _entity = iEntity;
         }
+
+        // 缓存 VisualRoot 下的 AnimatedSprite2D 用于翻转
+        var visualRoot = entity.GetNodeOrNull("VisualRoot");
+        if (visualRoot is AnimatedSprite2D sprite)
+            _sprite = sprite;
     }
 
     public void OnComponentUnregistered()
@@ -32,6 +38,7 @@ public partial class VelocityComponent : Node, IComponent
         // 清理引用
         _data = null;
         _entity = null;
+        _sprite = null;
     }
 
     public void OnComponentReset()
@@ -77,6 +84,13 @@ public partial class VelocityComponent : Node, IComponent
 
         // 获取输入
         Vector2 inputDir = InputManager.GetMoveInput();
+
+        // 根据输入方向翻转 sprite（有输入时才更新，停止时保持最后朝向）
+        if (_sprite != null)
+        {
+            if (inputDir.X > 0f) _sprite.FlipH = false;
+            else if (inputDir.X < 0f) _sprite.FlipH = true;
+        }
 
         // 计算期望的目标速度
         Vector2 targetVelocity = inputDir.Normalized() * Speed;

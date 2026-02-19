@@ -68,7 +68,7 @@ public static partial class GameEventType
         public const string TryTrigger = "ability:try_trigger";
         /// <summary>
         /// 尝试激活事件数据
-        /// Context: 施法上下文（包含 EventContext，用于回传 TriggerResult）
+        /// Context: 施法上下文（包含 ResponseContext，用于回传 TriggerResult）
         /// </summary>
         public readonly record struct TryTriggerEventData(CastContext Context);
 

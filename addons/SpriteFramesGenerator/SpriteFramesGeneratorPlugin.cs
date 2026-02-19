@@ -33,6 +33,13 @@ namespace BrotatoMy.Addons
             { "die", "dead" },
         };
 
+        // 需要循环播放的动画名称集合（其他动画默认不循环）
+        private static readonly HashSet<string> _loopAnimations = new()
+        {
+            "idle",
+            "run",
+        };
+
         private FolderContextMenuPlugin _contextMenuPlugin;
 
         /// <summary>
@@ -426,7 +433,9 @@ namespace BrotatoMy.Addons
 
                 spriteFrames.AddAnimation(animName);    // 添加动画
                 spriteFrames.SetAnimationSpeed(animName, defaultFps); // 使用设置中的帧率
-                spriteFrames.SetAnimationLoop(animName, defaultLoop); // 使用配置中的循环播放设置
+                // 只有白名单中的动画循环播放（idle/run/castingidle），其他动画播放一次
+                bool shouldLoop = _loopAnimations.Contains(animName);
+                spriteFrames.SetAnimationLoop(animName, shouldLoop);
 
                 foreach (var frameData in frames)
                 {

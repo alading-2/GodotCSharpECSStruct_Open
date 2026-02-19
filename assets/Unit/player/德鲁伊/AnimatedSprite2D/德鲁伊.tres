@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" load_steps=88 format=3 uid="uid://bhd885mwpak6u"]
+[gd_resource type="SpriteFrames" format=3 uid="uid://bhd885mwpak6u"]
 
 [ext_resource type="Texture2D" uid="uid://bhyfvcfjesex0" path="res://assets/Unit/Player/德鲁伊/hero_deluyizhanglao_1-Attack1_00.png" id="1_igdgh"]
 [ext_resource type="Texture2D" uid="uid://cjlqyuvf4oh11" path="res://assets/Unit/Player/德鲁伊/hero_deluyizhanglao_1-Attack1_01.png" id="2_msk8s"]
@@ -142,7 +142,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("17_gml2m")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack1",
 "speed": 10.0
 }, {
@@ -165,7 +165,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("23_rjqkd")
 }],
-"loop": true,
+"loop": false,
 "name": &"beattacked",
 "speed": 10.0
 }, {
@@ -182,7 +182,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("27_lx7ae")
 }],
-"loop": true,
+"loop": false,
 "name": &"castingidle",
 "speed": 10.0
 }, {
@@ -211,7 +211,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("35_6mfva")
 }],
-"loop": true,
+"loop": false,
 "name": &"celebrate",
 "speed": 10.0
 }, {
@@ -255,7 +255,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("48_saf4y")
 }],
-"loop": true,
+"loop": false,
 "name": &"dead",
 "speed": 10.0
 }, {
@@ -387,7 +387,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("87_kn2k2")
 }],
-"loop": true,
+"loop": false,
 "name": &"skill",
 "speed": 10.0
 }]

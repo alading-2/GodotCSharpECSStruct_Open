@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://dyaqs3f5hg1h8"]
+[gd_scene format=3 uid="uid://dyaqs3f5hg1h8"]
 
 [ext_resource type="SpriteFrames" uid="uid://bhd885mwpak6u" path="res://assets/Unit/Player/德鲁伊/AnimatedSprite2D/德鲁伊.tres" id="1_nmvsh"]
 
-[node name="德鲁伊" type="AnimatedSprite2D"]
+[node name="德鲁伊" type="AnimatedSprite2D" unique_id=870989864]
 position = Vector2(0, -64)
 sprite_frames = ExtResource("1_nmvsh")
 animation = &"attack1"

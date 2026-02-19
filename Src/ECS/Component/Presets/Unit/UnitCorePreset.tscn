@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bpd8k5x3qcfmr" path="res://Src/ECS/Component/Unit/Common/UnitStateComponent/UnitStateComponent.tscn" id="3_state"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/Common/DataInitComponent/DataInitComponent.tscn" id="5_44gbc"]
 [ext_resource type="PackedScene" uid="uid://dq8m5nvk2r7wp" path="res://Src/ECS/Component/Unit/Common/RecoveryComponent/RecoveryComponent.tscn" id="5_bplmq"]
+[ext_resource type="PackedScene" uid="uid://bx7k2n4p9qmva" path="res://Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.tscn" id="6_anim"]
 
 [node name="UnitCorePreset" type="Node" unique_id=292361174]
 
@@ -17,3 +18,5 @@
 [node name="RecoveryComponent" parent="." unique_id=1746390251 instance=ExtResource("5_bplmq")]
 
 [node name="DataInitComponent" parent="." unique_id=1151160750 instance=ExtResource("5_44gbc")]
+
+[node name="UnitAnimationComponent" parent="." unique_id=3847291056 instance=ExtResource("6_anim")]

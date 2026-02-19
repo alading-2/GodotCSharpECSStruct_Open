@@ -234,7 +234,7 @@ var context = new CastContext
 {
     Ability = ability,
     Caster = caster,
-    EventContext = new EventContext()
+    ResponseContext = new EventContext()
 };
 ability.Events.Emit(
     GameEventType.Ability.TryTrigger,
@@ -242,8 +242,8 @@ ability.Events.Emit(
 );
 
 // 读取强类型结果
-var result = context.EventContext?.HasResult == true
-    ? (TriggerResult)context.EventContext.GetResult<TriggerResult>()
+var result = context.ResponseContext?.HasResult == true
+    ? (TriggerResult)context.ResponseContext.GetResult<TriggerResult>()
     : TriggerResult.Failed;
 
 if (result == TriggerResult.Success) {
@@ -256,7 +256,7 @@ if (result == TriggerResult.Success) {
 public static void HandleTryTrigger(GameEventType.Ability.TryTriggerEventData eventData)
 {
     var context = eventData.Context;
-    var resultContext = context.EventContext;
+    var resultContext = context.ResponseContext;
     
     var result = TryTriggerAbilityWithContext(context);
     resultContext?.SetResult(result);  // 写入强类型结果

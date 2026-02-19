@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" load_steps=108 format=3 uid="uid://bq8drhxoiufm5"]
+[gd_resource type="SpriteFrames" format=3 uid="uid://bq8drhxoiufm5"]
 
 [ext_resource type="Texture2D" uid="uid://bacisvyxndfwt" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_00.png" id="1_6ol5n"]
 [ext_resource type="Texture2D" uid="uid://dpcggy2p6qbgx" path="res://assets/Unit/Enemy/鱼人/hero_jianshi-Attack1_01.png" id="2_p06a2"]
@@ -165,7 +165,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("18_3f72b")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack1",
 "speed": 10.0
 }, {
@@ -209,7 +209,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("31_ict4w")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack2",
 "speed": 10.0
 }, {
@@ -235,7 +235,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("38_fbyjk")
 }],
-"loop": true,
+"loop": false,
 "name": &"beattacked",
 "speed": 10.0
 }, {
@@ -297,7 +297,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("57_n175o")
 }],
-"loop": true,
+"loop": false,
 "name": &"celebrate",
 "speed": 10.0
 }, {
@@ -344,7 +344,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("71_1wpis")
 }],
-"loop": true,
+"loop": false,
 "name": &"dead",
 "speed": 10.0
 }, {
@@ -467,7 +467,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("107_0ulmn")
 }],
-"loop": true,
+"loop": false,
 "name": &"skill",
 "speed": 10.0
 }]
