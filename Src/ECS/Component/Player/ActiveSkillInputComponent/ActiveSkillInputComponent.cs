@@ -62,11 +62,6 @@ public partial class ActiveSkillInputComponent : Node, IComponent
         _data = null;
     }
 
-    /// <summary>
-    /// 对象池复用时的重置逻辑
-    /// </summary>
-    public void OnComponentReset() { }
-
     // ================= Godot 生命周期 =================
 
     /// <summary>

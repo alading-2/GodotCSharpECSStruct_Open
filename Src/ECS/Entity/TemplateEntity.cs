@@ -117,23 +117,4 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
 
     #endregion
 
-    #region ================= 业务逻辑 =================
-
-    // 在此添加业务逻辑
-
-    /// <summary>
-    /// Spawn 后的初始化示例(由 System 或其他逻辑调用)
-    /// </summary>
-    /// <param name="skillLevel">运行时数据: 技能等级</param>
-    /// <param name="target">运行时数据: 目标</param>
-    public void InitAfterSpawn(int skillLevel, IEntity target)
-    {
-        // ✅ Spawn 之后设置的运行时数据
-        // 这些数据会触发 PropertyChanged 事件,Component 可以监听响应
-        // 这种"Spawn -> Configure"模式是标准做法
-        Data.Set("SkillLevel", skillLevel); // 建议使用 DataKey.SkillLevel
-        Data.Set("Target", target);         // 建议使用 DataKey.Target
-    }
-
-    #endregion
 }

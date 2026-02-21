@@ -119,12 +119,6 @@ public partial class MyComponent : Node, IComponent
         }
     }
 
-    public void OnComponentReset()
-    {
-        // ✅ 对象池复用前的状态重置（由 EntityManager.UnregisterComponents 自动调用）
-        // 例如: 重置计时器、清理临时状态、取消正在进行的操作
-    }
-
     public void OnComponentUnregistered()
     {
         // ✅ 无需在此解绑事件（EntityManager 会自动调用 Events.Clear()）
@@ -151,8 +145,7 @@ Destroy 流程:
   │   ├─ Events.Clear() + Data.Clear()
   │   │
   │   └─ UnregisterComponents()
-  │       ├─ OnComponentReset() ─► 重置组件状态
-  │       └─ OnComponentUnregistered() ─► 清理引用
+  │       └─ OnComponentUnregistered() ─► 清理引用与重置组件状态
   │
   └─ ObjectPool.Return() ─► OnPoolRelease (Entity)
 ```

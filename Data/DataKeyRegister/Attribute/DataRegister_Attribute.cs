@@ -221,7 +221,9 @@ public static class DataRegister_Attribute
 
         DataRegistry.Register(new DataMeta { Key = DataKey.DamageAmplification, DisplayName = "伤害增幅", Description = "伤害增幅百分比", Category = DataCategory_Attribute.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true, SupportModifiers = true });
         DataRegistry.Register(new DataMeta { Key = DataKey.Penetration, DisplayName = "护甲穿透", Description = "护甲穿透值", Category = DataCategory_Attribute.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
-        DataRegistry.Register(new DataMeta { Key = DataKey.Range, DisplayName = "攻击范围", Description = "攻击范围", Category = DataCategory_Attribute.Attack, Type = typeof(float), DefaultValue = 100f, MinValue = 0, SupportModifiers = true });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AttackRange, DisplayName = "攻击范围", Description = "攻击范围", Category = DataCategory_Attribute.Attack, Type = typeof(float), DefaultValue = 100f, MinValue = 0, SupportModifiers = true });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AttackWindUpTime, DisplayName = "攻击前摇", Description = "攻击前摇时间", Category = DataCategory_Attribute.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AttackRecoveryTime, DisplayName = "攻击后摇", Description = "攻击后摇时间", Category = DataCategory_Attribute.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
         DataRegistry.Register(new DataMeta { Key = DataKey.Knockback, DisplayName = "击退", Description = "击退敌人的距离", Category = DataCategory_Attribute.Attack, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = 1000, SupportModifiers = true });
 
         // ========================================

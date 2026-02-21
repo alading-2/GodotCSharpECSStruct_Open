@@ -51,7 +51,14 @@ public static partial class DataKey
     // 穿透
     public const string Penetration = "Penetration"; // 物理穿透
 
-    public const string Range = "Range"; // 攻击范围
+    // 攻击阶段
+    public const string AttackWindUpTime = "AttackWindUpTime"; // 攻击前摇时长（秒，默认0=即时判定）
+    public const string AttackRecoveryTime = "AttackRecoveryTime"; // 攻击后摇时长（秒，默认0=无后摇）
+
+    // 其他攻击属性
+    public const string AttackRange = "AttackRange"; // 攻击范围
+
+
     public const string Knockback = "Knockback"; // 击退力度
 
     // ========== 防御相关 ==========

@@ -56,6 +56,22 @@ public static partial class GameEventType
         /// <summary>单位复活完成事件数据</summary>
         public readonly record struct RevivedEventData();
 
+        // === 动画事件 ===
+
+        /// <summary>请求停止当前动画立即回 idle（命令事件：外部 -> UnitAnimationComponent）</summary>
+        public const string StopAnimationRequested = "unit:stop_animation_requested";
+        /// <summary>请求停止动画事件数据</summary>
+        public readonly record struct StopAnimationRequestedEventData();
+
+        /// <summary>请求播放动画（命令事件：外部 -> UnitAnimationComponent）</summary>
+        public const string PlayAnimationRequested = "unit:play_animation_requested";
+        /// <summary>请求播放动画事件数据</summary>
+        public readonly record struct PlayAnimationRequestedEventData(
+            string AnimName,
+            bool ForceRestart = false,
+            float Duration = -1f
+        );
+
         // === 死亡/等级全局事件 (迁移自 Global) ===
 
         /// <summary>

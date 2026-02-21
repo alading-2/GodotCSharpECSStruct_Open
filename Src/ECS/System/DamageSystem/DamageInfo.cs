@@ -55,9 +55,9 @@ public class DamageInfo
 
     // === 数值信息 ===
     /// <summary>
-    /// 原始面板伤害
+    /// 伤害
     /// </summary>
-    public float BaseDamage { get; set; }
+    public float Damage { get; set; }
 
     /// <summary>
     /// 最终结算伤害

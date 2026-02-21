@@ -51,6 +51,7 @@ public static class ResourcePaths
         public const string RecoveryComponent = "RecoveryComponent";
         public const string TargetingIndicatorControlComponent = "TargetingIndicatorControlComponent";
         public const string TriggerComponent = "TriggerComponent";
+        public const string UnitAnimationComponent = "UnitAnimationComponent";
         public const string UnitCorePreset = "UnitCorePreset";
         public const string UnitStateComponent = "UnitStateComponent";
         public const string VelocityComponent = "VelocityComponent";
@@ -169,6 +170,7 @@ public static class ResourcePaths
                 { Component.RecoveryComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/RecoveryComponent/RecoveryComponent.tscn") },
                 { Component.TargetingIndicatorControlComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/TargetingIndicatorControlComponent/TargetingIndicatorControlComponent.tscn") },
                 { Component.TriggerComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.tscn") },
+                { Component.UnitAnimationComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.tscn") },
                 { Component.UnitCorePreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/UnitCorePreset.tscn") },
                 { Component.UnitStateComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/UnitStateComponent/UnitStateComponent.tscn") },
                 { Component.VelocityComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/VelocityComponent/VelocityComponent.tscn") },

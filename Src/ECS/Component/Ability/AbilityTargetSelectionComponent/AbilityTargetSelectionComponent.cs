@@ -47,18 +47,6 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
     }
 
     /// <summary>
-    /// 组件重置回调：处理对象池回收时的状态重置
-    /// </summary>
-    public void OnComponentReset() { }
-
-    /// <summary>
-    /// 每帧更新：目前采用事件驱动架构，无需在 _Process 中轮询
-    /// </summary>
-    public override void _Process(double delta)
-    {
-    }
-
-    /// <summary>
     /// 处理目标选择事件的核心回调
     /// </summary>
     /// <param name="evt">包含施法上下文（CastContext）的事件数据</param>

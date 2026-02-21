@@ -49,7 +49,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = deadUnit,
-                BaseDamage = 100,
+                Damage = 100,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoDead);
@@ -71,7 +71,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = invulnerableUnit,
-                BaseDamage = 100,
+                Damage = 100,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoInvulnerable);
@@ -106,7 +106,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 10,
+                Damage = 10,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoPhysical);
@@ -125,7 +125,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 10,
+                Damage = 10,
                 Type = DamageType.True
             };
             DamageService.Instance.Process(infoTrue);
@@ -158,7 +158,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 100,
+                Damage = 100,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoCrit);
@@ -188,7 +188,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 100,
+                Damage = 100,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoArmor);
@@ -219,7 +219,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 100,
+                Damage = 100,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoAmplified);
@@ -260,7 +260,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 100,
+                Damage = 100,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoLifesteal);
@@ -295,7 +295,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 50,
+                Damage = 50,
                 Type = DamageType.Physical
             };
             DamageService.Instance.Process(infoStats);
@@ -333,7 +333,7 @@ namespace BrotatoMy.Test.DamageSystemTest
             {
                 Attacker = attacker,
                 Victim = victim,
-                BaseDamage = 50,
+                Damage = 50,
                 Type = DamageType.Physical,
                 IsSimulation = true
             };

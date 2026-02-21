@@ -51,13 +51,7 @@ public partial class RecoveryComponent : Node, IComponent
         _data = null;
     }
 
-    /// <summary>
-    /// 重置组件状态（Entity归还对象池时调用）
-    /// </summary>
-    public void OnComponentReset()
-    {
-        TryUnregister();
-    }
+
 
     // ================= 注册管理 =================
 

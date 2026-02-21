@@ -62,7 +62,7 @@ public class SlamExecutor : IAbilityExecutor
                 {
                     Attacker = caster as Node,
                     Victim = unitVictim,
-                    BaseDamage = damage, // 传入基础伤害(含Attributes加成)
+                    Damage = damage, // 传入基础伤害(含Attributes加成)
                     Type = DamageType.Physical, // 猛击通常是物理伤害
                     Tags = DamageTags.Area | DamageTags.Melee // 范围+近战
                 };

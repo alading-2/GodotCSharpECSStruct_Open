@@ -37,6 +37,7 @@ public static partial class DataKey
     public const string IsStunned = "IsStunned"; // 是否眩晕
     public const string IsSilenced = "IsSilenced"; // 是否沉默
     public const string IsInvisible = "IsInvisible"; // 是否隐身
+    public const string AttackState = "AttackState"; // 攻击状态 (enum: AttackState)
 
     // === 生命周期LifecycleComponent ===
     public const string LifecycleState = "LifecycleState"; // 生命周期状态

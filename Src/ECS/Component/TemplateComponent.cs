@@ -62,12 +62,6 @@ public partial class TemplateComponent : Node, IComponent
         }
     }
 
-    public void OnComponentReset()
-    {
-        // ✅ 对象池复用前的状态重置
-        // 示例:重置计时器、清理临时状态、取消正在进行的操作
-    }
-
     public void OnComponentUnregistered()
     {
         // ✅ 无需手动解绑事件(EntityManager会自动调用Events.Clear())

@@ -63,7 +63,7 @@ public partial class EnemyEntity : CharacterBody2D, IPoolable, IUnit
         // 1. 重置自身状态 (仅重置非 Data/Component 管理的状态)
         Velocity = Vector2.Zero;
 
-        // 注意：Events.Clear(), Data.Clear(), Component.OnComponentReset()
+        // 注意：Events.Clear(), Data.Clear(), Component.OnComponentUnregistered()
         // 均由 EntityManager.Destroy() -> UnregisterEntity() 统一处理
     }
 

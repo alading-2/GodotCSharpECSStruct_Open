@@ -41,9 +41,7 @@ public partial class CooldownComponent : Node, IComponent
         }
     }
 
-    public void OnComponentReset()
-    {
-    }
+
 
     public void OnComponentUnregistered()
     {

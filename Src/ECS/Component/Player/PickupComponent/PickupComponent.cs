@@ -36,12 +36,7 @@ public partial class PickupComponent : Area2D, IComponent
         _entity = null;
     }
 
-    public void OnComponentReset()
-    {
-        // 重置状态
-        Collector = null;
-        // MagnetEnabled 由 Data 控制，Data 会在 Entity clean 时清空，所以这里不需要重置
-    }
+
 
     // ================= 事件 =================
 

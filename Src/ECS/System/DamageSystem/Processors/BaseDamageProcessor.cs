@@ -41,7 +41,7 @@ public class BaseDamageProcessor : IDamageProcessor
 
         // 3. 基础伤害初始化
         // 基础伤害 <= 0，伤害流程结束
-        if (info.BaseDamage <= 0)
+        if (info.Damage <= 0)
         {
             info.IsEnd = true;
             info.FinalDamage = 0;
@@ -49,7 +49,7 @@ public class BaseDamageProcessor : IDamageProcessor
             return;
         }
 
-        info.FinalDamage = info.BaseDamage;
-        info.AddLog($"基础伤害: {info.BaseDamage}");
+        info.FinalDamage = info.Damage;
+        info.AddLog($"基础伤害: {info.Damage}");
     }
 }

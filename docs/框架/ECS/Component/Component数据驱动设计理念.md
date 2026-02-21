@@ -35,8 +35,7 @@ public class HealthComponent
 {
     public float CurrentHp => _data.Get<float>(DataKey.CurrentHp);
     
-    // OnComponentReset 无需手动重置属性
-    public void OnComponentReset() { }  // 空实现！
+    // OnComponentUnregistered 无需手动重置属性
 }
 ```
 
@@ -143,7 +142,7 @@ DataRegistry.Register(new DataMeta
 
 ---
 
-## OnComponentReset 为何无需手动重置
+## 为何组件通常无需手动重置
 
 Entity 销毁流程：
 ```
@@ -152,11 +151,10 @@ EntityManager.Destroy()
         ├── Events.Clear()     // 清理事件
         ├── Data.Clear()       // 🎯 自动重置所有状态
         └── UnregisterComponents()
-            ├── OnComponentReset()        // 只需清理计时器等非 Data 资源
-            └── OnComponentUnregistered() // 清理引用
+            └── OnComponentUnregistered() // 🎯 兼顾清理引用与重置计时器等
 ```
 
-**结论**：只要状态都在 Data 里，`OnComponentReset()` 就无需重置属性。
+**结论**：只要状态都在 Data 里，组件在 `OnComponentUnregistered()` 时就无需手动重置属性。
 
 ---
 

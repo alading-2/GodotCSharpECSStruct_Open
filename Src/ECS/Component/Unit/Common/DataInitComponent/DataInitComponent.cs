@@ -34,10 +34,7 @@ public partial class DataInitComponent : Node, IComponent
         _data = null;
     }
 
-    public void OnComponentReset()
-    {
-        // 无状态，无需重置
-    }
+
 
     // ================= 核心逻辑 =================
 

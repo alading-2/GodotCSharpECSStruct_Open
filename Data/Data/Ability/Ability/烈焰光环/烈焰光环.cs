@@ -73,7 +73,7 @@ public class CircleDamageExecutor : IAbilityExecutor
             {
                 Attacker = caster as Node, // 攻击者
                 Victim = target as IUnit, // 受害者
-                BaseDamage = damage, // 基础伤害
+                Damage = damage, // 基础伤害
                 Type = DamageType.Magical, // 假设光环是魔法伤害
                 Tags = DamageTags.Area
             };

@@ -44,10 +44,6 @@ public partial class CostComponent : Node, IComponent
         }
     }
 
-    public void OnComponentReset()
-    {
-    }
-
     public void OnComponentUnregistered()
     {
         _data = null;

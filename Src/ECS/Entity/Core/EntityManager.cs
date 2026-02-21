@@ -297,7 +297,7 @@ public static partial class EntityManager
         }
 
         // 1. 注销所有 Component（包括清理关系）
-        // 必须先于 Data/Events 清理，以便 Component 在 OnComponentUnregistered/OnComponentReset 中仍能访问 Entity 数据
+        // 必须先于 Data/Events 清理，以便 Component 在 OnComponentUnregistered 中仍能访问 Entity 数据
         UnregisterComponents(entity);
 
         // 2. 统一清理 IEntity 资源

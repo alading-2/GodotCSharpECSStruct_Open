@@ -162,13 +162,6 @@ public partial class LifecycleComponent : Node, IComponent
         _data = null;
     }
 
-    /// <summary>
-    /// Entity OnPoolRelease 归还池时调用
-    /// </summary>
-    public void OnComponentReset()
-    {
-    }
-
     // ================= 状态查询 =================
 
     /// <summary> 

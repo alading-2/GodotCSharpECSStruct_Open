@@ -34,13 +34,13 @@ public static class Anim
 /// - 缓存 VisualRoot 下的 AnimatedSprite2D 引用
 /// - 监听生命周期事件，自动切换死亡动画
 /// - 在 _Process 中根据 CharacterBody2D.Velocity 判断 idle/run 切换
-/// - 提供 Play(string) 公开接口供外部直接调用（传 Anim 常量）
+/// - 监听 GameEventType.Unit.PlayAnimationRequested 事件，外部通过事件触发动画播放
 /// - 防止重复播放同一动画
 /// - 死亡动画优先级最高，锁定后不被其他动画打断
 ///
 /// 动画名称：
 /// - 直接使用 <see cref="Anim"/> 常量（与 SpriteFramesGeneratorPlugin 输出一致）
-/// - 无需枚举映射，调用方直接传字符串：Play(Anim.Attack1)
+/// - 通过触发 GameEventType.Unit.PlayAnimationRequested 完成播放
 ///
 /// 移动判断：
 /// - 在 _Process 中读取 CharacterBody2D.Velocity（兼容 Player/Enemy）
@@ -64,8 +64,8 @@ public partial class UnitAnimationComponent : Node, IComponent
     /// <summary>当前正在播放的动画名称</summary>
     public string CurrentAnimation { get; private set; } = Anim.Idle;
 
-    /// <summary>死亡动画锁定：锁定后不接受任何其他动画请求</summary>
-    private bool _deathLocked = false;
+    /// <summary>是否已死亡（从 DataKey.IsDead 读取，由 LifecycleComponent 写入）</summary>
+    private bool IsDead => _data.Get<bool>(DataKey.IsDead);
 
     // ================= IComponent 实现 =================
 
@@ -88,12 +88,20 @@ public partial class UnitAnimationComponent : Node, IComponent
         }
 
         // ✅ 监听生命周期状态变化（Dying/Dead/Alive）
-        _entity.Events.On<GameEventType.Unit.StateChangedEventData>(
-            GameEventType.Unit.StateChanged, OnStateChanged);
+        _entity.Events.On<GameEventType.Unit.KilledEventData>(
+            GameEventType.Unit.Killed, OnKilled);
 
         // ✅ 监听受击事件
         _entity.Events.On<GameEventType.Unit.DamagedEventData>(
             GameEventType.Unit.Damaged, OnDamaged);
+
+        // ✅ 监听外部发来的动画播放请求事件
+        _entity.Events.On<GameEventType.Unit.PlayAnimationRequestedEventData>(
+            GameEventType.Unit.PlayAnimationRequested, OnPlayAnimationRequested);
+
+        // ✅ 监听停止动画请求（攻击取消等）
+        _entity.Events.On<GameEventType.Unit.StopAnimationRequestedEventData>(
+            GameEventType.Unit.StopAnimationRequested, OnStopAnimationRequested);
 
         // 初始播放 Idle
         Play(Anim.Idle);
@@ -107,18 +115,12 @@ public partial class UnitAnimationComponent : Node, IComponent
         _data = null;
     }
 
-    public void OnComponentReset()
-    {
-        _deathLocked = false;
-        CurrentAnimation = Anim.Idle;
-    }
-
     // ================= Godot 生命周期 =================
 
     public override void _Process(double delta)
     {
-        // 死亡锁定期间不做任何处理
-        if (_deathLocked) return;
+        // 死亡期间不做任何处理
+        if (IsDead) return;
         if (_body == null) return;
 
         // 只在空闲态时根据速度切换 idle/run，不打断攻击/受击等动画
@@ -131,15 +133,16 @@ public partial class UnitAnimationComponent : Node, IComponent
     // ================= 公开 API =================
 
     /// <summary>
-    /// 播放指定动画（直接传 Anim 常量）
-    /// 用法：Play(Anim.Attack1)、Play(Anim.Dead)
+    /// 播放指定动画（私有方法）
+    /// 用法受限：外部通过 GameEventType.Unit.PlayAnimationRequested 事件调用
+    /// <param name="animName">动画名称</param>
+    /// <param name="forceRestart">是否强制重新播放</param>
+    /// <param name="duration">动画持续时间</param>
     /// </summary>
-    /// <param name="animName">动画名称（使用 Anim 常量）</param>
-    /// <param name="forceRestart">为 true 时即使当前已在播放同一动画也重新开始</param>
-    public void Play(string animName, bool forceRestart = false)
+    private void Play(string animName, bool forceRestart = false, float duration = -1f)
     {
-        // 死亡锁定：只允许 dead 本身通过
-        if (_deathLocked && animName != Anim.Dead) return;
+        // 死亡后只允许 dead 动画本身通过
+        if (IsDead && animName != Anim.Dead) return;
 
         if (_sprite == null) return;
 
@@ -159,6 +162,22 @@ public partial class UnitAnimationComponent : Node, IComponent
         }
 
         CurrentAnimation = animName;
+
+        // 重置动画速度
+        _sprite.SpeedScale = 1.0f;
+
+        // 计算并设置持续时间对应的拉伸速度
+        if (duration > 0 && _sprite.SpriteFrames != null)
+        {
+            int frameCount = _sprite.SpriteFrames.GetFrameCount(animName);
+            double fps = _sprite.SpriteFrames.GetAnimationSpeed(animName);
+            if (fps > 0 && frameCount > 0)
+            {
+                float naturalDuration = frameCount / (float)fps;
+                _sprite.SpeedScale = naturalDuration / duration;
+            }
+        }
+
         _sprite.Play(animName);
         _log.Trace($"播放动画: {animName}");
     }
@@ -190,25 +209,10 @@ public partial class UnitAnimationComponent : Node, IComponent
     /// <summary>
     /// 生命周期状态变化 → 切换对应动画
     /// </summary>
-    private void OnStateChanged(GameEventType.Unit.StateChangedEventData evt)
+    private void OnKilled(GameEventType.Unit.KilledEventData evt)
     {
-        if (evt.Key != DataKey.LifecycleState) return;
-
-        if (!System.Enum.TryParse<LifecycleState>(evt.NewValue, out var newState)) return;
-
-        switch (newState)
-        {
-            case LifecycleState.Dying:
-            case LifecycleState.Dead:
-                _deathLocked = true;
-                Play(Anim.Dead);
-                break;
-
-            case LifecycleState.Alive:
-                _deathLocked = false;
-                Play(Anim.Idle);
-                break;
-        }
+        // IsDead 由 LifecycleComponent 写入 Data，Play() 内部会检查
+        Play(Anim.Dead);
     }
 
     /// <summary>
@@ -219,4 +223,26 @@ public partial class UnitAnimationComponent : Node, IComponent
         Play(Anim.BeAttacked);
     }
 
+    /// <summary>
+    /// 收到动画播放请求事件 -> 直接播放
+    /// </summary>
+    private void OnPlayAnimationRequested(GameEventType.Unit.PlayAnimationRequestedEventData evt)
+    {
+        Play(evt.AnimName, evt.ForceRestart, evt.Duration);
+    }
+
+    /// <summary>
+    /// 收到停止动画请求 -> 立即中断当前动画并回到 idle
+    /// </summary>
+    private void OnStopAnimationRequested(GameEventType.Unit.StopAnimationRequestedEventData evt)
+    {
+        if (_sprite == null) return;
+        if (IsDead) return; // 死亡动画不被中断
+
+        _sprite.Stop();
+        CurrentAnimation = Anim.Idle;
+        _sprite.SpeedScale = 1.0f;
+        _sprite.Play(Anim.Idle);
+        _log.Trace("动画中断 → idle");
+    }
 }

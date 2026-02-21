@@ -28,11 +28,7 @@ public partial class HitboxComponent : Area2D, IComponent
         Source = null;
     }
 
-    public void OnComponentReset()
-    {
-        // 重置状态
-        Source = null;
-    }
+
 
     // ================= Runtime State =================
 

@@ -411,7 +411,7 @@ public static void UnregisterEntity(Node entity)
     foreach (var set in _entitiesByType.Values)
         set.Remove(entity);
 
-    // 4. 注销所有 Component（触发 OnComponentReset + OnComponentUnregistered）
+    // 4. 注销所有 Component（触发 OnComponentUnregistered）
     UnregisterComponents(entity);
 
     // 5. 清理所有 Entity-Component 关系
@@ -448,10 +448,7 @@ Destroy 流程:
 // UnregisterComponents 内部流程
 foreach (var component in components)
 {
-    // 1. 先重置组件状态
-    icomp.OnComponentReset();
-    
-    // 2. 再触发注销回调
+    // 触发注销回调
     icomp.OnComponentUnregistered();
 }
 ```

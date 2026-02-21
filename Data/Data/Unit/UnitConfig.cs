@@ -66,7 +66,7 @@ namespace Brotato.Data.Config.Units
         /// <summary>
         /// 攻击距离/范围
         /// </summary>
-        [DataKey(DataKey.Range)]
+        [DataKey(DataKey.AttackRange)]
         [Export] public float Range { get; set; }
         /// <summary>
         /// 暴击率 (%)

@@ -251,9 +251,6 @@ public static partial class EntityManager
             {
                 try
                 {
-                    // 先重置组件状态（对象池复用前的清理）
-                    icomp.OnComponentReset();
-                    // 再触发注销回调
                     icomp.OnComponentUnregistered();
                     _componentLog.Debug($"触发 IComponent 回调: {component.GetType().Name}");
                 }

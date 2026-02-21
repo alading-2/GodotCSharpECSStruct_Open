@@ -41,10 +41,7 @@ public partial class VelocityComponent : Node, IComponent
         _sprite = null;
     }
 
-    public void OnComponentReset()
-    {
-        // ✅ 速度状态由 Data.Clear() 自动重置，无需手动处理
-    }
+
 
     // ================= 运行时状态 =================
 

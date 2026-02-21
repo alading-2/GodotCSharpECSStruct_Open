@@ -67,7 +67,7 @@ public class ChainLightningExecutor : IAbilityExecutor
                 {
                     Attacker = caster as Node,
                     Victim = unitVictim,
-                    BaseDamage = currentDamage,
+                    Damage = currentDamage,
                     Type = DamageType.Magical,
                     // IsCritical = false // 默认由 DamageService 计算
                 };

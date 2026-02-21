@@ -30,10 +30,7 @@ public partial class HurtboxComponent : Area2D, IComponent
         _data = null;
     }
 
-    public void OnComponentReset()
-    {
-        // ✅ 无敌计时器由 Data.Clear() 自动重置，无需手动处理
-    }
+
 
     // ================= Runtime State =================
 

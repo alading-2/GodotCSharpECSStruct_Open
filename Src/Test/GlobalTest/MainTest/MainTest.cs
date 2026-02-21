@@ -39,7 +39,7 @@ public partial class MainTest : Node
                             // Instigator 不存在于 DamageInfo，Attacker 即为直接来源
                             // 归属权由 EntityRelationshipManager 处理
                             Victim = victim,
-                            BaseDamage = 10f,
+                            Damage = 10f,
                             Type = DamageType.Physical
                         };
                         DamageService.Instance.Process(damageInfo);

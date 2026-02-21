@@ -57,17 +57,6 @@ public partial class ChargeComponent : Node, IComponent
     }
 
     /// <summary>
-    /// 组件重置逻辑 (通常用于对象池回收)
-    /// </summary>
-    public void OnComponentReset()
-    {
-        if (_data == null) return;
-
-        // 停止恢复计时
-        StopChargeRecovery();
-    }
-
-    /// <summary>
     /// 组件注销时的清理逻辑
     /// </summary>
     public void OnComponentUnregistered()
