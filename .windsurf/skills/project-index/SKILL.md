@@ -1,0 +1,130 @@
+---
+name: project-index
+description: 查找项目任意模块的文档、源码、模板文件时使用。当需要了解项目整体架构、定位某个系统的实现文件、查找设计文档或 API 手册时自动触发。这是整个 Godot C# ECS 项目的导航地图。
+---
+
+# 项目导航地图 - Godot 复刻土豆兄弟
+
+**架构**：Godot 伪 ECS（Scene Tree 处理渲染/物理 + 组件化逻辑 + 数据驱动状态）
+**技术栈**：Godot 4.6 / C# / .NET 8.0
+
+---
+
+## 模块速查：我需要什么，去哪找
+
+### Entity（实体生命周期）
+- **接口定义** → `Src/ECS/Entity/IEntity.cs`
+- **标准模板** → `Src/ECS/Entity/TemplateEntity.cs` ← 新建 Entity 从这里复制
+- **生命周期管理 API** → `Src/ECS/Entity/Core/EntityManager.md`
+- **核心实现** → `Src/ECS/Entity/Core/EntityManager.cs`
+- **关系管理** → `Src/ECS/Entity/Core/EntityRelationshipManager.cs`
+- **开发规范** → `Src/ECS/Entity/Entity规范.md`
+- **架构设计** → `Docs/框架/ECS/Entity/Entity架构设计理念.md`
+
+### Component（组件）
+- **接口定义** → `Src/ECS/Component/IComponent.cs`
+- **标准模板** → `Src/ECS/Component/TemplateComponent.cs` ← 新建 Component 从这里复制
+- **开发规范** → `Src/ECS/Component/Component规范.md`
+- **设计理念** → `Docs/框架/ECS/Component/Component数据驱动设计理念.md`
+- **现有组件目录**：
+  - 通用单位组件 → `Src/ECS/Component/Unit/Common/`（HealthComponent、AttackComponent、UnitAnimationComponent 等）
+  - 技能组件 → `Src/ECS/Component/Ability/`（CooldownComponent、ChargeComponent、TriggerComponent 等）
+  - 玩家组件 → `Src/ECS/Component/Player/`
+
+### Data（数据容器）
+- **核心容器** → `Src/ECS/Data/Data.cs`
+- **使用指南** → `Src/ECS/Data/README.md`
+- **DataKey 定义目录** → `Data/DataKeyRegister/`
+  - 基础键 → `Data/DataKeyRegister/Base/`
+  - 单位属性 → `Data/DataKeyRegister/Unit/`
+  - 技能数据 → `Data/DataKeyRegister/Ability/`
+  - 属性系统 → `Data/DataKeyRegister/Attribute/`
+  - AI 数据 → `Data/DataKeyRegister/AI/`
+- **架构设计** → `Docs/框架/ECS/Data/DataSystem_Design.md`
+
+### EventBus（事件系统）
+- **核心引擎** → `Src/ECS/Event/EventBus.cs`
+- **全局总线** → `Src/ECS/Event/GlobalEventBus.cs`
+- **事件上下文** → `Src/ECS/Event/EventContext.cs`
+- **最佳实践** → `Src/ECS/Event/README_EventBus.md`
+- **事件类型定义目录** → `Data/EventType/`
+  - 技能事件 → `Data/EventType/Ability/GameEventType_Ability.cs`
+  - 单位事件 → `Data/EventType/Unit/`
+  - 攻击事件 → `Data/EventType/Unit/Attack/GameEventType_Attack.cs`
+  - 瞄准事件 → `Data/EventType/Unit/Targeting/GameEventType_Targeting.cs`
+
+### AbilitySystem（技能系统）
+- **核心系统** → `Src/ECS/System/AbilitySystem/AbilitySystem.cs`
+- **技能 CRUD** → `Src/ECS/System/AbilitySystem/EntityManager_Ability.cs`
+- **模块说明** → `Src/ECS/System/AbilitySystem/README.md`
+- **技能实体** → `Src/ECS/Entity/Ability/AbilityEntity.cs`
+- **施法上下文** → `Data/EventType/Ability/CastContext.cs`
+- **枚举定义** → `Data/DataKeyRegister/Ability/AbilityEnums.cs`
+- **架构设计（唯一概念文档）** → `Docs/框架/ECS/Ability/技能系统架构设计理念.md`
+- **内置技能组件**：
+  - 触发 → `Src/ECS/Component/Ability/TriggerComponent/`
+  - 冷却 → `Src/ECS/Component/Ability/CooldownComponent/`
+  - 充能 → `Src/ECS/Component/Ability/ChargeComponent/`
+  - 消耗 → `Src/ECS/Component/Ability/CostComponent/`
+  - 目标选择 → `Src/ECS/Component/Ability/AbilityTargetSelectionComponent/`
+
+### DamageSystem（伤害系统）
+- **核心服务** → `Src/ECS/System/DamageSystem/DamageService.cs`
+- **伤害信息** → `Src/ECS/System/DamageSystem/DamageInfo.cs`
+- **处理器接口** → `Src/ECS/System/DamageSystem/IDamageProcessor.cs`
+- **扩展指南** → `Src/ECS/System/DamageSystem/README.md`
+- **内置处理器目录** → `Src/ECS/System/DamageSystem/Processors/`
+- **设计理念** → `Docs/框架/ECS/System/伤害系统设计理念.md`
+
+### UI System（UI 系统）
+- **核心基类** → `Src/UI/Core/UIBase.cs`
+- **管理器** → `Src/UI/Core/UIManager.cs`
+- **开发指南** → `Src/UI/README.md`
+- **架构设计** → `Docs/框架/UI/UI架构设计理念.md`
+- **现有 UI 组件**：
+  - 血条 → `Src/UI/UI/HealthBarUI/HealthBarUI.cs`
+  - 伤害数字 → `Src/UI/UI/DamageNumberUI/DamageNumberUI.cs`
+  - 技能栏 → `Src/UI/UI/SkillUI/ActiveSkillBarUI.cs`
+  - 技能槽 → `Src/UI/UI/SkillUI/ActiveSkillSlotUI.cs`
+
+### AI System（AI 系统）
+- **AI 组件** → `Src/ECS/Component/Unit/Enemy/AI/AIComponent.cs`
+- **行为树运行器** → `Src/AI/Core/BehaviorTreeRunner.cs`
+- **节点基类** → `Src/AI/Core/BehaviorNode.cs`
+- **运行时上下文** → `Src/AI/Core/AIContext.cs`
+- **敌人行为树** → `Src/AI/Nodes/EnemyBehaviorTreeBuilder.cs`
+- **AI DataKey** → `Data/DataKeyRegister/AI/DataKey_AI.cs`
+- **架构说明** → `Docs/框架/ECS/System/AI/AI系统说明.md`
+- **源码说明** → `Src/AI/README.md`
+
+### Tools（工具类）
+- **TimerManager** → `Src/Tools/Timer/TimerManager.cs` | 文档 → `Src/Tools/Timer/TimerManager.md`
+- **ObjectPool** → `Src/Tools/ObjectPool/ObjectPool.cs` | 文档 → `Src/Tools/ObjectPool/ObjectPool.md`
+- **TargetSelector** → `Src/Tools/TargetSelector/TargetSelector.cs` | 文档 → `Src/Tools/TargetSelector/README.md`
+- **ResourceManagement** → `Data/ResourceManagement/ResourceManagement.cs` | 文档 → `Data/ResourceManagement/ResourceManagement.md`
+- **Log** → `Src/Tools/Logger/Log.cs`
+- **InputManager** → `Src/Tools/Input/InputManager.cs`
+- **ObjectPoolInit（初始化配置）** → 搜索 `ObjectPoolInit.cs`
+
+### 数据与配置
+- **ResourceManagement（资源加载）** → `Data/ResourceManagement/ResourceManagement.cs`
+- **ResourcePaths（自动生成路径索引）** → `Data/ResourceManagement/ResourcePaths.cs`
+- **DataForge 插件（可视化数据编辑）** → `addons/DataForge/`
+- **AutoLoad（全局单例管理）** → `Src/Autoload/AutoLoad.cs`
+
+---
+
+## 如何使用这份地图
+
+1. **新建某类型文件** → 找对应的"标准模板"文件复制
+2. **查 API 用法** → 找对应的 `.md` 文档
+3. **理解设计决策** → 找 `Docs/框架/` 下的设计理念文档
+4. **找事件类型定义** → `Data/EventType/` 目录
+5. **找 DataKey 常量** → `Data/DataKeyRegister/` 目录
+6. **找现有实现参考** → 对应模块的 `Src/` 目录
+
+---
+
+## 完整文档索引
+
+详细架构文档：`Docs/框架/项目索引.md`（人类可读的完整导航）
