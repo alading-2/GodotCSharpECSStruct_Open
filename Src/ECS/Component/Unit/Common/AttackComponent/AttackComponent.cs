@@ -30,6 +30,13 @@ public enum AttackState
 /// - WindUpTime=0, RecoveryTime=0 → 即时模式（适用于 Brotato/吸血鬼幸存者类游戏的自动攻击）
 /// - WindUpTime>0, RecoveryTime>0 → 完整前后摇（适用于 ACT/RTS 类游戏，增强打击感与博弈深度）
 /// </para>
+/// <para>
+/// 前后摇与攻击间隔(CD)的核心解惑：
+/// - 攻击间隔 (AttackInterval) 由【外部控制】，决定“多久尝试发一次攻击请求”。
+/// - 前后摇 (WindUp + Recovery) 由【本组件控制】，决定“本次攻击动作占用单位多久的时间”。
+/// - 正常情况 (前后摇时长短于攻击间隔)：打完一套动作回到 Idle，发呆等下一次 CD。
+/// - 攻速溢出 (前后摇时长超出攻击间隔)：CD 已经转好但由于本次动作尚未做完（非 Idle），新请求会被直接丢弃。实际攻速被强制拉长至前后摇总时长。
+/// </para>
 /// </summary>
 public partial class AttackComponent : Node, IComponent
 {
@@ -126,22 +133,9 @@ public partial class AttackComponent : Node, IComponent
         _entity.Events.Emit(GameEventType.Attack.Started,
             new GameEventType.Attack.StartedEventData(target));
 
-        // 攻击瞬间通常需要停止移动惯性（部分 ACT 设计，可根据具体需求调整此行）
-        if (_body != null)
-        {
-            _body.Velocity = Vector2.Zero;
-        }
-
-        if (windUpTime > 0f)
-        {
-            // === 前摇模式：启动计时器等待判定点 ===
-            EnterWindUp(windUpTime);
-        }
-        else
-        {
-            // === 即时模式：WindUp=0。跳过状态机直接判定伤害 ===
-            ExecuteStrikeAndProceed();
-        }
+        // 统一走 WindUp 流程（WindUpTime=0 时 Timer 会在下一帧立即触发 OnWindUpComplete）
+        // 这保证动画播放、校验计时器等逻辑只维护一处
+        EnterWindUp(windUpTime);
     }
 
     /// <summary>
@@ -165,10 +159,10 @@ public partial class AttackComponent : Node, IComponent
         _log.Trace($"状态转换: Idle → WindUp (预计耗时: {windUpTime:F2}s)");
 
         // 触发动画播放：攻击间隔越大，对应的动画通常播放得越慢。
-        float attackInterval = _data.Get<float>(DataKey.AttackInterval, 1.0f);
-        string attackAnim = _data.Has(DataKey.AttackAnimName)
-            ? _data.Get<string>(DataKey.AttackAnimName)
-            : Anim.Attack1;
+        float attackInterval = _data.Get<float>(DataKey.AttackInterval);
+
+        // 从可用动画列表中随机选择攻击动画（支持 attack1, attack2 等多个攻击动画）
+        string attackAnim = SelectRandomAttackAnimation();
 
         _entity?.Events.Emit(GameEventType.Unit.PlayAnimationRequested,
             new GameEventType.Unit.PlayAnimationRequestedEventData(
@@ -212,7 +206,7 @@ public partial class AttackComponent : Node, IComponent
         bool didHit = ExecuteDamage(_currentTarget);
 
         // 检查是否有后摇配置（例如挥大剑会有很大的硬直）
-        float recoveryTime = _data.Get<float>(DataKey.AttackRecoveryTime, 0f);
+        float recoveryTime = _data.Get<float>(DataKey.AttackRecoveryTime);
 
         if (recoveryTime > 0f)
         {
@@ -261,6 +255,36 @@ public partial class AttackComponent : Node, IComponent
     /// 流程完结：重置状态机，发出 Finished 事件
     /// </summary>
     private void FinishAttack(bool didHit)
+    {
+        if (_data == null || _entity == null) return;
+
+        // 计算剩余冷却时间 = AttackInterval - WindUp - Recovery
+        // 目的：让 AttackState 在整个攻击间隔内保持非 Idle，
+        // 使得 AI 的 IsAttackReady（检查 AttackState==Idle）自然生效，无需外部 CD 计时器
+        float attackInterval = _data.Get<float>(DataKey.AttackInterval);
+        float windUpTime = _data.Get<float>(DataKey.AttackWindUpTime);
+        float recoveryTime = _data.Get<float>(DataKey.AttackRecoveryTime);
+        float remainingCooldown = attackInterval - windUpTime - recoveryTime;
+
+        if (remainingCooldown > 0.001f)
+        {
+            // 进入追加冷却阶段（复用 Recovery 状态，语义等同于「出完刀还没到下次攻击时机」）
+            _state = AttackState.Recovery;
+            _data.Set(DataKey.AttackState, AttackState.Recovery);
+
+            _phaseTimer?.Cancel();
+            _phaseTimer = TimerManager.Instance.Delay(remainingCooldown)
+                .OnComplete(() => CompleteFinishAttack(didHit));
+            return;
+        }
+
+        CompleteFinishAttack(didHit);
+    }
+
+    /// <summary>
+    /// 真正执行状态回 Idle 并发出 Finished 事件（被 FinishAttack 调用，可能有延迟）
+    /// </summary>
+    private void CompleteFinishAttack(bool didHit)
     {
         var target = _currentTarget;
         CleanupTimers();
@@ -372,7 +396,7 @@ public partial class AttackComponent : Node, IComponent
         // （设计点：后摇期间由于伤害已经爆发，通常允许对方跑开而不需要打断收招动画）
         if (_state == AttackState.WindUp && _body != null)
         {
-            float attackRange = _data.Get<float>(DataKey.AttackRange, 50f);
+            float attackRange = _data.Get<float>(DataKey.AttackRange);
             float distance = _body.GlobalPosition.DistanceTo(_currentTarget.GlobalPosition);
 
             // 使用攻击距离的 1.5 倍作为"容差中断位点"。
@@ -426,7 +450,7 @@ public partial class AttackComponent : Node, IComponent
 
         if (target is IUnit victimUnit && _body != null)
         {
-            float finalAttack = (_data != null) ? _data.Get<float>(DataKey.FinalAttack, 10f) : 10f;
+            float finalAttack = _data.Get<float>(DataKey.FinalAttack);
 
             // 构造伤害载体并掷入 Pipeline 处理管道
             var damageInfo = new DamageInfo
@@ -455,5 +479,50 @@ public partial class AttackComponent : Node, IComponent
         _phaseTimer = null;
         _validationTimer?.Cancel();
         _validationTimer = null;
+    }
+
+    // ================= 动画选择 (Animation Selection) =================
+
+    /// <summary>
+    /// 从可用动画列表中随机选择一个攻击动画。
+    /// 如果有多个攻击动画（如 attack1, attack2），会随机选择一个。
+    /// 如果没有可用动画列表或没有攻击动画，返回默认的 Attack1。
+    /// </summary>
+    private string SelectRandomAttackAnimation()
+    {
+        if (_data == null) return Anim.Attack1;
+
+        // 从 Data 中获取可用动画列表
+        var availableAnims = _data.Get<System.Collections.Generic.List<string>>(DataKey.AvailableAnimations);
+        if (availableAnims == null || availableAnims.Count == 0)
+        {
+            return Anim.Attack1;
+        }
+
+        // 筛选出所有以 "attack" 开头的动画
+        var attackAnims = new System.Collections.Generic.List<string>();
+        foreach (var anim in availableAnims)
+        {
+            if (anim.StartsWith("attack"))
+            {
+                attackAnims.Add(anim);
+            }
+        }
+
+        // 如果没有找到攻击动画，返回默认值
+        if (attackAnims.Count == 0)
+        {
+            return Anim.Attack1;
+        }
+
+        // 如果只有一个攻击动画，直接返回
+        if (attackAnims.Count == 1)
+        {
+            return attackAnims[0];
+        }
+
+        // 随机选择一个攻击动画
+        int randomIndex = (int)GD.RandRange(0, attackAnims.Count - 1);
+        return attackAnims[randomIndex];
     }
 }

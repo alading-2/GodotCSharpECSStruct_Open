@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 /// <summary>
 /// 通用动画名称常量
@@ -25,6 +26,17 @@ public static class Anim
 
     // === 其他 ===
     public const string Celebrate = "celebrate";
+}
+
+/// <summary>
+/// 动画播放模式：区分循环动画和一次性动画的锁定行为
+/// </summary>
+public enum AnimPlayMode
+{
+    /// <summary>循环动画（idle/run），_Process 可自由切换</summary>
+    Loop,
+    /// <summary>一次性动画（attack/beattacked/dead），播放期间锁定，由 OnAnimationFinished 解锁</summary>
+    OneShot,
 }
 
 /// <summary>
@@ -62,10 +74,24 @@ public partial class UnitAnimationComponent : Node, IComponent
     // ================= 运行时状态 =================
 
     /// <summary>当前正在播放的动画名称</summary>
-    public string CurrentAnimation { get; private set; } = Anim.Idle;
+    private string CurrentAnimation { get; set; } = Anim.Idle;
 
-    /// <summary>是否已死亡（从 DataKey.IsDead 读取，由 LifecycleComponent 写入）</summary>
-    private bool IsDead => _data.Get<bool>(DataKey.IsDead);
+    /// <summary>
+    /// 当前动画的播放模式：循环动画（idle/run）可被 _Process 自由切换；
+    /// 一次性动画（attack/beattacked/dead）播放期间锁定，由 OnAnimationFinished 解锁。
+    /// </summary>
+    private AnimPlayMode _playMode = AnimPlayMode.Loop;
+
+    /// <summary>是否处于死亡中（Dead 或 Reviving），此期间锁定动画不被打断</summary>
+    private bool IsDeadOrReviving
+    {
+        get
+        {
+            if (_data == null) return false;
+            var state = _data.Get<LifecycleState>(DataKey.LifecycleState);
+            return state == LifecycleState.Dead || state == LifecycleState.Reviving;
+        }
+    }
 
     // ================= IComponent 实现 =================
 
@@ -86,8 +112,23 @@ public partial class UnitAnimationComponent : Node, IComponent
         {
             _log.Warn($"[{entity.Name}] 未找到 AnimatedSprite2D，动画组件无效");
         }
+        else
+        {
+            // 读取并缓存所有可用动画名称到 Data（供其他组件使用，如 AttackComponent 随机选择攻击动画）
+            var spriteFrames = _sprite.SpriteFrames;
+            if (spriteFrames != null)
+            {
+                var animNames = new List<string>();
+                foreach (var animName in spriteFrames.GetAnimationNames())
+                {
+                    animNames.Add(animName);
+                }
+                _data.Set(DataKey.AvailableAnimations, animNames);
+                _log.Debug($"[{entity.Name}] 缓存了 {animNames.Count} 个可用动画: {string.Join(", ", animNames.ToArray())}");
+            }
+        }
 
-        // ✅ 监听生命周期状态变化（Dying/Dead/Alive）
+        // ✅ 监听生命周期状态变化（Dead/Reviving/Alive）
         _entity.Events.On<GameEventType.Unit.KilledEventData>(
             GameEventType.Unit.Killed, OnKilled);
 
@@ -105,10 +146,17 @@ public partial class UnitAnimationComponent : Node, IComponent
 
         // 初始播放 Idle
         Play(Anim.Idle);
+
+        // ✅ 监听动画播放完毕信号（用于一次性动画结束后自动回退到 idle/run）
+        if (_sprite != null)
+            _sprite.AnimationFinished += OnAnimationFinished;
     }
 
     public void OnComponentUnregistered()
     {
+        if (_sprite != null)
+            _sprite.AnimationFinished -= OnAnimationFinished;
+
         _sprite = null;
         _body = null;
         _entity = null;
@@ -119,12 +167,12 @@ public partial class UnitAnimationComponent : Node, IComponent
 
     public override void _Process(double delta)
     {
-        // 死亡期间不做任何处理
-        if (IsDead) return;
-        if (_body == null) return;
+        // Dead/Reviving 期间锁定动画，Alive 允许正常切换
+        if (IsDeadOrReviving) return;
+        if (_body == null || _sprite == null) return;
 
-        // 只在空闲态时根据速度切换 idle/run，不打断攻击/受击等动画
-        if (CurrentAnimation != Anim.Idle && CurrentAnimation != Anim.Run) return;
+        // 一次性动画（攻击/受击等）播放期间不打断，由 OnAnimationFinished 信号负责回退
+        if (_playMode == AnimPlayMode.OneShot) return;
 
         bool isMoving = _body.Velocity.LengthSquared() > 1f;
         Play(isMoving ? Anim.Run : Anim.Idle);
@@ -141,8 +189,8 @@ public partial class UnitAnimationComponent : Node, IComponent
     /// </summary>
     private void Play(string animName, bool forceRestart = false, float duration = -1f)
     {
-        // 死亡后只允许 dead 动画本身通过
-        if (IsDead && animName != Anim.Dead) return;
+        // Dead/Reviving 期间只允许 dead 动画本身通过
+        if (IsDeadOrReviving && animName != Anim.Dead) return;
 
         if (_sprite == null) return;
 
@@ -150,7 +198,8 @@ public partial class UnitAnimationComponent : Node, IComponent
         if (!forceRestart && CurrentAnimation == animName && _sprite.IsPlaying()) return;
 
         // 检查 SpriteFrames 中是否存在该动画
-        if (_sprite.SpriteFrames != null && !_sprite.SpriteFrames.HasAnimation(animName))
+        var availableAnims = _data.Get<System.Collections.Generic.List<string>>(DataKey.AvailableAnimations);
+        if (!availableAnims.Contains(animName))
         {
             // 不存在则 fallback 到 idle（避免无限递归）
             if (animName != Anim.Idle)
@@ -162,6 +211,9 @@ public partial class UnitAnimationComponent : Node, IComponent
         }
 
         CurrentAnimation = animName;
+        _playMode = _sprite.SpriteFrames?.GetAnimationLoop(animName) == true
+            ? AnimPlayMode.Loop
+            : AnimPlayMode.OneShot;
 
         // 重置动画速度
         _sprite.SpeedScale = 1.0f;
@@ -204,6 +256,30 @@ public partial class UnitAnimationComponent : Node, IComponent
         return null;
     }
 
+    // ================= 信号处理 =================
+
+    /// <summary>
+    /// AnimatedSprite2D.AnimationFinished 信号回调
+    /// 一次性动画（攻击/受击等）播放完毕后，根据当前速度自动回退到 idle 或 run
+    /// </summary>
+    private void OnAnimationFinished()
+    {
+        // idle/run 是循环动画，不需要回退
+        if (_playMode == AnimPlayMode.Loop) return;
+
+        if (CurrentAnimation == Anim.Dead)
+        {
+            // 死亡动画播完：发出通用事件（携带动画名），LifecycleComponent 监听后处理
+            _entity.Events.Emit(GameEventType.Unit.AnimationFinished,
+                new GameEventType.Unit.AnimationFinishedEventData(Anim.Dead));
+            // 暂停在最后一帧（Pause 不重置帧，Stop 会回到第0帧）
+            _sprite?.Pause();
+        }
+
+        _playMode = AnimPlayMode.Loop; // 解锁，让 Play() 能正常切换
+        return;
+    }
+
     // ================= 事件处理 =================
 
     /// <summary>
@@ -237,10 +313,10 @@ public partial class UnitAnimationComponent : Node, IComponent
     private void OnStopAnimationRequested(GameEventType.Unit.StopAnimationRequestedEventData evt)
     {
         if (_sprite == null) return;
-        if (IsDead) return; // 死亡动画不被中断
+        if (IsDeadOrReviving) return; // Dead/Reviving 期间死亡动画不被中断
 
         _sprite.Stop();
-        CurrentAnimation = Anim.Idle;
+        _playMode = AnimPlayMode.Loop;
         _sprite.SpeedScale = 1.0f;
         _sprite.Play(Anim.Idle);
         _log.Trace("动画中断 → idle");

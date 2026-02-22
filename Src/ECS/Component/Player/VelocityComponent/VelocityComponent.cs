@@ -78,6 +78,7 @@ public partial class VelocityComponent : Node, IComponent
     public override void _PhysicsProcess(double delta)
     {
         if (_entity is not CharacterBody2D body) return;
+        if (_data != null && _data.Get<bool>(DataKey.IsDead)) return;
 
         // 获取输入
         Vector2 inputDir = InputManager.GetMoveInput();

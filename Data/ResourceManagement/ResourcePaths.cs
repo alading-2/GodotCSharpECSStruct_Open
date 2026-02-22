@@ -34,17 +34,15 @@ public static class ResourcePaths
         public const string AbilityPreset = "AbilityPreset";
         public const string AbilityTargetSelectionComponent = "AbilityTargetSelectionComponent";
         public const string ActiveSkillInputComponent = "ActiveSkillInputComponent";
+        public const string AIComponent = "AIComponent";
+        public const string AttackComponent = "AttackComponent";
         public const string ChargeComponent = "ChargeComponent";
-        public const string CombatPreset = "CombatPreset";
         public const string CooldownComponent = "CooldownComponent";
         public const string CostComponent = "CostComponent";
         public const string DataInitComponent = "DataInitComponent";
+        public const string EnemyMovementComponent = "EnemyMovementComponent";
         public const string EnemyPreset = "EnemyPreset";
-        public const string FollowComponent = "FollowComponent";
-        public const string FollowPreset = "FollowPreset";
         public const string HealthComponent = "HealthComponent";
-        public const string HitboxComponent = "HitboxComponent";
-        public const string HurtboxComponent = "HurtboxComponent";
         public const string LifecycleComponent = "LifecycleComponent";
         public const string PickupComponent = "PickupComponent";
         public const string PlayerPreset = "PlayerPreset";
@@ -68,9 +66,9 @@ public static class ResourcePaths
 
     public static class Asset
     {
-        public const string 豺狼人 = "豺狼人";
-        public const string 德鲁伊 = "德鲁伊";
-        public const string 鱼人 = "鱼人";
+        public const string chailangren = "chailangren";
+        public const string deluyi = "deluyi";
+        public const string yuren = "yuren";
     }
 
     public static class System
@@ -153,17 +151,15 @@ public static class ResourcePaths
                 { Component.AbilityPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Ability/AbilityPreset.tscn") },
                 { Component.AbilityTargetSelectionComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/AbilityTargetSelectionComponent/AbilityTargetSelectionComponent.tscn") },
                 { Component.ActiveSkillInputComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/ActiveSkillInputComponent/ActiveSkillInputComponent.tscn") },
+                { Component.AIComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Enemy/AI/AIComponent.tscn") },
+                { Component.AttackComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/AttackComponent/AttackComponent.tscn") },
                 { Component.ChargeComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/ChargeComponent/ChargeComponent.tscn") },
-                { Component.CombatPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/CombatPreset.tscn") },
                 { Component.CooldownComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn") },
                 { Component.CostComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn") },
                 { Component.DataInitComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/DataInitComponent/DataInitComponent.tscn") },
+                { Component.EnemyMovementComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Enemy/EnemyMovementComponent/EnemyMovementComponent.tscn") },
                 { Component.EnemyPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn") },
-                { Component.FollowComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/FollowComponent/FollowComponent.tscn") },
-                { Component.FollowPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/FollowPreset.tscn") },
                 { Component.HealthComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/HealthComponent/HealthComponent.tscn") },
-                { Component.HitboxComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/HitboxComponent/HitboxComponent.tscn") },
-                { Component.HurtboxComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/HurtboxComponent/HurtboxComponent.tscn") },
                 { Component.LifecycleComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.tscn") },
                 { Component.PickupComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/PickupComponent/PickupComponent.tscn") },
                 { Component.PlayerPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn") },
@@ -187,9 +183,9 @@ public static class ResourcePaths
         },
         { ResourceCategory.Asset, new Dictionary<string, ResourceData>
             {
-                { Asset.豺狼人, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/豺狼人/AnimatedSprite2D/豺狼人.tscn") },
-                { Asset.德鲁伊, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Player/德鲁伊/AnimatedSprite2D/德鲁伊.tscn") },
-                { Asset.鱼人, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/鱼人/AnimatedSprite2D/鱼人.tscn") },
+                { Asset.chailangren, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/chailangren/AnimatedSprite2D/chailangren.tscn") },
+                { Asset.deluyi, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Player/deluyi/AnimatedSprite2D/deluyi.tscn") },
+                { Asset.yuren, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tscn") },
             }
         },
         { ResourceCategory.System, new Dictionary<string, ResourceData>

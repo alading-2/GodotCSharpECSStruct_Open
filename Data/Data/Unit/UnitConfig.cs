@@ -22,6 +22,12 @@ namespace Brotato.Data.Config.Units
         [Export] public Team Team { get; set; }
 
         /// <summary>
+        /// 死亡类型
+        /// </summary>
+        [DataKey(DataKey.DeathType)]
+        [Export] public DeathType DeathType { get; set; }
+
+        /// <summary>
         /// 视觉场景路径 (PackedScene)
         /// Data.LoadFromResource 会自动读取此属性
         /// </summary>
@@ -67,7 +73,7 @@ namespace Brotato.Data.Config.Units
         /// 攻击距离/范围
         /// </summary>
         [DataKey(DataKey.AttackRange)]
-        [Export] public float Range { get; set; }
+        [Export] public float AttackRange { get; set; }
         /// <summary>
         /// 暴击率 (%)
         /// </summary>

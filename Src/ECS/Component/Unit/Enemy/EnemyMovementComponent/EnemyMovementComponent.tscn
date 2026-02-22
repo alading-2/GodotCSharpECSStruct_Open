@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dy5m3lfkabv7j" path="res://Src/ECS/Component/Unit/Enemy/EnemyMovementComponent/EnemyMovementComponent.cs" id="1_move"]
+
+
+[node name="EnemyMovementComponent" type="Node"]
+script = ExtResource("1_move")

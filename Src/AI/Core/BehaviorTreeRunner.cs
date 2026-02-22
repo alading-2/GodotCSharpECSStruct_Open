@@ -9,7 +9,7 @@
 /// </summary>
 public class BehaviorTreeRunner
 {
-    private static readonly Log _log = new("BehaviorTreeRunner");
+    private static readonly Log _log = new(nameof(BehaviorTreeRunner));
 
     /// <summary>行为树根节点</summary>
     public BehaviorNode Root { get; private set; }

@@ -326,6 +326,14 @@ public static class TargetSelector
             // 类型过滤
             if (!PassTypeFilter(target, typeFilter)) continue;
 
+            // 生命周期过滤：排除无效的目标（已死、复活中）
+            if (target.Data.Has(DataKey.LifecycleState))
+            {
+                var state = target.Data.Get<LifecycleState>(DataKey.LifecycleState);
+                if (state == LifecycleState.Dead || state == LifecycleState.Reviving)
+                    continue;
+            }
+
             filtered.Add(target);
         }
 

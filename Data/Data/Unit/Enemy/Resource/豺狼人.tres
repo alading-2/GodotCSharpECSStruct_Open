@@ -1,13 +1,12 @@
 [gd_resource type="Resource" script_class="EnemyConfig" format=3 uid="uid://fsgm31sfgumo"]
 
-[ext_resource type="PackedScene" uid="uid://b4aioasnwsfb0" path="res://assets/Unit/Enemy/豺狼人/AnimatedSprite2D/豺狼人.tscn" id="1_visual"]
+[ext_resource type="PackedScene" uid="uid://b4aioasnwsfb0" path="res://assets/Unit/Enemy/chailangren/AnimatedSprite2D/chailangren.tscn" id="1_visual"]
 [ext_resource type="Script" uid="uid://ce7cjavr7yk8u" path="res://Data/Data/Unit/Enemy/EnemyConfig.cs" id="2_script"]
 
 [resource]
 script = ExtResource("2_script")
 ExpReward = 5
 DetectionRange = 500.0
-AttackRange = 60.0
 SpawnStrategy = 2
 SpawnMinWave = 2
 SpawnInterval = 3.0
@@ -15,9 +14,11 @@ SingleSpawnCount = 2
 SpawnStartDelay = 5.0
 Name = "豺狼人"
 Team = 2
+DeathType = 0
 VisualScenePath = ExtResource("1_visual")
 HealthBarHeight = 200.0
 BaseHp = 50.0
-Range = 60.0
-CritRate = 5.0
+BaseAttack = 5.0
+AttackRange = 100.0
 BaseDefense = 3.0
+MoveSpeed = 150.0

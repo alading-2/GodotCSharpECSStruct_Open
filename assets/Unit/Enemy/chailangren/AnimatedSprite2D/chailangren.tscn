@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://b4aioasnwsfb0"]
+
+[ext_resource type="SpriteFrames" uid="uid://cg7vmf3gqtelw" path="res://assets/Unit/Enemy/chailangren/AnimatedSprite2D/chailangren.tres" id="1_8tuu2"]
+
+[node name="chailangren" type="AnimatedSprite2D" unique_id=181554631]
+position = Vector2(0, -80)
+sprite_frames = ExtResource("1_8tuu2")
+animation = &"attack1"

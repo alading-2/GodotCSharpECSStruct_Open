@@ -10,6 +10,11 @@ using Godot;
 /// 注意：AI运行时数据统一存储在 Entity.Data 中（通过 DataKey 常量访问），
 /// 不再使用独立的 Blackboard。这遵循项目"Data 是唯一数据源"的核心理念。
 /// </para>
+/// <para>
+/// 解耦原则：AIContext 不持有 CharacterBody2D 引用。
+/// AI 通过 DataKey（如 MoveDirection）表达意图，由 EnemyMovementComponent 执行物理操作。
+/// 需要位置信息时，通过 Entity（作为 Node2D）的 GlobalPosition 获取。
+/// </para>
 /// </summary>
 public class AIContext
 {
@@ -24,12 +29,10 @@ public class AIContext
     /// <summary>实体事件总线</summary>
     public EventBus Events { get; set; }
 
-    /// <summary>CharacterBody2D 引用（用于设置 Velocity）</summary>
-    public CharacterBody2D Body { get; set; }
-
     // ================= 帧数据 =================
 
     /// <summary>当前帧 delta 时间</summary>
     public float DeltaTime { get; set; }
 
 }
+

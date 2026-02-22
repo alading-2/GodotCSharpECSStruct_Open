@@ -71,6 +71,8 @@ public partial class ActiveSkillInputComponent : Node, IComponent
     {
         // 确保实体和数据有效，防止非法访问
         if (_entity == null || _data == null) return;
+        // 死亡/复活中不响应技能输入
+        if (_data.Get<bool>(DataKey.IsDead)) return;
 
         HandleActiveAbilityInput();
     }

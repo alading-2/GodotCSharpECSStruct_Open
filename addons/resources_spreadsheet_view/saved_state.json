@@ -66,6 +66,17 @@
         "visibility": 0.0
       }
     },
+    "res://Data/Data/Unit/Player/Resource/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      }
+    },
     "res://备份/test/godot-resources-as-sheets-plugin/example/Items/items/": {
       "metadata/_custom_type_script": {
         "visibility": 0.0
@@ -91,7 +102,8 @@
   },
   "recent_paths": [
     "res://Data/Data/Ability/Resource/",
-    "res://Data/Data/Unit/Enemy/"
+    "res://Data/Data/Unit/Enemy/",
+    "res://Data/Data/Unit/Player/Resource/"
   ],
   "table_functions": {
     "filter": [

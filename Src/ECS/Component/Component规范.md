@@ -44,6 +44,45 @@ health?.ApplyHeal(new GameEventType.Unit.HealRequestEventData(amount, HealSource
     *   因为 Entity 在销毁/归还池时会自动调用 `Data.Clear()`。
     *   **结论**：只要状态都在 Data 里，Component 就**不需要**写 `Reset()` 方法来重置属性。
 
+### 3.1 私有字段缓存规则 (Private Field Caching)
+
+> [!IMPORTANT]
+> **区分"组件内部缓存"和"跨组件共享数据"**
+
+**允许使用私有字段缓存的场景**：
+
+*   ✅ **组件内部专用数据**：只在当前 Component 内部使用，不需要被其他 Component 访问
+*   ✅ **性能优化缓存**：避免重复计算或查询（如缓存 `AnimatedSprite2D` 引用）
+*   ✅ **临时状态**：运行时临时变量（如 `_currentTarget`、`_phaseTimer`）
+
+**必须使用 Data 存储的场景**：
+
+*   ✅ **跨组件共享**：需要被其他 Component 或 System 访问的数据
+*   ✅ **业务状态**：影响游戏逻辑的核心状态（HP、State、Velocity 等）
+*   ✅ **需要序列化**：需要保存或网络同步的数据
+
+**示例对比**：
+
+```csharp
+// ❌ 错误：业务状态用私有字段（其他组件无法访问）
+private float _currentHp;
+
+// ✅ 正确：业务状态存 Data（跨组件共享）
+public float CurrentHp => _data.Get<float>(DataKey.CurrentHp);
+
+// ✅ 正确：组件内部缓存（仅本组件使用，性能优化）
+private AnimatedSprite2D? _sprite;
+private Node2D? _currentTarget;
+
+// ✅ 正确：组件内部专用列表（仅本组件使用，不需要跨组件访问）
+private List<string> _availableAttackAnims = new();
+```
+
+**设计原则**：
+
+*   如果数据**只在当前 Component 内部使用**，可以用私有字段（相当于一种保护机制）
+*   如果数据**需要被其他地方访问**，必须存 Data（实现跨组件通信）
+
 ### 4. 数据存储规则
 
 > [!IMPORTANT]

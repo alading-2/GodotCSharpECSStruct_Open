@@ -80,4 +80,12 @@ public static partial class DataKey
 
     /// <summary>攻击动画名称（可选配置，默认使用 Anim.Attack1）</summary>
     public const string AttackAnimName = "AttackAnimName";
+
+    // ========== AI 移动意图（由 AI 行为树写入，EnemyMovementComponent 执行） ==========
+
+    /// <summary>AI 请求的移动方向（Vector2，归一化方向，Vector2.Zero 表示停止移动）</summary>
+    public const string AIMoveDirection = "AIMoveDirection";
+
+    /// <summary>AI 请求的移动速度倍率（float，默认 1.0f，巡逻时可设为 0.5f 等）</summary>
+    public const string AIMoveSpeedMultiplier = "AIMoveSpeedMultiplier";
 }

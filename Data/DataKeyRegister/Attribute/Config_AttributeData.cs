@@ -18,7 +18,7 @@ public static partial class GlobalConfig
     public const float MaxCritRate = 75f;
 
     /// <summary> 英雄复活时间 </summary>
-    public const float HeroReviveTime = 7f;
+    public const float HeroReviveTime = 3f;
     /// <summary> 复活后无敌时间 </summary>
-    public const float ReviveinvulnerableTime = 3f;
+    public const float ReviveinvulnerableTime = 2f;
 }

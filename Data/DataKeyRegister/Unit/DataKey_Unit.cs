@@ -72,4 +72,7 @@ public static partial class DataKey
     public const string WaveCriticalHits = "WaveCriticalHits"; // 本波次暴击次数
     // === RecoveryComponent ===
     public const string IsRecoverySystemRegistered = "IsRecoverySystemRegistered"; // 是否注册了恢复系统
+
+    // === UnitAnimationComponent ===
+    public const string AvailableAnimations = "AvailableAnimations"; // 可用动画名称列表 (List<string>)
 }

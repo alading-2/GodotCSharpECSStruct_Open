@@ -79,15 +79,23 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
 
 ### 2.3 Data - 数据容器系统
 
-**核心原则**: ✅ Data是唯一数据源 | ❌ Component禁止私有状态字段
+**核心原则**: ✅ Data是唯一数据源 | ❌ Component禁止私有业务状态字段
+
+**私有字段缓存规则**:
+- ✅ **允许**: 组件内部专用数据（如 `_sprite`、`_currentTarget`、`_availableAttackAnims`）
+- ❌ **禁止**: 业务状态字段（如 `_currentHp`、`_moveSpeed`）- 必须存 Data
 
 **最简示例**:
 ```csharp
-// ✅ 正确: 数据存Data
+// ✅ 正确: 业务状态存Data（跨组件共享）
 var hp = _entity.Data.Get<float>(DataKey.CurrentHp);
 _entity.Data.Set(DataKey.CurrentHp, hp - damage);
 
-// ❌ 错误: 私有字段
+// ✅ 正确: 组件内部缓存（仅本组件使用）
+private AnimatedSprite2D? _sprite;
+private List<string> _availableAttackAnims = new();
+
+// ❌ 错误: 业务状态用私有字段
 private float _currentHp; // 禁止!
 ```
 

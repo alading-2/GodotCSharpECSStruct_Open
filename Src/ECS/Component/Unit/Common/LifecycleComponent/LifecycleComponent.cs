@@ -8,9 +8,7 @@ using System;
 /// </summary>
 public enum LifecycleState
 {
-    Spawning,   // 生成中
     Alive,      // 存活
-    Dying,      // 死亡中（播放死亡动画）
     Dead,       // 已死亡
     Reviving,   // 复活中
 }
@@ -30,7 +28,7 @@ public enum DeathType
 /// 生命周期组件 - 单位生命周期状态机
 ///
 /// 核心职责：
-/// - 管理生命周期状态（Spawning/Alive/Dying/Dead/Reviving）
+/// - 管理生命周期状态（Alive/Dead/Reviving）
 /// - 监听 HP 变化触发死亡判定
 /// - 管理存活时间（召唤物自动过期）
 /// - 提供 Kill() 和 Revive() 方法
@@ -80,6 +78,10 @@ public partial class LifecycleComponent : Node, IComponent
     private GameTimer? _lifeTimer;
     /// <summary> 复活计时器：用于英雄复活倒计时 </summary>
     private GameTimer? _reviveTimer;
+    /// <summary> 普通单位死亡动画结束后延迟销毁计时器 </summary>
+    private GameTimer? _deathLingerTimer;
+    /// <summary> 单位原始碰撞层，用于复活后恢复 </summary>
+    private uint _originalCollisionLayer;
 
     // ================= IComponent =================
 
@@ -96,6 +98,10 @@ public partial class LifecycleComponent : Node, IComponent
             _data = iEntity.Data;
         }
 
+        // 保存原始碰撞层，用于复活后恢复
+        if (entity is CharacterBody2D initBody)
+            _originalCollisionLayer = initBody.CollisionLayer;
+
         // ✅ 全局监听 Kill 事件（通过 Victim 筛选是否是自己）
         GlobalEventBus.Global.On<GameEventType.Unit.KilledEventData>(
             GameEventType.Unit.Killed, OnUnitKilled);
@@ -103,6 +109,10 @@ public partial class LifecycleComponent : Node, IComponent
         // ✅ 监听数据变化事件（处理 Spawn 后动态设置 MaxLifeTime 的场景）
         _entity?.Events.On<GameEventType.Data.PropertyChangedEventData>(
             GameEventType.Data.PropertyChanged, OnDataChanged);
+
+        // ✅ 监听动画播放完毕事件（Hero 死亡动画结束后启动复活，普通单位延迟销毁）
+        _entity?.Events.On<GameEventType.Unit.AnimationFinishedEventData>(
+            GameEventType.Unit.AnimationFinished, OnAnimationFinished);
 
         // 初始化状态为 Alive，确保单位生成后立即可用
         ChangeState(LifecycleState.Alive);
@@ -155,8 +165,10 @@ public partial class LifecycleComponent : Node, IComponent
         // 停止所有活跃的计时器（生命周期或复活倒计时）
         _lifeTimer?.Cancel();
         _reviveTimer?.Cancel();
+        _deathLingerTimer?.Cancel();
         _lifeTimer = null;
         _reviveTimer = null;
+        _deathLingerTimer = null;
 
         _entity = null;
         _data = null;
@@ -171,10 +183,10 @@ public partial class LifecycleComponent : Node, IComponent
     public bool StateIsAlive() => State == LifecycleState.Alive;
 
     /// <summary> 
-    /// 检查单位是否已死亡或正在播放死亡动画。
+    /// 检查单位是否已死亡。
     /// 死亡状态的单位通常不参与碰撞和 AI 决策。
     /// </summary>
-    public bool StateIsDead() => State == LifecycleState.Dead || State == LifecycleState.Dying;
+    public bool StateIsDead() => State == LifecycleState.Dead;
 
     /// <summary> 
     /// 检查单位是否正处于复活倒计时流程中。
@@ -214,7 +226,7 @@ public partial class LifecycleComponent : Node, IComponent
 
         var oldState = State;
         // ✅ 通过 Data 修改状态（符合纯数据驱动规范）
-        _data?.Set(DataKey.LifecycleState, newState);
+        _data.Set(DataKey.LifecycleState, newState);
 
         _log.Debug($"状态变化: {oldState} -> {newState}");
 
@@ -228,7 +240,7 @@ public partial class LifecycleComponent : Node, IComponent
 
     /// <summary>
     /// 执行单位死亡逻辑。
-    /// 负责进入 Dying/Dead 状态、标记 Data 属性、同步 HP 以及触发相关事件。
+    /// 负责进入 Dead 状态、标记 Data 属性、同步 HP 以及触发相关事件。
     /// 如果是普通死亡（非英雄），还会自动销毁 Entity。
     /// </summary>
     /// <param name="deathType">死亡原因/类型</param>
@@ -240,7 +252,7 @@ public partial class LifecycleComponent : Node, IComponent
         // ✅ 通过 Data 记录死亡类型（符合纯数据驱动规范）
         _data?.Set(DataKey.DeathType, deathType);
         _data?.Add(DataKey.DeathCount, 1);
-        ChangeState(LifecycleState.Dying);
+        ChangeState(LifecycleState.Dead);
 
         // 在 Data 容器中同步死亡标记，供无状态系统（如渲染器）查询
         _data?.Set(DataKey.IsDead, true);
@@ -250,26 +262,36 @@ public partial class LifecycleComponent : Node, IComponent
 
         _log.Info($"单位死亡, 类型: {deathType}");
 
-        // 根据死亡类型决定后续行为：是直接移除还是尝试复活
+        // 死亡后禁用碰撞层，防止死亡单位推挤其他单位
+        if (_entity is CharacterBody2D body)
+            body.CollisionLayer = 0;
+
+        // 向实体局部事件总线也发送 Killed 事件，让 UnitAnimationComponent 能收到并播放死亡动画
+        _entity?.Events.Emit(GameEventType.Unit.Killed,
+            new GameEventType.Unit.KilledEventData(
+                Victim: _entity,
+                Killer: null,
+                DeathType: deathType));
+
+        // 根据死亡类型决定后续行为
         switch (deathType)
         {
             case DeathType.Hero:
-                // 英雄死亡：如果允许复活则进入复活流程
-                if (CanRevive)
-                {
-                    StartRevive();
-                }
-                else
-                {
-                    ChangeState(LifecycleState.Dead);
-                }
+                // 英雄死亡：状态保持 Dead，等待 OnAnimationFinished 回调再启动复活
                 break;
 
             case DeathType.Instant:
+                // 瞬间死亡：跳过动画直接销毁
+                DestroyEntity();
+                break;
+
             case DeathType.Normal:
             case DeathType.Summon:
             default:
-                DestroyEntity();
+                // 普通死亡：启动保底计时器（防止没有 dead 动画时永远不被销毁）
+                // 有 dead 动画时，OnAnimationFinished 会取消此计时器并重启 0.5 秒短计时器
+                _deathLingerTimer = TimerManager.Instance?.Delay(GlobalConfig.EnemyDeathLingerTime)
+                    .OnComplete(DestroyEntity);
                 break;
         }
     }
@@ -292,6 +314,32 @@ public partial class LifecycleComponent : Node, IComponent
     }
 
     /// <summary>
+    /// 动画播放完毕回调（由 UnitAnimationComponent 发出，携带动画名）。
+    /// - dead 动画 + Hero：进入 Dead/Reviving 流程
+    /// - dead 动画 + 普通单位：延迟 0.5 秒后销毁
+    /// </summary>
+    private void OnAnimationFinished(GameEventType.Unit.AnimationFinishedEventData data)
+    {
+        // 只处理 dead 动画
+        if (data.AnimName != Anim.Dead) return;
+
+        if (State != LifecycleState.Dead) return;
+
+        if (DeathType == DeathType.Hero)
+        {
+            StartRevive();
+        }
+        else
+        {
+            // 普通单位：dead 动画播完，立即进入 Dead 状态锁住动画，取消保底计时器，0.5 秒后销毁
+            ChangeState(LifecycleState.Dead);
+            _deathLingerTimer?.Cancel();
+            _deathLingerTimer = TimerManager.Instance?.Delay(0.5f)
+                .OnComplete(DestroyEntity);
+        }
+    }
+
+    /// <summary>
     /// 启动复活流程。
     /// 切换到 Reviving 状态，并启动计时器在持续时间内逐步恢复血量。
     /// </summary>
@@ -303,20 +351,19 @@ public partial class LifecycleComponent : Node, IComponent
         _entity?.Events.Emit(GameEventType.Unit.Reviving,
             new GameEventType.Unit.RevivingEventData(ReviveDuration));
 
-        // TODO 复活逻辑
         // 启动复活计时器，每 0.1 秒执行一次进度回调
-        // _reviveTimer = TimerManager.Instance?.Countdown(ReviveDuration, 0.1f)
-        //     .OnCountdown((elapsed, progress) =>
-        //     {
-        //         // 随着复活进度增加，视觉上渐进恢复血量
-        //         if (_health != null)
-        //         {
-        //             float maxHp = _health.MaxHp;
-        //             // 使用 SetHp 直接设置，不触发事件（避免死亡判定循环）
-        //             _health.SetHp(maxHp * progress, triggerEvent: false);
-        //         }
-        //     })
-        //     .OnComplete(CompleteRevive); // 计时结束，完成复活
+        _reviveTimer = TimerManager.Instance?.Countdown(ReviveDuration, 0.1f)
+            .OnCountdown((elapsed, progress) =>
+            {
+                // 随着复活进度增加，逐步恢复血量并触发 HealthChanged 事件让血条 UI 更新
+                float maxHp = _data.Get<float>(DataKey.FinalHp);
+                float newHp = maxHp * progress;
+                float oldHp = _data.Get<float>(DataKey.CurrentHp);
+                _data.Set(DataKey.CurrentHp, newHp);
+                _entity?.Events.Emit(GameEventType.Data.HealthChanged,
+                    new GameEventType.Data.HealthChangedEventData(oldHp, newHp));
+            })
+            .OnComplete(CompleteRevive); // 计时结束，完成复活
     }
 
     /// <summary>
@@ -325,24 +372,32 @@ public partial class LifecycleComponent : Node, IComponent
     /// </summary>
     private void CompleteRevive()
     {
-        // 1. 恢复至满血，这次触发事件以通知 UI 更新
-        _data?.Set(DataKey.CurrentHp, _data.Get<float>(DataKey.FinalHp));
+        // 1. 恢复至满血，触发 HealthChanged 事件通知 UI 更新
+        float oldHp = _data.Get<float>(DataKey.CurrentHp);
+        float fullHp = _data.Get<float>(DataKey.FinalHp);
+        _data.Set(DataKey.CurrentHp, fullHp);
+        _entity?.Events.Emit(GameEventType.Data.HealthChanged,
+            new GameEventType.Data.HealthChangedEventData(oldHp, fullHp));
 
         // 2. 清除死亡标记
-        _data?.Set(DataKey.IsDead, false);
+        _data.Set(DataKey.IsDead, false);
 
-        // 3. 应用复活后的短暂无敌保护
-        // if (ReviveInvulnerabilityDuration > 0)
-        // {
-        //     _data?.Set(DataKey.IsInvulnerable, true);
-        //     TimerManager.Instance?.Delay(ReviveInvulnerabilityDuration)
-        //         .OnComplete(() => _data?.Set(DataKey.IsInvulnerable, false));
-        // }
+        // 3. 应用复活后的短暂无敌保护（防止复活瞬间被围攻致死）
+        if (ReviveInvulnerabilityDuration > 0)
+        {
+            _data?.Set(DataKey.IsInvulnerable, true);
+            TimerManager.Instance?.Delay(ReviveInvulnerabilityDuration)
+                .OnComplete(() => _data?.Set(DataKey.IsInvulnerable, false));
+        }
 
         // 4. 回到存活状态
         ChangeState(LifecycleState.Alive);
 
-        // 5. 广播复活完成事件
+        // 5. 恢复碰撞层
+        if (_entity is CharacterBody2D reviveBody)
+            reviveBody.CollisionLayer = _originalCollisionLayer;
+
+        // 6. 广播复活完成事件
         _entity?.Events.Emit(GameEventType.Unit.Revived,
             new GameEventType.Unit.RevivedEventData());
         _log.Info("单位复活完成");
@@ -354,8 +409,8 @@ public partial class LifecycleComponent : Node, IComponent
     /// </summary>
     public void Revive()
     {
-        // 只有处于死亡或死亡中状态的单位才能复活
-        if (State != LifecycleState.Dead && State != LifecycleState.Dying) return;
+        // 只有处于死亡状态的单位才能复活
+        if (State != LifecycleState.Dead) return;
 
         // 如果已经在复活中，取消当前的复活计时器
         _reviveTimer?.Cancel();

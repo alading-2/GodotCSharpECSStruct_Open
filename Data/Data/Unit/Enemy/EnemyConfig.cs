@@ -17,10 +17,6 @@ namespace Brotato.Data.Config.Units
         /// </summary>
         [ExportGroup("AI 配置")]
         [Export] public float DetectionRange { get; set; } = 400f;
-        /// <summary>
-        /// 攻击距离
-        /// </summary>
-        [Export] public float AttackRange { get; set; } = 50f;
 
         /// <summary>
         /// 是否启用生成规则
