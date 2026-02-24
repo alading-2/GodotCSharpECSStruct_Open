@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace BrotatoMy.Addons
+namespace Slime.Addons
 {
     /// <summary>
     /// SpriteFrames 自动生成插件

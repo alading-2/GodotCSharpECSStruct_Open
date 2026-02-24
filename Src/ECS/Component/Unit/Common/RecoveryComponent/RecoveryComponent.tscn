@@ -3,5 +3,5 @@
 [ext_resource type="Script" uid="uid://bnj6ritj44yy2" path="res://Src/ECS/Component/Unit/Common/RecoveryComponent/RecoveryComponent.cs" id="1_recovery"]
 
 
-[node name="RecoveryComponent" type="Node"]
+[node name="RecoveryComponent" type="Node2D"]
 script = ExtResource("1_recovery")

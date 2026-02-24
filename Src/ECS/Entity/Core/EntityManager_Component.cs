@@ -24,6 +24,17 @@ public static partial class EntityManager
     /// </summary>
     private static readonly Dictionary<string, List<NodePath>> _componentPathCache = new();
 
+    public static bool TryGetCachedComponentPaths(Node entity, out List<NodePath> paths)
+    {
+        paths = default!;
+        if (entity == null) return false;
+
+        string cacheKey = entity.SceneFilePath;
+        if (string.IsNullOrEmpty(cacheKey)) cacheKey = entity.GetType().Name;
+
+        return _componentPathCache.TryGetValue(cacheKey, out paths!) && paths != null && paths.Count > 0;
+    }
+
     /// <summary>
     /// [优化] 预热 Component 缓存
     /// 遍历所有 Entity 资源，实例化并扫描 Component 结构，存入缓存。

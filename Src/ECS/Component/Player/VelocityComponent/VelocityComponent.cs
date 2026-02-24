@@ -8,7 +8,7 @@ using Godot;
 /// 所有数据从 Entity.Data 读取。
 /// </para>
 /// </summary>
-public partial class VelocityComponent : Node, IComponent
+public partial class VelocityComponent : Node2D, IComponent
 {
     private static readonly Log _log = new(nameof(VelocityComponent));
 

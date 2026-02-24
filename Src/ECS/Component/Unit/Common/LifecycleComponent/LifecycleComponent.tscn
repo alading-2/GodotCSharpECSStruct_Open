@@ -3,5 +3,5 @@
 [ext_resource type="Script" uid="uid://ci4673necy84p" path="res://Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs" id="1_lifecycle"]
 
 
-[node name="LifecycleComponent" type="Node"]
+[node name="LifecycleComponent" type="Node2D"]
 script = ExtResource("1_lifecycle")

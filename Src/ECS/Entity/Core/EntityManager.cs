@@ -14,17 +14,17 @@ public readonly record struct EntitySpawnConfig
     /// <summary>单位配置资源（必填，如 EnemyConfig, PlayerConfig）</summary>
     public required Resource Config { get; init; }
 
-    /// <summary>是否使用对象池（默认 false）</summary>
-    public bool UsingObjectPool { get; init; }
+/// <summary>是否使用对象池（默认 false）</summary>
+public bool UsingObjectPool { get; init; }
 
-    /// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
-    public string? PoolName { get; init; }
+/// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
+public string? PoolName { get; init; }
 
-    /// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
-    public Vector2? Position { get; init; }
+/// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
+public Vector2? Position { get; init; }
 
-    /// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
-    public float? Rotation { get; init; }
+/// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
+public float? Rotation { get; init; }
 }
 
 /// <summary>
@@ -184,18 +184,23 @@ public static partial class EntityManager
             InjectVisualScene(entity, config.Config);
         }
 
-        // 4. 防止重复注册（对象池复用场景）
-        if (!NodeLifecycleManager.IsRegistered(id))
-        {
-            Register(entity);
-            RegisterComponents(entity);
-        }
-
-        // 5. 设置位置和旋转（仅对 Node2D 生效）
+        // 4. 设置位置和旋转（仅对 Node2D 生效）
+        // 关键时序：必须先设置变换，再做组件注册。
+        // 否则对象池复用对象可能在“旧位置”参与一帧物理，导致 HurtComponent 收到伪 body_entered。
         if (entity is Node2D entity2D)
         {
             if (config.Position.HasValue) entity2D.GlobalPosition = config.Position.Value;
             if (config.Rotation.HasValue) entity2D.GlobalRotation = config.Rotation.Value;
+
+            // 关键：强制同步 Transform，避免物理 server 在启用碰撞时仍使用旧物理位置
+            entity2D.ForceUpdateTransform();
+        }
+
+        // 5. 防止重复注册（对象池复用场景）
+        if (!NodeLifecycleManager.IsRegistered(id))
+        {
+            Register(entity);
+            RegisterComponents(entity);
         }
 
         GlobalEventBus.Global.Emit(GameEventType.Global.EntitySpawned, new GameEventType.Global.EntitySpawnedEventData(entity));

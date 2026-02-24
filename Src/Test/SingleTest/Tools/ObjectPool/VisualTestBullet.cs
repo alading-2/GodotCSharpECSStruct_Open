@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace BrotatoMy.Test;
+namespace Slime.Test;
 
 /// <summary>
 /// 可视化测试用的子弹对象
@@ -46,7 +46,7 @@ public partial class VisualTestBullet : Node2D, IPoolable
         _velocity = velocity;
         _bounds = bounds;
         _lifetime = 0;
-        
+
         // 重置视觉
         Modulate = Colors.White;
         _visual.Color = Colors.Green.Lerp(Colors.Blue, (_reuseCount % 10) / 10f); // 根据复用次数变色
@@ -73,7 +73,7 @@ public partial class VisualTestBullet : Node2D, IPoolable
         // 颜色渐变 (Green -> Red)
         float progress = _lifetime / _maxLifetime;
         _visual.Color = Colors.Green.Lerp(Colors.Red, progress);
-        
+
         // 旋转效果
         Rotation += 5.0f * dt;
 

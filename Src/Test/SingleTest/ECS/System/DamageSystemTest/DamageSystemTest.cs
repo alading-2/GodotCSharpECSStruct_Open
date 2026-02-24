@@ -1,8 +1,6 @@
 using Godot;
 using System;
-using BrotatoMy.Test;
-
-namespace BrotatoMy.Test.DamageSystemTest
+namespace Slime.Test.DamageSystemTest
 {
     public partial class DamageSystemTest : Node
     {

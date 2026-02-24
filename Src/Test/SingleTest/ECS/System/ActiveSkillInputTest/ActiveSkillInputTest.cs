@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-namespace BrotatoMy.Test.ActiveSkillInputTest
+namespace Slime.Test.ActiveSkillInputTest
 {
     /// <summary>
     /// 主动技能输入系统测试

@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn" id="4_kfkou"]
 [ext_resource type="PackedScene" uid="uid://b8q7x5y203a4c" path="res://Src/ECS/Component/Ability/AbilityTargetSelectionComponent/AbilityTargetSelectionComponent.tscn" id="5_q0glx"]
 
-[node name="AbilityPreset" type="Node" unique_id=1979186236]
+[node name="AbilityPreset" type="Node2D" unique_id=1979186236]
 
 [node name="TriggerComponent" parent="." unique_id=1607360994 instance=ExtResource("1_trigger")]
 

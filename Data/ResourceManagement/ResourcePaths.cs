@@ -43,6 +43,7 @@ public static class ResourcePaths
         public const string EnemyMovementComponent = "EnemyMovementComponent";
         public const string EnemyPreset = "EnemyPreset";
         public const string HealthComponent = "HealthComponent";
+        public const string HurtComponent = "HurtComponent";
         public const string LifecycleComponent = "LifecycleComponent";
         public const string PickupComponent = "PickupComponent";
         public const string PlayerPreset = "PlayerPreset";
@@ -160,6 +161,7 @@ public static class ResourcePaths
                 { Component.EnemyMovementComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Enemy/EnemyMovementComponent/EnemyMovementComponent.tscn") },
                 { Component.EnemyPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn") },
                 { Component.HealthComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/HealthComponent/HealthComponent.tscn") },
+                { Component.HurtComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/HurtComponent/HurtComponent.tscn") },
                 { Component.LifecycleComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.tscn") },
                 { Component.PickupComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/PickupComponent/PickupComponent.tscn") },
                 { Component.PlayerPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn") },

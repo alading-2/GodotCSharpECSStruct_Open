@@ -9,7 +9,7 @@ using Godot;
 /// 3. 自动恢复：当充能未满时，使用 TimerManager.Loop() 自动恢复。
 /// 4. 数据解耦：所有状态（当前充能）都存储在 Entity.Data 中。
 /// </summary>
-public partial class ChargeComponent : Node, IComponent
+public partial class ChargeComponent : Node2D, IComponent
 {
     private static readonly Log _log = new(nameof(ChargeComponent));
 

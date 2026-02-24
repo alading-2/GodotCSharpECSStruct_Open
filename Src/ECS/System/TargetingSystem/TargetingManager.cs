@@ -1,5 +1,5 @@
 using Godot;
-using Brotato.Data.Config.Units;
+using Slime.Config.Units;
 using System.Runtime.CompilerServices;
 /// <summary>
 /// 瞄准状态管理器 - 管理Point类型技能的异步目标选择

@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 
 
-namespace BrotatoMy.Test;
+namespace Slime.Test;
 
 /// <summary>
 /// 输入系统测试 - 使用 InputManager 演示版

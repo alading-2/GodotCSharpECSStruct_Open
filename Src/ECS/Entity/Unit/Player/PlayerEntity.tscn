@@ -5,19 +5,19 @@
 [ext_resource type="PackedScene" uid="uid://jx6dhoafnfft" path="res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn" id="3_in0jy"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_a3twn"]
-radius = 24.0
-height = 68.0
+radius = 19.0
+height = 64.0
 
 [node name="Player" type="CharacterBody2D" unique_id=1208168319]
-collision_mask = 3
+collision_layer = 2
 motion_mode = 1
 script = ExtResource("1_a3twn")
 
-[node name="Component" type="Node" parent="." unique_id=1031642538]
+[node name="Component" type="Node2D" parent="." unique_id=1031642538]
 
 [node name="UnitCorePreset" parent="Component" unique_id=1269007466 instance=ExtResource("2_hhu18")]
 
-[node name="PlayerExclusivePreset" parent="Component" unique_id=1428082245 instance=ExtResource("3_in0jy")]
+[node name="PlayerPreset" parent="Component" unique_id=1428082245 instance=ExtResource("3_in0jy")]
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=508281073]
 

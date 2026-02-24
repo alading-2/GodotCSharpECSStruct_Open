@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://dq8m5nvk2r7wp" path="res://Src/ECS/Component/Unit/Common/RecoveryComponent/RecoveryComponent.tscn" id="5_bplmq"]
 [ext_resource type="PackedScene" uid="uid://bx7k2n4p9qmva" path="res://Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.tscn" id="6_anim"]
 
-[node name="UnitCorePreset" type="Node" unique_id=292361174]
+[node name="UnitCorePreset" type="Node2D" unique_id=292361174]
 
 [node name="HealthComponent" parent="." unique_id=1934858435 instance=ExtResource("1_health")]
 

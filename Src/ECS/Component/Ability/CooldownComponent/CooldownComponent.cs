@@ -12,7 +12,7 @@ using Godot;
 /// - 无状态设计，所有数据存储在 Data 中
 /// - 冷却时间支持修改器 (CooldownReduction)
 /// </summary>
-public partial class CooldownComponent : Node, IComponent
+public partial class CooldownComponent : Node2D, IComponent
 {
     private static readonly Log _log = new(nameof(CooldownComponent));
 

@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace Brotato.Test.Data
+namespace Slime.Test.Mapping
 {
     /// <summary>
     /// 用于测试 DataKey 映射机制的虚拟资源类

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Brotato.Data.Config.Units
+namespace Slime.Config.Units
 {
     [GlobalClass]
     public partial class PlayerConfig : UnitConfig

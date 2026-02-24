@@ -94,7 +94,7 @@ public partial class MainTest : Node
 
         // 1. 生成玩家
         _log.Info("步骤 1: 生成玩家");
-        var playerConfig = ResourceManagement.Load<Brotato.Data.Config.Units.PlayerConfig>(ResourcePaths.PlayerConfig.德鲁伊, ResourceCategory.PlayerConfig);
+        var playerConfig = ResourceManagement.Load<Slime.Config.Units.PlayerConfig>(ResourcePaths.PlayerConfig.德鲁伊, ResourceCategory.PlayerConfig);
         _player = EntityManager.Spawn<PlayerEntity>(new EntitySpawnConfig
         {
             Config = playerConfig,
@@ -162,14 +162,14 @@ public partial class MainTest : Node
         // ECS系统会自动处理组件添加、关系建立等
 
         // 技能1: TargetStrike (目标打击)
-        var targetStrikeConfig = ResourceManagement.Load<Brotato.Data.Config.Abilities.AbilityConfig>(ResourcePaths.AbilityConfig.TargetEntitySkillConfig, ResourceCategory.AbilityConfig);
+        var targetStrikeConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.AbilityConfig.TargetEntitySkillConfig, ResourceCategory.AbilityConfig);
         if (targetStrikeConfig != null)
         {
             EntityManager.AddAbility(_player, targetStrikeConfig);
         }
 
         // 技能2: GroundSlam (地面猛击)
-        var groundSlamConfig = ResourceManagement.Load<Brotato.Data.Config.Abilities.AbilityConfig>(ResourcePaths.AbilityConfig.TargetPointSkillConfig, ResourceCategory.AbilityConfig);
+        var groundSlamConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.AbilityConfig.TargetPointSkillConfig, ResourceCategory.AbilityConfig);
         if (groundSlamConfig != null)
         {
             EntityManager.AddAbility(_player, groundSlamConfig);

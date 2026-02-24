@@ -10,7 +10,7 @@ using Godot;
 /// - 数据驱动：通过 Data 容器读写数据
 /// - 事件驱动：监听 Entity.Events 响应变化
 /// </summary>
-public partial class TemplateComponent : Node, IComponent
+public partial class TemplateComponent : Node2D, IComponent
 {
     private static readonly Log _log = new(nameof(TemplateComponent));
 

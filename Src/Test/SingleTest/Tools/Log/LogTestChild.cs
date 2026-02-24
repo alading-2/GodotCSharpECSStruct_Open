@@ -1,7 +1,7 @@
 using Godot;
-using BrotatoMy;
+using Slime;
 
-namespace BrotatoMy.Test
+namespace Slime.Test
 {
     public partial class LogTestChild : Node
     {

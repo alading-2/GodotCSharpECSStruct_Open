@@ -60,7 +60,7 @@ public enum AnimPlayMode
 /// - Enemy 通过 FollowComponent + AI 直接设置 CharacterBody2D.Velocity
 /// - 两者都最终体现在 CharacterBody2D.Velocity 上
 /// </summary>
-public partial class UnitAnimationComponent : Node, IComponent
+public partial class UnitAnimationComponent : Node2D, IComponent
 {
     private static readonly Log _log = new(nameof(UnitAnimationComponent));
 

@@ -40,7 +40,7 @@ public enum DeathType
 /// - 不直接管理状态标记：通过 Data 系统 (DataKey.IsDead 等)
 /// - 事件驱动：通过 EventBus 通知状态变化
 /// </summary>
-public partial class LifecycleComponent : Node, IComponent
+public partial class LifecycleComponent : Node2D, IComponent
 {
     private static readonly Log _log = new(nameof(LifecycleComponent));
 
@@ -98,10 +98,6 @@ public partial class LifecycleComponent : Node, IComponent
             _data = iEntity.Data;
         }
 
-        // 保存原始碰撞层，用于复活后恢复
-        if (entity is CharacterBody2D initBody)
-            _originalCollisionLayer = initBody.CollisionLayer;
-
         // ✅ 全局监听 Kill 事件（通过 Victim 筛选是否是自己）
         GlobalEventBus.Global.On<GameEventType.Unit.KilledEventData>(
             GameEventType.Unit.Killed, OnUnitKilled);
@@ -158,11 +154,11 @@ public partial class LifecycleComponent : Node, IComponent
     /// </summary>
     public void OnComponentUnregistered()
     {
-        // 取消全局事件订阅
+        // Cancel global event subscription
         GlobalEventBus.Global.Off<GameEventType.Unit.KilledEventData>(
             GameEventType.Unit.Killed, OnUnitKilled);
 
-        // 停止所有活跃的计时器（生命周期或复活倒计时）
+        // 取消计时器
         _lifeTimer?.Cancel();
         _reviveTimer?.Cancel();
         _deathLingerTimer?.Cancel();
@@ -261,10 +257,6 @@ public partial class LifecycleComponent : Node, IComponent
         _data?.Set(DataKey.CurrentHp, 0f);
 
         _log.Info($"单位死亡, 类型: {deathType}");
-
-        // 死亡后禁用碰撞层，防止死亡单位推挤其他单位
-        if (_entity is CharacterBody2D body)
-            body.CollisionLayer = 0;
 
         // 向实体局部事件总线也发送 Killed 事件，让 UnitAnimationComponent 能收到并播放死亡动画
         _entity?.Events.Emit(GameEventType.Unit.Killed,
@@ -393,11 +385,7 @@ public partial class LifecycleComponent : Node, IComponent
         // 4. 回到存活状态
         ChangeState(LifecycleState.Alive);
 
-        // 5. 恢复碰撞层
-        if (_entity is CharacterBody2D reviveBody)
-            reviveBody.CollisionLayer = _originalCollisionLayer;
-
-        // 6. 广播复活完成事件
+        // 5. 广播复活完成事件
         _entity?.Events.Emit(GameEventType.Unit.Revived,
             new GameEventType.Unit.RevivedEventData());
         _log.Info("单位复活完成");

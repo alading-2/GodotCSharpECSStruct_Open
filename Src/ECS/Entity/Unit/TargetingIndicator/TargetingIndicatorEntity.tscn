@@ -9,7 +9,7 @@
 z_index = 100
 script = ExtResource("1_indicator")
 
-[node name="Component" type="Node" parent="." unique_id=982227270]
+[node name="Component" type="Node2D" parent="." unique_id=982227270]
 
 [node name="UnitCorePreset" parent="Component" unique_id=292361174 instance=ExtResource("2_et682")]
 

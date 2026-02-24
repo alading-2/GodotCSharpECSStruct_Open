@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace BrotatoMy.Test;
+namespace Slime.Test;
 
 /// <summary>
 /// 测试用投射物
@@ -46,7 +46,7 @@ public partial class TestProjectile : Node2D, IPoolable
         _velocity = velocity;
         _bounds = bounds;
         _lifetime = 0;
-        
+
         // 重置视觉
         Modulate = Colors.White;
         _visual.Color = Colors.Green.Lerp(Colors.Blue, (_reuseCount % 10) / 10f);

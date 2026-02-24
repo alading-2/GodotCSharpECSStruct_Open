@@ -1,9 +1,9 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using BrotatoMy.Test;
+using Slime.Test;
 
-namespace BrotatoMy.Test
+namespace Slime.Test
 {
     /// <summary>
     /// 敌人生成系统测试场景

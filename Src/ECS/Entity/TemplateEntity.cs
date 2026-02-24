@@ -15,7 +15,7 @@ using Godot;
 /// │   - 统一使用 EntityManager.Spawn/Destroy 管理                   │
 /// └─────────────────────────────────────────────────────────────────┘
 /// </summary>
-public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
+public partial class TemplateEntity : Node2D, IEntity, IPoolable
 {
     private static readonly Log _log = new(nameof(TemplateEntity));
 
@@ -84,8 +84,6 @@ public partial class TemplateEntity : CharacterBody2D, IEntity, IPoolable
         // 取消全局事件订阅
         GlobalEventBus.Global.Off<GameEventType.Unit.KilledEventData>(
             GameEventType.Unit.Killed, OnKilled);
-        // 示例:重置物理状态
-        Velocity = Vector2.Zero;
     }
 
     /// <summary>

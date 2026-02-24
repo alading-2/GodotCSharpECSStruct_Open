@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cw674beipdru" path="res://Src/ECS/Entity/Ability/AbilityEntity.cs" id="1_ability"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Presets/Ability/AbilityPreset.tscn" id="2_bkcar"]
 
-[node name="AbilityEntity" type="Node"]
+[node name="AbilityEntity" type="Node2D"]
 script = ExtResource("1_ability")
 
 [node name="AbilityPreset" parent="." instance=ExtResource("2_bkcar")]

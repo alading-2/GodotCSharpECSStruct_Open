@@ -9,7 +9,7 @@ using Godot;
 /// - 效果执行归 AbilityEffect 执行器
 /// - 支持对象池复用（实现 IPoolable）
 /// </summary>
-public partial class AbilityEntity : Node, IEntity, IPoolable
+public partial class AbilityEntity : Node2D, IEntity, IPoolable
 {
     private static readonly Log _log = new(nameof(AbilityEntity));
 

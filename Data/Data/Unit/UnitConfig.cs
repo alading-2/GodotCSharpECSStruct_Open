@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Brotato.Data.Config.Units
+namespace Slime.Config.Units
 {
     /// <summary>
     /// 单位配置基类

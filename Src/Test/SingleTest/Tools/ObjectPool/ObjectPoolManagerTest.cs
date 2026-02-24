@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-namespace BrotatoMy.Test;
+namespace Slime.Test;
 
 /// <summary>
 /// ObjectPoolManager 全局管理器测试场景

@@ -3,5 +3,5 @@
 [ext_resource type="Script" path="res://Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.cs" id="1_anim"]
 
 
-[node name="UnitAnimationComponent" type="Node"]
+[node name="UnitAnimationComponent" type="Node2D"]
 script = ExtResource("1_anim")

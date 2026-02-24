@@ -9,11 +9,11 @@ radius = 16.0
 height = 54.0
 
 [node name="Enemy" type="CharacterBody2D" unique_id=1290880867]
-collision_layer = 2
-collision_mask = 3
+collision_layer = 4
+collision_mask = 5
 script = ExtResource("1_id0n2")
 
-[node name="Component" type="Node" parent="." unique_id=1891213159]
+[node name="Component" type="Node2D" parent="." unique_id=1891213159]
 
 [node name="EnemyPreset" parent="Component" unique_id=1234039195 instance=ExtResource("2_pu5y4")]
 

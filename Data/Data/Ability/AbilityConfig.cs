@@ -1,7 +1,7 @@
 using Godot;
 
 
-namespace Brotato.Data.Config.Abilities
+namespace Slime.Config.Abilities
 {
     [GlobalClass]
     public partial class AbilityConfig : Resource

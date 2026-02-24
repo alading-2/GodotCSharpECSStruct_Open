@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://dyw2wdk5k1cym" path="res://Src/ECS/Component/Unit/TargetingIndicatorControlComponent/TargetingIndicatorControlComponent.cs" id="1_control"]
 
-[node name="TargetingIndicatorControlComponent" type="Node"]
+[node name="TargetingIndicatorControlComponent" type="Node2D"]
 script = ExtResource("1_control")

@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace BrotatoMy.Test
+namespace Slime.Test
 {
     public partial class TestComponent : Node, IComponent
     {

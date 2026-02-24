@@ -16,7 +16,7 @@ using Godot;
 /// - 消耗类型和数量从技能 Data 读取
 /// - 资源从施法者 (Caster) Data 读取和扣除
 /// </summary>
-public partial class CostComponent : Node, IComponent
+public partial class CostComponent : Node2D, IComponent
 {
     private static readonly Log _log = new(nameof(CostComponent));
 

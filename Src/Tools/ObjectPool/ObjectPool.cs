@@ -142,6 +142,7 @@ public class ObjectPool<T> where T : class
 
         // 构造时直接预热，将性能开销放在初始化阶段
         Warmup(config.InitialSize);
+
         // 自动注册到全局管理器
         ObjectPoolManager.Register(this);
         _log.Info($"创建对象池: {config.Name}, 初始大小: {config.InitialSize}, 最大大小: {config.MaxSize}, 父节点路径: {config.ParentPath}");
@@ -201,13 +202,28 @@ public class ObjectPool<T> where T : class
         if (obj is Node node)
         {
             node.SetMeta("InPool", true);
-            // 关键：停止节点的所有处理逻辑（PhysicsProcess, Process, Input 等）
-            node.ProcessMode = Node.ProcessModeEnum.Disabled;
-            // 隐藏节点，避免渲染开销
-            if (node is CanvasItem item) item.Visible = false;
+            ApplyInactiveState(node);
         }
         _stack.Push(obj);
         _stats.Count = _stack.Count;
+    }
+
+    /// <summary>
+    /// 应用禁用状态：停止处理、隐藏
+    /// </summary>
+    private static void ApplyInactiveState(Node node)
+    {
+        node.ProcessMode = Node.ProcessModeEnum.Disabled;
+        if (node is CanvasItem item) item.Visible = false;
+    }
+
+    /// <summary>
+    /// 应用激活状态：恢复处理、显示
+    /// </summary>
+    private static void ApplyActiveState(Node node)
+    {
+        node.ProcessMode = Node.ProcessModeEnum.Inherit;
+        if (node is CanvasItem item) item.Visible = true;
     }
 
     /// <summary>
@@ -239,13 +255,8 @@ public class ObjectPool<T> where T : class
         // 执行 Godot 激活逻辑
         if (obj is Node node)
         {
-            // 标记对象已出池
             node.SetMeta("InPool", false);
-
-            // 恢复节点的处理能力
-            node.ProcessMode = Node.ProcessModeEnum.Inherit;
-            // 显示节点
-            if (node is CanvasItem item) item.Visible = true;
+            ApplyActiveState(node);
         }
 
         // 生命周期回调

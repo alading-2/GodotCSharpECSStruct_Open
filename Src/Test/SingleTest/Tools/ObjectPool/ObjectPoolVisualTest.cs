@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace BrotatoMy.Test;
+namespace Slime.Test;
 
 /// <summary>
 /// C# 版对象池可视化测试场景

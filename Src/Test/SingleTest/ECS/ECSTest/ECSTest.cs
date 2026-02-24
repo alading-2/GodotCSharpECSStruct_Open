@@ -1,8 +1,8 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using BrotatoMy.Test;
-using BrotatoMy.Test.DamageSystemTest;
+using Slime.Test;
+using Slime.Test.DamageSystemTest;
 
 public partial class ECSTest : Node
 {
