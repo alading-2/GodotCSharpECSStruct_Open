@@ -8,7 +8,7 @@ using Godot;
 /// - 处理确认/取消按键输入
 /// - 限制指示器在施法范围内
 /// </summary>
-public partial class TargetingIndicatorControlComponent : Node2D, IComponent
+public partial class TargetingIndicatorControlComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(TargetingIndicatorControlComponent));
 

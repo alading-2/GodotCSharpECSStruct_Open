@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dpv5ksg4ophhc" path="res://Src/Test/SingleTest/Tools/Input/InputTest.cs" id="1_wcmj6"]
 
-[node name="InputTest" type="Node2D"]
+[node name="InputTest" type="Node"]
 script = ExtResource("1_wcmj6")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]

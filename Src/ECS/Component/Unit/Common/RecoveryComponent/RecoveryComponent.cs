@@ -13,7 +13,7 @@ using Godot;
 /// - 恢复逻辑由 RecoverySystem 统一处理
 /// - 智能注册：只有恢复属性 > 0 时才注册
 /// </summary>
-public partial class RecoveryComponent : Node2D, IComponent
+public partial class RecoveryComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(RecoveryComponent));
 

@@ -14,7 +14,7 @@ using System;
 /// - 谁修改数据，谁触发事件
 /// - 所有 HP 变更事件集中在此组件触发
 /// </summary>
-public partial class HealthComponent : Node2D, IComponent
+public partial class HealthComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(HealthComponent));
 

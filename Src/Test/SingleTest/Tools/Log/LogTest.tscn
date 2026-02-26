@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://ceymd3r1jmv5y" path="res://Src/Test/SingleTest/Tools/Log/LogTest.cs" id="1_logtest"]
 
-[node name="LogTest" type="Node2D"]
+[node name="LogTest" type="Node"]
 script = ExtResource("1_logtest")

@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" path="res://Src/ECS/Component/Player/PickupComponent/PickupComponent.tscn" id="1_l1d4d"]
 [ext_resource type="PackedScene" uid="uid://sk7v2ipjvk1o" path="res://Src/ECS/Component/Player/VelocityComponent/VelocityComponent.tscn" id="2_5sp1r"]
 [ext_resource type="PackedScene" uid="uid://dn6ijis6tlt0k" path="res://Src/ECS/Component/Player/ActiveSkillInputComponent/ActiveSkillInputComponent.tscn" id="3_h4de5"]
-[ext_resource type="PackedScene" path="res://Src/ECS/Component/Player/HurtComponent/HurtComponent.tscn" id="4_contact"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.tscn" id="4_qh4sb"]
 
 [node name="PlayerPreset" type="Node2D" unique_id=1164705830]
 
@@ -13,4 +13,4 @@
 
 [node name="ActiveSkillInputComponent" parent="." unique_id=1196432089 instance=ExtResource("3_h4de5")]
 
-[node name="HurtComponent" parent="." unique_id=1196432090 instance=ExtResource("4_contact")]
+[node name="ContactDamageComponent" parent="." unique_id=1361494412 instance=ExtResource("4_qh4sb")]

@@ -10,7 +10,7 @@ namespace Slime.Test.ActiveSkillInputTest
     /// 2. 技能释放 (X)
     /// 3. UI 显示更新
     /// </summary>
-    public partial class ActiveSkillInputTest : Node2D
+    public partial class ActiveSkillInputTest : Node
     {
         private static readonly Log _log = new Log("ActiveSkillInputTest");
 

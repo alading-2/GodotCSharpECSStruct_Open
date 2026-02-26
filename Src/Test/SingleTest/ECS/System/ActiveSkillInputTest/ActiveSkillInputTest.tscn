@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://Src/Test/SingleTest/ECS/System/ActiveSkillInputTest/ActiveSkillInputTest.cs" id="1"]
 
-[node name="ActiveSkillInputTest" type="Node2D"]
+[node name="ActiveSkillInputTest" type="Node"]
 script = ExtResource("1")

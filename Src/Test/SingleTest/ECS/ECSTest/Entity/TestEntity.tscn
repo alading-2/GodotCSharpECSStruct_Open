@@ -3,5 +3,5 @@
 [ext_resource type="Script" uid="uid://bku7on2fidj5" path="res://Src/Test/SingleTest/ECS/ECSTest/Entity/TestEntity.cs" id="1_test_entity"]
 
 
-[node name="TestEntity" type="Node2D"]
+[node name="TestEntity" type="Node"]
 script = ExtResource("1_test_entity")

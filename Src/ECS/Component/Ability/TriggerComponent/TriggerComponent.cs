@@ -13,7 +13,7 @@ using System.Collections.Generic;
 /// - Permanent: 永久生效。通常用于属性加成类被动，添加即生效。
 
 /// </summary>
-public partial class TriggerComponent : Node2D, IComponent
+public partial class TriggerComponent : Node, IComponent
 {
     private static readonly Log _log = new Log("TriggerComponent");
 

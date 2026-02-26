@@ -37,13 +37,14 @@ public static class ResourcePaths
         public const string AIComponent = "AIComponent";
         public const string AttackComponent = "AttackComponent";
         public const string ChargeComponent = "ChargeComponent";
+        public const string CollisionSensorComponent = "CollisionSensorComponent";
+        public const string ContactDamageComponent = "ContactDamageComponent";
         public const string CooldownComponent = "CooldownComponent";
         public const string CostComponent = "CostComponent";
         public const string DataInitComponent = "DataInitComponent";
         public const string EnemyMovementComponent = "EnemyMovementComponent";
         public const string EnemyPreset = "EnemyPreset";
         public const string HealthComponent = "HealthComponent";
-        public const string HurtComponent = "HurtComponent";
         public const string LifecycleComponent = "LifecycleComponent";
         public const string PickupComponent = "PickupComponent";
         public const string PlayerPreset = "PlayerPreset";
@@ -155,13 +156,14 @@ public static class ResourcePaths
                 { Component.AIComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Enemy/AI/AIComponent.tscn") },
                 { Component.AttackComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/AttackComponent/AttackComponent.tscn") },
                 { Component.ChargeComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/ChargeComponent/ChargeComponent.tscn") },
+                { Component.CollisionSensorComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Collision/CollisionSensorComponent/CollisionSensorComponent.tscn") },
+                { Component.ContactDamageComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.tscn") },
                 { Component.CooldownComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn") },
                 { Component.CostComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn") },
                 { Component.DataInitComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/DataInitComponent/DataInitComponent.tscn") },
                 { Component.EnemyMovementComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Enemy/EnemyMovementComponent/EnemyMovementComponent.tscn") },
                 { Component.EnemyPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn") },
                 { Component.HealthComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/HealthComponent/HealthComponent.tscn") },
-                { Component.HurtComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/HurtComponent/HurtComponent.tscn") },
                 { Component.LifecycleComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.tscn") },
                 { Component.PickupComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/PickupComponent/PickupComponent.tscn") },
                 { Component.PlayerPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn") },

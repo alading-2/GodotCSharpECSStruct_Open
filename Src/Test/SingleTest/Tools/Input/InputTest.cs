@@ -14,7 +14,7 @@ namespace Slime.Test;
 /// <item>响应手柄热插拔事件</item>
 /// </list>
 /// </summary>
-public partial class InputTest : Node2D
+public partial class InputTest : Node
 {
     // --- UI 节点引用 ---
     [Export] private Label _logLabel = null!;

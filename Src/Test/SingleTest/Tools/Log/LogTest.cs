@@ -3,7 +3,7 @@ using Slime;
 
 namespace Slime.Test
 {
-    public partial class LogTest : Node2D
+    public partial class LogTest : Node
     {
         // 1. 标准实例
         private static readonly Log Log = new Log("LogTest");

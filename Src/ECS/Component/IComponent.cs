@@ -7,7 +7,7 @@ using System.Linq;
 /// 
 /// 标准实现模式：
 /// <code>
-/// public partial class MyComponent : Node2D, IComponent
+/// public partial class MyComponent : Node, IComponent
 /// {
 ///     private Data? _data;
 ///     private IEntity? _entity;

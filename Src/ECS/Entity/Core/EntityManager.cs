@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-
-
 /// <summary>
 /// Entity 生成配置参数
 /// 类似 TypeScript 的接口对象，支持命名参数初始化
@@ -14,17 +12,17 @@ public readonly record struct EntitySpawnConfig
     /// <summary>单位配置资源（必填，如 EnemyConfig, PlayerConfig）</summary>
     public required Resource Config { get; init; }
 
-/// <summary>是否使用对象池（默认 false）</summary>
-public bool UsingObjectPool { get; init; }
+    /// <summary>是否使用对象池（默认 false）</summary>
+    public bool UsingObjectPool { get; init; }
 
-/// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
-public string? PoolName { get; init; }
+    /// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
+    public string? PoolName { get; init; }
 
-/// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
-public Vector2? Position { get; init; }
+    /// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
+    public Vector2? Position { get; init; }
 
-/// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
-public float? Rotation { get; init; }
+    /// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
+    public float? Rotation { get; init; }
 }
 
 /// <summary>

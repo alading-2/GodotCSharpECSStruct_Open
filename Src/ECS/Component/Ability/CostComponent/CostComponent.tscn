@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://Src/ECS/Component/Ability/CostComponent/CostComponent.cs" id="1_cost"]
 
-[node name="CostComponent" type="Node2D"]
+[node name="CostComponent" type="Node"]
 script = ExtResource("1_cost")

@@ -3,7 +3,7 @@ using System;
 
 namespace Slime.Test
 {
-    public partial class TestEntity : Node2D, IEntity, IPoolable
+    public partial class TestEntity : Node, IEntity, IPoolable
     {
         private static readonly Log _log = new Log("TestEntity");
         /// <summary>

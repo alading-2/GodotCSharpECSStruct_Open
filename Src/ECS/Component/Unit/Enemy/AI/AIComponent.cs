@@ -14,7 +14,7 @@ using Godot;
 /// 3. 组件在 _Process 中自动 Tick
 /// </para>
 /// </summary>
-public partial class AIComponent : Node2D, IComponent
+public partial class AIComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(AIComponent));
 

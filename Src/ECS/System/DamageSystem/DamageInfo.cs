@@ -20,12 +20,14 @@ public enum DamageType
 public enum DamageTags
 {
     None = 0,
-    Melee = 1 << 0,       // 近战
-    Ranged = 1 << 1,      // 远程（投射物）
-    Area = 1 << 2,        // 范围伤害 (AOE)
-    Persistent = 1 << 3,  // 持续伤害 (DOT)
-    Explosion = 1 << 4,   // 爆炸
-    Engineering = 1 << 5  // 工程学
+    Physical = 1 << 0,       // 物理
+    Magical = 1 << 1,       // 魔法
+    Melee = 1 << 2,       // 近战
+    Ranged = 1 << 3,      // 远程（投射物）
+    Area = 1 << 4,        // 范围伤害 (AOE)
+    Persistent = 1 << 5,  // 持续伤害 (DOT)
+    Explosion = 1 << 6,   // 爆炸
+    Engineering = 1 << 7  // 工程学
 }
 
 /// <summary>

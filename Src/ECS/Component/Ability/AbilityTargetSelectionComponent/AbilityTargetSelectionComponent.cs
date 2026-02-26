@@ -7,7 +7,7 @@ using System.Collections.Generic;
 /// <para>功能：根据技能的配置信息（如范围、几何形状、筛选规则等），利用 TargetSelector 检索有效目标并填充到 CastContext 中。</para>
 /// <para>协作：由 AbilitySystem 触发，计算结果供后续的 AbilityEffectComponent 使用。</para>
 /// </summary>
-public partial class AbilityTargetSelectionComponent : Node2D, IComponent
+public partial class AbilityTargetSelectionComponent : Node, IComponent
 {
     /// <summary>
     /// 日志工具，用于调试目标选择过程

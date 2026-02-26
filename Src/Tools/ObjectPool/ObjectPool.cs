@@ -209,21 +209,46 @@ public class ObjectPool<T> where T : class
     }
 
     /// <summary>
-    /// 应用禁用状态：停止处理、隐藏
+    /// 应用禁用状态：停止处理、隐藏，如果节点是CollisionObject2D，则禁用其直接子节点的碰撞形状
     /// </summary>
     private static void ApplyInactiveState(Node node)
     {
         node.ProcessMode = Node.ProcessModeEnum.Disabled;
         if (node is CanvasItem item) item.Visible = false;
+
+        // 【新增】：统一处理物理实体的碰撞开关
+        // 注意：只遍历直接子节点，防止越权关闭深层组件（如 Sensor）的碰撞体
+        if (node is CollisionObject2D collisionObj)
+        {
+            foreach (var child in collisionObj.GetChildren())
+            {
+                if (child is CollisionShape2D shape)
+                    shape.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+                else if (child is CollisionPolygon2D polygon)
+                    polygon.SetDeferred(CollisionPolygon2D.PropertyName.Disabled, true);
+            }
+        }
     }
 
     /// <summary>
-    /// 应用激活状态：恢复处理、显示
+    /// 应用激活状态：恢复处理、显示，如果节点是CollisionObject2D，则恢复其直接子节点的碰撞形状
     /// </summary>
     private static void ApplyActiveState(Node node)
     {
         node.ProcessMode = Node.ProcessModeEnum.Inherit;
         if (node is CanvasItem item) item.Visible = true;
+
+        // 【新增】：统一处理物理实体的碰撞开关
+        if (node is CollisionObject2D collisionObj)
+        {
+            foreach (var child in collisionObj.GetChildren())
+            {
+                if (child is CollisionShape2D shape)
+                    shape.SetDeferred(CollisionShape2D.PropertyName.Disabled, false);
+                else if (child is CollisionPolygon2D polygon)
+                    polygon.SetDeferred(CollisionPolygon2D.PropertyName.Disabled, false);
+            }
+        }
     }
 
     /// <summary>

@@ -14,7 +14,7 @@ using Godot;
 ///
 /// 此组件保留用于未来扩展（如限时状态计时器管理）。
 /// </summary>
-public partial class UnitStateComponent : Node2D, IComponent
+public partial class UnitStateComponent : Node, IComponent
 {
     public void OnComponentRegistered(Node entity) { }
 

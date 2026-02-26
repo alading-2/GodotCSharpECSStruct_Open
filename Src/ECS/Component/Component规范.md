@@ -72,7 +72,7 @@ public float CurrentHp => _data.Get<float>(DataKey.CurrentHp);
 
 // ✅ 正确：组件内部缓存（仅本组件使用，性能优化）
 private AnimatedSprite2D? _sprite;
-private Node2D? _currentTarget;
+private Node? _currentTarget;
 
 // ✅ 正确：组件内部专用列表（仅本组件使用，不需要跨组件访问）
 private List<string> _availableAttackAnims = new();

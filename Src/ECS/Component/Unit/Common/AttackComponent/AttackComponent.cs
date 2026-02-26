@@ -38,7 +38,7 @@ public enum AttackState
 /// - 攻速溢出 (前后摇时长超出攻击间隔)：CD 已经转好但由于本次动作尚未做完（非 Idle），新请求会被直接丢弃。实际攻速被强制拉长至前后摇总时长。
 /// </para>
 /// </summary>
-public partial class AttackComponent : Node2D, IComponent
+public partial class AttackComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(AttackComponent));
 

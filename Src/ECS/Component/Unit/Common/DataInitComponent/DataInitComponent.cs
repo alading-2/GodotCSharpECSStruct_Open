@@ -8,7 +8,7 @@ using System;
 /// 1. 在实体生成后，负责将 "静态配置属性" 同步初始化为 "运行时动态属性"。
 /// 2. 解决例如：配置了 MaxHp 但 CurrentHp 为空，导致生成即死的问题。
 /// </summary>
-public partial class DataInitComponent : Node2D, IComponent
+public partial class DataInitComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(DataInitComponent));
 

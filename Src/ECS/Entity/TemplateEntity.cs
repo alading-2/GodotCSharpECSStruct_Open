@@ -15,7 +15,7 @@ using Godot;
 /// │   - 统一使用 EntityManager.Spawn/Destroy 管理                   │
 /// └─────────────────────────────────────────────────────────────────┘
 /// </summary>
-public partial class TemplateEntity : Node2D, IEntity, IPoolable
+public partial class TemplateEntity : Node, IEntity, IPoolable
 {
     private static readonly Log _log = new(nameof(TemplateEntity));
 

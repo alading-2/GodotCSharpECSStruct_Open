@@ -15,7 +15,7 @@ using Godot;
 /// 实现了 AI 决策层与物理/视觉层的完全分离。
 /// </para>
 /// </summary>
-public partial class EnemyMovementComponent : Node2D, IComponent
+public partial class EnemyMovementComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(EnemyMovementComponent));
 

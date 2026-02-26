@@ -40,7 +40,7 @@ public enum DeathType
 /// - 不直接管理状态标记：通过 Data 系统 (DataKey.IsDead 等)
 /// - 事件驱动：通过 EventBus 通知状态变化
 /// </summary>
-public partial class LifecycleComponent : Node2D, IComponent
+public partial class LifecycleComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(LifecycleComponent));
 

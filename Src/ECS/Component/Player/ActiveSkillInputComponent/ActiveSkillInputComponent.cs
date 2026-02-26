@@ -11,7 +11,7 @@ using System.Collections.Generic;
 ///   <item>智能目标解析：根据技能配置（单位/点/混合）自动完成索敌或方向预测。</item>
 /// </list>
 /// </summary>
-public partial class ActiveSkillInputComponent : Node2D, IComponent
+public partial class ActiveSkillInputComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(ActiveSkillInputComponent));
 
