@@ -39,6 +39,11 @@ public abstract class BehaviorNode
 
     /// <summary>
     /// 重置节点状态（当行为树切换分支时调用）
+    /// <para>
+    /// ctx 可选：需要清理 Entity.Data 中运行时黑板数据时传入（如清除巡逻目标点、等待标志）。
+    /// 仅在有 Entity 上下文的调用链中传入，Runner.Reset() 等全局重置场景传 null。
+    /// </para>
     /// </summary>
-    public virtual void Reset() { }
+    /// <param name="ctx">AI 处理上下文（可选）</param>
+    public virtual void Reset(AIContext? ctx = null) { }
 }

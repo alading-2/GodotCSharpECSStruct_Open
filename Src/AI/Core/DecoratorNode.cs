@@ -20,9 +20,9 @@ public abstract class DecoratorNode : BehaviorNode
     /// <summary>
     /// 当装饰器被重置时，递归将重置指令传递给子节点。
     /// </summary>
-    public override void Reset()
+    public override void Reset(AIContext? ctx = null)
     {
-        Child?.Reset();
+        Child?.Reset(ctx);
     }
 }
 
@@ -86,7 +86,7 @@ public class AlwaysSucceedNode : DecoratorNode
 /// 2. 当冷却完毕且子节点成功执行完毕后，重置冷却时间。
 /// </para>
 /// <para>
-/// 场景示例：用于限制 AI 某些特定攻击（如大招、冲锋）的释放频率，避免连续使用。
+/// 场景示例：用于限制 AI 某些特定技能（如大招、冲锋）的释放频率，避免连续使用。
 /// </para>
 /// </summary>
 public class CooldownNode : DecoratorNode
@@ -94,41 +94,38 @@ public class CooldownNode : DecoratorNode
     /// <summary>固定的冷却周期时长 (秒)</summary>
     private readonly float _cooldownTime;
 
-    /// <summary>当前剩余的冷却时间</summary>
-    private float _remainingTime;
+    /// <summary>冷却计时器，非 null 表示冷却中</summary>
+    private GameTimer? _timer;
 
     public CooldownNode(BehaviorNode child, float cooldownTime)
         : base(child, $"Cooldown({cooldownTime}s)")
     {
         _cooldownTime = cooldownTime;
-        _remainingTime = 0f;
     }
 
     public override NodeState Evaluate(AIContext ctx)
     {
-        // 1. 如果还在冷却中，扣减时间并直接返回 Failure，阻断子节点的执行
-        if (_remainingTime > 0f)
-        {
-            _remainingTime -= ctx.DeltaTime;
+        // 1. 冷却中，直接阻断
+        if (_timer != null)
             return NodeState.Failure;
-        }
 
         // 2. 冷却就绪，执行子节点
         var state = Child.Evaluate(ctx);
 
-        // 3. 只有当子节点 "成功" (释放了大招) 时，才进入冷却
-        // （如果动作被打断失败，或者仍在 Running 中，则暂不计算冷却倒计时）
+        // 3. 只有当子节点 "成功" 时，才启动冷却定时器
         if (state == NodeState.Success)
         {
-            _remainingTime = _cooldownTime;
+            _timer = TimerManager.Instance.Delay(_cooldownTime).OnComplete(() => _timer = null);
         }
 
         return state;
     }
 
-    public override void Reset()
+    /// <inheritdoc/>
+    public override void Reset(AIContext? ctx = null)
     {
-        _remainingTime = 0f;
-        base.Reset();
+        _timer?.Cancel();
+        _timer = null;
+        base.Reset(ctx);
     }
 }

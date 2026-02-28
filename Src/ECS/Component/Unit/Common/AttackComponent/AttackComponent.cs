@@ -81,13 +81,13 @@ public partial class AttackComponent : Node, IComponent
         if (entity is CharacterBody2D body)
             _body = body;
 
-        // // 监听来自 AI 节点或玩家输入的攻击请求
-        // _entity.Events.On<GameEventType.Attack.RequestedEventData>(
-        //     GameEventType.Attack.Requested, OnAttackRequested);
+        // 监听来自 AI 节点或玩家输入的攻击请求
+        _entity.Events.On<GameEventType.Attack.RequestedEventData>(
+            GameEventType.Attack.Requested, OnAttackRequested);
 
-        // // 监听来自外部（如眩晕 Buff、强制位移等）的中断请求
-        // _entity.Events.On<GameEventType.Attack.CancelRequestedEventData>(
-        //     GameEventType.Attack.CancelRequested, OnCancelRequested);
+        // 监听来自外部（如眩晕 Buff、强制位移等）的中断请求
+        _entity.Events.On<GameEventType.Attack.CancelRequestedEventData>(
+            GameEventType.Attack.CancelRequested, OnCancelRequested);
     }
 
     /// <summary>

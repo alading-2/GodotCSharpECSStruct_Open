@@ -75,11 +75,8 @@ public static partial class DataKey
     /// <summary>当前巡逻目标点</summary>
     public const string PatrolTargetPoint = "PatrolTargetPoint";
 
-    /// <summary>巡逻等待计时器（AI行为树运行时数据）</summary>
-    public const string PatrolWaitTimer = "PatrolWaitTimer";
-
-    /// <summary>攻击动画名称（可选配置，默认使用 Anim.Attack1）</summary>
-    public const string AttackAnimName = "AttackAnimName";
+    /// <summary>巡逻等待完成标记（bool，由 TimerManager 回调写入）</summary>
+    public const string PatrolWaitDone = "PatrolWaitDone";
 
     // ========== AI 移动意图（由 AI 行为树写入，EnemyMovementComponent 执行） ==========
 

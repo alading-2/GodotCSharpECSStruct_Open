@@ -162,10 +162,8 @@ public static class SpawnPositionCalculator
     /// </summary>
     private static Vector2 GetRandomRectanglePosition(SpawnPositionParams p)
     {
-        return new Vector2(
-            (float)GD.RandRange(p.MinX, p.MaxX),
-            (float)GD.RandRange(p.MinY, p.MaxY)
-        );
+        var rect = new Rect2(p.MinX, p.MinY, p.MaxX - p.MinX, p.MaxY - p.MinY);
+        return GeometryCalculator.GetRandomPointInAABB(rect);
     }
 
     /// <summary>
@@ -173,9 +171,7 @@ public static class SpawnPositionCalculator
     /// </summary>
     private static Vector2 GetRandomCirclePosition(SpawnPositionParams p)
     {
-        float angle = GD.Randf() * Mathf.Tau;
-        float distance = Mathf.Sqrt(GD.Randf()) * p.Radius; // 均匀分布
-        return p.Center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+        return GeometryCalculator.GetRandomPointInCircle(p.Center, p.Radius);
     }
 
     /// <summary>
@@ -183,8 +179,7 @@ public static class SpawnPositionCalculator
     /// </summary>
     private static Vector2 GetPerimeterPosition(SpawnPositionParams p)
     {
-        float angle = GD.Randf() * Mathf.Tau;
-        return p.Center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * p.Radius;
+        return GeometryCalculator.GetRandomPointOnPerimeter(p.Center, p.Radius);
     }
 
     /// <summary>
@@ -201,75 +196,18 @@ public static class SpawnPositionCalculator
         Vector2 viewCenter = camera != null ? camera.GlobalPosition : (visibleRect.Position + visibleRect.Size / 2);
         Vector2 viewSize = visibleRect.Size;
 
-        // 视口边界 (含 Padding)
-        float viewLeft = viewCenter.X - viewSize.X / 2 - p.ViewportPadding;
-        float viewRight = viewCenter.X + viewSize.X / 2 + p.ViewportPadding;
-        float viewTop = viewCenter.Y - viewSize.Y / 2 - p.ViewportPadding;
-        float viewBottom = viewCenter.Y + viewSize.Y / 2 + p.ViewportPadding;
+        // 视口边界矩形 (含 Padding)
+        var innerRect = new Rect2(
+            viewCenter.X - viewSize.X / 2 - p.ViewportPadding,
+            viewCenter.Y - viewSize.Y / 2 - p.ViewportPadding,
+            viewSize.X + p.ViewportPadding * 2,
+            viewSize.Y + p.ViewportPadding * 2
+        );
 
-        // 2. 外部大矩形边界
-        // 确保外部矩形至少包裹住视口，否则无法生成
-        float outerLeft = Mathf.Min(p.MinX, viewLeft);
-        float outerRight = Mathf.Max(p.MaxX, viewRight);
-        float outerTop = Mathf.Min(p.MinY, viewTop);
-        float outerBottom = Mathf.Max(p.MaxY, viewBottom);
+        // 外部大矩形
+        var outerRect = new Rect2(p.MinX, p.MinY, p.MaxX - p.MinX, p.MaxY - p.MinY);
 
-        // 3. 将剩余区域划分为 4 个不重叠的矩形块 (上、下、左、右)
-        // Top: (OuterLeft, OuterTop) -> (OuterRight, ViewTop)
-        // Bottom: (OuterLeft, ViewBottom) -> (OuterRight, OuterBottom)
-        // Left: (OuterLeft, ViewTop) -> (ViewLeft, ViewBottom)
-        // Right: (ViewRight, ViewTop) -> (OuterRight, ViewBottom)
-
-        float areaTop = (outerRight - outerLeft) * (viewTop - outerTop);
-        float areaBottom = (outerRight - outerLeft) * (outerBottom - viewBottom);
-        float areaLeft = (viewLeft - outerLeft) * (viewBottom - viewTop);
-        float areaRight = (outerRight - viewRight) * (viewBottom - viewTop);
-
-        // 防止负面积 (如果大矩形比视口小)
-        areaTop = Mathf.Max(0, areaTop);
-        areaBottom = Mathf.Max(0, areaBottom);
-        areaLeft = Mathf.Max(0, areaLeft);
-        areaRight = Mathf.Max(0, areaRight);
-
-        float totalArea = areaTop + areaBottom + areaLeft + areaRight;
-
-        if (totalArea <= 0.001f)
-        {
-            // 如果没有可用区域，退化为 Viewport 边缘生成
-            return viewCenter + new Vector2(viewSize.X / 2 + 50, 0).Rotated(GD.Randf() * Mathf.Tau);
-        }
-
-        // 4. 按面积权重随机选择一个区域
-        float r = GD.Randf() * totalArea;
-
-        if (r < areaTop) // 在 Top 区域生成
-        {
-            return new Vector2(
-                (float)GD.RandRange(outerLeft, outerRight),
-                (float)GD.RandRange(outerTop, viewTop)
-            );
-        }
-        else if (r < areaTop + areaBottom) // 在 Bottom 区域生成
-        {
-            return new Vector2(
-                (float)GD.RandRange(outerLeft, outerRight),
-                (float)GD.RandRange(viewBottom, outerBottom)
-            );
-        }
-        else if (r < areaTop + areaBottom + areaLeft) // 在 Left 区域生成
-        {
-            return new Vector2(
-                (float)GD.RandRange(outerLeft, viewLeft),
-                (float)GD.RandRange(viewTop, viewBottom)
-            );
-        }
-        else // 在 Right 区域生成
-        {
-            return new Vector2(
-                (float)GD.RandRange(viewRight, outerRight),
-                (float)GD.RandRange(viewTop, viewBottom)
-            );
-        }
+        return GeometryCalculator.GetRandomPointInHollowBox(outerRect, innerRect);
     }
 
     /// <summary>

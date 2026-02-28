@@ -76,10 +76,11 @@ API 文档：`Src/Tools/ObjectPool/ObjectPool.md`
 ## TargetSelector - 目标选择
 
 禁止 `GetTree().GetNodesInGroup()` 和手写距离计算。
+区分为 `EntityTargetSelector`（筛选实体）和 `PositionTargetSelector`（生成位置），底层共用 `GeometryCalculator` 几何计算。
 
 ```csharp
-// 查找范围内最近的 5 个敌人
-var targets = TargetSelector.Query(new TargetSelectorQuery
+// 查找范围内最近的 5 个敌人 (返回 List<IEntity>)
+var targets = EntityTargetSelector.Query(new TargetSelectorQuery
 {
     Geometry = AbilityTargetGeometry.Circle,
     Origin = caster.GlobalPosition,
@@ -90,32 +91,20 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
     MaxTargets = 5
 });
 
-// 扇形范围
-var targets = TargetSelector.Query(new TargetSelectorQuery
+// 在扇形范围内随机生成 1 个目标点 (返回 List<Vector2>)
+var randomPos = PositionTargetSelector.Query(new TargetSelectorQuery
 {
     Geometry = AbilityTargetGeometry.Cone,
     Origin = caster.GlobalPosition,
     Range = 150f,
     Angle = 60f,           // 扇形角度（度）
-    Direction = facing,    // 朝向向量
-    TeamFilter = AbilityTargetTeamFilter.Enemy,
-    MaxTargets = 10
-});
-
-// 矩形范围
-var targets = TargetSelector.Query(new TargetSelectorQuery
-{
-    Geometry = AbilityTargetGeometry.Rectangle,
-    Origin = caster.GlobalPosition,
-    Range = 200f,          // 长度
-    Width = 80f,           // 宽度
-    Direction = facing,
-    TeamFilter = AbilityTargetTeamFilter.Enemy
+    Forward = facing,      // 朝向向量
+    MaxTargets = 1
 });
 ```
 
-TeamFilter 选项：`Enemy` / `Ally` / `All` / `Self`
-Sorting 选项：`Nearest` / `Farthest` / `LowestHp` / `HighestHp` / `Random`
+TeamFilter 选项：`Enemy` / `Friendly` / `All` / `Neutral` / `Self`
+Sorting 选项：`Nearest` / `Farthest` / `LowestHealth` / `HighestHealth` / `Random` / `HighestThreat`
 
 API 文档：`Src/Tools/TargetSelector/README.md`
 
@@ -157,7 +146,9 @@ API 文档：`Data/ResourceManagement/ResourceManagement.md`
 - **ObjectPool** → `Src/Tools/ObjectPool/ObjectPool.cs` | 文档 → `Src/Tools/ObjectPool/ObjectPool.md`
 - **IPoolable 接口** → `Src/Tools/ObjectPool/IPoolable.cs`
 - **ObjectPoolManager** → `Src/Tools/ObjectPool/ObjectPoolManager.cs`
-- **TargetSelector** → `Src/Tools/TargetSelector/TargetSelector.cs` | 文档 → `Src/Tools/TargetSelector/README.md`
+- **EntityTargetSelector** → `Src/Tools/TargetSelector/EntityTargetSelector.cs` | 文档 → `Src/Tools/TargetSelector/README.md`
+- **PositionTargetSelector** → `Src/Tools/TargetSelector/PositionTargetSelector.cs`
+- **GeometryCalculator** → `Src/Tools/TargetSelector/GeometryCalculator.cs`
 - **TargetSelectorQuery** → `Src/Tools/TargetSelector/TargetSelectorQuery.cs`
 - **ResourceManagement** → `Data/ResourceManagement/ResourceManagement.cs` | 文档 → `Data/ResourceManagement/ResourceManagement.md`
 - **ResourcePaths（自动生成）** → `Data/ResourceManagement/ResourcePaths.cs`

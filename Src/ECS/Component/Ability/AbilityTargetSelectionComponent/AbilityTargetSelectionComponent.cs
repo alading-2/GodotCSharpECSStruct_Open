@@ -90,11 +90,11 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
                     // 获取技能配置的攻击范围
                     var range = ability.Data.Get<float>(DataKey.AbilityRange);
 
-                    // 调用高性能目标选择工具 TargetSelector 进行空间查询
+                    // 调用高性能目标选择工具 EntityTargetSelector 进行空间查询
                     // 这里默认搜索范围内“威胁值最高”的一个敌人
-                    var targets = TargetSelector.Query(new TargetSelectorQuery
+                    var targets = EntityTargetSelector.Query(new TargetSelectorQuery
                     {
-                        Geometry = AbilityTargetGeometry.Circle, // 搜索形状：圆形
+                        Geometry = GeometryType.Circle, // 搜索形状：圆形
                         Origin = origin,                         // 搜索中心
                         Range = range,                          // 搜索半径
                         CenterEntity = context.Caster,          // 施法者引用
@@ -117,9 +117,9 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
                 {
                     // EntityOrPoint：先尝试 Entity 自动索敌
                     var range = ability.Data.Get<float>(DataKey.AbilityRange);
-                    var targets = TargetSelector.Query(new TargetSelectorQuery
+                    var targets = EntityTargetSelector.Query(new TargetSelectorQuery
                     {
-                        Geometry = AbilityTargetGeometry.Circle,
+                        Geometry = GeometryType.Circle,
                         Origin = origin,
                         Range = range,
                         CenterEntity = context.Caster,

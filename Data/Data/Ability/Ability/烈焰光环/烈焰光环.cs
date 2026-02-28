@@ -35,7 +35,7 @@ public class CircleDamageExecutor : IAbilityExecutor
         {
             // 手动构建查询
             var range = ability.Data.Get<float>(DataKey.AbilityRange);
-            var geometry = ability.Data.Get<AbilityTargetGeometry>(DataKey.AbilityTargetGeometry);
+            var geometry = ability.Data.Get<GeometryType>(DataKey.AbilityTargetGeometry);
             var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
 
             var query = new TargetSelectorQuery
@@ -49,7 +49,7 @@ public class CircleDamageExecutor : IAbilityExecutor
                 MaxTargets = 999 // 攻击所有范围内敌人
             };
 
-            targets = TargetSelector.Query(query);
+            targets = EntityTargetSelector.Query(query);
             context.Targets = targets; // 回填到上下文
         }
 
@@ -67,20 +67,23 @@ public class CircleDamageExecutor : IAbilityExecutor
         int hitCount = 0;
         foreach (var target in targets)
         {
-            // --- 伤害逻辑开始 ---
-            // 使用 DamageService 统一处理伤害，自动处理闪避、暴击、护甲、护盾、伤害统计等
-            var damageInfo = new DamageInfo
+            if (target is IUnit victim)
             {
-                Attacker = caster as Node, // 攻击者
-                Victim = target as IUnit, // 受害者
-                Damage = damage, // 基础伤害
-                Type = DamageType.Magical, // 假设光环是魔法伤害
-                Tags = DamageTags.Area
-            };
+                // --- 伤害逻辑开始 ---
+                // 使用 DamageService 统一处理伤害，自动处理闪避、暴击、护甲、护盾、伤害统计等
+                var damageInfo = new DamageInfo
+                {
+                    Attacker = caster as Node, // 攻击者
+                    Victim = victim, // 受害者
+                    Damage = damage, // 基础伤害
+                    Type = DamageType.Magical, // 假设光环是魔法伤害
+                    Tags = DamageTags.Area
+                };
 
-            DamageService.Instance.Process(damageInfo);
+                DamageService.Instance.Process(damageInfo);
 
-            hitCount++;
+                hitCount++;
+            }
         }
 
         return new AbilityExecutedResult { TargetsHit = hitCount };

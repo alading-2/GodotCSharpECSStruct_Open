@@ -72,8 +72,8 @@ public partial class EnemyMovementComponent : Node, IComponent
 
         // 读取 AI 写入的移动意图
         Vector2 moveDirection = _data.Get<Vector2>(DataKey.AIMoveDirection);
-        float speedMultiplier = _data.Get<float>(DataKey.AIMoveSpeedMultiplier, 1.0f);
-        float moveSpeed = _data.Get<float>(DataKey.MoveSpeed, 100f);
+        float speedMultiplier = _data.Get<float>(DataKey.AIMoveSpeedMultiplier);
+        float moveSpeed = _data.Get<float>(DataKey.MoveSpeed);
 
         // 根据移动方向更新视觉朝向（独立于实际移动，即使攻击停止时也能面向目标）
         if (moveDirection.LengthSquared() > 0.001f)

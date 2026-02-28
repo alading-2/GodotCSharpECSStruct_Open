@@ -37,10 +37,10 @@ public abstract class CompositeNode : BehaviorNode
     /// 重置当前组合节点及其所有子孙节点的状态。
     /// 通过遍历 <see cref="Children"/> 递归调用。
     /// </summary>
-    public override void Reset()
+    public override void Reset(AIContext? ctx = null)
     {
         foreach (var child in Children)
-            child.Reset();
+            child.Reset(ctx);
     }
 
     /// <summary>
@@ -48,12 +48,13 @@ public abstract class CompositeNode : BehaviorNode
     /// 用于 Selector 切换分支时，清理旧分支的运行时状态。
     /// </summary>
     /// <param name="exceptIndex">不需要重置的子节点索引</param>
-    protected void ResetChildrenExcept(int exceptIndex)
+    /// <param name="ctx">AI 处理上下文（可选，用于清理黑板数据）</param>
+    protected void ResetChildrenExcept(int exceptIndex, AIContext? ctx = null)
     {
         for (int i = 0; i < Children.Count; i++)
         {
             if (i != exceptIndex)
-                Children[i].Reset();
+                Children[i].Reset(ctx);
         }
     }
 }
@@ -110,10 +111,11 @@ public class SequenceNode : CompositeNode
         return NodeState.Success;
     }
 
-    public override void Reset()
+    /// <inheritdoc/>
+    public override void Reset(AIContext? ctx = null)
     {
         _currentIndex = 0;
-        base.Reset();
+        base.Reset(ctx);
     }
 }
 
@@ -150,14 +152,14 @@ public class SelectorNode : CompositeNode
                 case NodeState.Success:
                     // 方案成功，重置其他分支状态
                     if (_currentIndex != i && _currentIndex >= 0)
-                        ResetChildrenExcept(i);
+                        ResetChildrenExcept(i, ctx);
                     _currentIndex = -1;
                     return NodeState.Success;
 
                 case NodeState.Running:
                     // 如果切换到了不同的分支，重置旧分支
                     if (_currentIndex != i && _currentIndex >= 0)
-                        ResetChildrenExcept(i);
+                        ResetChildrenExcept(i, ctx);
                     _currentIndex = i;
                     return NodeState.Running;
 
@@ -172,9 +174,10 @@ public class SelectorNode : CompositeNode
         return NodeState.Failure;
     }
 
-    public override void Reset()
+    /// <inheritdoc/>
+    public override void Reset(AIContext? ctx = null)
     {
         _currentIndex = -1;
-        base.Reset();
+        base.Reset(ctx);
     }
 }

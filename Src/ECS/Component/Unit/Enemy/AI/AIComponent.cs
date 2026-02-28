@@ -103,9 +103,6 @@ public partial class AIComponent : Node, IComponent
 
         // 构建上下文（复用对象，避免 GC）
         _context.Entity = _entity;
-        _context.Data = _data;
-        _context.Events = _entity.Events;
-        _context.DeltaTime = (float)delta;
 
         // 执行行为树
         Runner.Tick(_context);

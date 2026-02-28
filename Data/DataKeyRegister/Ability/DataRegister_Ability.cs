@@ -68,7 +68,7 @@ public static class DataRegister_Ability
         // 目标选取
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetSelection, DisplayName = "目标原点", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSelection), DefaultValue = AbilityTargetSelection.None });
         // 目标几何形状
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetGeometry, DisplayName = "目标几何形状", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetGeometry), DefaultValue = AbilityTargetGeometry.Single });
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetGeometry, DisplayName = "目标几何形状", Category = DataCategory_Ability.Target, Type = typeof(GeometryType), DefaultValue = GeometryType.Single });
         // 阵营过滤
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetTeamFilter, DisplayName = "阵营过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTeamFilter), DefaultValue = AbilityTargetTeamFilter.None });
         // 目标排序

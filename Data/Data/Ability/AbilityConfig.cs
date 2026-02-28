@@ -94,7 +94,7 @@ namespace Slime.Config.Abilities
         /// 目标几何形状
         /// </summary>
         [DataKey(DataKey.AbilityTargetGeometry)]
-        [Export] public AbilityTargetGeometry AbilityTargetGeometry { get; set; }
+        [Export] public GeometryType AbilityTargetGeometry { get; set; }
         /// <summary>
         /// 目标阵营过滤
         /// </summary>
