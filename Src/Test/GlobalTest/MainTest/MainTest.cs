@@ -94,7 +94,7 @@ public partial class MainTest : Node
 
         // 1. 生成玩家
         _log.Info("步骤 1: 生成玩家");
-        var playerConfig = ResourceManagement.Load<Slime.Config.Units.PlayerConfig>(ResourcePaths.PlayerConfig.德鲁伊, ResourceCategory.PlayerConfig);
+        var playerConfig = ResourceManagement.Load<Slime.Config.Units.PlayerConfig>(ResourcePaths.Data_Unit_Player_Resource_deluyi, ResourceCategory.Data);
         _player = EntityManager.Spawn<PlayerEntity>(new EntitySpawnConfig
         {
             Config = playerConfig,
@@ -106,7 +106,7 @@ public partial class MainTest : Node
 
         // 1.5. 生成一个敌人用于测试单位目标选择
         _log.Info("步骤 1.5: 生成测试敌人");
-        var enemyConfig = ResourceManagement.Load<Resource>("豺狼人", ResourceCategory.EnemyConfig);
+        var enemyConfig = ResourceManagement.Load<Resource>(ResourcePaths.Data_Unit_Enemy_Resource_chailangren, ResourceCategory.Data);
         var enemy = EntityManager.Spawn<EnemyEntity>(new EntitySpawnConfig
         {
             Config = enemyConfig,
@@ -162,14 +162,14 @@ public partial class MainTest : Node
         // ECS系统会自动处理组件添加、关系建立等
 
         // 技能1: TargetStrike (目标打击)
-        var targetStrikeConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.AbilityConfig.TargetEntitySkillConfig, ResourceCategory.AbilityConfig);
+        var targetStrikeConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.Data_Ability_Resource_TargetEntitySkillConfig, ResourceCategory.Data);
         if (targetStrikeConfig != null)
         {
             EntityManager.AddAbility(_player, targetStrikeConfig);
         }
 
         // 技能2: GroundSlam (地面猛击)
-        var groundSlamConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.AbilityConfig.TargetPointSkillConfig, ResourceCategory.AbilityConfig);
+        var groundSlamConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.Data_Ability_Resource_TargetPointSkillConfig, ResourceCategory.Data);
         if (groundSlamConfig != null)
         {
             EntityManager.AddAbility(_player, groundSlamConfig);

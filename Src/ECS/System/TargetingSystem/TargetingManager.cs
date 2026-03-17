@@ -184,8 +184,8 @@ public static class TargetingManager
     {
         // 加载 TargetingIndicatorConfig 资源
         var config = ResourceManagement.Load<TargetingIndicatorConfig>(
-            ResourcePaths.Unit.TargetingIndicatorConfig,
-            ResourceCategory.Unit
+            ResourcePaths.Data_Unit_Targeting_Resource_TargetingIndicatorConfig,
+            ResourceCategory.Data
         );
 
         if (config == null)

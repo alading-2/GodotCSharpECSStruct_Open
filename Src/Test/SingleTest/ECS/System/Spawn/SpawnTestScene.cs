@@ -44,7 +44,7 @@ namespace Slime.Test
             // _testEnemy = EnemyData.Configs.GetValueOrDefault("豺狼人") as Dictionary<string, object>;
 
             // 改为加载 Resource
-            _testEnemy = ResourceManagement.Load<Resource>(ResourcePaths.EnemyConfig.豺狼人, ResourceCategory.EnemyConfig);
+            _testEnemy = ResourceManagement.Load<Resource>(ResourcePaths.Data_Unit_Enemy_Resource_chailangren, ResourceCategory.Data);
 
             if (_testEnemy == null) _log.Error("Failed to load test enemy resource!");
 

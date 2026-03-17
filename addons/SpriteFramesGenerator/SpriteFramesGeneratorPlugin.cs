@@ -23,6 +23,7 @@ namespace Slime.Addons
         private const string SETTING_DEFAULT_FPS = "sprite_frames_generator/默认帧率";
         private const string SETTING_DEFAULT_LOOP = "sprite_frames_generator/默认循环播放";
         private const string SETTING_NAME_MAP = "sprite_frames_generator/名称映射表";
+        private const string SETTING_UNIFIED_IDLE_PATHS = "sprite_frames_generator/固定Effect命名路径";
 
         // 动画名称规范化映射表：用于统一不同美术素材的命名差异
         private static readonly Dictionary<string, string> _nameMap = new()
@@ -84,7 +85,7 @@ namespace Slime.Addons
             // --- 注册：批量扫描路径 (String Array) ---
             if (!ProjectSettings.HasSetting(SETTING_BATCH_PATHS))
             {
-                string[] defaultPaths = { "res://assets/Unit/Enemy", "res://assets/Unit/Player" }; // Fixed typo: ememy -> Enemy
+                string[] defaultPaths = { "res://assets" }; 
                 ProjectSettings.SetSetting(SETTING_BATCH_PATHS, defaultPaths);
             }
             ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
@@ -140,6 +141,21 @@ namespace Slime.Addons
             });
             ProjectSettings.SetInitialValue(SETTING_NAME_MAP, ProjectSettings.GetSetting(SETTING_NAME_MAP));
 
+            // --- 注册：固定Idle命名路径 (String Array) ---
+            if (!ProjectSettings.HasSetting(SETTING_UNIFIED_IDLE_PATHS))
+            {
+                string[] defaultIdlePaths = { "res://assets/Effect" };
+                ProjectSettings.SetSetting(SETTING_UNIFIED_IDLE_PATHS, defaultIdlePaths);
+            }
+            ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
+            {
+                { "name", SETTING_UNIFIED_IDLE_PATHS },
+                { "type", (int)Variant.Type.PackedStringArray },
+                { "hint", (int)PropertyHint.None },
+                { "hint_string", "" }
+            });
+            ProjectSettings.SetInitialValue(SETTING_UNIFIED_IDLE_PATHS, ProjectSettings.GetSetting(SETTING_UNIFIED_IDLE_PATHS));
+
             // 保存更改
             ProjectSettings.Save();
         }
@@ -174,7 +190,24 @@ namespace Slime.Addons
             // 检查文件夹是否存在
             if (DirAccess.DirExistsAbsolute(path))
             {
-                GenerateSpriteFrames(path, true);
+                var validFolders = new List<string>();
+                ScanFolderRecursively(path, validFolders);
+
+                if (validFolders.Count > 0)
+                {
+                    int totalGenerated = 0;
+                    foreach (var folder in validFolders)
+                    {
+                        GenerateSpriteFrames(folder, false);
+                        totalGenerated++;
+                    }
+                    EditorInterface.Singleton.GetResourceFilesystem().Scan();
+                    GD.PrintRich($"[color=cyan]单次/选中生成完成！共处理 {totalGenerated} 个角色目录。[/color]");
+                }
+                else
+                {
+                    GD.PushWarning($"[{path}] 未识别到有效的序列帧命名格式 (示例: attack_0.png) 或其子文件夹中未发现资源。");
+                }
             }
             else
             {
@@ -385,6 +418,28 @@ namespace Slime.Addons
         }
 
         /// <summary>
+        /// 判断当前文件夹是否处于配置的统一Idle动画命名路径下
+        /// </summary>
+        private bool IsUnderUnifiedIdlePath(string folderPath)
+        {
+            if (!ProjectSettings.HasSetting(SETTING_UNIFIED_IDLE_PATHS))
+                return false;
+
+            string[] unifiedPaths = ProjectSettings.GetSetting(SETTING_UNIFIED_IDLE_PATHS).AsStringArray();
+            string normalizedFolder = folderPath.Replace("\\", "/");
+            foreach (var path in unifiedPaths)
+            {
+                if (string.IsNullOrWhiteSpace(path)) continue;
+                string normalizedPath = path.Replace("\\", "/");
+                if (normalizedFolder.StartsWith(normalizedPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// 核心逻辑：扫描文件夹并生成 SpriteFrames 资源和场景
         /// </summary>
         /// <param name="folderPath">目标文件夹路径</param>
@@ -393,6 +448,21 @@ namespace Slime.Addons
         {
             // 复用解析逻辑
             var animGroups = FindSpriteSequences(folderPath);
+
+            // 如果该文件夹在固定Effect命名路径下，对所有提取出的动画按照字母排序进行重命名
+            if (animGroups.Count > 0 && IsUnderUnifiedIdlePath(folderPath))
+            {
+                var newGroups = new Dictionary<string, List<(int index, string path)>>();
+                int index = 0;
+                var sortedKeys = animGroups.Keys.OrderBy(k => k).ToList();
+                foreach (var key in sortedKeys)
+                {
+                    string newName = index == 0 ? "Effect" : $"Effect{index}";
+                    newGroups[newName] = animGroups[key];
+                    index++;
+                }
+                animGroups = newGroups;
+            }
 
             if (animGroups.Count == 0)
             {
@@ -433,8 +503,8 @@ namespace Slime.Addons
 
                 spriteFrames.AddAnimation(animName);    // 添加动画
                 spriteFrames.SetAnimationSpeed(animName, defaultFps); // 使用设置中的帧率
-                // 只有白名单中的动画循环播放（idle/run/castingidle），其他动画播放一次
-                bool shouldLoop = _loopAnimations.Contains(animName);
+                // 只有白名单中的动画循环播放（idle/run/castingidle），或者是以idle开头的命名，其他动画播放一次
+                bool shouldLoop = _loopAnimations.Contains(animName) || animName.StartsWith("idle");
                 spriteFrames.SetAnimationLoop(animName, shouldLoop);
 
                 foreach (var frameData in frames)
@@ -536,7 +606,9 @@ namespace Slime.Addons
             // 检查当前设置的动画名是否依然有效
             if (!spriteFrames.HasAnimation(spriteNode.Animation))
             {
-                if (spriteFrames.HasAnimation("idle"))
+                if (spriteFrames.HasAnimation("Effect"))
+                    spriteNode.Animation = "Effect";
+                else if (spriteFrames.HasAnimation("idle"))
                     spriteNode.Animation = "idle";
                 else if (spriteFrames.GetAnimationNames().Length > 0)
                     spriteNode.Animation = spriteFrames.GetAnimationNames()[0];

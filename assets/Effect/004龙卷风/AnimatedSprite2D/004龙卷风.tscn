@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://pf5uitbovhv6"]
+
+[ext_resource type="SpriteFrames" uid="uid://du0xwomadgnpn" path="res://assets/Effect/004龙卷风/AnimatedSprite2D/004龙卷风.tres" id="1_m2o61"]
+
+[node name="004龙卷风" type="AnimatedSprite2D" unique_id=1754023001]
+sprite_frames = ExtResource("1_m2o61")
+animation = &"Effect"

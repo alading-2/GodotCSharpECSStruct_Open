@@ -1,0 +1,54 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://d0jr0yc2fwjke"]
+
+[ext_resource type="Texture2D" uid="uid://du2rbcehpsnb4" path="res://assets/Effect/lrsc3/lrsc3-action_00.png" id="1_7w433"]
+[ext_resource type="Texture2D" uid="uid://i0rbuc8f1c83" path="res://assets/Effect/lrsc3/lrsc3-action_01.png" id="2_6ooyj"]
+[ext_resource type="Texture2D" uid="uid://6vwfn623noh0" path="res://assets/Effect/lrsc3/lrsc3-action_02.png" id="3_r88ln"]
+[ext_resource type="Texture2D" uid="uid://we8bqtfndm3e" path="res://assets/Effect/lrsc3/lrsc3-action_03.png" id="4_l6650"]
+[ext_resource type="Texture2D" uid="uid://cf48ogons1hch" path="res://assets/Effect/lrsc3/lrsc3-action_04.png" id="5_jso0h"]
+[ext_resource type="Texture2D" uid="uid://bs5a1by3g0uh2" path="res://assets/Effect/lrsc3/lrsc3-action_05.png" id="6_kbvwn"]
+[ext_resource type="Texture2D" uid="uid://dch45u073o3ro" path="res://assets/Effect/lrsc3/lrsc3-action_06.png" id="7_u43g8"]
+[ext_resource type="Texture2D" uid="uid://882dqnk7s0xi" path="res://assets/Effect/lrsc3/lrsc3-action_07.png" id="8_f73qh"]
+[ext_resource type="Texture2D" uid="uid://dxcq0e1snjd3p" path="res://assets/Effect/lrsc3/lrsc3-action_08.png" id="9_mkh2c"]
+[ext_resource type="Texture2D" uid="uid://bw6whbl33qmmn" path="res://assets/Effect/lrsc3/lrsc3-action_09.png" id="10_x7y6p"]
+[ext_resource type="Texture2D" uid="uid://dtgchx0qub8n7" path="res://assets/Effect/lrsc3/lrsc3-action_10.png" id="11_pdhjw"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_7w433")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_6ooyj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_r88ln")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_l6650")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_jso0h")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_kbvwn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_u43g8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_f73qh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_mkh2c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_x7y6p")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_pdhjw")
+}],
+"loop": false,
+"name": &"Effect",
+"speed": 10.0
+}]

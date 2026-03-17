@@ -193,7 +193,7 @@ public static class GeometryCalculator
         return origin + new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)) * dist;
     }
 
-    // =========================== EnemySpawn方法 ===========================
+    // =========================== SpawnSystem特有方法 ===========================
 
     /// <summary>
     /// 在 AABB（轴对齐矩形）内生成均匀分布的随机点。

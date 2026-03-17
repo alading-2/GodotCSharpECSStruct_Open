@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://dju0murovtl7b"]
+
+[ext_resource type="SpriteFrames" uid="uid://brts8vgi15eni" path="res://assets/Effect/003/AnimatedSprite2D/003.tres" id="1_bpnvc"]
+
+[node name="003" type="AnimatedSprite2D" unique_id=1634112305]
+sprite_frames = ExtResource("1_bpnvc")
+animation = &"Effect"

@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://cfjp1v7dcv76c"]
+
+[ext_resource type="SpriteFrames" uid="uid://d0jr0yc2fwjke" path="res://assets/Effect/lrsc3/AnimatedSprite2D/lrsc3.tres" id="1_xfdhg"]
+
+[node name="lrsc3" type="AnimatedSprite2D" unique_id=1448507566]
+sprite_frames = ExtResource("1_xfdhg")
+animation = &"Effect"

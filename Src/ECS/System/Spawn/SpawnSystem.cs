@@ -146,8 +146,8 @@ public partial class SpawnSystem : Node
         // 2. 初始化规则状态
         _activeStates.Clear();
 
-        // 从 ResourceManagement 加载所有敌人配置
-        var allEnemyConfigs = ResourceManagement.LoadAll<EnemyConfig>(ResourceCategory.EnemyConfig);
+        // 从 ResourceManagement 加载所有敌人配置，过滤路径以确保只加载敌人相关的配置
+        var allEnemyConfigs = ResourceManagement.LoadAll<EnemyConfig>(ResourceCategory.Data, "Unit/Enemy");
 
         foreach (var config in allEnemyConfigs)
         {

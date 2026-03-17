@@ -36,6 +36,20 @@ public static class ResourceManagement
             return Godot.GD.Load<T>(data.Path);
         }
 
+        // Fallback: 兼容基于类名的自动加载（如 nameof(System) 或 typeof(Entity).Name）
+        string suffix = "_" + name;
+        foreach (var kvp in dict)
+        {
+            // 2. 检查字典里的 Key 是否以这个后缀结尾
+            // 比如 "DamageSystem_DamageService" 肯定是以 "_DamageService" 结尾的
+            if (kvp.Key.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) ||
+                kvp.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                // 3. 匹配成功，直接返回该资源的路径
+                return Godot.GD.Load<T>(kvp.Value.Path);
+            }
+        }
+
         _log.Error($"未找到资源: {category}/{name}");
         return null;
     }
@@ -47,18 +61,23 @@ public static class ResourceManagement
     /// </summary>
     /// <typeparam name="T">资源类型</typeparam>
     /// <param name="category">资源分类</param>
+    /// <param name="pathFilter">路径过滤（可选，如 "Unit/Enemy"）</param>
     /// <returns>资源列表</returns>
-    public static List<T> LoadAll<T>(ResourceCategory category) where T : class
+    public static List<T> LoadAll<T>(ResourceCategory category, string pathFilter = "") where T : class
     {
         var dict = GetDictionaryByCategory(category);
         var results = new List<T>();
 
         foreach (var kvp in dict)
         {
+            // 如果指定了路径过滤，检查路径是否包含过滤字符串
+            if (!string.IsNullOrEmpty(pathFilter) && !kvp.Value.Path.Contains(pathFilter, StringComparison.OrdinalIgnoreCase))
+                continue;
+
             var resource = Godot.GD.Load<T>(kvp.Value.Path);
             if (resource != null)
                 results.Add(resource);
-            else
+            else if (string.IsNullOrEmpty(pathFilter)) // 只有在没过滤的情况下才报 Warn，防止过滤导致的正常加载失败也报警告
                 _log.Warn($"加载失败: {category}/{kvp.Key} ({kvp.Value.Path})");
         }
 
@@ -68,10 +87,15 @@ public static class ResourceManagement
     /// <summary>
     /// 获取分类下所有资源名称
     /// </summary>
-    public static List<string> GetNames(ResourceCategory category)
+    public static List<string> GetNames(ResourceCategory category, string pathFilter = "")
     {
         var dict = GetDictionaryByCategory(category);
-        return dict.Keys.ToList();
+        if (string.IsNullOrEmpty(pathFilter))
+            return dict.Keys.ToList();
+
+        return dict.Where(kvp => kvp.Value.Path.Contains(pathFilter, StringComparison.OrdinalIgnoreCase))
+                   .Select(kvp => kvp.Key)
+                   .ToList();
     }
 
     /// <summary>

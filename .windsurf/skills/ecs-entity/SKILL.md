@@ -111,3 +111,5 @@ private void OnDamaged(GameEventType.Unit.DamagedEventData evt)
 - **架构设计** → `Docs/框架/ECS/Entity/Entity架构设计理念.md`
 - **对象池接口** → `Src/Tools/ObjectPool/IPoolable.cs`
 - **对象池初始化** → 搜索 `ObjectPoolInit.cs`
+- **特效实体参考** → `Src/ECS/Entity/Effect/EffectEntity.cs`
+- **特效服务入口** → `Src/ECS/System/EffectSystem/EffectTool.cs`

@@ -34,8 +34,8 @@ public partial class HealthBarUI : UIBase, IPoolable
         );
 
         // 订阅全局单位销毁事件
-        GlobalEventBus.Global.On<GameEventType.Unit.DestroyedEventData>(
-            GameEventType.Unit.Destroyed,
+        GlobalEventBus.Global.On<GameEventType.Global.EntityDestroyedEventData>(
+            GameEventType.Global.EntityDestroyed,
             OnUnitDestroyed
         );
 
@@ -141,7 +141,7 @@ public partial class HealthBarUI : UIBase, IPoolable
     /// <summary>
     /// 单位销毁事件处理：自动解绑并回收血条
     /// </summary>
-    private static void OnUnitDestroyed(GameEventType.Unit.DestroyedEventData evt)
+    private static void OnUnitDestroyed(GameEventType.Global.EntityDestroyedEventData evt)
     {
         // 解绑所有 UI（包括血条）
         UIManager.UnbindAllUI(evt.Entity);

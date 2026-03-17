@@ -36,6 +36,8 @@ public enum EntityType
     Trap = 1 << 6,
     /// <summary>瞄准指示器（技能施法点标记）</summary>
     TargetingIndicator = 1 << 7,
+    /// <summary>特效实体</summary>
+    Effect = 1 << 8,
 
 
     // ============ 组合预设 ============

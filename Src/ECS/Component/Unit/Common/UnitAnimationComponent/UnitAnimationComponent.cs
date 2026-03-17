@@ -26,6 +26,8 @@ public static class Anim
 
     // === 其他 ===
     public const string Celebrate = "celebrate";
+    /// <summary>默认特效动画</summary>
+    public const string Effect = "Effect";
 }
 
 /// <summary>

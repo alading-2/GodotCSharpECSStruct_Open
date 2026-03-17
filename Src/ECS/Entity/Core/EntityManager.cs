@@ -12,17 +12,17 @@ public readonly record struct EntitySpawnConfig
     /// <summary>单位配置资源（必填，如 EnemyConfig, PlayerConfig）</summary>
     public required Resource Config { get; init; }
 
-    /// <summary>是否使用对象池（默认 false）</summary>
-    public bool UsingObjectPool { get; init; }
+/// <summary>是否使用对象池（默认 false）</summary>
+public bool UsingObjectPool { get; init; }
 
-    /// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
-    public string? PoolName { get; init; }
+/// <summary>对象池名称（UsingObjectPool=true 时必填，如 ObjectPoolNames.EnemyPool）</summary>
+public string? PoolName { get; init; }
 
-    /// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
-    public Vector2? Position { get; init; }
+/// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
+public Vector2? Position { get; init; }
 
-    /// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
-    public float? Rotation { get; init; }
+/// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
+public float? Rotation { get; init; }
 }
 
 /// <summary>
@@ -227,8 +227,6 @@ public static partial class EntityManager
         _log.Debug($"已将 Entity 添加到场景树: {typeName} -> {path}");
     }
 
-
-
     /// <summary>
     /// 自动加载 VisualScene
     /// </summary>
@@ -374,7 +372,8 @@ public static partial class EntityManager
         // 发送销毁事件（在注销前发送，以便监听者仍能访问实体的 Data/Id）
         if (entity is IEntity iEntity)
         {
-            GlobalEventBus.Global.Emit(GameEventType.Unit.Destroyed, new GameEventType.Unit.DestroyedEventData(iEntity));
+            // 通用 Entity 销毁事件（所有 IEntity）
+            GlobalEventBus.Global.Emit(GameEventType.Global.EntityDestroyed, new GameEventType.Global.EntityDestroyedEventData(iEntity));
         }
 
         // 1. 注销（内部已清理 Component、关系、Data、Events）

@@ -1,0 +1,54 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://brts8vgi15eni"]
+
+[ext_resource type="Texture2D" uid="uid://ymnji43flt3q" path="res://assets/Effect/003/003_00.png" id="1_m0aem"]
+[ext_resource type="Texture2D" uid="uid://tek4tpoae1nn" path="res://assets/Effect/003/003_01.png" id="2_xgq6w"]
+[ext_resource type="Texture2D" uid="uid://cqm1k5yubgvn7" path="res://assets/Effect/003/003_02.png" id="3_r5t8f"]
+[ext_resource type="Texture2D" uid="uid://dtq2441tqy786" path="res://assets/Effect/003/003_03.png" id="4_w1vfd"]
+[ext_resource type="Texture2D" uid="uid://c62qrxi8amp8n" path="res://assets/Effect/003/003_04.png" id="5_y3irf"]
+[ext_resource type="Texture2D" uid="uid://wali626hx6na" path="res://assets/Effect/003/003_05.png" id="6_hmn88"]
+[ext_resource type="Texture2D" uid="uid://dqh1elc0g30oa" path="res://assets/Effect/003/003_06.png" id="7_ygb7m"]
+[ext_resource type="Texture2D" uid="uid://hkl00bwt8124" path="res://assets/Effect/003/003_07.png" id="8_ilm6d"]
+[ext_resource type="Texture2D" uid="uid://d3ddebnsqroq5" path="res://assets/Effect/003/003_08.png" id="9_ihxn0"]
+[ext_resource type="Texture2D" uid="uid://cajuq148gvm4" path="res://assets/Effect/003/003_09.png" id="10_vc1g7"]
+[ext_resource type="Texture2D" uid="uid://cgpd1spk5ws7e" path="res://assets/Effect/003/003_10.png" id="11_7flof"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_m0aem")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_xgq6w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_r5t8f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_w1vfd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_y3irf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_hmn88")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_ygb7m")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_ilm6d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_ihxn0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_vc1g7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_7flof")
+}],
+"loop": false,
+"name": &"Effect",
+"speed": 10.0
+}]

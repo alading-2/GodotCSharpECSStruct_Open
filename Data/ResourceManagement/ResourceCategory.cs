@@ -18,18 +18,8 @@ public enum ResourceCategory
     /// <summary>Manager 管理器 (如 TimerManager)</summary>
     Tools,
 
-    /// <summary>敌人配置 (.tres)</summary>
-    EnemyConfig,
-    /// <summary>玩家配置 (.tres)</summary>
-    PlayerConfig,
-    /// <summary>单位配置 (通用)</summary>
-    Unit,
-
-    /// <summary>技能配置 (.tres)</summary>
-    AbilityConfig,
-
-    /// <summary>道具配置 (预留)</summary>
-    ItemConfig,
+    /// <summary>数据配置 (.tres) (合并原先的 *Config)</summary>
+    Data,
 
     /// <summary>Test 测试资源</summary>
     Test,

@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://ytutl1ubn0al"]
+
+[ext_resource type="Script" uid="uid://csc72dbdhk6go" path="res://Src/ECS/Entity/Effect/EffectEntity.cs" id="1_effect"]
+[ext_resource type="PackedScene" uid="uid://bx7k2n4qaqmva" path="res://Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.tscn" id="2_xgdd2"]
+[ext_resource type="PackedScene" uid="uid://un2fds2fs1tc" path="res://Src/ECS/Component/Effect/EffectComponent/EffectComponent.tscn" id="3_3x4x1"]
+
+[node name="EffectEntity" type="Node2D" unique_id=514802635]
+script = ExtResource("1_effect")
+
+[node name="Component" type="Node2D" parent="." unique_id=566099241]
+
+[node name="UnitAnimationComponent" parent="Component" unique_id=154321046 instance=ExtResource("2_xgdd2")]
+
+[node name="EffectComponent" parent="Component" unique_id=1317693693 instance=ExtResource("3_3x4x1")]

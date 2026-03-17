@@ -36,11 +36,7 @@ class ResourceGenerator
             // 只有 Data/Data/ 路径下的 .tres 才是真正的配置文件
             if (path.Contains("Data/Data/", StringComparison.OrdinalIgnoreCase))
             {
-                if (path.Contains("/Enemy/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.EnemyConfig;
-                if (path.Contains("/Player/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.PlayerConfig;
-                if (path.Contains("/Unit/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Unit; // New: General Unit config
-                if (path.Contains("/Ability/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.AbilityConfig;
-                if (path.Contains("/Item/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.ItemConfig;
+                return ResourceCategory.Data;
             }
             // assets 下的 .tres 文件（如 SpriteFrames）归类为 Asset
             else if (path.StartsWith("res://assets/", StringComparison.OrdinalIgnoreCase))
@@ -144,11 +140,11 @@ class ResourceGenerator
             // 排除 ResourceManagement 本身
             if (file.EndsWith("ResourceManagement.tscn")) continue;
 
-            var name = Path.GetFileNameWithoutExtension(file);
-
             // 转换为 res:// 路径
             var relativePath = Path.GetRelativePath(projectRoot, file).Replace("\\", "/");
             var resPath = "res://" + relativePath;
+
+            var name = GetNameFromResPath(resPath);
 
             // 检查排除路径
             bool isExcluded = false;
@@ -225,15 +221,51 @@ class ResourceGenerator
         }
     }
 
+    private static string GetNameFromResPath(string resPath)
+    {
+        string relPath = resPath.StartsWith("res://") ? resPath.Substring(6) : resPath;
+
+        string[] prefixes = {
+            "Data/Data/",
+            "assets/",
+            "Src/UI/",
+            "Src/ECS/Component/",
+            "Src/ECS/Entity/",
+            "Src/ECS/System/",
+            "Src/Tools/",
+            "Src/Test/",
+            "Src/"
+        };
+
+        foreach (var prefix in prefixes)
+        {
+            if (relPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                relPath = relPath.Substring(prefix.Length);
+                break;
+            }
+        }
+
+        if (relPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)) relPath = relPath.Substring(0, relPath.Length - 5);
+        if (relPath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)) relPath = relPath.Substring(0, relPath.Length - 5);
+
+        if (relPath.Contains("/AnimatedSprite2D/", StringComparison.OrdinalIgnoreCase))
+        {
+            relPath = relPath.Split(new string[] { "/AnimatedSprite2D/", "/animatedsprite2d/" }, StringSplitOptions.None)[0];
+        }
+
+        return relPath.Replace("/", "_").Replace("\\", "_").Replace("-", "_");
+    }
+
     private static void GenerateCode(string projectRoot, Dictionary<ResourceCategory, Dictionary<string, string>> resourcesByCategory)
     {
         var sb = new StringBuilder();
         sb.AppendLine("//------------------------------------------------------------------------------");
-        sb.AppendLine("// <ResourceGenerator>");
-        sb.AppendLine("//     ResourceGenerator 资源路径生成器工具");
-        sb.AppendLine("//");
-        sb.AppendLine("//     不要修改本文件，因为每次运行ResourceGenerator都会覆盖本文件。");
-        sb.AppendLine("// </ResourceGenerator>");
+        sb.AppendLine("//* <ResourceGenerator>");
+        sb.AppendLine("//*     ResourceGenerator 资源路径生成器工具");
+        sb.AppendLine("//*");
+        sb.AppendLine("//*     不要修改本文件，因为每次运行ResourceGenerator都会覆盖本文件。");
+        sb.AppendLine("//* </ResourceGenerator>");
         sb.AppendLine("//------------------------------------------------------------------------------");
         sb.AppendLine();
         sb.AppendLine("using System.Collections.Generic;");
@@ -252,22 +284,20 @@ class ResourceGenerator
         sb.AppendLine("public static class ResourcePaths");
         sb.AppendLine("{");
 
-        // 1. 生成静态类和常量 (强类型访问)
-        // 格式: ResourcePaths.EnemyConfig.Name
+        // 1. 生成静态常量 (强类型访问)
+        // 格式: ResourcePaths.EnemyConfig_Name
         var allCategories = Enum.GetNames(typeof(ResourceCategory));
         foreach (var categoryName in allCategories)
         {
-            sb.AppendLine($"    public static class {categoryName}");
-            sb.AppendLine("    {");
+            sb.AppendLine($"    // --- {categoryName} ---");
             if (resourcesByCategory.TryGetValue(Enum.Parse<ResourceCategory>(categoryName), out var items))
             {
                 foreach (var kvp in items.OrderBy(x => x.Key))
                 {
-                    // 使用 nameof 风格的常量，值为 Key
-                    sb.AppendLine($"        public const string {kvp.Key} = \"{kvp.Key}\";");
+                    // 使用 Category_Name 风格的常量
+                    sb.AppendLine($"    public const string {categoryName}_{kvp.Key} = \"{kvp.Key}\";");
                 }
             }
-            sb.AppendLine("    }");
             sb.AppendLine();
         }
 
@@ -284,8 +314,8 @@ class ResourceGenerator
             {
                 foreach (var kvp in items.OrderBy(x => x.Key))
                 {
-                    // 使用静态常量作为 Key，确保一致性
-                    sb.AppendLine($"                {{ {categoryName}.{kvp.Key}, new ResourceData(ResourceCategory.{categoryName}, \"{kvp.Value}\") }},");
+                    // 使用扁平化的静态常量作为 Key，确保一致性
+                    sb.AppendLine($"                {{ {categoryName}_{kvp.Key}, new ResourceData(ResourceCategory.{categoryName}, \"{kvp.Value}\") }},");
                 }
             }
 
