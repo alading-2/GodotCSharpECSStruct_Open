@@ -1,12 +1,14 @@
 @tool
 extends HBoxContainer
 
-var manager : Control
+const ColumnLabelsZh := preload("res://addons/resources_spreadsheet_view/column_labels_zh.gd")
+
+var manager: Control
 
 
-func set_label(label : String):
-	$"Button".text = label.capitalize()
-	$"Button".tooltip_text = label + "\nClick to sort."
+func set_label(label: String):
+	$"Button".text = ColumnLabelsZh.get_label(label)
+	$"Button".tooltip_text = label + "\n点击排序"
 
 
 func _ready():
@@ -16,7 +18,7 @@ func _ready():
 
 
 func _on_about_to_popup():
-	var menu_popup : PopupMenu = $"Button2".get_popup()
+	var menu_popup: PopupMenu = $"Button2".get_popup()
 	menu_popup.clear()
 	menu_popup.add_item("Select All", 0)
 	menu_popup.add_item("Hide", 1)
@@ -37,9 +39,9 @@ func _on_about_to_popup():
 			menu_popup.add_item("Open Sub-Resources in Selection", 3)
 
 
-func _on_main_gui_input(event : InputEvent):
+func _on_main_gui_input(event: InputEvent):
 	if event is InputEventMouseButton and event.pressed:
-		var popup : Popup = $"Button2".get_popup()
+		var popup: Popup = $"Button2".get_popup()
 		if event.button_index == MOUSE_BUTTON_RIGHT:
 			_on_about_to_popup()
 			popup.visible = !popup.visible
@@ -50,7 +52,7 @@ func _on_main_gui_input(event : InputEvent):
 			popup.visible = false
 
 
-func _on_list_id_pressed(id : int):
+func _on_list_id_pressed(id: int):
 	match id:
 		0:
 			manager.select_column(get_index())

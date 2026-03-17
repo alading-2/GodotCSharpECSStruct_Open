@@ -6,21 +6,22 @@ signal cells_rightclicked(cells_positions)
 
 const EditorViewClass := preload("res://addons/resources_spreadsheet_view/editor_view.gd")
 const TextEditingUtilsClass := preload("res://addons/resources_spreadsheet_view/text_editing_utils.gd")
+const ColumnLabelsZh := preload("res://addons/resources_spreadsheet_view/column_labels_zh.gd")
 
-@export var cell_editor_classes : Array[Script] = []
+@export var cell_editor_classes: Array[Script] = []
 
-@onready var node_property_editors : VBoxContainer = $"../HeaderContentSplit/MarginContainer/FooterContentSplit/Footer/PropertyEditors"
-@onready var scrollbar : ScrollContainer = $"../HeaderContentSplit/MarginContainer/FooterContentSplit/Panel/Scroll"
+@onready var node_property_editors: VBoxContainer = $"../HeaderContentSplit/MarginContainer/FooterContentSplit/Footer/PropertyEditors"
+@onready var scrollbar: ScrollContainer = $"../HeaderContentSplit/MarginContainer/FooterContentSplit/Panel/Scroll"
 
-@onready var editor_view : EditorViewClass = get_parent()
+@onready var editor_view: EditorViewClass = get_parent()
 
-var edited_cells : Array = []
-var edited_cells_text : Array = []
-var edit_cursor_positions : Array[int] = []
+var edited_cells: Array = []
+var edited_cells_text: Array = []
+var edit_cursor_positions: Array[int] = []
 
-var all_cell_editors : Array = []
-var column_editors : Array[Object] = []
-var inspector_resource : Resource
+var all_cell_editors: Array = []
+var column_editors: Array[Object] = []
+var inspector_resource: Resource
 
 
 func _ready():
@@ -29,10 +30,10 @@ func _ready():
 		all_cell_editors.append(x.new())
 		all_cell_editors[all_cell_editors.size() - 1].hint_strings_array = editor_view.column_hint_strings
 
-	get_parent()\
-		.editor_interface\
-		.get_inspector()\
-		.property_edited\
+	get_parent() \
+		.editor_interface \
+		.get_inspector() \
+		.property_edited \
 		.connect(_on_inspector_property_edited)
 
 	scrollbar.get_h_scroll_bar().value_changed.connect(queue_redraw.unbind(1), CONNECT_DEFERRED)
@@ -53,7 +54,7 @@ func _draw():
 	var label_padding_left := 2.0
 	var newline_char := 10
 	for i in edited_cells.size():
-		var cell : Control = get_cell_node_from_position(edited_cells[i])
+		var cell: Control = get_cell_node_from_position(edited_cells[i])
 		var caret_rect := Rect2()
 		if cell.has_method(&"get_character_bounds"):
 			if edited_cells_text[i].length() == edit_cursor_positions[i]:
@@ -90,7 +91,7 @@ func deselect_all_cells():
 	_selection_changed()
 
 
-func deselect_cell(cell : Vector2i):
+func deselect_cell(cell: Vector2i):
 	var idx := edited_cells.find(cell)
 	if idx == -1: return
 
@@ -106,7 +107,7 @@ func deselect_cell(cell : Vector2i):
 	_selection_changed()
 
 
-func select_cell(cell : Vector2i):
+func select_cell(cell: Vector2i):
 	var column_index := get_cell_column(cell)
 	if edited_cells.size() == 0 or edited_cells[0].x == cell.x:
 		_add_cell_to_selection(cell)
@@ -117,7 +118,7 @@ func select_cell(cell : Vector2i):
 	_selection_changed()
 
 
-func select_cells(cells : Array):
+func select_cells(cells: Array):
 	var last_selectible := Vector2i(-1, -1)
 	var started_empty := edited_cells.size() == 0
 	for x in cells:
@@ -130,7 +131,7 @@ func select_cells(cells : Array):
 		select_cell(last_selectible)
 
 
-func select_cells_to(cell : Vector2i):
+func select_cells_to(cell: Vector2i):
 	var column_index := get_cell_column(cell)
 	if edited_cells.size() == 0 or column_index != get_cell_column(edited_cells[-1]):
 		return
@@ -149,7 +150,7 @@ func select_cells_to(cell : Vector2i):
 			edited_cells.append(cur_cell)
 
 			var cur_cell_value = editor_view.io.get_value(editor_view.rows[cur_cell.y], editor_view.columns[cur_cell.x])
-			var cur_cell_text : String = column_editor.to_text(cur_cell_value)
+			var cur_cell_text: String = column_editor.to_text(cur_cell_value)
 			edited_cells_text.append(cur_cell_text)
 			edit_cursor_positions.append(cur_cell_text.length())
 
@@ -166,15 +167,15 @@ func rightclick_cells():
 	cells_rightclicked.emit(edited_cells)
 
 
-func is_cell_node_selected(cell : Control) -> bool:
+func is_cell_node_selected(cell: Control) -> bool:
 	return get_cell_node_position(cell) in edited_cells
 
 
-func is_cell_selected(cell : Vector2i) -> bool:
+func is_cell_selected(cell: Vector2i) -> bool:
 	return cell in edited_cells
 
 
-func can_select_cell(cell : Vector2i) -> bool:
+func can_select_cell(cell: Vector2i) -> bool:
 	if edited_cells.size() == 0:
 		return true
 
@@ -187,7 +188,7 @@ func can_select_cell(cell : Vector2i) -> bool:
 	return !cell in edited_cells
 
 
-func get_cell_node_from_position(cell_pos : Vector2i) -> Control:
+func get_cell_node_from_position(cell_pos: Vector2i) -> Control:
 	var cell_index := (cell_pos.y - editor_view.first_row) * editor_view.columns.size() + cell_pos.x
 	if cell_index < 0 or cell_index >= editor_view.node_table_root.get_child_count():
 		return null
@@ -195,22 +196,22 @@ func get_cell_node_from_position(cell_pos : Vector2i) -> Control:
 	return editor_view.node_table_root.get_child(cell_index)
 
 
-func get_cell_node_position(cell : Control) -> Vector2i:
+func get_cell_node_position(cell: Control) -> Vector2i:
 	var col_count := editor_view.columns.size()
 	var cell_index := cell.get_index()
 	return Vector2i(cell_index % col_count, cell_index / col_count + editor_view.first_row)
 
 
-func get_cell_column(cell : Vector2i) -> int:
+func get_cell_column(cell: Vector2i) -> int:
 	return cell.x
 
 
-func get_cell_row(cell : Vector2i) -> int:
+func get_cell_row(cell: Vector2i) -> int:
 	return cell.y
 
 
 func get_edited_rows() -> Array[int]:
-	var rows : Array[int] = []
+	var rows: Array[int] = []
 	rows.resize(edited_cells.size())
 	for i in rows.size():
 		rows[i] = get_cell_row(edited_cells[i])
@@ -246,14 +247,14 @@ func _selection_changed():
 	cells_selected.emit(edited_cells)
 
 
-func _set_visible_selected(state : bool):	
+func _set_visible_selected(state: bool):
 	for x in edited_cells:
 		var cell_node := get_cell_node_from_position(x)
 		if cell_node != null:
 			column_editors[get_cell_column(x)].set_selected(cell_node, state)
 
 
-func _add_cell_to_selection(cell : Vector2i):
+func _add_cell_to_selection(cell: Vector2i):
 	if !edited_cells.has(cell):
 		edited_cells.append(cell)
 
@@ -263,7 +264,7 @@ func _add_cell_to_selection(cell : Vector2i):
 		column_editor.set_selected(cell_node, true)
 
 	var cell_value = editor_view.io.get_value(editor_view.rows[cell.y], editor_view.columns[cell.x])
-	var text_value : String = column_editor.to_text(cell_value)
+	var text_value: String = column_editor.to_text(cell_value)
 	edited_cells_text.append(text_value)
 	edit_cursor_positions.append(text_value.length())
 
@@ -284,7 +285,7 @@ func _update_selected_cells_text():
 		edit_cursor_positions[i] = edited_cells_text[i].length()
 
 
-func _try_open_docks(cell : Vector2i):
+func _try_open_docks(cell: Vector2i):
 	var column_index := get_cell_column(cell)
 	var row = editor_view.rows[get_cell_row(cell)]
 	var column := editor_view.columns[column_index]
@@ -293,10 +294,10 @@ func _try_open_docks(cell : Vector2i):
 
 	for x in node_property_editors.get_children():
 		x.visible = x.try_edit_value(editor_view.io.get_value(row, column), type, hints)
-		x.get_node(x.path_property_name).text = column
+		x.get_node(x.path_property_name).text = ColumnLabelsZh.get_label(column)
 
 
-func _on_inspector_property_edited(property : StringName):
+func _on_inspector_property_edited(property: StringName):
 	if !editor_view.is_visible_in_tree(): return
 	if inspector_resource != editor_view.editor_plugin.get_editor_interface().get_inspector().get_edited_object():
 		return

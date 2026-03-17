@@ -4,13 +4,12 @@ using System.Runtime.CompilerServices;
 using Godot;
 
 /// <summary>
-/// 链式闪电技能执行器 - 复杂技能示例
+/// 链式闪电技能执行器
 /// 
-/// 演示功能：
-/// 1. Chain几何形状 - 链式弹跳目标选择
-/// 2. 伤害衰减机制 - 每次弹跳伤害递减
-/// 3. 属性计算 - 结合FinalAttack、FinalSkillDamage
-/// 4. 目标排序 - 使用AbilityTargetSorting
+/// 触发方式：Manual（手动，玩家按键）
+/// 目标选择：Entity（自动索取最近敌人），Chain 几何形状（弹跳）
+/// 特效：Effect_lrsc3（在每个被命中目标位置生成独立特效）
+/// 伤害：魔法伤害，每次弹跳衰减 80%
 /// </summary>
 public class ChainLightningExecutor : IAbilityExecutor
 {
@@ -36,14 +35,12 @@ public class ChainLightningExecutor : IAbilityExecutor
         var baseDamage = ability.Data.Get<float>(DataKey.AbilityDamage);
         var chainCount = ability.Data.Get<int>(DataKey.AbilityChainCount);
 
-        // 2. 计算初始伤害 - 结合施法者属性
+        // 2. 计算初始伤害（基础伤害 + 攻击力）× 技能伤害倍率
         var finalAttack = caster.Data.Get<float>(DataKey.FinalAttack);
         var finalSkillDamage = caster.Data.Get<float>(DataKey.FinalSkillDamage);
-
-        // 最终伤害 = (基础伤害 + 攻击力) × 技能伤害倍率
         var initialDamage = (baseDamage + finalAttack) * (finalSkillDamage / 100f);
 
-        // 3. 获取Chain目标列表 (由AbilitySystem通过TargetSelector提供)
+        // 3. 获取 Chain 目标列表（由 AbilityTargetSelectionComponent 填充）
         var targets = context.Targets;
         if (targets == null || targets.Count == 0)
         {
@@ -51,10 +48,13 @@ public class ChainLightningExecutor : IAbilityExecutor
             return new AbilityExecutedResult { TargetsHit = 0 };
         }
 
-        // 4. 对每个目标应用伤害 - 展示伤害衰减
+        // 4. 预加载特效场景
+        var effectScene = ResourceManagement.Load<PackedScene>(ResourcePaths.Asset_Effect_lrsc3, ResourceCategory.Asset);
+
+        // 5. 对每个目标应用伤害（带衰减）并生成特效
         int hitCount = 0;
         float currentDamage = initialDamage;
-        const float damageDecay = 0.8f;  // 每次弹跳伤害衰减至80%
+        const float damageDecay = 0.8f;
 
         for (int i = 0; i < targets.Count && i <= chainCount; i++)
         {
@@ -62,29 +62,32 @@ public class ChainLightningExecutor : IAbilityExecutor
 
             if (target is IUnit unitVictim)
             {
-                // 移除手动暴击计算，交由 DamageService 管道处理
                 var damageInfo = new DamageInfo
                 {
                     Attacker = caster as Node,
                     Victim = unitVictim,
                     Damage = currentDamage,
-                    Type = DamageType.Magical,
-                    // IsCritical = false // 默认由 DamageService 计算
+                    Type = DamageType.Magical
                 };
-
                 DamageService.Instance.Process(damageInfo);
+
+                // 在目标位置生成闪电特效
+                if (effectScene != null && target is Node2D targetNode2D)
+                {
+                    EffectTool.Spawn(targetNode2D.GlobalPosition, new EffectSpawnOptions(
+                        VisualScene: effectScene,
+                        Name: $"链式闪电特效_{i}"
+                    ));
+                }
 
                 _log.Debug($"链式闪电 第{i + 1}跳: {unitVictim.Data.Get<string>(DataKey.Name)} 受到 {damageInfo.FinalDamage:F1} 伤害");
 
                 hitCount++;
-
-                // 下次弹跳伤害衰减
                 currentDamage *= damageDecay;
             }
         }
 
         _log.Info($"链式闪电执行完成: 初始伤害 {initialDamage:F1}, 弹跳次数 {hitCount}");
-
         return new AbilityExecutedResult { TargetsHit = hitCount };
     }
 }

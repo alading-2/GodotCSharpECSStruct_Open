@@ -1,6 +1,4 @@
 using Godot;
-using System;
-using System.Threading.Tasks;
 
 
 
@@ -13,76 +11,8 @@ public partial class MainTest : Node
     public override void _Ready()
     {
         GlobalEventBus.TriggerGameStart();
-        RegisterExecutors();
         ExecuteTestScenario();
         _log.Info("MainTest初始化完成");
-    }
-
-    private void RegisterExecutors()
-    {
-        // 注册 "单位目标" / "TargetStrike"
-        AbilityExecutorRegistry.Register("单位目标", new TestAbilityExecutor((context) =>
-        {
-            _log.Info($"执行技能 [单位目标] -> 目标数量: {context.Targets?.Count ?? 0}");
-            if (context.Targets != null)
-            {
-                foreach (var target in context.Targets)
-                {
-                    _log.Info($"  命中目标: {target.Data.Get<string>(DataKey.Name)}");
-
-                    // 简单的伤害逻辑模拟
-                    if (target is IUnit victim)
-                    {
-                        var damageInfo = new DamageInfo
-                        {
-                            Attacker = context.Caster as Node,
-                            // Instigator 不存在于 DamageInfo，Attacker 即为直接来源
-                            // 归属权由 EntityRelationshipManager 处理
-                            Victim = victim,
-                            Damage = 10f,
-                            Type = DamageType.Physical
-                        };
-                        DamageService.Instance.Process(damageInfo);
-                    }
-                }
-            }
-            return new AbilityExecutedResult { TargetsHit = context.Targets?.Count ?? 0 };
-        }));
-
-        AbilityExecutorRegistry.Register("TargetStrike", new TestAbilityExecutor((context) =>
-        {
-            _log.Info($"执行技能 [TargetStrike] -> 目标数量: {context.Targets?.Count ?? 0}");
-            return new AbilityExecutedResult { TargetsHit = context.Targets?.Count ?? 0 };
-        }));
-
-        // 注册 "位置目标" / "GroundSlam"
-        AbilityExecutorRegistry.Register("位置目标", new TestAbilityExecutor((context) =>
-        {
-            _log.Info($"执行技能 [地面猛击] -> 位置: {context.TargetPosition}");
-            return new AbilityExecutedResult { TargetsHit = 0 };
-        }));
-
-        AbilityExecutorRegistry.Register("GroundSlam", new TestAbilityExecutor((context) =>
-        {
-            _log.Info($"执行技能 [GroundSlam] -> 位置: {context.TargetPosition}");
-            return new AbilityExecutedResult { TargetsHit = 0 };
-        }));
-    }
-
-    // 可以在 MainTest 内部定义简单的测试用执行器
-    private class TestAbilityExecutor : IAbilityExecutor
-    {
-        private readonly Func<CastContext, AbilityExecutedResult> _action;
-
-        public TestAbilityExecutor(Func<CastContext, AbilityExecutedResult> action)
-        {
-            _action = action;
-        }
-
-        public AbilityExecutedResult Execute(CastContext context)
-        {
-            return _action(context);
-        }
     }
 
     private async void ExecuteTestScenario()
@@ -158,31 +88,29 @@ public partial class MainTest : Node
     {
         if (_player == null) return;
 
-        // 使用 EntityManager.AddAbility 从配置加载技能
-        // ECS系统会自动处理组件添加、关系建立等
+        // 加载正式技能配置，对应 Data/Data/Ability/Ability/ 中的执行器
 
-        // 技能1: TargetStrike (目标打击)
-        var targetStrikeConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.Data_Ability_Resource_TargetEntitySkillConfig, ResourceCategory.Data);
-        if (targetStrikeConfig != null)
-        {
-            EntityManager.AddAbility(_player, targetStrikeConfig);
-        }
+        // 技能1: 裂地猛击 (Slam) - 范围近战AOE
+        var slamConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+            ResourcePaths.Data_Ability_Resource_SlamConfig, ResourceCategory.Data);
+        if (slamConfig != null) EntityManager.AddAbility(_player, slamConfig);
 
-        // 技能2: GroundSlam (地面猛击)
-        var groundSlamConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(ResourcePaths.Data_Ability_Resource_TargetPointSkillConfig, ResourceCategory.Data);
-        if (groundSlamConfig != null)
-        {
-            EntityManager.AddAbility(_player, groundSlamConfig);
-        }
+        // // 技能2: 链式闪电 (ChainLightning) - 链式弹跳魔法
+        // var chainConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+        //     ResourcePaths.Data_Ability_Resource_ChainLightningConfig, ResourceCategory.Data);
+        // if (chainConfig != null) EntityManager.AddAbility(_player, chainConfig);
 
-        // 注释掉自动范围伤害技能（按需求）
-        // var circleDamageConfig = ResourceManagement.Load<Brotato.Data.Config.Abilities.AbilityConfig>(ResourcePaths.AbilityConfig.CircleDamageConfig, ResourceCategory.AbilityConfig);
-        // if (circleDamageConfig != null)
-        // {
-        //     EntityManager.AddAbility(_player, circleDamageConfig);
-        // }
+        // // 技能3: 烈焰光环 (CircleDamage) - 周期范围伤害
+        // var auraConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+        //     ResourcePaths.Data_Ability_Resource_CircleDamageConfig, ResourceCategory.Data);
+        // if (auraConfig != null) EntityManager.AddAbility(_player, auraConfig);
 
-        _log.Info("已添加主动技能，等待UI自动更新");
+        // // 技能4: 冲刺 (Dash) - 位移技能
+        // var dashConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+        //     ResourcePaths.Data_Ability_Resource_DashConfig, ResourceCategory.Data);
+        // if (dashConfig != null) EntityManager.AddAbility(_player, dashConfig);
+
+        _log.Info("已添加正式技能，等待UI自动更新");
     }
 
     public override void _Process(double delta)

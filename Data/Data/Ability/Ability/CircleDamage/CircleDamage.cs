@@ -2,12 +2,12 @@ using System.Runtime.CompilerServices;
 using Godot;
 
 /// <summary>
-/// 圆形范围持续伤害技能执行器 (Circle Damage Over Time)
+/// 烈焰光环技能执行器
 /// 
-/// 演示功能：
-/// 1. 周期性触发 (Periodic)
-/// 2. 圆形范围目标选择 (Circle Geometry)
-/// 3. 敌对目标过滤 (Team Filter)
+/// 触发方式：Periodic（周期触发，由 TriggerComponent 每隔 AbilityCooldown 秒自动执行）
+/// 目标选择：None（自动对施法者周围圆形范围内所有敌人）
+/// 特效：Effect_003（每次触发在施法者位置播放一次独立特效）
+/// 伤害：魔法伤害，带 Area 标签
 /// </summary>
 public class CircleDamageExecutor : IAbilityExecutor
 {
@@ -26,31 +26,39 @@ public class CircleDamageExecutor : IAbilityExecutor
 
         if (caster == null || ability == null) return new AbilityExecutedResult();
 
-        // 1. 获取目标
-        // 由于 AbilitySystem 不再自动为 None 模式选择目标，我们需要手动查询
-        // 或者如果 AbilitySystem 传递了目标（预选模式），则使用传递的
-        var targets = context.Targets;
+        var casterNode2D = caster as Node2D;
 
+        // 1. 目标查询（Periodic 技能不走 AbilityTargetSelectionComponent，需手动查询）
+        var targets = context.Targets;
         if (targets == null || targets.Count == 0)
         {
-            // 手动构建查询
             var range = ability.Data.Get<float>(DataKey.AbilityRange);
-            var geometry = ability.Data.Get<GeometryType>(DataKey.AbilityTargetGeometry);
             var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
 
             var query = new TargetSelectorQuery
             {
-                Geometry = geometry,
+                Geometry = GeometryType.Circle,
                 Range = range,
-                Origin = (caster as Node2D)?.GlobalPosition ?? Vector2.Zero, // 以施法者为中心
+                Origin = casterNode2D?.GlobalPosition ?? Vector2.Zero,
                 CenterEntity = caster,
                 TeamFilter = teamFilter,
-                Sorting = AbilityTargetSorting.Nearest, // 按距离排序
-                MaxTargets = 999 // 攻击所有范围内敌人
+                Sorting = AbilityTargetSorting.Nearest,
+                MaxTargets = 999
             };
 
             targets = EntityTargetSelector.Query(query);
-            context.Targets = targets; // 回填到上下文
+            context.Targets = targets;
+        }
+
+        // 2. 每次触发在施法者位置生成光环特效
+        var effectScene = ResourceManagement.Load<PackedScene>(ResourcePaths.Asset_Effect_003, ResourceCategory.Asset);
+        if (effectScene != null && casterNode2D != null)
+        {
+            EffectTool.Spawn(casterNode2D.GlobalPosition, new EffectSpawnOptions(
+                VisualScene: effectScene,
+                Name: "烈焰光环特效",
+                Scale: new Vector2(2.0f, 2.0f)
+            ));
         }
 
         _log.Info($"[烈焰光环] 触发! 范围: {ability.Data.Get<float>(DataKey.AbilityRange)}, 找到目标: {targets?.Count ?? 0}");
@@ -60,28 +68,21 @@ public class CircleDamageExecutor : IAbilityExecutor
             return new AbilityExecutedResult { TargetsHit = 0 };
         }
 
-        // 2. 获取配置参数
+        // 3. 对每个目标造成魔法 AOE 伤害
         var damage = ability.Data.Get<float>(DataKey.AbilityDamage);
-
-        // 3. 对每个目标造成伤害
         int hitCount = 0;
         foreach (var target in targets)
         {
             if (target is IUnit victim)
             {
-                // --- 伤害逻辑开始 ---
-                // 使用 DamageService 统一处理伤害，自动处理闪避、暴击、护甲、护盾、伤害统计等
-                var damageInfo = new DamageInfo
+                DamageService.Instance.Process(new DamageInfo
                 {
-                    Attacker = caster as Node, // 攻击者
-                    Victim = victim, // 受害者
-                    Damage = damage, // 基础伤害
-                    Type = DamageType.Magical, // 假设光环是魔法伤害
+                    Attacker = casterNode2D,
+                    Victim = victim,
+                    Damage = damage,
+                    Type = DamageType.Magical,
                     Tags = DamageTags.Area
-                };
-
-                DamageService.Instance.Process(damageInfo);
-
+                });
                 hitCount++;
             }
         }

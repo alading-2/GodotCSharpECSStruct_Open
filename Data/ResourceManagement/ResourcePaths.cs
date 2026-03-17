@@ -63,6 +63,10 @@ public static class ResourcePaths
     public const string UI_UI_SkillUI_ActiveSkillSlotUI = "UI_SkillUI_ActiveSkillSlotUI";
 
     // --- Asset ---
+    public const string Asset_Effect_003 = "Effect_003";
+    public const string Asset_Effect_004龙卷风 = "Effect_004龙卷风";
+    public const string Asset_Effect_020 = "Effect_020";
+    public const string Asset_Effect_lrsc3 = "Effect_lrsc3";
     public const string Asset_Unit_Enemy_chailangren = "Unit_Enemy_chailangren";
     public const string Asset_Unit_Enemy_yuren = "Unit_Enemy_yuren";
     public const string Asset_Unit_Player_deluyi = "Unit_Player_deluyi";
@@ -78,7 +82,10 @@ public static class ResourcePaths
     public const string Tools_Timer_TimerManager = "Timer_TimerManager";
 
     // --- Data ---
+    public const string Data_Ability_Resource_ChainLightningConfig = "Ability_Resource_ChainLightningConfig";
     public const string Data_Ability_Resource_CircleDamageConfig = "Ability_Resource_CircleDamageConfig";
+    public const string Data_Ability_Resource_DashConfig = "Ability_Resource_DashConfig";
+    public const string Data_Ability_Resource_SlamConfig = "Ability_Resource_SlamConfig";
     public const string Data_Ability_Resource_TargetEntitySkillConfig = "Ability_Resource_TargetEntitySkillConfig";
     public const string Data_Ability_Resource_TargetPointSkillConfig = "Ability_Resource_TargetPointSkillConfig";
     public const string Data_Unit_Enemy_Resource_chailangren = "Unit_Enemy_Resource_chailangren";
@@ -156,6 +163,10 @@ public static class ResourcePaths
         },
         { ResourceCategory.Asset, new Dictionary<string, ResourceData>
             {
+                { Asset_Effect_003, new ResourceData(ResourceCategory.Asset, "res://assets/Effect/003/AnimatedSprite2D/003.tscn") },
+                { Asset_Effect_004龙卷风, new ResourceData(ResourceCategory.Asset, "res://assets/Effect/004龙卷风/AnimatedSprite2D/004龙卷风.tscn") },
+                { Asset_Effect_020, new ResourceData(ResourceCategory.Asset, "res://assets/Effect/020/AnimatedSprite2D/020.tscn") },
+                { Asset_Effect_lrsc3, new ResourceData(ResourceCategory.Asset, "res://assets/Effect/lrsc3/AnimatedSprite2D/lrsc3.tscn") },
                 { Asset_Unit_Enemy_chailangren, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/chailangren/AnimatedSprite2D/chailangren.tscn") },
                 { Asset_Unit_Enemy_yuren, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tscn") },
                 { Asset_Unit_Player_deluyi, new ResourceData(ResourceCategory.Asset, "res://assets/Unit/Player/deluyi/AnimatedSprite2D/deluyi.tscn") },
@@ -177,7 +188,10 @@ public static class ResourcePaths
         },
         { ResourceCategory.Data, new Dictionary<string, ResourceData>
             {
+                { Data_Ability_Resource_ChainLightningConfig, new ResourceData(ResourceCategory.Data, "res://Data/Data/Ability/Resource/ChainLightningConfig.tres") },
                 { Data_Ability_Resource_CircleDamageConfig, new ResourceData(ResourceCategory.Data, "res://Data/Data/Ability/Resource/CircleDamageConfig.tres") },
+                { Data_Ability_Resource_DashConfig, new ResourceData(ResourceCategory.Data, "res://Data/Data/Ability/Resource/DashConfig.tres") },
+                { Data_Ability_Resource_SlamConfig, new ResourceData(ResourceCategory.Data, "res://Data/Data/Ability/Resource/SlamConfig.tres") },
                 { Data_Ability_Resource_TargetEntitySkillConfig, new ResourceData(ResourceCategory.Data, "res://Data/Data/Ability/Resource/TargetEntitySkillConfig.tres") },
                 { Data_Ability_Resource_TargetPointSkillConfig, new ResourceData(ResourceCategory.Data, "res://Data/Data/Ability/Resource/TargetPointSkillConfig.tres") },
                 { Data_Unit_Enemy_Resource_chailangren, new ResourceData(ResourceCategory.Data, "res://Data/Data/Unit/Enemy/Resource/chailangren.tres") },

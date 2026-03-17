@@ -5,21 +5,93 @@
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 0.0
+        "visibility": 0
       },
       "resource_name": {
-        "visibility": 0.0
+        "visibility": 0
+      },
+      "resource_path": {
+        "visibility": 0
       }
     },
     "res://Data/Data/Ability/Resource/": {
+      "AbilityChainCount": {
+        "visibility": 1.0
+      },
+      "AbilityChainRange": {
+        "visibility": 1.0
+      },
+      "AbilityChargeTime": {
+        "visibility": 1.0
+      },
+      "AbilityDamage": {
+        "visibility": 1
+      },
+      "AbilityIcon": {
+        "visibility": 1.0
+      },
+      "AbilityLength": {
+        "visibility": 1.0
+      },
+      "AbilityLevel": {
+        "visibility": 1.0
+      },
+      "AbilityMaxCharges": {
+        "visibility": 1.0
+      },
+      "AbilityMaxLevel": {
+        "visibility": 1.0
+      },
+      "AbilityMaxTargets": {
+        "visibility": 1.0
+      },
+      "AbilityRange": {
+        "visibility": 1.0
+      },
+      "AbilityTargetGeometry": {
+        "visibility": 1.0
+      },
+      "AbilityTargetSelection": {
+        "visibility": 1.0
+      },
+      "AbilityTargetSorting": {
+        "visibility": 1.0
+      },
+      "AbilityTargetTeamFilter": {
+        "visibility": 1.0
+      },
+      "AbilityTriggerMode": {
+        "visibility": 1.0
+      },
+      "AbilityType": {
+        "visibility": 1.0
+      },
+      "AbilityWidth": {
+        "visibility": 1.0
+      },
+      "Description": {
+        "visibility": 1.0
+      },
+      "EntityType": {
+        "visibility": 1.0
+      },
+      "IsAbilityUsesCharges": {
+        "visibility": 1.0
+      },
+      "Name": {
+        "visibility": 1.0
+      },
       "metadata/_custom_type_script": {
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 0.0
+        "visibility": 0
       },
       "resource_name": {
-        "visibility": 0.0
+        "visibility": 0
+      },
+      "resource_path": {
+        "visibility": 0
       }
     },
     "res://Data/Data/Resources/": {
@@ -60,13 +132,52 @@
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 0.0
+        "visibility": 1.0
       },
       "resource_name": {
-        "visibility": 0.0
+        "visibility": 1.0
+      },
+      "resource_path": {
+        "visibility": 1.0
       }
     },
     "res://Data/Data/Unit/Player/Resource/": {
+      "BaseHp": {
+        "visibility": 1.0
+      },
+      "BaseHpRegen": {
+        "visibility": 1.0
+      },
+      "BaseMana": {
+        "visibility": 1.0
+      },
+      "BaseManaRegen": {
+        "visibility": 1.0
+      },
+      "BaseSkillDamage": {
+        "visibility": 1.0
+      },
+      "CooldownReduction": {
+        "visibility": 1.0
+      },
+      "CurrentMana": {
+        "visibility": 1.0
+      },
+      "DeathType": {
+        "visibility": 1.0
+      },
+      "LifeSteal": {
+        "visibility": 1.0
+      },
+      "Name": {
+        "visibility": 1.0
+      },
+      "PickupRange": {
+        "visibility": 1.0
+      },
+      "Team": {
+        "visibility": 1.0
+      },
       "metadata/_custom_type_script": {
         "visibility": 0.0
       },

@@ -95,6 +95,47 @@ public class MyAbilityExecutor : IAbilityExecutor
 }
 ```
 
+## 在执行器中使用特效
+
+技能执行时通过 `EffectTool.Spawn` 生成特效（详见 `Docs/框架/ECS/System/特效系统使用指南.md`）：
+
+```csharp
+public AbilityExecutedResult Execute(CastContext context)
+{
+    var casterNode = context.Caster as Node2D;
+
+    // 在施法者位置生成独立特效（播完自动销毁）
+    var effectScene = ResourceManagement.Load<PackedScene>(
+        ResourcePaths.Asset_Effect_020, ResourceCategory.Asset);
+    if (effectScene != null && casterNode != null)
+    {
+        EffectTool.Spawn(casterNode.GlobalPosition, new EffectSpawnOptions(
+            VisualScene: effectScene,
+            Name: "技能特效",
+            Scale: new Vector2(1.5f, 1.5f)
+        ));
+    }
+
+    // 附着特效（跟随施法者移动，播完自动销毁）
+    var dashEffectScene = ResourceManagement.Load<PackedScene>(
+        ResourcePaths.Asset_Effect_004龙卷风, ResourceCategory.Asset);
+    if (dashEffectScene != null && casterNode != null)
+    {
+        EffectTool.Spawn(Vector2.Zero, new EffectSpawnOptions(
+            VisualScene: dashEffectScene,
+            Host: casterNode   // 传 Host 则为附着模式
+        ));
+    }
+    // ...
+}
+```
+
+**可用特效常量**（`ResourceCategory.Asset`）：
+- `ResourcePaths.Asset_Effect_003` - 光环/范围爆炸
+- `ResourcePaths.Asset_Effect_004龙卷风` - 冲刺/位移
+- `ResourcePaths.Asset_Effect_020` - 地面撞击/近战AOE
+- `ResourcePaths.Asset_Effect_lrsc3` - 闪电命中
+
 ## 技能增删查
 
 ```csharp
