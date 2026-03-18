@@ -12,5 +12,4 @@ AbilityTriggerMode = 1
 AbilityCooldown = 5.0
 IsAbilityUsesCharges = true
 AbilityMaxCharges = 2
-AbilityChargeTime = 5.0
-AbilityRange = 300.0
+AbilityChargeTime = 1.0

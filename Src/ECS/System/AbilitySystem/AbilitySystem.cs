@@ -46,6 +46,13 @@ public static class AbilitySystem
     {
         if (context.Ability == null) return TriggerResult.Failed;
 
+        // 【新增】拦截已死亡角色的技能请求（防止周期性光环等技能死后继续触发新一轮的伤害判定）
+        if (context.Caster != null && context.Caster.Data.Get<bool>(DataKey.IsDead))
+        {
+            _log.Debug($"技能触发失败: 施法者已阵亡");
+            return TriggerResult.Failed;
+        }
+
         var ability = context.Ability;
 
         // 事件驱动：就绪检查
@@ -164,7 +171,7 @@ public static class AbilitySystem
     private static void RequestPlayerTargeting(CastContext context)
     {
         var ability = context.Ability!;
-        var range = ability.Data.Get<float>(DataKey.AbilityRange);
+        var range = ability.Data.Get<float>(DataKey.AbilityCastRange);
         var abilityName = ability.Data.Get<string>(DataKey.Name);
 
         _log.Debug($"技能 {abilityName} 需要玩家瞄准，进入异步模式，射程: {range}");

@@ -35,12 +35,19 @@ var columns := []:
 			x.queue_free()
 
 		var new_node: Control
-		for x in v:
+		var group_color_map := _build_group_color_map()
+		for i in v.size():
+			var x = v[i]
 			new_node = table_header_scene.instantiate()
 			new_node.manager = self
 			add_child(new_node)
 			new_node.set_label(x)
 			new_node.get_node("Button").pressed.connect(editor_view._set_sorting.bind(x))
+			# 传递分组颜色
+			if editor_view.column_groups.size() > i:
+				var grp: String = editor_view.column_groups[i]
+				if grp != "" and group_color_map.has(grp):
+					new_node.set_group_color(group_color_map[grp])
 			_update_column_sizes()
 		
 		_build_group_headers()
@@ -247,6 +254,7 @@ func _build_group_headers():
 		if current_group_name != "":
 			groups.append({"name": current_group_name, "start": current_start, "count": current_count})
 	
+	var group_color_map := _build_group_color_map()
 	for group_info in groups:
 		# 跳过 Resource 相关分组（Godot 内置属性，对用户配置无意义）
 		if group_info["name"].to_lower() == "resource":
@@ -259,7 +267,8 @@ func _build_group_headers():
 		var group_header = GroupHeaderScene.instantiate()
 		group_header.manager = self
 		group_row.add_child(group_header)
-		group_header.setup(group_info["name"], group_info["start"], group_info["count"])
+		var grp_color: Color = group_color_map.get(group_info["name"], Color.TRANSPARENT)
+		group_header.setup(group_info["name"], group_info["start"], group_info["count"], grp_color)
 		
 		# 传递列名信息用于 tooltip
 		var col_names: Array[String] = []
@@ -368,3 +377,28 @@ func expand_all_groups():
 	
 	editor_view.save_data()
 	update()
+
+
+func _build_group_color_map() -> Dictionary:
+	var unique_groups: Array[String] = []
+	for grp in editor_view.column_groups:
+		if grp != "" and not unique_groups.has(grp):
+			unique_groups.append(grp)
+	
+	# 预设一组高饱和度区分色，循环使用
+	var palette: Array[Color] = [
+		Color(0.98, 0.45, 0.45), # 红
+		Color(0.98, 0.72, 0.30), # 橙
+		Color(0.55, 0.85, 0.40), # 绿
+		Color(0.35, 0.75, 0.95), # 蓝
+		Color(0.75, 0.50, 0.95), # 紫
+		Color(0.30, 0.90, 0.80), # 青
+		Color(0.95, 0.55, 0.85), # 粉
+		Color(0.90, 0.85, 0.30), # 黄
+	]
+	
+	var result: Dictionary = {}
+	for i in unique_groups.size():
+		result[unique_groups[i]] = palette[i % palette.size()]
+	
+	return result

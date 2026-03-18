@@ -74,4 +74,36 @@ public static class GlobalEventBus
     {
         Global.Emit(GameEventType.Unit.LevelUp, new GameEventType.Unit.LevelUpEventData(entity, oldLevel, newLevel));
     }
+
+    // ============================================================
+    // 战斗结果事件便捷方法
+    // ============================================================
+
+    /// <summary>
+    /// 触发单位受伤事件（全局广播）
+    /// </summary>
+    public static void TriggerDamaged(IEntity victim, float amount, IEntity? attacker = null,
+        DamageType type = DamageType.True, bool isCritical = false)
+    {
+        Global.Emit(GameEventType.Unit.Damaged,
+            new GameEventType.Unit.DamagedEventData(victim, amount, attacker, type, isCritical));
+    }
+
+    /// <summary>
+    /// 触发治疗已应用事件（全局广播）
+    /// </summary>
+    public static void TriggerHealApplied(IEntity victim, float requestedAmount, float actualAmount, HealSource source)
+    {
+        Global.Emit(GameEventType.Unit.HealApplied,
+            new GameEventType.Unit.HealAppliedEventData(victim, requestedAmount, actualAmount, source));
+    }
+
+    /// <summary>
+    /// 触发闪避事件（全局广播）
+    /// </summary>
+    public static void TriggerDodged(IEntity victim, IEntity? attacker = null)
+    {
+        Global.Emit(GameEventType.Unit.Dodged,
+            new GameEventType.Unit.DodgedEventData(victim, attacker));
+    }
 }

@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://dju0murovtl7b"]
+[gd_scene format=3 uid="uid://dllon5caxuugh"]
 
-[ext_resource type="SpriteFrames" uid="uid://brts8vgi15eni" path="res://assets/Effect/003/AnimatedSprite2D/003.tres" id="1_bpnvc"]
+[ext_resource type="SpriteFrames" uid="uid://cpx358lfw5uan" path="res://assets/Effect/003/AnimatedSprite2D/003.tres" id="1_bpnvc"]
 
-[node name="003" type="AnimatedSprite2D" unique_id=1634112305]
+[node name="003" type="AnimatedSprite2D" unique_id=915030338]
 sprite_frames = ExtResource("1_bpnvc")
-animation = &"Effect"
+animation = &"effect"

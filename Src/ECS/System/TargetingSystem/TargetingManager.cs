@@ -103,7 +103,7 @@ public static class TargetingManager
         CurrentCaster = context.Caster;
         CurrentAbility = context.Ability;
         CurrentContext = context;
-        CurrentRange = CurrentAbility!.Data.Get<float>(DataKey.AbilityRange);
+        CurrentRange = CurrentAbility!.Data.Get<float>(DataKey.AbilityCastRange);
 
         // 获取施法者位置
         Vector2 casterPos = Vector2.Zero;

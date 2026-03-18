@@ -63,8 +63,7 @@ func try_edit_value(value, type, property_hint) -> bool:
 
 
 func _format_value(value) -> String:
-	if not _stored_value_is_int and int(value) == value:
-		return str(value) + ".0"
+	# 直接返回数值字符串，不强制添加 .0
 	return str(value)
 
 

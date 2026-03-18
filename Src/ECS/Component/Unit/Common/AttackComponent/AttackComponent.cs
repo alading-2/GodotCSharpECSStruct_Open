@@ -426,11 +426,15 @@ public partial class AttackComponent : Node, IComponent
             return false;
         }
 
+        // 移除对自身死亡 (SelfDead) 的检查
+        // 确保前摇度过后，脱手伤害即使原主阵亡也能打出
+        /*
         if (_data != null && _data.Get<bool>(DataKey.IsDead))
         {
             CancelAttack(AttackCancelReason.SelfDead);
             return false;
         }
+        */
 
         return true;
     }

@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://pf5uitbovhv6"]
+[gd_scene format=3 uid="uid://vdx3k7x2hxgb"]
 
-[ext_resource type="SpriteFrames" uid="uid://du0xwomadgnpn" path="res://assets/Effect/004龙卷风/AnimatedSprite2D/004龙卷风.tres" id="1_m2o61"]
+[ext_resource type="SpriteFrames" uid="uid://cgf78i3s8vlke" path="res://assets/Effect/004龙卷风/AnimatedSprite2D/004龙卷风.tres" id="1_m2o61"]
 
-[node name="004龙卷风" type="AnimatedSprite2D" unique_id=1754023001]
+[node name="004龙卷风" type="AnimatedSprite2D" unique_id=1687351554]
 sprite_frames = ExtResource("1_m2o61")
-animation = &"Effect"
+animation = &"effect"

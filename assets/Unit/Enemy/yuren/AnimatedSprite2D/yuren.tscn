@@ -1,8 +1,10 @@
-[gd_scene format=3 uid="uid://cvx83guqqptmk"]
+[gd_scene format=3 uid="uid://xulpywb2d61u"]
 
-[ext_resource type="SpriteFrames" uid="uid://bq8drhxoiufm5" path="res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tres" id="1_a7vrm"]
+[ext_resource type="SpriteFrames" uid="uid://cfen8i35mmtgd" path="res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tres" id="1_a7vrm"]
 
-[node name="yuren" type="AnimatedSprite2D" unique_id=1894225626]
-position = Vector2(0, -40)
+[node name="yuren" type="AnimatedSprite2D" unique_id=2024640787]
+position = Vector2(15, -51)
 sprite_frames = ExtResource("1_a7vrm")
 animation = &"attack1"
+frame = 17
+frame_progress = 1.0

@@ -50,7 +50,8 @@ ability.Data.Set(DataKey.AbilityTriggerMode, (int)AbilityTriggerMode.Manual);
 // 目标选择配置
 ability.Data.Set(DataKey.AbilityTargetSelection, (int)AbilityTargetSelection.Entity);
 ability.Data.Set(DataKey.AbilityTargetGeometry, (int)AbilityTargetGeometry.Circle);
-ability.Data.Set(DataKey.AbilityRange, 200f);
+ability.Data.Set(DataKey.AbilityCastRange, 200f);      // 施法距离（索敌/瞄准射程，0=无限制）
+ability.Data.Set(DataKey.AbilityEffectRadius, 150f);   // 效果半径（AOE范围/冲刺位移距离）
 ability.Data.Set(DataKey.AbilityMaxTargets, 5);
 ability.Data.Set(DataKey.AbilityTargetTeamFilter, (int)AbilityTargetTeamFilter.Enemy);
 ability.Data.Set(DataKey.AbilityTargetSorting, (int)AbilityTargetSorting.Nearest);

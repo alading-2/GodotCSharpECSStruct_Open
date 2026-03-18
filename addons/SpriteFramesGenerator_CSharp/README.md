@@ -23,21 +23,23 @@
 
 ## 2. 配置设置
 
-插件的所有通用配置都已集成到 Godot 的 **项目设置 (Project Settings)** 中。
+所有配置集中在 **`SpriteFramesConfig.cs`** 文件中，直接编辑源码即可，保存后重新编译生效。
 
-1. 打开菜单 **Project (项目) -> Project Settings (项目设置)**。
-2. 搜索 `sprite_frames_generator` 即可看到所有配置项。
-3. **配置项说明**：
+> **为什么不用 ProjectSettings？** Godot 引擎限制：Dictionary 类型无法在编辑器中动态增删键值对，动态设置项无法显示 Tooltip 描述。使用独立配置文件可获得 IDE 自动补全、编译期检查、注释即文档等优势。
 
-| 设置项名称 | 类型 | 说明 |
+**配置项说明**：
+
+| 配置项 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **sprite_frames_generator/批量扫描路径** | 字符串数组 | 定义“批量生成”功能扫描的根目录（如 `res://assets/Unit`）。插件会**递归搜索**该路径下的所有子目录。 |
-| **sprite_frames_generator/默认帧率** | 浮点数 | 生成新动画时默认使用的 FPS (如 `10.0`)。 |
-| **sprite_frames_generator/默认循环播放** | 布尔值 | 新生成的动画是否默认开启循环。 |
-| **sprite_frames_generator/名称映射表** | 字典 | 自动重名修正表。例如将美术资源名 `movement` 映射为标准的 `run`。 |
+| `BatchPaths` | string[] | 批量生成时递归扫描的根目录列表（如 `res://assets`） |
+| `DefaultFps` | float | 默认播放帧率（如 `10.0`） |
+| `DefaultLoop` | bool | 是否默认开启循环播放 |
+| `NameMap` | Dictionary | 动画名称映射表（如 `"movement" -> "run"`） |
+| `LoopAnimations` | HashSet | 强制循环播放的动画名称白名单 |
+| `UnifiedEffectPaths` | string[] | 统一 Effect 命名的路径列表 |
 
-> **注意**：由于 Godot 引擎限制，动态添加的项目设置目前无法在编辑器中显示文字描述（Tooltip）。请以上表作为配置参考。
-> **提示**：插件默认采用“智能更新”策略。当重新生成时，会自动保留场景中你手动修改过的属性（位置、脚本、子节点等），只更新动画数据。
+> **提示**：插件默认采用"智能更新"策略。当重新生成时，会自动保留场景中你手动修改过的属性（位置、脚本、子节点等），只更新动画数据。
+> **GDScript 版本**：如果你不想依赖 C# 编译，可以使用 `addons/SpriteFramesGenerator_GDS` 中的纯 GDScript 版本（功能完全相同）。
 
 ## 3. 使用方法
 

@@ -109,9 +109,11 @@ const LABELS: Dictionary = {
 	"abilitytargetgeometry": "目标形状",
 	"abilitytargetteamfilter": "目标阵营",
 	"abilitytargetsorting": "目标排序",
-	"abilityrange": "施法距离",
-	"abilitylength": "效果长度/半径",
-	"abilitywidth": "效果宽度/角度",
+	"abilitycastrange": "施法距离",
+	"abilityeffectradius": "效果半径",
+	"abilityeffectlength": "效果长度",
+	"abilityeffectwidth": "效果宽度",
+	"abilityangle": "效果角度",
 
 	# AbilityConfig - 链式效果
 	"abilitychaincount": "链式弹跳次数",

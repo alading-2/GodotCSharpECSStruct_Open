@@ -206,9 +206,8 @@ public partial class EffectComponent : Node, IComponent
         var animName = ResolveDefaultAnimation();
         if (string.IsNullOrEmpty(animName)) return;
 
-        _entity.Events.Emit(
-            GameEventType.Unit.PlayAnimationRequested,
-            new GameEventType.Unit.PlayAnimationRequestedEventData(animName));
+        _sprite.SpeedScale = PlayRate > 0 ? PlayRate : 1f;
+        _sprite.Play(animName);
     }
 
     /// <summary>

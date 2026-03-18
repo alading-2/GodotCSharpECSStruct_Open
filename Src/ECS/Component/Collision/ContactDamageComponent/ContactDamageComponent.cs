@@ -118,12 +118,15 @@ public partial class ContactDamageComponent : Node, IComponent
             return;
         }
 
-        // attacker 已死亡则取消
+        // 移除 attacker 已死亡则取消的拦截，
+        // 确保“尸体有毒/留痕毒火”这种环境接触依然能造成伤害，死不等于伤害失效
+        /*
         if (body is IEntity attackerEntity && attackerEntity.Data.Get<bool>(DataKey.IsDead))
         {
             CancelBodyTimer(body);
             return;
         }
+        */
 
         ApplyDamageFrom(body);
     }

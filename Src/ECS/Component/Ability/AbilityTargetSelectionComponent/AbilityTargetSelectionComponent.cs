@@ -85,23 +85,34 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
         // 根据不同的目标选择模式执行不同的查询逻辑
         switch (selection)
         {
+            case AbilityTargetSelection.None:
+                // None 类型：无需目标（如自身增益、位移技能）
+                // 直接跳过目标选择，技能执行器自行处理
+                break;
+
             case AbilityTargetSelection.Entity:
                 {
-                    // 获取技能配置的攻击范围
-                    var range = ability.Data.Get<float>(DataKey.AbilityRange);
+                    // 读取技能配置的几何形状和参数
+                    var geometry = ability.Data.Get<GeometryType>(DataKey.AbilityTargetGeometry);
+                    var range = ability.Data.Get<float>(DataKey.AbilityCastRange);
+                    var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
+                    var sorting = ability.Data.Get<AbilityTargetSorting>(DataKey.AbilityTargetSorting);
+                    var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
 
-                    // 调用高性能目标选择工具 EntityTargetSelector 进行空间查询
-                    // 这里默认搜索范围内“威胁值最高”的一个敌人
-                    var targets = EntityTargetSelector.Query(new TargetSelectorQuery
+                    // 构建查询参数
+                    var query = new TargetSelectorQuery
                     {
-                        Geometry = GeometryType.Circle, // 搜索形状：圆形
-                        Origin = origin,                         // 搜索中心
-                        Range = range,                          // 搜索半径
-                        CenterEntity = context.Caster,          // 施法者引用
-                        TeamFilter = AbilityTargetTeamFilter.Enemy, // 阵营过滤：只搜敌人
-                        Sorting = AbilityTargetSorting.HighestThreat, // 排序规则：威胁度优先
-                        MaxTargets = 1                          // 目标上限：1个
-                    });
+                        Geometry = geometry,
+                        Origin = origin,
+                        Range = range,
+                        CenterEntity = context.Caster,
+                        TeamFilter = teamFilter,
+                        Sorting = sorting,
+                        MaxTargets = maxTargets > 0 ? maxTargets : 1
+                    };
+
+                    // 调用目标选择器
+                    var targets = EntityTargetSelector.Query(query);
 
                     // 如果找到了符合条件的目标，填充到上下文中供后续流水线使用
                     if (targets.Count > 0) context.Targets = targets;
@@ -116,16 +127,21 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
             case AbilityTargetSelection.EntityOrPoint:
                 {
                     // EntityOrPoint：先尝试 Entity 自动索敌
-                    var range = ability.Data.Get<float>(DataKey.AbilityRange);
+                    var geometry = ability.Data.Get<GeometryType>(DataKey.AbilityTargetGeometry);
+                    var range = ability.Data.Get<float>(DataKey.AbilityCastRange);
+                    var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
+                    var sorting = ability.Data.Get<AbilityTargetSorting>(DataKey.AbilityTargetSorting);
+                    var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
+
                     var targets = EntityTargetSelector.Query(new TargetSelectorQuery
                     {
-                        Geometry = GeometryType.Circle,
+                        Geometry = geometry,
                         Origin = origin,
                         Range = range,
                         CenterEntity = context.Caster,
-                        TeamFilter = AbilityTargetTeamFilter.Enemy,
-                        Sorting = AbilityTargetSorting.HighestThreat,
-                        MaxTargets = 1
+                        TeamFilter = teamFilter,
+                        Sorting = sorting,
+                        MaxTargets = maxTargets > 0 ? maxTargets : 1
                     });
 
                     // 命中则填充 Entity 目标；未命中则留空，AbilitySystem 会回退到 Point 异步瞄准

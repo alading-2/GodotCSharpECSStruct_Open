@@ -28,6 +28,11 @@ public class DodgeProcessor : IDamageProcessor
             info.IsEnd = true;
             info.FinalDamage = 0;
             info.AddLog("闪避");
+
+            // 发出闪避事件（供飘字系统显示 MISS）
+            var dodgedData = new GameEventType.Unit.DodgedEventData(info.Victim, info.Attacker as IEntity);
+            info.Victim.Events.Emit(GameEventType.Unit.Dodged, dodgedData);
+            GlobalEventBus.Global.Emit(GameEventType.Unit.Dodged, dodgedData);
         }
     }
 }

@@ -64,6 +64,10 @@ public static class DataRegister_Ability
         // 触发概率
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTriggerChance, DisplayName = "触发概率", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0f, MaxValue = 100f, IsPercentage = true });
 
+        // ============ 执行模式 ============
+        // 技能执行模式
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityExecutionMode, DisplayName = "执行模式", Category = DataCategory_Ability.Effect, Type = typeof(AbilityExecutionMode), DefaultValue = AbilityExecutionMode.Instant });
+
         // ============ 目标系统 - 5 层分解 ============
         // 目标选取
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityTargetSelection, DisplayName = "目标原点", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSelection), DefaultValue = AbilityTargetSelection.None });
@@ -77,18 +81,24 @@ public static class DataRegister_Ability
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityMaxTargets, DisplayName = "最大目标", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = 1, MinValue = 1 });
 
         // ============ 目标几何参数 ============
-        // 技能范围
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityRange, DisplayName = "技能范围", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
-        // 技能宽度
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityWidth, DisplayName = "技能宽度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
-        // 技能长度
-        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityLength, DisplayName = "技能长度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
-        // 技能角度
+        // 施法距离（索敌/瞄准布局使用；0=无限制）
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityCastRange, DisplayName = "施法距离", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+        // 效果半径（AOE/冲刺位移距离）
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityEffectRadius, DisplayName = "效果半径", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+        // 效果长度（矩形/线形 AOE）
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityEffectLength, DisplayName = "效果长度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        // 效果宽度（矩形/线形 AOE）
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityEffectWidth, DisplayName = "效果宽度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        // 技能角度（扇形 AOE 张角）
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityAngle, DisplayName = "技能角度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = 360 });
         // 弹跳次数
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChainCount, DisplayName = "弹跳次数", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
         // 弹跳范围
         DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChainRange, DisplayName = "弹跳范围", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+        // 弹跳延时
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChainDelay, DisplayName = "弹跳延时", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0.2f, MinValue = 0 });
+        // 伤害衰减
+        DataRegistry.Register(new DataMeta { Key = DataKey.AbilityChainDamageDecay, DisplayName = "伤害衰减", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 100f, MinValue = 0, IsPercentage = true });
 
         // ============ 状态标记 ============
         // 已解锁

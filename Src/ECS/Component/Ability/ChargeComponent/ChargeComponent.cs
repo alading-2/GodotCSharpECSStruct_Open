@@ -51,6 +51,15 @@ public partial class ChargeComponent : Node, IComponent
                 return;
             }
 
+            // 初始化当前充能：如果未设置（默认值0），则自动填充到最大值
+            int maxCharges = _data.Get<int>(DataKey.AbilityMaxCharges);
+            int currentCharges = _data.Get<int>(DataKey.AbilityCurrentCharges);
+            if (currentCharges <= 0 && maxCharges > 0)
+            {
+                _data.Set(DataKey.AbilityCurrentCharges, maxCharges);
+                _log.Debug($"初始化充能: {AbilityName}, 充能数: {maxCharges}/{maxCharges}");
+            }
+
             // 订阅事件驱动请求
             SubscribeEvents();
         }

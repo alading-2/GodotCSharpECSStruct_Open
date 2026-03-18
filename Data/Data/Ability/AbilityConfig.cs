@@ -107,20 +107,25 @@ namespace Slime.Config.Abilities
         [Export] public AbilityTargetSorting AbilityTargetSorting { get; set; }
 
         /// <summary>
-        /// 施法距离
+        /// 施法距离（索敌/瞄准射程；0=无限制）
         /// </summary>
-        [DataKey(DataKey.AbilityRange)]
-        [Export] public float AbilityRange { get; set; }
+        [DataKey(DataKey.AbilityCastRange)]
+        [Export] public float AbilityCastRange { get; set; }
         /// <summary>
-        /// 效果长度/半径 (矩形长度或扇形半径)
+        /// 效果半径（圆形/扇形 AOE 半径；冲刺=位移距离）
         /// </summary>
-        [DataKey(DataKey.AbilityLength)]
-        [Export] public float AbilityLength { get; set; } // 矩形长度或扇形半径
+        [DataKey(DataKey.AbilityEffectRadius)]
+        [Export] public float AbilityEffectRadius { get; set; }
         /// <summary>
-        /// 效果宽度/角度 (矩形宽度或扇形角度)
+        /// 效果长度（矩形/线形 AOE 长度维度）
         /// </summary>
-        [DataKey(DataKey.AbilityWidth)]
-        [Export] public float AbilityWidth { get; set; }  // 矩形宽度或扇形角度
+        [DataKey(DataKey.AbilityEffectLength)]
+        [Export] public float AbilityEffectLength { get; set; }
+        /// <summary>
+        /// 效果宽度（矩形/线形 AOE 宽度维度）
+        /// </summary>
+        [DataKey(DataKey.AbilityEffectWidth)]
+        [Export] public float AbilityEffectWidth { get; set; }
 
         /// <summary>
         /// 链式弹跳次数
@@ -133,6 +138,16 @@ namespace Slime.Config.Abilities
         /// </summary>
         [DataKey(DataKey.AbilityChainRange)]
         [Export] public float AbilityChainRange { get; set; }
+        /// <summary>
+        /// 链式弹跳延时 (秒)
+        /// </summary>
+        [DataKey(DataKey.AbilityChainDelay)]
+        [Export] public float AbilityChainDelay { get; set; } = 0.2f;
+        /// <summary>
+        /// 链式伤害衰减系数 (0-100)
+        /// </summary>
+        [DataKey(DataKey.AbilityChainDamageDecay)]
+        [Export] public float AbilityChainDamageDecay { get; set; } = 100f;
         /// <summary>
         /// 最大目标数量
         /// </summary>

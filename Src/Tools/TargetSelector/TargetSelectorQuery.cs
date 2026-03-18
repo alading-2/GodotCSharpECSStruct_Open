@@ -57,24 +57,6 @@ public float Length { get; init; }
 /// </summary>
 public float Angle { get; init; }
 
-/// <summary>
-/// 链式跳跃次数（可选）。
-/// 仅 Chain 使用。
-/// </summary>
-public int ChainCount { get; init; }
-
-/// <summary>
-/// 链式每跳最大距离（可选）。
-/// 仅 Chain 使用。
-/// </summary>
-public float ChainRange { get; init; }
-
-/// <summary>
-/// 链式是否允许重复目标（可选）。
-/// 仅 Chain 使用。
-/// </summary>
-public bool ChainAllowDuplicate { get; init; }
-
 // ==================== 过滤参数 ====================
 
 /// <summary>

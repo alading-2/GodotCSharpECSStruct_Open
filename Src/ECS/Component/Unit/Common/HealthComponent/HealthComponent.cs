@@ -109,12 +109,14 @@ public partial class HealthComponent : Node, IComponent
         // 复活来源不触发飘字
         if (source != HealSource.Revive)
         {
-            _entity.Events.Emit(GameEventType.Unit.HealApplied,
-                new GameEventType.Unit.HealAppliedEventData(
+            var healData = new GameEventType.Unit.HealAppliedEventData(
+                    _entity,       // Victim
                     amount,        // 原始请求量
                     actualHeal,    // 实际治疗量（去溢出）
                     source
-                ));
+                );
+            _entity.Events.Emit(GameEventType.Unit.HealApplied, healData);
+            GlobalEventBus.Global.Emit(GameEventType.Unit.HealApplied, healData);
             _log.Debug($"治疗: {actualHeal}, 来源: {source}, HP: {oldHp} -> {newHp}");
         }
     }
@@ -145,8 +147,9 @@ public partial class HealthComponent : Node, IComponent
 
         // 发送 Damaged 事件（供飘字等使用）
         // Attacker 可能是子弹/武器，在需要时通过关系链查找 IUnit
-        _entity.Events.Emit(GameEventType.Unit.Damaged,
-            new GameEventType.Unit.DamagedEventData(amount, info.Attacker as IEntity, info.Type));
+        var damagedData = new GameEventType.Unit.DamagedEventData(_entity, amount, info.Attacker as IEntity, info.Type, info.IsCritical);
+        _entity.Events.Emit(GameEventType.Unit.Damaged, damagedData);
+        GlobalEventBus.Global.Emit(GameEventType.Unit.Damaged, damagedData);
 
         _log.Debug($"受到伤害: {amount}, HP: {oldHp} -> {newHp}");
 

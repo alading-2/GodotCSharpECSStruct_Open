@@ -49,10 +49,14 @@ public static partial class DataKey
     /// <summary>触发概率</summary>
     public const string AbilityTriggerChance = "AbilityTriggerChance";
 
+    // ============ 执行模式 ============
+    /// <summary>技能执行模式 (Instant/Chain/Channel/Projectile)</summary>
+    public const string AbilityExecutionMode = "AbilityExecutionMode";
+
     // ============ 目标系统 - 5 层分解 ============
     /// <summary>目标选取 (Self/Unit/Point/EventSource/Cursor)</summary>
     public const string AbilityTargetSelection = "AbilityTargetSelection";
-    /// <summary>目标几何形状 (Single/Circle/Box/Line/Cone/Chain/Global)</summary>
+    /// <summary>目标几何形状 (Single/Circle/Box/Line/Cone/Global)</summary>
     public const string AbilityTargetGeometry = "AbilityTargetGeometry";
     /// <summary>目标阵营过滤 [Flags] (Friendly/Enemy/Neutral/Self)</summary>
     public const string AbilityTargetTeamFilter = "AbilityTargetTeamFilter";
@@ -62,18 +66,24 @@ public static partial class DataKey
     public const string AbilityMaxTargets = "AbilityMaxTargets";
 
     // ============ 目标几何参数 ============
-    /// <summary>技能作用范围 (圆形/扇形半径)</summary>
-    public const string AbilityRange = "AbilityRange";
-    /// <summary>技能宽度 (矩形/线性)</summary>
-    public const string AbilityWidth = "AbilityWidth";
-    /// <summary>技能长度 (矩形/线性)</summary>
-    public const string AbilityLength = "AbilityLength";
-    /// <summary>技能角度 (扇形)</summary>
+    /// <summary>施法距离（技能可释放的最大距离；0=无限制；瞄准射程/索敌半径均用此值）</summary>
+    public const string AbilityCastRange = "AbilityCastRange";
+    /// <summary>效果半径（圆形/扇形 AOE 的作用半径；冲刺=位移距离；AOE=爆炸范围）</summary>
+    public const string AbilityEffectRadius = "AbilityEffectRadius";
+    /// <summary>效果长度（矩形/线形 AOE 的长度维度）</summary>
+    public const string AbilityEffectLength = "AbilityEffectLength";
+    /// <summary>效果宽度（矩形/线形 AOE 的宽度维度）</summary>
+    public const string AbilityEffectWidth = "AbilityEffectWidth";
+    /// <summary>技能角度（扇形 AOE 的张角，度数）</summary>
     public const string AbilityAngle = "AbilityAngle";
     /// <summary>链式弹跳次数</summary>
     public const string AbilityChainCount = "AbilityChainCount";
     /// <summary>链式弹跳范围</summary>
     public const string AbilityChainRange = "AbilityChainRange";
+    /// <summary>链式弹跳延时 (秒)</summary>
+    public const string AbilityChainDelay = "AbilityChainDelay";
+    /// <summary>链式伤害衰减系数 (0-100)</summary>
+    public const string AbilityChainDamageDecay = "AbilityChainDamageDecay";
 
     // ============ 状态标记 ============
     /// <summary>技能是否已解锁</summary>

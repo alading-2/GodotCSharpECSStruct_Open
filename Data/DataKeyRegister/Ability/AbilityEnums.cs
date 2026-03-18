@@ -58,7 +58,22 @@ public enum AbilityTargetSelection
 }
 
 /// <summary>
-/// 目标几何形状 - 决定影响范围形状
+/// 技能执行模式 - 决定技能如何执行效果
+/// </summary>
+public enum AbilityExecutionMode
+{
+    /// <summary>即时执行 - 一次性对所有目标生效</summary>
+    Instant = 0,
+    /// <summary>链式弹跳 - 延时逐个弹跳到多个目标</summary>
+    Chain = 1,
+    /// <summary>持续施法 - 引导技能</summary>
+    Channel = 2,
+    /// <summary>投射物 - 发射弹道</summary>
+    Projectile = 3,
+}
+
+/// <summary>
+/// 目标几何形状 - 决定影响范围形状（纯空间概念）
 /// </summary>
 public enum GeometryType
 {
@@ -74,10 +89,8 @@ public enum GeometryType
     Line = 4,
     /// <summary>扇形 (需要 Range, Angle)</summary>
     Cone = 5,
-    /// <summary>链式弹跳 (需要 ChainCount, ChainRange)</summary>
-    Chain = 6,
     /// <summary>全屏</summary>
-    Global = 7,
+    Global = 6,
 }
 
 /// <summary>

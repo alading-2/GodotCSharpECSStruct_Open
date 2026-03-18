@@ -23,6 +23,14 @@ public static class GameTheme
     public static readonly Color TextDanger = new Color(1f, 0.4f, 0.4f);     // 危险红
     public static readonly Color TextDisable = new Color(0.6f, 0.6f, 0.6f);  // 禁用灰
 
+    // 飘字颜色
+    public static readonly Color DamagePhysical = new Color(1f, 1f, 1f);         // 白色：普通物理
+    public static readonly Color DamageCritical = new Color(1f, 0.25f, 0.1f);    // 橙红：暴击
+    public static readonly Color DamageMagical = new Color(0.5f, 0.5f, 1f);      // 蓝紫：魔法
+    public static readonly Color DamageTrue = new Color(1f, 1f, 0.2f);           // 黄色：真实
+    public static readonly Color Heal = new Color(0.2f, 1f, 0.35f);              // 绿色：治疗
+    public static readonly Color Miss = new Color(0.8f, 0.8f, 0.8f);             // 灰色：闪避
+
     /// <summary>
     /// 获取实体对应的颜色
     /// </summary>

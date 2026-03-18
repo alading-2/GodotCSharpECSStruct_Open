@@ -60,6 +60,39 @@
 | **过滤器** | 按类名筛选资源类型 |
 | **分页控件** | 资源较多时分页显示 |
 
+### 分组头部（属性分组显示）
+
+插件会自动识别资源中的 `PROPERTY_USAGE_GROUP` 分组，将列按分组组织显示：
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ▼ 基础信息 (5)   ▼ 消耗与冷却 (3)   ▶ 充能系统 (2)   ▼ 目标选择 (4)      │  ← 分组头部
+├─────────────────────────────────────────────────────────────────────────┤
+│ 资源名称 │ 技能等级 │ 冷却时间 │ 施法距离 │ 消耗类型 │ 消耗数值 │ ...     │  ← 列头
+├──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼─────────┤
+│ Fireball │    1     │   5.0    │   300    │   Mana   │   20     │ ...     │
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴─────────┘
+```
+
+**分组头部操作**:
+
+| 操作 | 效果 |
+|:---|:---|
+| **左键点击** | 展开/折叠该分组的所有列 |
+| **右键点击** | 打开菜单（仅显示此组 / 隐藏此组 / 全部展开） |
+| **鼠标悬停** | 显示 Tooltip，列出该分组包含的所有列名 |
+
+**视觉指示**:
+- `▼ 分组名 (5)` - 展开状态，显示列数
+
+- `▶ 分组名 (3)` - 折叠状态，节省空间
+
+**内置分组自动隐藏**：
+- Godot 内置的 `Resource` 分组（含 `Resource Local To Scene`、`Resource Name` 等）会自动隐藏
+- 这些列对用户配置数据无实际意义
+
+---
+
 ### 表格区域
 
 ```
@@ -177,7 +210,7 @@
 
 ```gdscript
 # 在 LABELS 字典中添加一行：
-"字段名小写": "显示的中文",
+"字段名小写": "显示的中文"
 
 # 示例：
 "newdamage": "新伤害值",
@@ -188,7 +221,7 @@
 
 插件使用 `to_lower()` 匹配键名，所以 `AbilityCooldown`、`abilityCooldown`、`abilitycooldown` 都能匹配到同一中文标签。
 
----
+----
 
 ## 🐛 故障排除
 
@@ -199,6 +232,10 @@
 | **无法连续输入数字** | 使用**底部面板的数值区域单击**进入输入模式，回车确认 |
 | **修改没保存** | 按 `Enter` 或切换单元格触发保存；检查文件权限 |
 | **列头不显示中文** | 确保所有 gd 文件编译无错误（检查 Godot 输出面板） |
+| **分组头部显示异常** | 重启 Godot 或重新加载插件（项目 → 插件 → 取消勾选 → 再勾选） |
+| **Resource 相关列仍显示** | 删除 `addons/resources_spreadsheet_view/saved_state.json` 后重启 |
+| **分组折叠后无法展开** | 已修复，折叠的分组头部保持可见，点击即可展开 |
+| **分组头部重叠或错位** | 已修复，分组头部现在正确跟随滚动和计算位置 |
 
 ---
 
@@ -208,25 +245,37 @@
 addons/resources_spreadsheet_view/
 ├── plugin.cfg                    # 插件配置
 ├── plugin.gd                     # 入口脚本
-├── editor_view.gd                # 主编辑器逻辑
+├── editor_view.gd                # 主编辑器逻辑（含分组信息收集）
 ├── editor_view.tscn              # 主场景
 ├── column_labels_zh.gd           # ← 中文映射（新加）
+├── saved_state.json              # 列可见性状态保存（自动生成）
 ├── main_screen/
-│   ├── column_header_manager.gd  # 列头管理
-│   ├── table_header.gd            # 单个列头
-│   ├── selection_manager.gd       # 选区/编辑管理
-│   ├── input_handler.gd           # 键盘输入处理
+│   ├── column_header_manager.gd  # 列头管理（含分组头部逻辑）
+│   ├── group_header.gd           # 分组头部逻辑（展开/折叠/Tooltip）
+│   ├── group_header.tscn         # 分组头部场景
+│   ├── table_header.gd           # 单个列头
+│   ├── selection_manager.gd      # 选区/编辑管理
+│   ├── input_handler.gd          # 键盘输入处理
 │   └── ...
 ├── typed_cells/
-│   ├── cell_editor_number.gd      # 数字单元格渲染
-│   ├── cell_editor_string.gd      # 字符串单元格
-│   ├── cell_editor_resource.gd    # 资源引用单元格
+│   ├── cell_editor_number.gd     # 数字单元格渲染
+│   ├── cell_editor_string.gd     # 字符串单元格
+│   ├── cell_editor_resource.gd   # 资源引用单元格
 │   └── ...
 └── typed_editors/
-    ├── dock_number.gd             # 底部数字编辑器（已增强直接输入）
-    ├── dock_color.gd              # 底部颜色编辑器
+    ├── dock_number.gd            # 底部数字编辑器
+    ├── dock_color.gd             # 底部颜色编辑器
     └── ...
 ```
+
+### 关键文件说明
+
+| 文件 | 职责 | 最近修改 |
+| :--- | :--- | :--- |
+| `column_header_manager.gd` | 管理列头和分组头部的创建、布局、滚动同步 | 新增分组头部逻辑，跳过 Resource 分组 |
+| `group_header.gd` | 分组头部交互（点击展开/折叠、Tooltip） | 移除 +/- 按钮，改为整头点击 |
+| `editor_view.gd` | 主逻辑，收集资源的 `PROPERTY_USAGE_GROUP` 信息 | 识别并传递分组信息给列头管理器 |
+| `column_labels_zh.gd` | 中文标签映射 | 支持分组名称翻译和列名 Tooltip |
 
 ---
 

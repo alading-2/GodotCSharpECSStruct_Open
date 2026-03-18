@@ -24,8 +24,17 @@
       "AbilityChargeTime": {
         "visibility": 1.0
       },
+      "AbilityCooldown": {
+        "visibility": 1.0
+      },
+      "AbilityCostAmount": {
+        "visibility": 1.0
+      },
+      "AbilityCostType": {
+        "visibility": 1.0
+      },
       "AbilityDamage": {
-        "visibility": 1
+        "visibility": 1.0
       },
       "AbilityIcon": {
         "visibility": 1.0
@@ -85,13 +94,13 @@
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "resource_name": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "resource_path": {
-        "visibility": 0
+        "visibility": 0.0
       }
     },
     "res://Data/Data/Resources/": {
@@ -128,17 +137,23 @@
       }
     },
     "res://Data/Data/Unit/Enemy/": {
+      "DetectionRange": {
+        "visibility": 0
+      },
+      "ExpReward": {
+        "visibility": 0
+      },
       "metadata/_custom_type_script": {
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 1.0
+        "visibility": 0
       },
       "resource_name": {
-        "visibility": 1.0
+        "visibility": 0
       },
       "resource_path": {
-        "visibility": 1.0
+        "visibility": 0
       }
     },
     "res://Data/Data/Unit/Player/Resource/": {
@@ -182,10 +197,13 @@
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 0.0
+        "visibility": 0
       },
       "resource_name": {
-        "visibility": 0.0
+        "visibility": 0
+      },
+      "resource_path": {
+        "visibility": 0
       }
     },
     "res://备份/test/godot-resources-as-sheets-plugin/example/Items/items/": {

@@ -4,11 +4,22 @@ extends HBoxContainer
 const ColumnLabelsZh := preload("res://addons/resources_spreadsheet_view/column_labels_zh.gd")
 
 var manager: Control
+var _group_color: Color = Color.TRANSPARENT
 
 
 func set_label(label: String):
 	$"Button".text = ColumnLabelsZh.get_label(label)
 	$"Button".tooltip_text = label + "\n点击排序"
+
+
+func set_group_color(color: Color):
+	_group_color = color
+	queue_redraw()
+
+
+func _draw():
+	if _group_color != Color.TRANSPARENT:
+		draw_rect(Rect2(0, 0, size.x, 3), _group_color)
 
 
 func _ready():

@@ -24,36 +24,44 @@ public class CircleDamageExecutor : IAbilityExecutor
         var caster = context.Caster;
         var ability = context.Ability;
 
+        // 安全检查：确保施法者和技能实体存在
         if (caster == null || ability == null) return new AbilityExecutedResult();
 
         var casterNode2D = caster as Node2D;
 
-        // 1. 目标查询（Periodic 技能不走 AbilityTargetSelectionComponent，需手动查询）
+        // 1. 目标查询逻辑
+        // 由于烈焰光环通常由 TriggerComponent 周期性（Periodic）触发，
+        // 这种触发方式下，CastContext 可能不会由 AbilityTargetSelectionComponent 预填充目标，
+        // 因此需要在此处利用 TargetSelector 进行实时范围扫描。
         var targets = context.Targets;
         if (targets == null || targets.Count == 0)
         {
-            var range = ability.Data.Get<float>(DataKey.AbilityRange);
+            // 获取技能配置中的伤害半径和阵营过滤条件
+            var range = ability.Data.Get<float>(DataKey.AbilityEffectRadius);
             var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
 
             var query = new TargetSelectorQuery
             {
-                Geometry = GeometryType.Circle,
-                Range = range,
+                Geometry = GeometryType.Circle, // 以施法者为圆心的圆形区域
+                Range = range,                  // 查询半径
                 Origin = casterNode2D?.GlobalPosition ?? Vector2.Zero,
                 CenterEntity = caster,
-                TeamFilter = teamFilter,
+                TeamFilter = teamFilter,        // 根据配置过滤目标阵营（通常为敌人）
                 Sorting = AbilityTargetSorting.Nearest,
-                MaxTargets = 999
+                MaxTargets = 999                // 烈焰光环通常不限命中数量
             };
 
+            // 执行核心空间查询并将结果存回上下文暂存
             targets = EntityTargetSelector.Query(query);
             context.Targets = targets;
         }
 
-        // 2. 每次触发在施法者位置生成光环特效
+        // 2. 每次触发时生成视觉反馈
+        // 加载烈焰光环特效资源 (Effect_003)
         var effectScene = ResourceManagement.Load<PackedScene>(ResourcePaths.Asset_Effect_003, ResourceCategory.Asset);
         if (effectScene != null && casterNode2D != null)
         {
+            // 在施法者脚下生成特效，设置较大的缩放以符合光环意图
             EffectTool.Spawn(casterNode2D.GlobalPosition, new EffectSpawnOptions(
                 VisualScene: effectScene,
                 Name: "烈焰光环特效",
@@ -61,20 +69,23 @@ public class CircleDamageExecutor : IAbilityExecutor
             ));
         }
 
-        _log.Info($"[烈焰光环] 触发! 范围: {ability.Data.Get<float>(DataKey.AbilityRange)}, 找到目标: {targets?.Count ?? 0}");
+        _log.Info($"[烈焰光环] 触发! 范围: {ability.Data.Get<float>(DataKey.AbilityEffectRadius)}, 找到目标: {targets?.Count ?? 0}");
 
+        // 如果没有探测到任何合法目标，则直接结束执行
         if (targets == null || targets.Count == 0)
         {
             return new AbilityExecutedResult { TargetsHit = 0 };
         }
 
-        // 3. 对每个目标造成魔法 AOE 伤害
+        // 3. 对扫描到的每个目标执行伤害结算
+        // 从技能数据获取基础伤害
         var damage = ability.Data.Get<float>(DataKey.AbilityDamage);
         int hitCount = 0;
         foreach (var target in targets)
         {
             if (target is IUnit victim)
             {
+                // 调用伤害服务，标记为魔法伤害类型并附加 Area（范围）标签
                 DamageService.Instance.Process(new DamageInfo
                 {
                     Attacker = casterNode2D,
@@ -87,6 +98,7 @@ public class CircleDamageExecutor : IAbilityExecutor
             }
         }
 
+        // 返回本次触发总计命中的目标数量
         return new AbilityExecutedResult { TargetsHit = hitCount };
     }
 }

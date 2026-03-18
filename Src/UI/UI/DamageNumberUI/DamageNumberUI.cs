@@ -5,19 +5,22 @@ using Godot;
 /// 显示一次性的飘字效果，不需要绑定Entity
 /// 
 /// 核心功能：
-/// 1. 显示伤害数值和颜色（普通/暴击）
-/// 2. 播放飘字动画
+/// 1. 显示伤害数值和颜色（普通/暴击/魔法/真实/治疗/闪避）
+/// 2. 播放飘字动画（普通上飘 / 暴击弹跳放大）
 /// 3. 动画结束自动归还对象池
+/// 4. 随机水平偏移防止数字堆叠
 /// </summary>
 public partial class DamageNumberUI : Control, IPoolable
 {
     private Label _damageLabel = null!;
     private AnimationPlayer _animationPlayer = null!;
 
-    // 颜色配置
-    private static readonly Color NORMAL_COLOR = new Color(1, 1, 1); // 白色
-    private static readonly Color CRITICAL_COLOR = new Color(1, 0.2f, 0.2f); // 红色
-    private static readonly Color HEAL_COLOR = new Color(0.2f, 1, 0.2f); // 绿色
+    // 颜色配置（统一引用 GameTheme）
+
+    // 随机水平偏移范围（防止数字完全重叠）
+    private static readonly System.Random _rng = new();
+    private const float RANDOM_OFFSET_X = 30f;
+    private const float BASE_OFFSET_Y = -20f; // 稍微向上偏移，对齐敌人中心上方
 
     // ============================================================
     // Godot 生命周期
@@ -28,7 +31,6 @@ public partial class DamageNumberUI : Control, IPoolable
         _damageLabel = GetNode<Label>("DamageLabel");
         _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
 
-        // 监听动画结束事件
         _animationPlayer.AnimationFinished += OnAnimationFinished;
     }
 
@@ -37,48 +39,59 @@ public partial class DamageNumberUI : Control, IPoolable
     // ============================================================
 
     /// <summary>
-    /// 显示伤害数字
+    /// 显示伤害数字（核心入口）
     /// </summary>
-    /// <param name="damage">伤害值</param>
-    /// <param name="position">显示位置（世界坐标）</param>
+    /// <param name="damage">最终伤害值</param>
+    /// <param name="worldPosition">受击单位的世界坐标</param>
     /// <param name="isCritical">是否暴击</param>
-    public void Show(float damage, Vector2 position, bool isCritical = false)
+    /// <param name="damageType">伤害类型（决定颜色）</param>
+    public void Show(float damage, Vector2 worldPosition, bool isCritical = false, DamageType damageType = DamageType.Physical)
     {
-        // 设置位置
-        GlobalPosition = position;
-
-        // 设置文本
         _damageLabel.Text = $"{damage:F0}";
 
-        // 设置颜色和缩放
         if (isCritical)
         {
-            _damageLabel.Modulate = CRITICAL_COLOR;
-            _damageLabel.Scale = new Vector2(1.5f, 1.5f);
+            _damageLabel.AddThemeFontSizeOverride("font_size", 32);
+            _damageLabel.Modulate = GameTheme.DamageCritical;
+            _damageLabel.Scale = new Vector2(1.3f, 1.3f);
+            PlayAt(worldPosition, "float_up_crit");
         }
         else
         {
-            _damageLabel.Modulate = NORMAL_COLOR;
+            _damageLabel.AddThemeFontSizeOverride("font_size", 22);
+            _damageLabel.Modulate = damageType switch
+            {
+                DamageType.Magical => GameTheme.DamageMagical,
+                DamageType.True => GameTheme.DamageTrue,
+                _ => GameTheme.DamagePhysical,
+            };
             _damageLabel.Scale = Vector2.One;
+            PlayAt(worldPosition, "float_up");
         }
+    }
 
-        // 显示并播放动画
-        Visible = true;
-        _animationPlayer.Play("float_up");
+    /// <summary>
+    /// 显示闪避（MISS）
+    /// </summary>
+    public void ShowMiss(Vector2 worldPosition)
+    {
+        _damageLabel.AddThemeFontSizeOverride("font_size", 20);
+        _damageLabel.Text = "MISS";
+        _damageLabel.Modulate = GameTheme.Miss;
+        _damageLabel.Scale = Vector2.One;
+        PlayAt(worldPosition, "float_up");
     }
 
     /// <summary>
     /// 显示治疗数字
     /// </summary>
-    public void ShowHeal(float healAmount, Vector2 position)
+    public void ShowHeal(float healAmount, Vector2 worldPosition)
     {
-        GlobalPosition = position;
+        _damageLabel.AddThemeFontSizeOverride("font_size", 22);
         _damageLabel.Text = $"+{healAmount:F0}";
-        _damageLabel.Modulate = HEAL_COLOR;
+        _damageLabel.Modulate = GameTheme.Heal;
         _damageLabel.Scale = Vector2.One;
-
-        Visible = true;
-        _animationPlayer.Play("float_up");
+        PlayAt(worldPosition, "float_up");
     }
 
     // ============================================================
@@ -87,14 +100,12 @@ public partial class DamageNumberUI : Control, IPoolable
 
     public void OnPoolAcquire()
     {
-        // 从池中取出时重置状态
         Visible = false;
     }
 
     public void OnPoolRelease()
     {
-        // 归还时停止动画
-        _animationPlayer.Stop();
+        if (_animationPlayer != null) _animationPlayer.Stop();
         Visible = false;
     }
 
@@ -109,20 +120,25 @@ public partial class DamageNumberUI : Control, IPoolable
     // ============================================================
 
     /// <summary>
-    /// 动画播放完成回调
+    /// 设置位置（加随机偏移）并播放动画
     /// </summary>
+    private void PlayAt(Vector2 worldPosition, string animName)
+    {
+        float offsetX = (float)(_rng.NextDouble() * 2 - 1) * RANDOM_OFFSET_X;
+        GlobalPosition = worldPosition + new Vector2(offsetX, BASE_OFFSET_Y);
+        Modulate = Colors.White; // 重置父节点 alpha（动画控制父节点 modulate 做渐隐）
+        Visible = true;
+        _animationPlayer.Play(animName);
+    }
+
     private void OnAnimationFinished(StringName animName)
     {
-        // 自动归还对象池
         ObjectPoolManager.ReturnToPool(this);
     }
 
     public override void _ExitTree()
     {
-        // 清理事件订阅
         if (_animationPlayer != null)
-        {
             _animationPlayer.AnimationFinished -= OnAnimationFinished;
-        }
     }
 }

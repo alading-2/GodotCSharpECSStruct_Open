@@ -95,20 +95,20 @@ public partial class MainTest : Node
             ResourcePaths.Data_Ability_Resource_SlamConfig, ResourceCategory.Data);
         if (slamConfig != null) EntityManager.AddAbility(_player, slamConfig);
 
-        // // 技能2: 链式闪电 (ChainLightning) - 链式弹跳魔法
-        // var chainConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-        //     ResourcePaths.Data_Ability_Resource_ChainLightningConfig, ResourceCategory.Data);
-        // if (chainConfig != null) EntityManager.AddAbility(_player, chainConfig);
+        // 技能2: 链式闪电 (ChainLightning) - 链式弹跳魔法
+        var chainConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+            ResourcePaths.Data_Ability_Resource_ChainLightningConfig, ResourceCategory.Data);
+        if (chainConfig != null) EntityManager.AddAbility(_player, chainConfig);
 
-        // // 技能3: 烈焰光环 (CircleDamage) - 周期范围伤害
-        // var auraConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-        //     ResourcePaths.Data_Ability_Resource_CircleDamageConfig, ResourceCategory.Data);
-        // if (auraConfig != null) EntityManager.AddAbility(_player, auraConfig);
+        // 技能3: 烈焰光环 (CircleDamage) - 周期范围伤害
+        var auraConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+            ResourcePaths.Data_Ability_Resource_CircleDamageConfig, ResourceCategory.Data);
+        if (auraConfig != null) EntityManager.AddAbility(_player, auraConfig);
 
-        // // 技能4: 冲刺 (Dash) - 位移技能
-        // var dashConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-        //     ResourcePaths.Data_Ability_Resource_DashConfig, ResourceCategory.Data);
-        // if (dashConfig != null) EntityManager.AddAbility(_player, dashConfig);
+        // 技能4: 冲刺 (Dash) - 位移技能
+        var dashConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+            ResourcePaths.Data_Ability_Resource_DashConfig, ResourceCategory.Data);
+        if (dashConfig != null) EntityManager.AddAbility(_player, dashConfig);
 
         _log.Info("已添加正式技能，等待UI自动更新");
     }

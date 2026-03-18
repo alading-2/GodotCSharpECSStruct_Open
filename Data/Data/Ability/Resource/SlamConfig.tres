@@ -6,14 +6,14 @@
 [resource]
 script = ExtResource("1_script")
 Name = "Slam"
-Description = "震碎大地，对周围敌人造成物理范围伤害"
+Description = "在角色周围随机位置猛击地面，对范围内敌人造成物理伤害"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1
 AbilityCostType = 1
-AbilityCostAmount = 20.0
-AbilityCooldown = 3.0
+AbilityCooldown = 1.0
 AbilityTargetGeometry = 1
 AbilityTargetTeamFilter = 2
-AbilityRange = 250.0
+AbilityCastRange = 400.0
+AbilityEffectRadius = 300.0
 AbilityMaxTargets = 10
 AbilityDamage = 30.0

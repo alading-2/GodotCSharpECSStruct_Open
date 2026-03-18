@@ -18,147 +18,23 @@ namespace Slime.Addons
         private const string MENU_ITEM_NAME = "Generate SpriteFrames (Single/Selection)";
         private const string MENU_ITEM_BATCH_NAME = "Generate All SpriteFrames (Batch)";
 
-        // 项目设置键常量（扁平化中文路径）
-        private const string SETTING_BATCH_PATHS = "sprite_frames_generator/批量扫描路径";
-        private const string SETTING_DEFAULT_FPS = "sprite_frames_generator/默认帧率";
-        private const string SETTING_DEFAULT_LOOP = "sprite_frames_generator/默认循环播放";
-        private const string SETTING_NAME_MAP = "sprite_frames_generator/名称映射表";
-        private const string SETTING_UNIFIED_IDLE_PATHS = "sprite_frames_generator/固定Effect命名路径";
 
-        // 动画名称规范化映射表：用于统一不同美术素材的命名差异
-        private static readonly Dictionary<string, string> _nameMap = new()
-        {
-            { "movement", "run" },
-            { "deaded", "dead" },
-            { "death", "dead" },
-            { "die", "dead" },
-        };
-
-        // 需要循环播放的动画名称集合（其他动画默认不循环）
-        private static readonly HashSet<string> _loopAnimations = new()
-        {
-            "idle",
-            "run",
-        };
-
-        private FolderContextMenuPlugin _contextMenuPlugin;
+        private FolderContextMenuPlugin? _contextMenuPlugin;
 
         /// <summary>
         /// 插件进入编辑器树时调用（启用插件）
+        /// 配置参数已迁移至 SpriteFramesConfig.cs，无需再注册 ProjectSettings
         /// </summary>
         public override void _EnterTree()
         {
-            // 1. 注册/初始化项目设置
-            InitializeProjectSettings();
-
-            // 2. 在编辑器顶部“工具”菜单中添加批量生成项
+            // 1. 在编辑器顶部"工具"菜单中添加批量生成项
             AddToolMenuItem(MENU_ITEM_BATCH_NAME, Callable.From(GenerateAllFromPredefinedPaths));
 
-            // 3. 注册文件系统面板的右键菜单插件
+            // 2. 注册文件系统面板的右键菜单插件
             _contextMenuPlugin = new FolderContextMenuPlugin(this);
             AddContextMenuPlugin(EditorContextMenuPlugin.ContextMenuSlot.Filesystem, _contextMenuPlugin);
         }
 
-        /// <summary>
-        /// 初始化和注册插件所需的项目设置
-        /// 注意：Godot 的 AddPropertyInfo 目前不支持通过代码动态设置 Tooltip (描述文本)。
-        /// 编辑器中的 "无可用描述" 是引擎限制，并非 Bug。请参考 README 获取详细配置说明。
-        /// </summary>
-        private void InitializeProjectSettings()
-        {
-            // --- 清理旧版本设置项 (如果存在) ---
-            string[] oldKeys = {
-                "sprite_frames_generator/config/batch_paths",
-                "sprite_frames_generator/config/default_fps",
-                "sprite_frames_generator/常规/批量扫描路径",
-                "sprite_frames_generator/常规/默认帧率",
-                "sprite_frames_generator/常规/默认循环播放",
-                "sprite_frames_generator/高级/覆盖策略",
-                "sprite_frames_generator/高级/名称映射表"
-            };
-            foreach (var key in oldKeys)
-            {
-                if (ProjectSettings.HasSetting(key))
-                    ProjectSettings.SetSetting(key, new Variant());
-            }
-
-            // --- 注册：批量扫描路径 (String Array) ---
-            if (!ProjectSettings.HasSetting(SETTING_BATCH_PATHS))
-            {
-                string[] defaultPaths = { "res://assets" }; 
-                ProjectSettings.SetSetting(SETTING_BATCH_PATHS, defaultPaths);
-            }
-            ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
-            {
-                { "name", SETTING_BATCH_PATHS },
-                { "type", (int)Variant.Type.PackedStringArray },
-                { "hint", (int)PropertyHint.None },
-                { "hint_string", "" }
-            });
-            ProjectSettings.SetInitialValue(SETTING_BATCH_PATHS, ProjectSettings.GetSetting(SETTING_BATCH_PATHS));
-
-            // --- 注册：默认帧率 (Float) ---
-            if (!ProjectSettings.HasSetting(SETTING_DEFAULT_FPS))
-            {
-                ProjectSettings.SetSetting(SETTING_DEFAULT_FPS, 10.0f);
-            }
-            ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
-            {
-                { "name", SETTING_DEFAULT_FPS },
-                { "type", (int)Variant.Type.Float },
-                { "hint", (int)PropertyHint.Range },
-                { "hint_string", "1,60,0.1" } // Range 提示串必须符合格式，不能包含描述文本
-            });
-            ProjectSettings.SetInitialValue(SETTING_DEFAULT_FPS, 10.0f);
-
-            // --- 注册：默认循环播放 (Bool) ---
-            if (!ProjectSettings.HasSetting(SETTING_DEFAULT_LOOP))
-            {
-                ProjectSettings.SetSetting(SETTING_DEFAULT_LOOP, true);
-            }
-            ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
-            {
-                { "name", SETTING_DEFAULT_LOOP },
-                { "type", (int)Variant.Type.Bool },
-                { "hint", (int)PropertyHint.None },
-                { "hint_string", "" }
-            });
-            ProjectSettings.SetInitialValue(SETTING_DEFAULT_LOOP, true);
-
-            // --- 注册：名称映射表 (Dictionary) ---
-            if (!ProjectSettings.HasSetting(SETTING_NAME_MAP))
-            {
-                var defaultMap = new Godot.Collections.Dictionary();
-                foreach (var kp in _nameMap) defaultMap[kp.Key] = kp.Value;
-                ProjectSettings.SetSetting(SETTING_NAME_MAP, defaultMap);
-            }
-            ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
-            {
-                { "name", SETTING_NAME_MAP },
-                { "type", (int)Variant.Type.Dictionary },
-                { "hint", (int)PropertyHint.None },
-                { "hint_string", "" }
-            });
-            ProjectSettings.SetInitialValue(SETTING_NAME_MAP, ProjectSettings.GetSetting(SETTING_NAME_MAP));
-
-            // --- 注册：固定Idle命名路径 (String Array) ---
-            if (!ProjectSettings.HasSetting(SETTING_UNIFIED_IDLE_PATHS))
-            {
-                string[] defaultIdlePaths = { "res://assets/Effect" };
-                ProjectSettings.SetSetting(SETTING_UNIFIED_IDLE_PATHS, defaultIdlePaths);
-            }
-            ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
-            {
-                { "name", SETTING_UNIFIED_IDLE_PATHS },
-                { "type", (int)Variant.Type.PackedStringArray },
-                { "hint", (int)PropertyHint.None },
-                { "hint_string", "" }
-            });
-            ProjectSettings.SetInitialValue(SETTING_UNIFIED_IDLE_PATHS, ProjectSettings.GetSetting(SETTING_UNIFIED_IDLE_PATHS));
-
-            // 保存更改
-            ProjectSettings.Save();
-        }
 
         /// <summary>
         /// 插件退出编辑器树时调用（禁用插件）
@@ -220,7 +96,7 @@ namespace Slime.Addons
         /// </summary>
         private partial class FolderContextMenuPlugin : EditorContextMenuPlugin
         {
-            private SpriteFramesGeneratorPlugin _plugin;
+            private SpriteFramesGeneratorPlugin? _plugin;
 
             public FolderContextMenuPlugin() { }
             public FolderContextMenuPlugin(SpriteFramesGeneratorPlugin plugin)
@@ -238,7 +114,11 @@ namespace Slime.Addons
                 {
                     if (DirAccess.DirExistsAbsolute(path))
                     {
-                        AddContextMenuItem(MENU_ITEM_NAME, Callable.From(() => _plugin.GenerateFromPaths(paths)));
+                        // Godot 调用 AddContextMenuItem 回调时会传入一个 Variant 参数（context args）
+                        // 必须用 Callable.From<Variant> 接受该参数，否则参数不匹配导致回调静默失败
+                        var capturedPlugin = _plugin!;
+                        var capturedPaths = paths;
+                        AddContextMenuItem(MENU_ITEM_NAME, Callable.From<Variant>((_ctx) => capturedPlugin.GenerateFromPaths(capturedPaths)));
                         break;
                     }
                 }
@@ -251,7 +131,7 @@ namespace Slime.Addons
         private void GenerateAllFromPredefinedPaths()
         {
             int totalGenerated = 0;
-            string[] batchPaths = ProjectSettings.GetSetting(SETTING_BATCH_PATHS).AsStringArray();
+            string[] batchPaths = SpriteFramesConfig.BatchPaths;
             var validFolders = new List<string>();
 
             foreach (var basePath in batchPaths)
@@ -381,14 +261,10 @@ namespace Slime.Addons
         {
             string cleanName = rawName.ToLower().Trim();
 
-            // 从项目设置读取动态映射表
-            if (ProjectSettings.HasSetting(SETTING_NAME_MAP))
+            // 从配置文件读取映射表
+            if (SpriteFramesConfig.NameMap.TryGetValue(cleanName, out string? mappedName) && mappedName != null)
             {
-                var nameMap = ProjectSettings.GetSetting(SETTING_NAME_MAP).AsGodotDictionary();
-                if (nameMap.ContainsKey(cleanName))
-                {
-                    return nameMap[cleanName].AsString();
-                }
+                return mappedName;
             }
 
             return cleanName;
@@ -418,14 +294,11 @@ namespace Slime.Addons
         }
 
         /// <summary>
-        /// 判断当前文件夹是否处于配置的统一Idle动画命名路径下
+        /// 判断当前文件夹是否处于配置的统一Effect动画命名路径下
         /// </summary>
         private bool IsUnderUnifiedIdlePath(string folderPath)
         {
-            if (!ProjectSettings.HasSetting(SETTING_UNIFIED_IDLE_PATHS))
-                return false;
-
-            string[] unifiedPaths = ProjectSettings.GetSetting(SETTING_UNIFIED_IDLE_PATHS).AsStringArray();
+            string[] unifiedPaths = SpriteFramesConfig.UnifiedEffectPaths;
             string normalizedFolder = folderPath.Replace("\\", "/");
             foreach (var path in unifiedPaths)
             {
@@ -486,9 +359,8 @@ namespace Slime.Addons
                 folderName = "AnimatedSprite2D"; // 兜底
             }
 
-            // --- 读取增强配置 ---
-            float defaultFps = (float)ProjectSettings.GetSetting(SETTING_DEFAULT_FPS).AsDouble();
-            bool defaultLoop = ProjectSettings.GetSetting(SETTING_DEFAULT_LOOP).AsBool();
+            // --- 读取配置 ---
+            float defaultFps = SpriteFramesConfig.DefaultFps;
 
             // --- 阶段 1: 构建 SpriteFrames 资源 ---
             SpriteFrames spriteFrames = new SpriteFrames();
@@ -504,7 +376,7 @@ namespace Slime.Addons
                 spriteFrames.AddAnimation(animName);    // 添加动画
                 spriteFrames.SetAnimationSpeed(animName, defaultFps); // 使用设置中的帧率
                 // 只有白名单中的动画循环播放（idle/run/castingidle），或者是以idle开头的命名，其他动画播放一次
-                bool shouldLoop = _loopAnimations.Contains(animName) || animName.StartsWith("idle");
+                bool shouldLoop = SpriteFramesConfig.LoopAnimations.Contains(animName) || animName.StartsWith("idle");
                 spriteFrames.SetAnimationLoop(animName, shouldLoop);
 
                 foreach (var frameData in frames)

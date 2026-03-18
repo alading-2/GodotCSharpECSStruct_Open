@@ -11,6 +11,7 @@ var column_names: Array[String] = [] # 存储分组包含的列名
 
 var manager: Control
 var label: Label
+var _group_color: Color = Color.TRANSPARENT
 
 
 func _ready():
@@ -20,12 +21,19 @@ func _ready():
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 
-func setup(p_group_name: String, p_column_start: int, p_column_count: int):
+func setup(p_group_name: String, p_column_start: int, p_column_count: int, p_color: Color = Color.TRANSPARENT):
 	group_name = p_group_name
 	column_start = p_column_start
 	column_count = p_column_count
+	_group_color = p_color
 	
 	_update_label()
+	queue_redraw()
+
+
+func _draw():
+	if _group_color != Color.TRANSPARENT:
+		draw_rect(Rect2(0, 0, size.x, 3), _group_color)
 
 
 func set_column_names(names: Array[String]):

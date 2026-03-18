@@ -54,6 +54,11 @@ public partial class RecoverySystem : Node
     private readonly HashSet<IEntity> _registeredEntities = new();
 
     /// <summary>
+    /// 遍历缓冲列表（复用，避免每次 ProcessRecovery 都 new List）
+    /// </summary>
+    private readonly List<IEntity> _processBuffer = new();
+
+    /// <summary>
     /// 底层驱动计时器。
     /// 依托于 TimerManager 运行，循环触发行恢复处理函数。
     /// </summary>
@@ -177,12 +182,13 @@ public partial class RecoverySystem : Node
     {
         if (_registeredEntities.Count == 0) return;
 
-        // 【关键点】：创建集合副本进行遍历。
+        // 【关键点】：使用缓存列表进行遍历（复用，避免每秒 new List）。
         // 因为在 ProcessEntityRecovery 过程中，可能会触发 Unregister 操作修改 _registeredEntities 集合，
         // 直接遍历原集合会导致 "Collection was modified" 异常。
-        var entitiesToProcess = new List<IEntity>(_registeredEntities);
+        _processBuffer.Clear();
+        _processBuffer.AddRange(_registeredEntities);
 
-        foreach (var entity in entitiesToProcess)
+        foreach (var entity in _processBuffer)
         {
             // 安全预检：Godot 节点可能在计时器间隔期间被 QueueFree。
             // 转换为 Node 并检查实例有效性。

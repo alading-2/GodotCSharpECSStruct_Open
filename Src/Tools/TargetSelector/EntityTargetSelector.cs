@@ -19,7 +19,7 @@ public static class EntityTargetSelector
 
     /// <summary>
     /// 查询并返回符合条件的实体列表。
-    /// 支持 GeometryType.Chain 的贪心链式查询，以及常规几何范围扫描。
+    /// 支持常规几何范围扫描（Circle/Ring/Box/Line/Cone/Global）。
     /// </summary>
     /// <param name="query">查询配置参数</param>
     /// <returns>符合条件的 List&lt;IEntity&gt;</returns>
@@ -27,12 +27,7 @@ public static class EntityTargetSelector
     {
         var candidates = new List<IEntity>();
 
-        if (query.Geometry == GeometryType.Chain)
-        {
-            candidates = QueryChain(query);
-            candidates = FilterTargets(candidates, query.CenterEntity, query.TeamFilter, query.TypeFilter);
-        }
-        else if (query.Geometry == GeometryType.Single)
+        if (query.Geometry == GeometryType.Single)
         {
             // Single 模式通常需要外部预选目标
             candidates = new List<IEntity>();
@@ -53,8 +48,7 @@ public static class EntityTargetSelector
             candidates = FilterTargets(candidates, query.CenterEntity, query.TeamFilter, query.TypeFilter);
         }
 
-        // 链式查询的结果是有序的（路径顺序），不应被通用排序打乱
-        if (candidates.Count > 1 && query.Geometry != GeometryType.Chain)
+        if (candidates.Count > 1)
         {
             SortTargets(candidates, query.Origin, query.Sorting);
         }
@@ -65,61 +59,6 @@ public static class EntityTargetSelector
         }
 
         return candidates;
-    }
-
-    /// <summary>
-    /// 链式查询（贪心最近点策略）。
-    /// 从 query.Origin 起步，每一跳都在候选集中找“当前点最近且在 ChainRange 内”的下一个实体。
-    /// </summary>
-    /// <remarks>
-    /// - ChainAllowDuplicate = false：通过 visited 集合避免重复命中；
-    /// - ChainAllowDuplicate = true：允许回跳，但仍禁止“同一跳命中当前实体本身”。
-    /// </remarks>
-    private static List<IEntity> QueryChain(TargetSelectorQuery query)
-    {
-        var results = new List<IEntity>();
-        var visited = new HashSet<IEntity>();
-        Vector2 currentPos = query.Origin;
-        IEntity? currentEntity = null;
-        var allCandidates = GetAllNode2DEntities().ToList();
-
-        for (int i = 0; i < query.ChainCount; i++)
-        {
-            IEntity? nextTarget = null;
-            float minDistance = float.MaxValue;
-
-            foreach (var candidate in allCandidates)
-            {
-                if (!query.ChainAllowDuplicate && visited.Contains(candidate)) continue;
-                if (IsSameEntity(candidate, currentEntity)) continue;
-                if (!PassTeamFilter(candidate, query.CenterEntity, query.TeamFilter)) continue;
-                if (!PassTypeFilter(candidate, query.TypeFilter)) continue;
-
-                if (candidate is Node2D node2D)
-                {
-                    float distance = node2D.GlobalPosition.DistanceTo(currentPos);
-                    if (distance <= query.ChainRange && distance < minDistance)
-                    {
-                        minDistance = distance;
-                        nextTarget = candidate;
-                    }
-                }
-            }
-
-            if (nextTarget != null)
-            {
-                results.Add(nextTarget);
-                if (!query.ChainAllowDuplicate) visited.Add(nextTarget);
-
-                if (nextTarget is Node2D nextNode2D) currentPos = nextNode2D.GlobalPosition;
-                currentEntity = nextTarget;
-            }
-            else
-            {
-                break;
-            }
-        }
-        return results;
     }
 
     /// <summary>
