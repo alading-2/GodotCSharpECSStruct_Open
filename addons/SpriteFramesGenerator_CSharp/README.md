@@ -36,7 +36,7 @@
 | `DefaultLoop` | bool | 是否默认开启循环播放 |
 | `NameMap` | Dictionary | 动画名称映射表（如 `"movement" -> "run"`） |
 | `LoopAnimations` | HashSet | 强制循环播放的动画名称白名单 |
-| `UnifiedEffectPaths` | string[] | 统一 Effect 命名的路径列表 |
+| `UnifiedNamePaths` | Dictionary<string, string[]> | 统一动画命名规则，Key 为目标动画名，Value 为路径列表 |
 
 > **提示**：插件默认采用"智能更新"策略。当重新生成时，会自动保留场景中你手动修改过的属性（位置、脚本、子节点等），只更新动画数据。
 > **GDScript 版本**：如果你不想依赖 C# 编译，可以使用 `addons/SpriteFramesGenerator_GDS` 中的纯 GDScript 版本（功能完全相同）。

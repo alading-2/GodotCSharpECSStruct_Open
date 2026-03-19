@@ -4,4 +4,4 @@
 
 [node name="003" type="AnimatedSprite2D" unique_id=915030338]
 sprite_frames = ExtResource("1_bpnvc")
-animation = &"effect"
+animation = &"Effect"

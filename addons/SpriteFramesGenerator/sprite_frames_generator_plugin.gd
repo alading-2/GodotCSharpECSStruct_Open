@@ -5,7 +5,7 @@
 extends EditorPlugin
 
 # 预加载配置文件（避免依赖 class_name 在插件未启用时不可用的问题）
-const Config = preload("res://addons/SpriteFramesGenerator_GDS/sprite_frames_config.gd")
+const Config = preload("res://addons/SpriteFramesGenerator/sprite_frames_config.gd")
 
 # 菜单项名称常量
 const MENU_ITEM_NAME := "Generate SpriteFrames (Single/Selection)"

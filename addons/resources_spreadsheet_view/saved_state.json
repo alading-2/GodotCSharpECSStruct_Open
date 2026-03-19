@@ -138,22 +138,22 @@
     },
     "res://Data/Data/Unit/Enemy/": {
       "DetectionRange": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "ExpReward": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "metadata/_custom_type_script": {
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "resource_name": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "resource_path": {
-        "visibility": 0
+        "visibility": 0.0
       }
     },
     "res://Data/Data/Unit/Player/Resource/": {
@@ -197,13 +197,13 @@
         "visibility": 0.0
       },
       "resource_local_to_scene": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "resource_name": {
-        "visibility": 0
+        "visibility": 0.0
       },
       "resource_path": {
-        "visibility": 0
+        "visibility": 0.0
       }
     },
     "res://备份/test/godot-resources-as-sheets-plugin/example/Items/items/": {

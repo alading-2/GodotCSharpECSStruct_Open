@@ -4,4 +4,4 @@
 
 [node name="020" type="AnimatedSprite2D" unique_id=569173656]
 sprite_frames = ExtResource("1_nturd")
-animation = &"effect"
+animation = &"Effect"

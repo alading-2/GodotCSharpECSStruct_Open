@@ -294,22 +294,26 @@ namespace Slime.Addons
         }
 
         /// <summary>
-        /// 判断当前文件夹是否处于配置的统一Effect动画命名路径下
+        /// 判断当前文件夹是否处于配置的统一命名路径下，返回匹配的目标动画名（未匹配返回空字符串）
         /// </summary>
-        private bool IsUnderUnifiedIdlePath(string folderPath)
+        private string GetUnifiedAnimName(string folderPath)
         {
-            string[] unifiedPaths = SpriteFramesConfig.UnifiedEffectPaths;
+            var unifiedNamePaths = SpriteFramesConfig.UnifiedNamePaths;
             string normalizedFolder = folderPath.Replace("\\", "/");
-            foreach (var path in unifiedPaths)
+            foreach (var kvp in unifiedNamePaths)
             {
-                if (string.IsNullOrWhiteSpace(path)) continue;
-                string normalizedPath = path.Replace("\\", "/");
-                if (normalizedFolder.StartsWith(normalizedPath, StringComparison.OrdinalIgnoreCase))
+                string animName = kvp.Key;
+                foreach (var path in kvp.Value)
                 {
-                    return true;
+                    if (string.IsNullOrWhiteSpace(path)) continue;
+                    string normalizedPath = path.Replace("\\", "/");
+                    if (normalizedFolder.StartsWith(normalizedPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return animName;
+                    }
                 }
             }
-            return false;
+            return "";
         }
 
         /// <summary>
@@ -322,15 +326,16 @@ namespace Slime.Addons
             // 复用解析逻辑
             var animGroups = FindSpriteSequences(folderPath);
 
-            // 如果该文件夹在固定Effect命名路径下，对所有提取出的动画按照字母排序进行重命名
-            if (animGroups.Count > 0 && IsUnderUnifiedIdlePath(folderPath))
+            // 如果该文件夹匹配统一命名路径，对所有动画按字母序统一重命名为 Key, Key1, Key2...
+            string unifiedName = GetUnifiedAnimName(folderPath);
+            if (animGroups.Count > 0 && !string.IsNullOrEmpty(unifiedName))
             {
                 var newGroups = new Dictionary<string, List<(int index, string path)>>();
                 int index = 0;
                 var sortedKeys = animGroups.Keys.OrderBy(k => k).ToList();
                 foreach (var key in sortedKeys)
                 {
-                    string newName = index == 0 ? "Effect" : $"Effect{index}";
+                    string newName = index == 0 ? unifiedName : $"{unifiedName}{index}";
                     newGroups[newName] = animGroups[key];
                     index++;
                 }

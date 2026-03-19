@@ -85,6 +85,6 @@ animations = [{
 "texture": ExtResource("20_icpld")
 }],
 "loop": false,
-"name": &"effect",
+"name": &"Effect",
 "speed": 10.0
 }]
