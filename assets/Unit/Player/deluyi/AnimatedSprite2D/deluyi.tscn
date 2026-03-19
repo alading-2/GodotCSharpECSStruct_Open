@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://dyaqs3f5hg1h8"]
+[gd_scene format=3 uid="uid://dmwhanur44pn6"]
 
-[ext_resource type="SpriteFrames" uid="uid://bhd885mwpak6u" path="res://assets/Unit/Player/deluyi/AnimatedSprite2D/deluyi.tres" id="1_6pt4h"]
+[ext_resource type="SpriteFrames" uid="uid://wemkt7bdq7pn" path="res://assets/Unit/Player/deluyi/AnimatedSprite2D/deluyi.tres" id="1_6pt4h"]
 
-[node name="deluyi" type="AnimatedSprite2D" unique_id=870989864]
-position = Vector2(0, -64)
+[node name="deluyi" type="AnimatedSprite2D" unique_id=802862728]
+position = Vector2(7, -69)
 sprite_frames = ExtResource("1_6pt4h")
 animation = &"attack1"

@@ -39,9 +39,7 @@ namespace Slime.Addons
             "run",
         };
 
-        // --- 统一动画命名路径字典 ---
-        // Key: 目标动画名，Value: 路径列表
-        // 位于对应路径下的所有动画，将按字母序统一重命名为 Key, Key1, Key2...
+        /// <summary>统一动画命名路径字典。Key 为目标动画名，Value 为路径列表。路径下所有动画按字母序重命名为 Key, Key1, Key2...</summary>
         public static readonly System.Collections.Generic.Dictionary<string, string[]> UnifiedNamePaths = new()
         {
             { "Effect", new[] { "res://assets/Effect" } },

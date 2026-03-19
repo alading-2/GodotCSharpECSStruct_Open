@@ -153,11 +153,11 @@ func _find_sprite_sequences(folder_path: String) -> Dictionary:
 				frame_index = int(result.get_string(2))
 				matched = true
 
-		if matched:
+		if matched and not anim_name.is_empty():
 			var full_path := folder_path.path_join(file_name)
 			if not anim_groups.has(anim_name):
 				anim_groups[anim_name] = []
-			anim_groups[anim_name].append({"index": frame_index, "path": full_path})
+			anim_groups[anim_name].append({"index": frame_index, "path": full_path, "name": file_name})
 
 	return anim_groups
 
@@ -249,7 +249,7 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 	for anim_name in anim_groups:
 		# 按帧序号升序排列
 		var frames: Array = anim_groups[anim_name]
-		frames.sort_custom(func(a, b): return a["index"] < b["index"])
+		frames.sort_custom(func(a, b): return a["index"] < b["index"] if a["index"] != b["index"] else a["name"] < b["name"])
 
 		sprite_frames.add_animation(anim_name) # 添加动画
 		sprite_frames.set_animation_speed(anim_name, default_fps) # 使用设置中的帧率

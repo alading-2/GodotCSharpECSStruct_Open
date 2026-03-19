@@ -4,4 +4,4 @@
 
 [node name="lrsc3" type="AnimatedSprite2D" unique_id=1448507566]
 sprite_frames = ExtResource("1_xfdhg")
-animation = &"Effect"
+animation = &"effect"

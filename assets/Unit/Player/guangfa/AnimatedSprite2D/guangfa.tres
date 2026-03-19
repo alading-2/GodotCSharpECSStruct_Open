@@ -1,0 +1,322 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://dwn5fdqvvhsgs"]
+
+[ext_resource type="Texture2D" uid="uid://der5i243w8kbn" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_00.png" id="1_l5qpj"]
+[ext_resource type="Texture2D" uid="uid://cqbe3845tuu8c" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_01.png" id="2_nqgye"]
+[ext_resource type="Texture2D" uid="uid://oelxfwsqput5" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_02.png" id="3_7k0c2"]
+[ext_resource type="Texture2D" uid="uid://v0b2hmoqpj8p" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_03.png" id="4_gdv4d"]
+[ext_resource type="Texture2D" uid="uid://bq61n76064dp7" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_04.png" id="5_ylk0h"]
+[ext_resource type="Texture2D" uid="uid://bqqrmarckpsc0" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_05.png" id="6_aw3a2"]
+[ext_resource type="Texture2D" uid="uid://s5gtw4et8m8f" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_06.png" id="7_xfi5n"]
+[ext_resource type="Texture2D" uid="uid://c412va02oo4xt" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_07.png" id="8_rtto3"]
+[ext_resource type="Texture2D" uid="uid://dhwiwhxen304e" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_08.png" id="9_7kyqj"]
+[ext_resource type="Texture2D" uid="uid://bn21jcu664r8b" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_09.png" id="10_sd8fs"]
+[ext_resource type="Texture2D" uid="uid://bcoh4xec6hqv1" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_10.png" id="11_hmrbf"]
+[ext_resource type="Texture2D" uid="uid://bk2u0nc75opqr" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_11.png" id="12_pc850"]
+[ext_resource type="Texture2D" uid="uid://cnrul5uk6fsjn" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_12.png" id="13_d5kt0"]
+[ext_resource type="Texture2D" uid="uid://dj7iacqqt2p34" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_13.png" id="14_royim"]
+[ext_resource type="Texture2D" uid="uid://dxgkx4p0fu0wp" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_14.png" id="15_g1m8w"]
+[ext_resource type="Texture2D" uid="uid://bi7mgjn1wn7yf" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_15.png" id="16_58i1a"]
+[ext_resource type="Texture2D" uid="uid://be3f4csuyvnfg" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_16.png" id="17_5otgv"]
+[ext_resource type="Texture2D" uid="uid://celkcimb3t8ls" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_17.png" id="18_gq5xt"]
+[ext_resource type="Texture2D" uid="uid://b3b4ibjwpmjq6" path="res://assets/Unit/Player/guangfa/hero_guangfa-Attack1_18.png" id="19_6rn5c"]
+[ext_resource type="Texture2D" uid="uid://cpqnxfm6k2afq" path="res://assets/Unit/Player/guangfa/hero_guangfa-BeAttacked_0.png" id="20_8rbdk"]
+[ext_resource type="Texture2D" uid="uid://cg8r6aw3g8any" path="res://assets/Unit/Player/guangfa/hero_guangfa-BeAttacked_1.png" id="21_p5ewd"]
+[ext_resource type="Texture2D" uid="uid://cr1nojx30dnr0" path="res://assets/Unit/Player/guangfa/hero_guangfa-BeAttacked_2.png" id="22_rmrio"]
+[ext_resource type="Texture2D" uid="uid://cqqtf3audg8lu" path="res://assets/Unit/Player/guangfa/hero_guangfa-BeAttacked_3.png" id="23_ec8fk"]
+[ext_resource type="Texture2D" uid="uid://obc0w1fcsojs" path="res://assets/Unit/Player/guangfa/hero_guangfa-BeAttacked_4.png" id="24_vbhx0"]
+[ext_resource type="Texture2D" uid="uid://dmrq4rth0wohg" path="res://assets/Unit/Player/guangfa/hero_guangfa-BeAttacked_5.png" id="25_egmm3"]
+[ext_resource type="Texture2D" uid="uid://c0vrjgwsr0012" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_00.png" id="26_lvlo7"]
+[ext_resource type="Texture2D" uid="uid://uvnly3xtfk7c" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_01.png" id="27_fpdtu"]
+[ext_resource type="Texture2D" uid="uid://byinw25ugn3fp" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_02.png" id="28_op814"]
+[ext_resource type="Texture2D" uid="uid://bko7dtt775ok" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_03.png" id="29_5qmli"]
+[ext_resource type="Texture2D" uid="uid://dntos4r0iqpvs" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_04.png" id="30_dvd0x"]
+[ext_resource type="Texture2D" uid="uid://dorvavp6jx2c6" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_05.png" id="31_crb8d"]
+[ext_resource type="Texture2D" uid="uid://cc2q8aw2jx8as" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_06.png" id="32_owa40"]
+[ext_resource type="Texture2D" uid="uid://cp6qu60sib05g" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_07.png" id="33_yomim"]
+[ext_resource type="Texture2D" uid="uid://dpgf1u6ton0yq" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_08.png" id="34_bpt2t"]
+[ext_resource type="Texture2D" uid="uid://iy47jb6whoao" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_09.png" id="35_ln8b3"]
+[ext_resource type="Texture2D" uid="uid://curcd3em2y3f8" path="res://assets/Unit/Player/guangfa/hero_guangfa-Deaded_10.png" id="36_jmeuw"]
+[ext_resource type="Texture2D" uid="uid://c7u6tfyoaln07" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_00.png" id="37_37axj"]
+[ext_resource type="Texture2D" uid="uid://bo01fs5nu6it1" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_01.png" id="38_fo1it"]
+[ext_resource type="Texture2D" uid="uid://bi637q3y53kha" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_02.png" id="39_f6bia"]
+[ext_resource type="Texture2D" uid="uid://ch0nqc7ljgitt" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_03.png" id="40_44wqi"]
+[ext_resource type="Texture2D" uid="uid://bgh5tnxu8jxao" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_04.png" id="41_8rb3d"]
+[ext_resource type="Texture2D" uid="uid://dfs8jmyhdew8k" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_05.png" id="42_5kcwd"]
+[ext_resource type="Texture2D" uid="uid://c66gihr7ys67v" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_06.png" id="43_skuhw"]
+[ext_resource type="Texture2D" uid="uid://cwny1atdwejt2" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_07.png" id="44_f3wpp"]
+[ext_resource type="Texture2D" uid="uid://bgr6xbcnmtleo" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_08.png" id="45_6klop"]
+[ext_resource type="Texture2D" uid="uid://besbxdw8syh64" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_09.png" id="46_1od0h"]
+[ext_resource type="Texture2D" uid="uid://3ke2iu6vcbjb" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_10.png" id="47_75x6s"]
+[ext_resource type="Texture2D" uid="uid://ddj8gtdhq4a0m" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_11.png" id="48_xh0hw"]
+[ext_resource type="Texture2D" uid="uid://drly7chg17ruj" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_12.png" id="49_i4v5b"]
+[ext_resource type="Texture2D" uid="uid://1m8mr6gse5f6" path="res://assets/Unit/Player/guangfa/hero_guangfa-Idle_13.png" id="50_pvhm4"]
+[ext_resource type="Texture2D" uid="uid://dieev11apk2d4" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_00.png" id="51_im7o8"]
+[ext_resource type="Texture2D" uid="uid://dgank6g4x2ug2" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_01.png" id="52_c0oal"]
+[ext_resource type="Texture2D" uid="uid://bdvgnwoooy6aq" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_02.png" id="53_po58a"]
+[ext_resource type="Texture2D" uid="uid://uj6ao0j8tf0t" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_03.png" id="54_87nno"]
+[ext_resource type="Texture2D" uid="uid://ugri81quxmm4" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_04.png" id="55_5tpq6"]
+[ext_resource type="Texture2D" uid="uid://bggfgui84l00d" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_05.png" id="56_trytt"]
+[ext_resource type="Texture2D" uid="uid://bmk06b1r3qgoq" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_06.png" id="57_5sh4a"]
+[ext_resource type="Texture2D" uid="uid://jjcqxos88irp" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_07.png" id="58_kqpcx"]
+[ext_resource type="Texture2D" uid="uid://b1tuuse4v8jsm" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_08.png" id="59_av0uc"]
+[ext_resource type="Texture2D" uid="uid://hknlit1jurf4" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_09.png" id="60_m43vs"]
+[ext_resource type="Texture2D" uid="uid://debidexlobnho" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_10.png" id="61_s83bh"]
+[ext_resource type="Texture2D" uid="uid://cwobxi7igtxhx" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_11.png" id="62_bcbf4"]
+[ext_resource type="Texture2D" uid="uid://bslyrlivbdv2s" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_12.png" id="63_48ggt"]
+[ext_resource type="Texture2D" uid="uid://cjg506lftmlpx" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_13.png" id="64_tlp75"]
+[ext_resource type="Texture2D" uid="uid://c6d6pbvn4qlfc" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_14.png" id="65_8mcxh"]
+[ext_resource type="Texture2D" uid="uid://belwpxjrmuvmv" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_15.png" id="66_xolf4"]
+[ext_resource type="Texture2D" uid="uid://cug5mcvk48dcu" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_16.png" id="67_80dam"]
+[ext_resource type="Texture2D" uid="uid://b3e1wmb5y6ajk" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_17.png" id="68_0jsgn"]
+[ext_resource type="Texture2D" uid="uid://jimt38a62mpc" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_18.png" id="69_gc5ro"]
+[ext_resource type="Texture2D" uid="uid://resi1qvswv7" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_19.png" id="70_feckm"]
+[ext_resource type="Texture2D" uid="uid://cvfsvabmptuk6" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_20.png" id="71_kcnix"]
+[ext_resource type="Texture2D" uid="uid://b3tc7nib3fhv4" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_21.png" id="72_n4oo6"]
+[ext_resource type="Texture2D" uid="uid://bmoc7ds073qwl" path="res://assets/Unit/Player/guangfa/hero_guangfa-Skill_22.png" id="73_mhm71"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_l5qpj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_nqgye")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_7k0c2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_gdv4d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_ylk0h")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_aw3a2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_xfi5n")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_rtto3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_7kyqj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_sd8fs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_hmrbf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_pc850")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_d5kt0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_royim")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_g1m8w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_58i1a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_5otgv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_gq5xt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_6rn5c")
+}],
+"loop": false,
+"name": &"attack1",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("20_8rbdk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_p5ewd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_rmrio")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_ec8fk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_vbhx0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_egmm3")
+}],
+"loop": false,
+"name": &"beattacked",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("26_lvlo7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_fpdtu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_op814")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_5qmli")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_dvd0x")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_crb8d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_owa40")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_yomim")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_bpt2t")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_ln8b3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_jmeuw")
+}],
+"loop": false,
+"name": &"dead",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("37_37axj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_fo1it")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_f6bia")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_44wqi")
+}, {
+"duration": 1.0,
+"texture": ExtResource("41_8rb3d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42_5kcwd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43_skuhw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44_f3wpp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45_6klop")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46_1od0h")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47_75x6s")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48_xh0hw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("49_i4v5b")
+}, {
+"duration": 1.0,
+"texture": ExtResource("50_pvhm4")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("51_im7o8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("52_c0oal")
+}, {
+"duration": 1.0,
+"texture": ExtResource("53_po58a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("54_87nno")
+}, {
+"duration": 1.0,
+"texture": ExtResource("55_5tpq6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("56_trytt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("57_5sh4a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("58_kqpcx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("59_av0uc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("60_m43vs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("61_s83bh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("62_bcbf4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("63_48ggt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("64_tlp75")
+}, {
+"duration": 1.0,
+"texture": ExtResource("65_8mcxh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("66_xolf4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("67_80dam")
+}, {
+"duration": 1.0,
+"texture": ExtResource("68_0jsgn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("69_gc5ro")
+}, {
+"duration": 1.0,
+"texture": ExtResource("70_feckm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("71_kcnix")
+}, {
+"duration": 1.0,
+"texture": ExtResource("72_n4oo6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("73_mhm71")
+}],
+"loop": false,
+"name": &"skill",
+"speed": 10.0
+}]

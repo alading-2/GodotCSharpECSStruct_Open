@@ -185,6 +185,6 @@ animations = [{
 "texture": ExtResource("45_jt8bi")
 }],
 "loop": false,
-"name": &"Effect",
+"name": &"effect",
 "speed": 10.0
 }]

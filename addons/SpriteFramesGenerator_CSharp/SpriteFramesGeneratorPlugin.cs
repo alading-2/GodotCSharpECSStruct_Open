@@ -21,6 +21,11 @@ namespace Slime.Addons
 
         private FolderContextMenuPlugin? _contextMenuPlugin;
 
+        // Spine 导出格式正则: 前缀-动画名_序号.png（编译一次复用）
+        private static readonly Regex _regexComplex = new(@".*-(.*)_(\d+)\.png", RegexOptions.Compiled);
+        // 简单格式正则: 动画名_序号.png
+        private static readonly Regex _regexSimple = new(@"(.*)_(\d+)\.png", RegexOptions.Compiled);
+
         /// <summary>
         /// 插件进入编辑器树时调用（启用插件）
         /// 配置参数已迁移至 SpriteFramesConfig.cs，无需再注册 ProjectSettings
@@ -214,9 +219,6 @@ namespace Slime.Addons
             using var dir = DirAccess.Open(folderPath);
             if (dir == null) return animGroups;
 
-            var regexComplex = new Regex(@".*-(.*)_(\d+)\.png");
-            var regexSimple = new Regex(@"(.*)_(\d+)\.png");
-
             foreach (var fileName in dir.GetFiles())
             {
                 if (!fileName.EndsWith(".png") || fileName.EndsWith(".import")) continue;
@@ -225,7 +227,7 @@ namespace Slime.Addons
                 int frameIndex = 0;
                 bool matched = false;
 
-                var match = regexComplex.Match(fileName);
+                var match = _regexComplex.Match(fileName);
                 if (match.Success)
                 {
                     animName = NormalizeName(match.Groups[1].Value);
@@ -234,7 +236,7 @@ namespace Slime.Addons
                 }
                 else
                 {
-                    match = regexSimple.Match(fileName);
+                    match = _regexSimple.Match(fileName);
                     if (match.Success)
                     {
                         animName = NormalizeName(match.Groups[1].Value);
@@ -243,7 +245,7 @@ namespace Slime.Addons
                     }
                 }
 
-                if (matched)
+                if (matched && !string.IsNullOrEmpty(animName))
                 {
                     string fullPath = folderPath.PathJoin(fileName);
                     if (!animGroups.ContainsKey(animName))
@@ -376,7 +378,7 @@ namespace Slime.Addons
             {
                 string animName = anim.Key;
                 // 按帧序号升序排列
-                var frames = anim.Value.OrderBy(f => f.index).ToList();
+                var frames = anim.Value.OrderBy(f => f.index).ThenBy(f => f.path).ToList();
 
                 spriteFrames.AddAnimation(animName);    // 添加动画
                 spriteFrames.SetAnimationSpeed(animName, defaultFps); // 使用设置中的帧率
