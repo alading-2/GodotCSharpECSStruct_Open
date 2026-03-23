@@ -256,7 +256,7 @@ public static class AbilitySystem
 
         var ability = context.Ability;
         var abilityName = ability.Data.Get<string>(DataKey.Name) ?? string.Empty;
-        var executorId = ability.Data.Get<string>(DataKey.Id);
+        var executorId = ability.Data.Get<string>(DataKey.AbilityExecutorId);
 
         // 如果模板没有填写指定的逻辑 ID，兼容处理，默认取技能自身名字
         if (string.IsNullOrEmpty(executorId))

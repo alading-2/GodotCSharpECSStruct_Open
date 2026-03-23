@@ -78,8 +78,9 @@ public class CircleDamageExecutor : IAbilityExecutor
         }
 
         // 3. 对扫描到的每个目标执行伤害结算
-        // 从技能数据获取最终技能伤害
-        var damage = ability.Data.Get<float>(DataKey.FinalSkillDamage);
+        // 技能基础伤害 × 施法者技能伤害倍率
+        var damage = ability.Data.Get<float>(DataKey.AbilityDamage)
+                   * caster.Data.Get<float>(DataKey.AbilityDamageBonus) / 100f;
         int hitCount = 0;
         foreach (var target in targets)
         {

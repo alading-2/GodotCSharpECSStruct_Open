@@ -31,7 +31,7 @@ public static partial class DataKey
     // === Spawn ===
     // 是否启用SpawnRule
     public static readonly DataMeta IsEnableSpawnRule = DataRegistry.Register(
-        new DataMeta { Key = nameof(IsEnableSpawnRule), DisplayName = "是否启用SpawnRule", Category = DataCategory_Unit.Spawn, Type = typeof(bool), DefaultValue = false });
+        new DataMeta { Key = nameof(IsEnableSpawnRule), DisplayName = "是否启用SpawnRule", Category = DataCategory_Unit.Spawn, Type = typeof(bool), DefaultValue = true });
 
     // 生成策略
     public static readonly DataMeta SpawnStrategy = DataRegistry.Register(

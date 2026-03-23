@@ -25,8 +25,8 @@ namespace Slime.Config.Units
         /// <summary>
         /// 基础技能伤害
         /// </summary>
-        [DataKey(nameof(DataKey.BaseSkillDamage))]
-        [Export] public float BaseSkillDamage { get; set; } = (float)DataKey.BaseSkillDamage.DefaultValue!;
+        [DataKey(nameof(DataKey.AbilityDamageBonus))]
+        [Export] public float BaseSkillDamage { get; set; } = (float)DataKey.AbilityDamageBonus.DefaultValue!;
         /// <summary>
         /// 冷却缩减 (%)
         /// </summary>

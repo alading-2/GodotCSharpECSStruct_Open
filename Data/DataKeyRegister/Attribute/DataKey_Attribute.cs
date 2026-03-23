@@ -342,34 +342,9 @@ public static partial class DataKey
     // ========================================
     // 技能相关 (Skill)
     // ========================================
-    // 基础技能伤害
-    public static readonly DataMeta BaseSkillDamage = DataRegistry.Register(
-        new DataMeta { Key = nameof(BaseSkillDamage), DisplayName = "基础技能伤害", Description = "基础技能伤害百分比", Category = DataCategory_Attribute.Skill, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
-
-    // 技能伤害加成
-    public static readonly DataMeta SkillDamageBonus = DataRegistry.Register(
-        new DataMeta { Key = nameof(SkillDamageBonus), DisplayName = "技能伤害加成", Description = "技能伤害百分比加成", Category = DataCategory_Attribute.Skill, Type = typeof(float), DefaultValue = 0f, MinValue = 0, IsPercentage = true, SupportModifiers = true });
-
-    // 技能伤害
-    public static readonly DataMeta FinalSkillDamage = DataRegistry.Register(
-        new DataMeta
-        {
-            Key = nameof(FinalSkillDamage),
-            DisplayName = "技能伤害",
-            Description = "技能伤害百分比",
-            Category = DataCategory_Attribute.Computed,
-            Type = typeof(float),
-            DefaultValue = 0f,
-            SupportModifiers = false,
-            IsPercentage = true,
-            Dependencies = [nameof(BaseSkillDamage), nameof(SkillDamageBonus)],
-            Compute = (data) =>
-            {
-                float baseSkillDamage = data.Get<float>(nameof(BaseSkillDamage));
-                float bonus = data.Get<float>(nameof(SkillDamageBonus));
-                return MyMath.AttributeBonusCalculation(baseSkillDamage, bonus);
-            }
-        });
+    // 技能伤害百分比
+    public static readonly DataMeta AbilityDamageBonus = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityDamageBonus), DisplayName = "技能伤害百分比", Description = "技能伤害百分比", Category = DataCategory_Attribute.Skill, Type = typeof(float), DefaultValue = 100f, MinValue = 0, IsPercentage = true, SupportModifiers = true });
 
     // 技能冷却缩减
     public static readonly DataMeta CooldownReduction = DataRegistry.Register(

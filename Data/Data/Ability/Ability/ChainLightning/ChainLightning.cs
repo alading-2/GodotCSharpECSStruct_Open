@@ -58,8 +58,9 @@ public class ChainLightningExecutor : IAbilityExecutor
         var chainCount = ability.Data.Get<int>(DataKey.AbilityChainCount);
         if (chainCount <= 0) chainCount = 1;
 
-        // 计算初始伤害（基于施法者的最终技能伤害属性）
-        var initialDamage = caster.Data.Get<float>(DataKey.FinalSkillDamage);
+        // 计算初始伤害：技能基础伤害 × 施法者技能伤害倍率
+        var initialDamage = ability.Data.Get<float>(DataKey.AbilityDamage)
+                          * caster.Data.Get<float>(DataKey.AbilityDamageBonus) / 100f;
 
         var bounceContext = new ChainBounceContext
         {

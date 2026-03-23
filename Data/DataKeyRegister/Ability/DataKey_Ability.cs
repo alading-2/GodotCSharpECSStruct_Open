@@ -7,6 +7,10 @@ using System.Collections.Generic;
 public static partial class DataKey
 {
     // ============ 基础信息 ============
+
+    public static readonly DataMeta AbilityExecutorId = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityExecutorId), DisplayName = "技能执行器ID", Category = DataCategory_Ability.Basic, Type = typeof(string), DefaultValue = "" });
+
     // 技能图标
     public static readonly DataMeta AbilityIcon = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityIcon), DisplayName = "技能图标", Category = DataCategory_Ability.Basic, Type = typeof(Texture2D), DefaultValue = null });
@@ -95,7 +99,7 @@ public static partial class DataKey
 
     // 最大目标
     public static readonly DataMeta AbilityMaxTargets = DataRegistry.Register(
-        new DataMeta { Key = nameof(AbilityMaxTargets), DisplayName = "最大目标", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = 1, MinValue = 1 });
+        new DataMeta { Key = nameof(AbilityMaxTargets), DisplayName = "最大目标", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = -1, MinValue = 1 });
 
     // ============ 目标几何参数 ============
     // 施法距离

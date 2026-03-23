@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 Name = "ChainLightning"
-Id = "ChainLightning"
+AbilityExecutorId = "ChainLightning"
 Description = "释放链式闪电，在多个敌人间弹跳造成魔法伤害，每次弹跳伤害衰减"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1
@@ -17,5 +17,4 @@ AbilityTargetGeometry = 1
 AbilityTargetTeamFilter = 2
 AbilityTargetSorting = 1
 AbilityCastRange = 600.0
-AbilityMaxTargets = 101
-BaseSkillDamage = 50.0
+AbilityDamage = 50.0

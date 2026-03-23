@@ -44,7 +44,6 @@ public class SlamExecutor : IAbilityExecutor
         // 1. 获取技能参数
         var abilityRange = ability.Data.Get<float>(DataKey.AbilityCastRange);      // 选点范围（角色周围圆环半径）
         var damageRadius = ability.Data.Get<float>(DataKey.AbilityEffectRadius);   // 伤害范围（圆形半径）
-        var baseDamage = ability.Data.Get<float>(DataKey.BaseSkillDamage);
         var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
 
         // 2. 在角色周围随机选点
@@ -89,8 +88,9 @@ public class SlamExecutor : IAbilityExecutor
             return new AbilityExecutedResult { TargetsHit = 0 };
         }
 
-        // 6. 计算最终伤害
-        var damage = caster.Data.Get<float>(DataKey.FinalSkillDamage);
+        // 6. 计算最终伤害：技能基础伤害 × 施法者技能伤害倍率
+        var damage = ability.Data.Get<float>(DataKey.AbilityDamage)
+                   * caster.Data.Get<float>(DataKey.AbilityDamageBonus) / 100f;
 
         // 7. 对每个目标应用伤害
         int targetsHit = 0;

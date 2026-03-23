@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 Name = "位置目标"
-Id = "位置目标"
+AbilityExecutorId = "位置目标"
 Description = "选择一个位置进行范围攻击"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1
@@ -17,4 +17,4 @@ AbilityTargetGeometry = 1
 AbilityTargetTeamFilter = 2
 AbilityCastRange = 400.0
 AbilityEffectRadius = 200.0
-BaseSkillDamage = 10.0
+AbilityDamage = 10.0

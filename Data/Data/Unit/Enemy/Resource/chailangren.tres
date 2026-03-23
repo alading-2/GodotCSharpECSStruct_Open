@@ -6,7 +6,6 @@
 [resource]
 script = ExtResource("2_script")
 ExpReward = 5
-DetectionRange = 500.0
 SpawnStrategy = 2
 SpawnMinWave = 2
 SpawnInterval = 3.0
@@ -18,6 +17,5 @@ VisualScenePath = ExtResource("1_visual")
 HealthBarHeight = 155.0
 BaseHp = 50.0
 BaseAttack = 5.0
-AttackRange = 100.0
 BaseDefense = 3.0
 MoveSpeed = 150.0

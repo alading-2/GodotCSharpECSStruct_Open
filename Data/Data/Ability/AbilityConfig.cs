@@ -15,8 +15,8 @@ namespace Slime.Config.Abilities
         /// <summary>
         /// 技能执行模板ID（为空时默认调用与 Name 相同的执行器）
         /// </summary>
-        [DataKey(nameof(DataKey.Id))]
-        [Export] public string? Id { get; set; }
+        [DataKey(nameof(DataKey.AbilityExecutorId))]
+        [Export] public string? AbilityExecutorId { get; set; }
         /// <summary>
         /// 技能描述
         /// </summary>
@@ -136,7 +136,7 @@ namespace Slime.Config.Abilities
         /// 最大目标数量
         /// </summary>
         [DataKey(nameof(DataKey.AbilityMaxTargets))]
-        [Export] public int AbilityMaxTargets { get; set; }
+        [Export] public int AbilityMaxTargets { get; set; } = (int)DataKey.AbilityMaxTargets.DefaultValue!;
 
         /// <summary>
         /// 技能表现特效（施法/命中/爆炸等通用表现）
@@ -150,7 +150,7 @@ namespace Slime.Config.Abilities
         /// </summary>
         [ExportGroup("伤害效果")]
         // 这里只是示例，也许应该有一个DamageInfo配置？暂时先这样
-        [DataKey(nameof(DataKey.BaseSkillDamage))]
-        [Export] public float BaseSkillDamage { get; set; }
+        [DataKey(nameof(DataKey.AbilityDamage))]
+        [Export] public float AbilityDamage { get; set; } = (float)DataKey.AbilityDamage.DefaultValue!;
     }
 }

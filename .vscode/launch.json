@@ -6,7 +6,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "C#-build",
-      "program": "E:\\Godot\\GodotEngine\\4.x\\C#\\Godot_v4.5.1-stable_mono_win64\\Godot_v4.5.1-stable_mono_win64.exe",
+      "program": "E:\\Godot\\GodotEngine\\4.x\\C#\\Godot_v4.6-stable_mono_win64\\Godot_v4.6-stable_mono_win64.exe",
       "args": [],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false
@@ -16,7 +16,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "C#-build",
-      "program": "E:\\Godot\\GodotEngine\\4.x\\C#\\Godot_v4.5.1-stable_mono_win64\\Godot_v4.5.1-stable_mono_win64.exe",
+      "program": "E:\\Godot\\GodotEngine\\4.x\\C#\\Godot_v4.6-stable_mono_win64\\Godot_v4.6-stable_mono_win64.exe",
       "args": [
         "${file}" // 将当前打开的文件路径作为参数传给 Godot
       ],
@@ -28,7 +28,7 @@
       "name": "调试Godot编辑器插件 ", // 3. 调试插件 (附加到编辑器)
       "type": "coreclr",
       "request": "attach",
-      "processName": "Godot_v4.5.1-stable_mono_win64.exe" // 指定进程名称：godot编辑器的名称
+      "processName": "Godot_v4.6-stable_mono_win64.exe" // 指定进程名称：godot编辑器的名称
     }
   ]
 }

@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_script")
 Name = "CircleDamage"
-Id = "CircleDamage"
+AbilityExecutorId = "CircleDamage"
 Description = "周身燃起烈焰光环，每秒对周围敌人造成魔法伤害"
 AbilityIcon = ExtResource("1_elfag")
 AbilityType = 1
@@ -16,6 +16,5 @@ AbilityCooldown = 1.0
 AbilityTargetGeometry = 1
 AbilityTargetTeamFilter = 2
 AbilityEffectRadius = 500.0
-AbilityMaxTargets = 99
 EffectScene = ExtResource("2_h8mow")
-BaseSkillDamage = 10.0
+AbilityDamage = 10.0

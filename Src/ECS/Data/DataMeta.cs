@@ -19,7 +19,6 @@ public class DataMeta
     /// <summary>数据类型（必填）</summary>
     public required Type Type { get; init; }
 
-
 /// <summary>描述信息（用于 Tooltip 等）</summary>
 public string Description { get; init; } = "";
 
