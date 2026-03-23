@@ -37,15 +37,13 @@ public static class ResourceManagement
         }
 
         // Fallback: 兼容基于类名的自动加载（如 nameof(System) 或 typeof(Entity).Name）
-        string suffix = "_" + name;
         foreach (var kvp in dict)
         {
-            // 2. 检查字典里的 Key 是否以这个后缀结尾
-            // 比如 "DamageSystem_DamageService" 肯定是以 "_DamageService" 结尾的
-            if (kvp.Key.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) ||
-                kvp.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
+            // 检查字典里的 Key 是否包含该名称
+            // 在同一分类下，基本上不需要担心重名问题
+            if (kvp.Key.Contains(name, StringComparison.OrdinalIgnoreCase))
             {
-                // 3. 匹配成功，直接返回该资源的路径
+                // 匹配成功，直接返回该资源的路径
                 return Godot.GD.Load<T>(kvp.Value.Path);
             }
         }

@@ -14,6 +14,31 @@
         "visibility": 0
       }
     },
+    "res://Data/Data/Ability/": {
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      },
+      "resource_path": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Ability/Ability/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      },
+      "resource_path": {
+        "visibility": 0.0
+      }
+    },
     "res://Data/Data/Ability/Resource/": {
       "AbilityChainCount": {
         "visibility": 1.0
@@ -31,9 +56,6 @@
         "visibility": 1.0
       },
       "AbilityCostType": {
-        "visibility": 1.0
-      },
-      "AbilityDamage": {
         "visibility": 1.0
       },
       "AbilityIcon": {
@@ -76,6 +98,9 @@
         "visibility": 1.0
       },
       "AbilityWidth": {
+        "visibility": 1.0
+      },
+      "BaseSkillDamage": {
         "visibility": 1.0
       },
       "Description": {
@@ -230,9 +255,9 @@
     }
   },
   "recent_paths": [
-    "res://Data/Data/Ability/Resource/",
     "res://Data/Data/Unit/Enemy/",
-    "res://Data/Data/Unit/Player/Resource/"
+    "res://Data/Data/Unit/Player/Resource/",
+    "res://Data/Data/Ability/"
   ],
   "table_functions": {
     "filter": [

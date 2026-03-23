@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://busoc634vyrie"]
+
+[ext_resource type="Script" uid="uid://cqrgw2mrtn6sv" path="res://Src/ECS/Entity/Effect/LightningLineEffect/LightningLineEffect.cs" id="1_y2s7o"]
+
+[node name="LightningLineEffect" type="Line2D" unique_id=1060894526]
+script = ExtResource("1_y2s7o")

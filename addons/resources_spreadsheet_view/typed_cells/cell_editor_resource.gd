@@ -2,22 +2,45 @@ extends ResourceTablesCellEditor
 
 const TablesPluginSettingsClass := preload("res://addons/resources_spreadsheet_view/settings_grid.gd")
 
-var previewer : EditorResourcePreview
+var previewer: EditorResourcePreview
 
 
 func can_edit_value(value, type, property_hint, column_index) -> bool:
 	return type == TYPE_OBJECT
 
 
-func create_cell(caller : Control) -> Control:
+func create_cell(caller: Control) -> Control:
 	if previewer == null:
 		previewer = caller.editor_plugin.get_editor_interface().get_resource_previewer()
 
 	var node = load(CELL_SCENE_DIR + "resource.tscn").instantiate()
+	node.set_drag_forwarding(
+		Callable(),
+		_can_drop_resource.bind(caller),
+		_drop_resource.bind(node, caller)
+	)
 	return node
 
 
-func set_value(node : Control, value):
+func _can_drop_resource(_pos: Vector2, data, _editor_view: Control) -> bool:
+	return data is Dictionary and data.get("type", "") == "files" and data.get("files", []).size() == 1
+
+
+func _drop_resource(_pos: Vector2, data, node: Control, editor_view: Control):
+	var path: String = data["files"][0]
+	var resource = load(path)
+	if resource == null:
+		return
+	var col_count: int = editor_view.columns.size()
+	var col_index: int = node.get_index() % col_count
+	var row_index: int = node.get_index() / col_count + editor_view.first_row
+	var cell_pos := Vector2i(col_index, row_index)
+	editor_view._selection.deselect_all_cells()
+	editor_view._selection.select_cell(cell_pos)
+	editor_view.set_edited_cells_values([resource])
+
+
+func set_value(node: Control, value):
 	var preview_node := node.get_node("Box/Tex")
 	var label_node := node.get_node("Box/Label")
 	if value == null:
@@ -36,14 +59,14 @@ func set_value(node : Control, value):
 
 	else:
 		preview_node.visible = false
-		previewer.queue_resource_preview(value.resource_path, self, &"_on_preview_loaded", node)
+		previewer.queue_resource_preview(value.resource_path, self , &"_on_preview_loaded", node)
 		
 	preview_node.custom_minimum_size = Vector2.ONE * ProjectSettings.get_setting(
 		TablesPluginSettingsClass.PREFIX + "resource_preview_size"
 	)
 
 
-func set_color(node : Control, color : Color):
+func set_color(node: Control, color: Color):
 	node.get_node("Back").modulate = color * 0.6 if node.editor_description == "" else color
 
 
@@ -51,14 +74,14 @@ func is_text():
 	return false
 
 
-func _on_preview_loaded(path : String, preview : Texture, thumbnail_preview : Texture, node):
+func _on_preview_loaded(path: String, preview: Texture, thumbnail_preview: Texture, node):
 	# Abort if the node has been deleted since.
 	if is_instance_valid(node):
 		node.get_node("Box/Tex").visible = true
 		node.get_node("Box/Tex").texture = preview
 
 
-static func _resource_to_string(res : Resource, cell_label_mode : int):
+static func _resource_to_string(res: Resource, cell_label_mode: int):
 	var prefix := ""
 	if cell_label_mode != 2:
 		if res.has_method(&"_to_string"):

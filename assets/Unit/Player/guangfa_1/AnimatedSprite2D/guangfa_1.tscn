@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://cqcwwwjf0jq7c"]
-
-[ext_resource type="SpriteFrames" uid="uid://pko68s7p71l1" path="res://assets/Unit/Player/guangfa_1/AnimatedSprite2D/guangfa_1.tres" id="1_34m8e"]
-
-[node name="guangfa_1" type="AnimatedSprite2D" unique_id=375429676]
-position = Vector2(-22, -110)
-sprite_frames = ExtResource("1_34m8e")
-animation = &"attack1"

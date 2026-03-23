@@ -47,8 +47,8 @@ public class CircleDamageExecutor : IAbilityExecutor
                 Origin = casterNode2D?.GlobalPosition ?? Vector2.Zero,
                 CenterEntity = caster,
                 TeamFilter = teamFilter,        // 根据配置过滤目标阵营（通常为敌人）
-                Sorting = AbilityTargetSorting.Nearest,
-                MaxTargets = 999                // 烈焰光环通常不限命中数量
+                Sorting = AbilityTargetSorting.None,
+                MaxTargets = -1               // 烈焰光环通常不限命中数量
             };
 
             // 执行核心空间查询并将结果存回上下文暂存
@@ -57,8 +57,8 @@ public class CircleDamageExecutor : IAbilityExecutor
         }
 
         // 2. 每次触发时生成视觉反馈
-        // 加载烈焰光环特效资源 (Effect_003)
-        var effectScene = ResourceManagement.Load<PackedScene>(ResourcePaths.Asset_Effect_003, ResourceCategory.Asset);
+        // 获取配置中的通用特效资源
+        var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);
         if (effectScene != null && casterNode2D != null)
         {
             // 在施法者脚下生成特效，设置较大的缩放以符合光环意图
@@ -78,8 +78,8 @@ public class CircleDamageExecutor : IAbilityExecutor
         }
 
         // 3. 对扫描到的每个目标执行伤害结算
-        // 从技能数据获取基础伤害
-        var damage = ability.Data.Get<float>(DataKey.AbilityDamage);
+        // 从技能数据获取最终技能伤害
+        var damage = ability.Data.Get<float>(DataKey.FinalSkillDamage);
         int hitCount = 0;
         foreach (var target in targets)
         {

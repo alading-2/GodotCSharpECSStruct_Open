@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 /// <summary>
-/// 数据注册表 - 管理所有数据的元数据和计算规则
-/// 仅作为元数据存储库，由 DataInit 驱动初始化
+/// 数据注册表 - 管理所有 DataMeta（含运行时约束 + 展示字段）
 /// </summary>
 public static class DataRegistry
 {
@@ -11,17 +10,21 @@ public static class DataRegistry
 
     private static readonly Dictionary<string, DataMeta> _metaRegistry = new();
 
-    // --- 注册接口：由 DataInit 在游戏启动时调用 ---
+    // --- 注册接口 ---
 
-    public static void Register(DataMeta meta)
+    /// <summary>
+    /// 注册元数据，返回同一实例（便于静态字段直接赋值）
+    /// </summary>
+    public static DataMeta Register(DataMeta meta)
     {
         _metaRegistry[meta.Key] = meta;
+        return meta;
     }
 
     // === 公共查询接口 ===
 
     /// <summary>
-    /// 获取数据的元数据
+    /// 获取元数据（未注册返回 null，走快速路径）
     /// </summary>
     public static DataMeta? GetMeta(string key)
     {
@@ -33,8 +36,7 @@ public static class DataRegistry
     /// </summary>
     public static bool IsComputed(string key)
     {
-        var meta = GetMeta(key);
-        return meta?.IsComputed ?? false;
+        return GetMeta(key)?.IsComputed ?? false;
     }
 
     /// <summary>
@@ -42,13 +44,11 @@ public static class DataRegistry
     /// </summary>
     public static bool SupportModifiers(string key)
     {
-        var meta = GetMeta(key);
-        return meta?.SupportModifiers ?? false;
+        return GetMeta(key)?.SupportModifiers ?? false;
     }
 
     /// <summary>
-    /// 获取依赖指定数据的所有DataKey，主要用在MarkDirty
-    /// 比如最终生命值 = 基础生命值 * (1 + 生命值加成/100)，基础生命值变了，最终生命值也要重新计算，这里返回的一般是依赖里面包含基础生命值的计算属性
+    /// 获取依赖指定 baseKey 的所有计算键（用于 MarkDirty 级联失效）
     /// </summary>
     public static IEnumerable<string> GetDependentComputedKeys(string baseKey)
     {
@@ -58,11 +58,11 @@ public static class DataRegistry
     }
 
     /// <summary>
-    /// 获取指定分类的所有数据元数据
+    /// 获取指定分类的所有元数据（通过 DataMeta.Category 筛选）
     /// </summary>
     public static IEnumerable<DataMeta> GetMetaByCategory(Enum category)
     {
-        return _metaRegistry.Values.Where(m => m.Category == category);
+        return _metaRegistry.Values.Where(m => Equals(m.Category, category));
     }
 
     /// <summary>

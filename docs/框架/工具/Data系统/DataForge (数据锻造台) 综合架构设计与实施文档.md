@@ -110,7 +110,7 @@
     // 简单类型 (可处理)
     DataKey.AbilityCooldown,           // float
     DataKey.AbilityLevel,              // int
-    DataKey.AbilityDamage,             // float
+    DataKey.BaseSkillDamage,             // float
     
     // 枚举类型 (需映射)
     DataKey.AbilityType,               // AbilityType.Passive

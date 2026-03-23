@@ -10,12 +10,12 @@ namespace Slime.Test.Mapping
     {
         /// <summary>基础生命值</summary>
         // 测试正常场景：属性名和 DataKey 一致，但带了标签
-        [DataKey(DataKey.BaseHp)]
+        [DataKey(nameof(DataKey.BaseHp))]
         [Export] public float BaseHp { get; set; }
 
         /// <summary>自定义攻击力名称</summary>
         // 测试映射场景：属性名和 DataKey 不一致，通过标签强制映射
-        [DataKey(DataKey.BaseAttack)]
+        [DataKey(nameof(DataKey.BaseAttack))]
         [Export] public float MyCustomAttackName { get; set; }
 
         /// <summary>移动速度</summary>

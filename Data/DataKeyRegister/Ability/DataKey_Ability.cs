@@ -1,3 +1,4 @@
+using Godot;
 using System.Collections.Generic;
 
 /// <summary>
@@ -6,94 +7,135 @@ using System.Collections.Generic;
 public static partial class DataKey
 {
     // ============ 基础信息 ============
-    /// <summary>技能图标路径</summary>
-    public const string AbilityIcon = "AbilityIcon";
-    /// <summary>技能类型 (Active/Passive)</summary>
-    public const string AbilityType = "AbilityType";
-    /// <summary>技能等级</summary>
-    public const string AbilityLevel = "AbilityLevel";
-    /// <summary>技能最大等级</summary>
-    public const string AbilityMaxLevel = "AbilityMaxLevel";
-    /// <summary>技能基础伤害</summary>
-    public const string AbilityDamage = "AbilityDamage";
+    // 技能图标
+    public static readonly DataMeta AbilityIcon = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityIcon), DisplayName = "技能图标", Category = DataCategory_Ability.Basic, Type = typeof(Texture2D), DefaultValue = null });
+
+    // 技能类型
+    public static readonly DataMeta AbilityType = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityType), DisplayName = "技能类型", Category = DataCategory_Ability.Basic, Type = typeof(AbilityType), DefaultValue = global::AbilityType.Passive });
+
+    // 技能等级
+    public static readonly DataMeta AbilityLevel = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityLevel), DisplayName = "技能等级", Category = DataCategory_Ability.Basic, Type = typeof(int), DefaultValue = 1, MinValue = 1 });
+
+    // 最大等级
+    public static readonly DataMeta AbilityMaxLevel = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityMaxLevel), DisplayName = "技能最大等级", Category = DataCategory_Ability.Basic, Type = typeof(int), DefaultValue = 10, MinValue = 1 });
+
+    // 技能伤害
+    public static readonly DataMeta AbilityDamage = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityDamage), DisplayName = "技能伤害", Category = DataCategory_Ability.Effect, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
 
     // ============ 冷却系统 ============
-    /// <summary>基础冷却时间 (秒)</summary>
-    public const string AbilityCooldown = "AbilityCooldown";
+    // 冷却时间
+    public static readonly DataMeta AbilityCooldown = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityCooldown), DisplayName = "冷却时间", Category = DataCategory_Ability.Cooldown, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
 
     // ============ 充能系统 ============
-    /// <summary>是否使用充能系统 (bool)</summary>
-    public const string IsAbilityUsesCharges = "IsAbilityUsesCharges";
-    /// <summary>最大充能次数</summary>
-    public const string AbilityMaxCharges = "AbilityMaxCharges";
-    /// <summary>当前充能次数</summary>
-    public const string AbilityCurrentCharges = "AbilityCurrentCharges";
-    /// <summary>
-    /// 单次充能恢复时间 (秒)。
-    /// 特殊值：当 ChargeTime <= 0 时，不启动自动恢复，实现“限制使用次数”技能。
-    /// 此类技能只能通过事件 (AddCharge) 或方法 (AddCharges) 恢复充能。
-    /// </summary>
-    public const string AbilityChargeTime = "AbilityChargeTime";
+    // 是否使用充能
+    public static readonly DataMeta IsAbilityUsesCharges = DataRegistry.Register(
+        new DataMeta { Key = nameof(IsAbilityUsesCharges), DisplayName = "是否使用充能", Category = DataCategory_Ability.Charge, Type = typeof(bool), DefaultValue = false });
+
+    // 最大充能
+    public static readonly DataMeta AbilityMaxCharges = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityMaxCharges), DisplayName = "最大充能", Category = DataCategory_Ability.Charge, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
+
+    // 当前充能
+    public static readonly DataMeta AbilityCurrentCharges = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityCurrentCharges), DisplayName = "当前充能", Category = DataCategory_Ability.Charge, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
+
+    // 充能时间
+    public static readonly DataMeta AbilityChargeTime = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityChargeTime), DisplayName = "充能时间", Category = DataCategory_Ability.Charge, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
 
     // ============ 消耗系统 ============
-    /// <summary>消耗类型 (None/Mana/Energy/Ammo/Health)</summary>
-    public const string AbilityCostType = "AbilityCostType";
-    /// <summary>消耗数量</summary>
-    public const string AbilityCostAmount = "AbilityCostAmount";
+    // 消耗类型
+    public static readonly DataMeta AbilityCostType = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityCostType), DisplayName = "消耗类型", Category = DataCategory_Ability.Cost, Type = typeof(AbilityCostType), DefaultValue = global::AbilityCostType.None });
+
+    // 消耗数量
+    public static readonly DataMeta AbilityCostAmount = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityCostAmount), DisplayName = "消耗数量", Category = DataCategory_Ability.Cost, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
 
     // ============ 触发配置 ============
-    /// <summary>触发模式 [Flags] (Manual/OnEvent/Periodic/Permanent)</summary>
-    public const string AbilityTriggerMode = "AbilityTriggerMode";
-    /// <summary>触发事件类型 (当 TriggerMode 包含 OnEvent)</summary>
-    public const string AbilityTriggerEvent = "AbilityTriggerEvent";
-    /// <summary>触发概率</summary>
-    public const string AbilityTriggerChance = "AbilityTriggerChance";
+    // 触发模式
+    public static readonly DataMeta AbilityTriggerMode = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityTriggerMode), DisplayName = "触发模式", Category = DataCategory_Ability.Trigger, Type = typeof(AbilityTriggerMode), DefaultValue = global::AbilityTriggerMode.None });
+
+    // 触发事件
+    public static readonly DataMeta AbilityTriggerEvent = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityTriggerEvent), DisplayName = "触发事件", Category = DataCategory_Ability.Trigger, Type = typeof(List<string>), DefaultValue = new List<string>() });
+
+    // 触发概率
+    public static readonly DataMeta AbilityTriggerChance = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityTriggerChance), DisplayName = "触发概率", Category = DataCategory_Ability.Trigger, Type = typeof(float), DefaultValue = 0f, MinValue = 0f, MaxValue = 100f, IsPercentage = true });
 
     // ============ 执行模式 ============
-    /// <summary>技能执行模式 (Instant/Chain/Channel/Projectile)</summary>
-    public const string AbilityExecutionMode = "AbilityExecutionMode";
+    // 执行模式
+    public static readonly DataMeta AbilityExecutionMode = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityExecutionMode), DisplayName = "执行模式", Category = DataCategory_Ability.Effect, Type = typeof(AbilityExecutionMode), DefaultValue = global::AbilityExecutionMode.Instant });
 
-    // ============ 目标系统 - 5 层分解 ============
-    /// <summary>目标选取 (Self/Unit/Point/EventSource/Cursor)</summary>
-    public const string AbilityTargetSelection = "AbilityTargetSelection";
-    /// <summary>目标几何形状 (Single/Circle/Box/Line/Cone/Global)</summary>
-    public const string AbilityTargetGeometry = "AbilityTargetGeometry";
-    /// <summary>目标阵营过滤 [Flags] (Friendly/Enemy/Neutral/Self)</summary>
-    public const string AbilityTargetTeamFilter = "AbilityTargetTeamFilter";
-    /// <summary>目标排序方式 (Nearest/Farthest/LowestHealth/Random)</summary>
-    public const string AbilityTargetSorting = "AbilityTargetSorting";
-    /// <summary>目标数量上限</summary>
-    public const string AbilityMaxTargets = "AbilityMaxTargets";
+    // ============ 目标系统 ============
+    // 目标原点
+    public static readonly DataMeta AbilityTargetSelection = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityTargetSelection), DisplayName = "目标原点", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSelection), DefaultValue = global::AbilityTargetSelection.None });
+
+    // 目标几何形状
+    public static readonly DataMeta AbilityTargetGeometry = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityTargetGeometry), DisplayName = "目标几何形状", Category = DataCategory_Ability.Target, Type = typeof(GeometryType), DefaultValue = GeometryType.Single });
+
+    // 阵营过滤
+    public static readonly DataMeta AbilityTargetTeamFilter = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityTargetTeamFilter), DisplayName = "阵营过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTeamFilter), DefaultValue = global::AbilityTargetTeamFilter.None });
+
+    // 目标排序
+    public static readonly DataMeta AbilityTargetSorting = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityTargetSorting), DisplayName = "目标排序", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSorting), DefaultValue = global::AbilityTargetSorting.None });
+
+    // 最大目标
+    public static readonly DataMeta AbilityMaxTargets = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityMaxTargets), DisplayName = "最大目标", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = 1, MinValue = 1 });
 
     // ============ 目标几何参数 ============
-    /// <summary>施法距离（技能可释放的最大距离；0=无限制；瞄准射程/索敌半径均用此值）</summary>
-    public const string AbilityCastRange = "AbilityCastRange";
-    /// <summary>效果半径（圆形/扇形 AOE 的作用半径；冲刺=位移距离；AOE=爆炸范围）</summary>
-    public const string AbilityEffectRadius = "AbilityEffectRadius";
-    /// <summary>效果长度（矩形/线形 AOE 的长度维度）</summary>
-    public const string AbilityEffectLength = "AbilityEffectLength";
-    /// <summary>效果宽度（矩形/线形 AOE 的宽度维度）</summary>
-    public const string AbilityEffectWidth = "AbilityEffectWidth";
-    /// <summary>技能角度（扇形 AOE 的张角，度数）</summary>
-    public const string AbilityAngle = "AbilityAngle";
-    /// <summary>链式弹跳次数</summary>
-    public const string AbilityChainCount = "AbilityChainCount";
-    /// <summary>链式弹跳范围</summary>
-    public const string AbilityChainRange = "AbilityChainRange";
-    /// <summary>链式弹跳延时 (秒)</summary>
-    public const string AbilityChainDelay = "AbilityChainDelay";
-    /// <summary>链式伤害衰减系数 (0-100)</summary>
-    public const string AbilityChainDamageDecay = "AbilityChainDamageDecay";
+    // 施法距离
+    public static readonly DataMeta AbilityCastRange = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityCastRange), DisplayName = "施法距离", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+
+    // 效果半径
+    public static readonly DataMeta AbilityEffectRadius = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityEffectRadius), DisplayName = "效果半径", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+
+    // 效果长度
+    public static readonly DataMeta AbilityEffectLength = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityEffectLength), DisplayName = "效果长度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+
+    // 效果宽度
+    public static readonly DataMeta AbilityEffectWidth = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityEffectWidth), DisplayName = "效果宽度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
+
+    // 技能角度
+    public static readonly DataMeta AbilityAngle = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityAngle), DisplayName = "技能角度", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = 360 });
+
+    // 特效场景路径，不走约束系统
+    public const string EffectScene = "EffectScene";
 
     // ============ 状态标记 ============
-    /// <summary>技能是否已解锁</summary>
-    public const string AbilityUnlocked = "AbilityUnlocked";
-    /// <summary>技能是否启用</summary>
-    public const string AbilityEnabled = "AbilityEnabled";
-    /// <summary>技能是否正在执行</summary>
-    public const string AbilityIsActive = "AbilityIsActive";
+    // 已解锁
+    public static readonly DataMeta AbilityUnlocked = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityUnlocked), DisplayName = "已解锁", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = true });
+
+    // 已启用
+    public static readonly DataMeta AbilityEnabled = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityEnabled), DisplayName = "已启用", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = true });
+
+    // 执行中
+    public static readonly DataMeta AbilityIsActive = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityIsActive), DisplayName = "执行中", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = false });
 
     // ============ 主动技能输入 ============
-    /// <summary>当前选中的主动技能索引（存储在拥有者 Data 中）</summary>
-    public const string CurrentActiveAbilityIndex = "CurrentActiveAbilityIndex";
+    // 当前激活技能索引
+    public static readonly DataMeta CurrentActiveAbilityIndex = DataRegistry.Register(
+        new DataMeta { Key = nameof(CurrentActiveAbilityIndex), DisplayName = "当前激活技能索引", Category = DataCategory_Ability.Input, Type = typeof(int), DefaultValue = 0, MinValue = 0 });
 }

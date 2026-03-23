@@ -84,7 +84,7 @@ Vector2 random = GeometryCalculator.GetRandomPointInCircle(casterPos, 150f);
 | `TeamFilter` | 阵营过滤位掩码（Friendly / Enemy / Neutral / Self） |
 | `TypeFilter` | 实体类型过滤位掩码（`EntityType`） |
 | `Sorting` | 排序规则（Nearest / Farthest / LowestHealth / Random ...） |
-| `MaxTargets` | 目标数量上限（0 = 不限） |
+| `MaxTargets` | 目标数量上限（-1 = 不限） |
 
 > 注意：`PositionTargetSelector` 中 `MaxTargets` 表示“生成点数量”。
 

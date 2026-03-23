@@ -6,6 +6,11 @@ using Godot;
 /// </summary>
 public readonly record struct TargetSelectorQuery
 {
+    /// <summary>
+    /// 初始化 TargetSelectorQuery，设置默认不限目标数。
+    /// </summary>
+    public TargetSelectorQuery() {}
+
     // ==================== 几何参数 ====================
 
     /// <summary>
@@ -87,7 +92,7 @@ public AbilityTargetSorting Sorting { get; init; }
 
 /// <summary>
 /// 最大目标数量（可选）。
-/// 0 表示不限。
+/// -1 表示不限。
 /// </summary>
-public int MaxTargets { get; init; }
+public int MaxTargets { get; init; } = -1;
 }

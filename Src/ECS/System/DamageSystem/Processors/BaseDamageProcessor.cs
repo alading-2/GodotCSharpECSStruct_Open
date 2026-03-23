@@ -27,6 +27,7 @@ public class BaseDamageProcessor : IDamageProcessor
         {
             info.IsEnd = true;
             info.FinalDamage = 0;
+            _log.Debug($"[BaseDamageProcessor] 目标 {info.Victim} 已死亡(IsDead=true)，伤害阻断");
             return;
         }
 
@@ -46,10 +47,12 @@ public class BaseDamageProcessor : IDamageProcessor
             info.IsEnd = true;
             info.FinalDamage = 0;
             info.AddLog("基础伤害 <= 0，伤害流程结束");
+            _log.Debug($"[BaseDamageProcessor] Damage={info.Damage} <= 0，伤害阻断");
             return;
         }
 
         info.FinalDamage = info.Damage;
         info.AddLog($"基础伤害: {info.Damage}");
+        _log.Debug($"[BaseDamageProcessor] 基础伤害初始化: FinalDamage={info.FinalDamage}");
     }
 }

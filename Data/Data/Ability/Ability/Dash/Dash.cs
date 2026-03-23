@@ -68,8 +68,8 @@ public class DashExecutor : IAbilityExecutor
         casterNode.GlobalPosition = targetPos;
 
         // 4. 生成附加特效（跟随施法者移动，播放完毕后由 EffectComponent 自动销毁）
-        // 使用 ResourceManagement.Load 安全加载资源，避免硬编码路径
-        var effectScene = ResourceManagement.Load<PackedScene>(ResourcePaths.Asset_Effect_lrsc3, ResourceCategory.Asset);
+        // 从配置中动态读取位移特效资源
+        var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);
         if (effectScene != null)
         {
             // 在施法者当前位置生成特效，并通过 Host 参数将其绑定到施法者上

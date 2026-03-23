@@ -1,174 +1,174 @@
 [gd_resource type="SpriteFrames" format=3 uid="uid://bob3dmkfeqxat"]
 
-[ext_resource type="Texture2D" uid="uid://ca85b40hi1kgp" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_00.png" id="2_xha3i"]
-[ext_resource type="Texture2D" uid="uid://cf04tdhfuoq2k" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_01.png" id="3_ltx5s"]
-[ext_resource type="Texture2D" uid="uid://tutw2hj4o1ju" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_02.png" id="5_rqeil"]
-[ext_resource type="Texture2D" uid="uid://d1av5t2wr1u1w" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_03.png" id="7_alsto"]
-[ext_resource type="Texture2D" uid="uid://kc385mdnln8o" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_04.png" id="9_vh4lq"]
-[ext_resource type="Texture2D" uid="uid://d2l4ei8hfmrx8" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_05.png" id="11_apx6x"]
-[ext_resource type="Texture2D" uid="uid://bih3r1rwegg5g" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_06.png" id="13_nggka"]
-[ext_resource type="Texture2D" uid="uid://cj2dm2lgyklms" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_07.png" id="15_gktqa"]
-[ext_resource type="Texture2D" uid="uid://dokms6qhxya2n" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_08.png" id="17_e71sp"]
-[ext_resource type="Texture2D" uid="uid://duicnxdl0imxp" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_09.png" id="19_tt33i"]
-[ext_resource type="Texture2D" uid="uid://beunmt07wa0u7" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_10.png" id="21_8d2vg"]
-[ext_resource type="Texture2D" uid="uid://c35ltu7323dtg" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_11.png" id="22_ge6f1"]
-[ext_resource type="Texture2D" uid="uid://023k04lif32y" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_12.png" id="23_x5d0i"]
-[ext_resource type="Texture2D" uid="uid://din4duwtyl7iv" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_13.png" id="24_yvlaq"]
-[ext_resource type="Texture2D" uid="uid://c7p7xo4x1tiax" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_14.png" id="25_rmo42"]
-[ext_resource type="Texture2D" uid="uid://dm6jjlfkx21r6" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_15.png" id="26_q8ohq"]
-[ext_resource type="Texture2D" uid="uid://bvgihsk4m8678" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_16.png" id="27_5l3tc"]
-[ext_resource type="Texture2D" uid="uid://bqbmwo8ij3pef" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_17.png" id="28_xcenj"]
-[ext_resource type="Texture2D" uid="uid://cg6ttcv58hes4" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_0.png" id="29_6rxni"]
-[ext_resource type="Texture2D" uid="uid://bwguukl0b4ixd" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_1.png" id="30_5b6n3"]
-[ext_resource type="Texture2D" uid="uid://crmhtkdg4cj06" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_2.png" id="31_ldcxt"]
-[ext_resource type="Texture2D" uid="uid://cgid777vb8nhk" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_3.png" id="32_gyuee"]
-[ext_resource type="Texture2D" uid="uid://d2jdr8o0v4dg4" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_4.png" id="33_ck7xc"]
-[ext_resource type="Texture2D" uid="uid://pib8oskpptid" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_5.png" id="34_el2lk"]
-[ext_resource type="Texture2D" uid="uid://chpkbsdci1qf8" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_6.png" id="35_gigei"]
-[ext_resource type="Texture2D" uid="uid://cayykd6n3uksn" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_7.png" id="36_kp2yh"]
-[ext_resource type="Texture2D" uid="uid://b5c28low8rnc6" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_00.png" id="37_ancj4"]
-[ext_resource type="Texture2D" uid="uid://c1uv5ynyfyglm" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_01.png" id="38_elv0c"]
-[ext_resource type="Texture2D" uid="uid://806lvyrht8nj" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_02.png" id="39_0dojw"]
-[ext_resource type="Texture2D" uid="uid://cndj2v6gt60dq" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_03.png" id="40_pbip6"]
-[ext_resource type="Texture2D" uid="uid://3wvgnbbq70np" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_04.png" id="41_rtucl"]
-[ext_resource type="Texture2D" uid="uid://d02fd66axsb3b" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_05.png" id="42_hdhns"]
-[ext_resource type="Texture2D" uid="uid://bql8y0qiw6r64" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_06.png" id="43_iscmj"]
-[ext_resource type="Texture2D" uid="uid://bkjk6e13xjip3" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_07.png" id="44_p0d1u"]
-[ext_resource type="Texture2D" uid="uid://bdvuqyek5wyb1" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_08.png" id="45_onjv6"]
-[ext_resource type="Texture2D" uid="uid://c6j8gjk0tvb14" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_09.png" id="46_7qe1k"]
-[ext_resource type="Texture2D" uid="uid://dhvb0ijrgkwl7" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_00.png" id="47_g1cek"]
-[ext_resource type="Texture2D" uid="uid://bmflk3b4eg24l" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_01.png" id="48_r1w8y"]
-[ext_resource type="Texture2D" uid="uid://bnnphwgmmwct4" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_02.png" id="49_y5pti"]
-[ext_resource type="Texture2D" uid="uid://cmict40gwuyfb" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_03.png" id="50_4duwq"]
-[ext_resource type="Texture2D" uid="uid://d0ebr16eix0ab" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_04.png" id="51_aj00y"]
-[ext_resource type="Texture2D" uid="uid://boe7e7w0xbh48" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_05.png" id="52_1qb3a"]
-[ext_resource type="Texture2D" uid="uid://bsjhl0v4ur4v4" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_06.png" id="53_8hx53"]
-[ext_resource type="Texture2D" uid="uid://bp6uuj2lgen2l" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_07.png" id="54_ddgiw"]
-[ext_resource type="Texture2D" uid="uid://buthnb05ls27e" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_08.png" id="55_edrov"]
-[ext_resource type="Texture2D" uid="uid://dvtjmlqdg1ewh" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_09.png" id="56_wjc63"]
-[ext_resource type="Texture2D" uid="uid://ckqifpsvm3jw4" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_10.png" id="57_i1hyv"]
-[ext_resource type="Texture2D" uid="uid://f8x651xygckp" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_11.png" id="58_bio1i"]
-[ext_resource type="Texture2D" uid="uid://dy8usfpvkamk8" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_12.png" id="59_6id2x"]
-[ext_resource type="Texture2D" uid="uid://hk7x3aep8pjm" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_13.png" id="60_amruj"]
-[ext_resource type="Texture2D" uid="uid://c06v73dvumvly" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_14.png" id="61_lge4n"]
-[ext_resource type="Texture2D" uid="uid://dguj8ua7b0oy5" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_15.png" id="62_fho5u"]
-[ext_resource type="Texture2D" uid="uid://xjudoblg344x" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_16.png" id="63_ud1i2"]
-[ext_resource type="Texture2D" uid="uid://d4c61dvplnwjx" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_00.png" id="64_7xxtj"]
-[ext_resource type="Texture2D" uid="uid://b8dl8i44j2nfi" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_01.png" id="65_dwdom"]
-[ext_resource type="Texture2D" uid="uid://cmbn1yexhqd2o" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_02.png" id="66_vuu0x"]
-[ext_resource type="Texture2D" uid="uid://b5ikruxwhj7qs" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_03.png" id="67_6b71x"]
-[ext_resource type="Texture2D" uid="uid://ckdreg7pl1r7h" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_04.png" id="68_2pbe3"]
-[ext_resource type="Texture2D" uid="uid://cpeae565nyysk" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_05.png" id="69_l4dc6"]
-[ext_resource type="Texture2D" uid="uid://bx4piipa0sidf" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_06.png" id="70_spu5s"]
-[ext_resource type="Texture2D" uid="uid://dyl2sqxapp2ad" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_07.png" id="71_qbv01"]
-[ext_resource type="Texture2D" uid="uid://den74p82rm5kr" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_08.png" id="72_nj4q2"]
-[ext_resource type="Texture2D" uid="uid://dhu576l4vuhhu" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_09.png" id="73_2647w"]
-[ext_resource type="Texture2D" uid="uid://df1umgeh7684h" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_00.png" id="74_dqjty"]
-[ext_resource type="Texture2D" uid="uid://d1c22e3kgvpjm" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_01.png" id="75_fcch5"]
-[ext_resource type="Texture2D" uid="uid://c6rgfe2pn1pos" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_02.png" id="76_qls6m"]
-[ext_resource type="Texture2D" uid="uid://byjfv5jixh0t6" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_03.png" id="77_218no"]
-[ext_resource type="Texture2D" uid="uid://r06akr0jvhmk" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_04.png" id="78_1cq7k"]
-[ext_resource type="Texture2D" uid="uid://sbmb8m10mole" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_05.png" id="79_yhsm3"]
-[ext_resource type="Texture2D" uid="uid://vv1uefcbsepi" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_06.png" id="80_ulrbn"]
-[ext_resource type="Texture2D" uid="uid://ctadelh8dheem" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_07.png" id="81_os002"]
-[ext_resource type="Texture2D" uid="uid://ndnxbem1bckc" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_08.png" id="82_1d0va"]
-[ext_resource type="Texture2D" uid="uid://c20nor2ah4gn5" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_09.png" id="83_5ffmd"]
-[ext_resource type="Texture2D" uid="uid://dj0jlx1olkutm" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_10.png" id="84_sts1h"]
-[ext_resource type="Texture2D" uid="uid://c3fiul70kxm6v" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_11.png" id="85_xrbxk"]
-[ext_resource type="Texture2D" uid="uid://bn4ft3kcaavgf" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_12.png" id="86_b72ak"]
-[ext_resource type="Texture2D" uid="uid://dq26iy2le7y3p" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_13.png" id="87_k2ob1"]
-[ext_resource type="Texture2D" uid="uid://bwjhnjwlsfbk" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_14.png" id="88_pna7y"]
-[ext_resource type="Texture2D" uid="uid://cbikiu2wvphvk" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_15.png" id="89_tm1l3"]
-[ext_resource type="Texture2D" uid="uid://wakqr6qv5oqa" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_16.png" id="90_yfyub"]
-[ext_resource type="Texture2D" uid="uid://cvqn8dkblrtcw" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_17.png" id="91_um0rm"]
-[ext_resource type="Texture2D" uid="uid://b6jbly8xjj2wc" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_18.png" id="92_qwml5"]
-[ext_resource type="Texture2D" uid="uid://cvhi8ths2qsfm" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_0.png" id="93_kiqv5"]
-[ext_resource type="Texture2D" uid="uid://sww5likvewrr" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_1.png" id="94_5lvuk"]
-[ext_resource type="Texture2D" uid="uid://yuryva02wou8" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_2.png" id="95_ikgm1"]
-[ext_resource type="Texture2D" uid="uid://noq3xwc0ihrs" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_3.png" id="96_w6mtj"]
-[ext_resource type="Texture2D" uid="uid://cwcrx1qkl4c0q" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_4.png" id="97_pdhvj"]
-[ext_resource type="Texture2D" uid="uid://b43oef8726x3p" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_5.png" id="98_2g2q6"]
-[ext_resource type="Texture2D" uid="uid://dshfepnvqjjxm" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_6.png" id="99_2jghj"]
-[ext_resource type="Texture2D" uid="uid://3u1dkfo5epq2" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_7.png" id="100_euj64"]
-[ext_resource type="Texture2D" uid="uid://o8rm60agydgp" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_00.png" id="101_c1de8"]
-[ext_resource type="Texture2D" uid="uid://dv057ni44e3ln" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_01.png" id="102_r36nt"]
-[ext_resource type="Texture2D" uid="uid://udgisfl35f0q" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_02.png" id="103_ebxp3"]
-[ext_resource type="Texture2D" uid="uid://dmb542kla0evj" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_03.png" id="104_x07c8"]
-[ext_resource type="Texture2D" uid="uid://bi0pg5bownoj8" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_04.png" id="105_fepgx"]
-[ext_resource type="Texture2D" uid="uid://ba7dfmh3ssnja" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_05.png" id="106_gewam"]
-[ext_resource type="Texture2D" uid="uid://bbsys6apnnsli" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_06.png" id="107_bps80"]
-[ext_resource type="Texture2D" uid="uid://8j0rc5fybw2p" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_07.png" id="108_sxeje"]
-[ext_resource type="Texture2D" uid="uid://ntd2gs70jj41" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_08.png" id="109_v4556"]
-[ext_resource type="Texture2D" uid="uid://byqb2ybgk6wmk" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_09.png" id="110_djxkn"]
-[ext_resource type="Texture2D" uid="uid://4y0f5hg53vm4" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_10.png" id="111_n3myd"]
-[ext_resource type="Texture2D" uid="uid://bp2nagdl1wfws" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_11.png" id="112_odbf4"]
-[ext_resource type="Texture2D" uid="uid://blnec4g2ff6ja" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_12.png" id="113_ishd8"]
-[ext_resource type="Texture2D" uid="uid://bmsk02bghjqf7" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_13.png" id="114_qdwi6"]
-[ext_resource type="Texture2D" uid="uid://47yp620yimuh" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_14.png" id="115_n1q40"]
-[ext_resource type="Texture2D" uid="uid://cssm53esbq3lq" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_15.png" id="116_we61y"]
-[ext_resource type="Texture2D" uid="uid://ceke5y45027bm" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_16.png" id="117_aqqhh"]
-[ext_resource type="Texture2D" uid="uid://b6n2tbgpl1433" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_17.png" id="118_qugv1"]
-[ext_resource type="Texture2D" uid="uid://dsjjirj1asihl" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_18.png" id="119_no4ee"]
-[ext_resource type="Texture2D" uid="uid://dwoenwmxgjaow" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_19.png" id="120_qtr46"]
-[ext_resource type="Texture2D" uid="uid://bsonlqac2urgr" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_20.png" id="121_732rh"]
-[ext_resource type="Texture2D" uid="uid://b8wcv6gaorl7r" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_21.png" id="122_lnopf"]
+[ext_resource type="Texture2D" uid="uid://ca85b40hi1kgp" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_00.png" id="1_8axht"]
+[ext_resource type="Texture2D" uid="uid://cf04tdhfuoq2k" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_01.png" id="2_swpju"]
+[ext_resource type="Texture2D" uid="uid://tutw2hj4o1ju" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_02.png" id="3_dh7kj"]
+[ext_resource type="Texture2D" uid="uid://d1av5t2wr1u1w" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_03.png" id="4_l53bs"]
+[ext_resource type="Texture2D" uid="uid://kc385mdnln8o" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_04.png" id="5_tfgdm"]
+[ext_resource type="Texture2D" uid="uid://d2l4ei8hfmrx8" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_05.png" id="6_1hjk2"]
+[ext_resource type="Texture2D" uid="uid://bih3r1rwegg5g" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_06.png" id="7_511dd"]
+[ext_resource type="Texture2D" uid="uid://cj2dm2lgyklms" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_07.png" id="8_2dncs"]
+[ext_resource type="Texture2D" uid="uid://dokms6qhxya2n" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_08.png" id="9_5qbs8"]
+[ext_resource type="Texture2D" uid="uid://duicnxdl0imxp" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_09.png" id="10_3a3dr"]
+[ext_resource type="Texture2D" uid="uid://beunmt07wa0u7" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_10.png" id="11_fjfb1"]
+[ext_resource type="Texture2D" uid="uid://c35ltu7323dtg" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_11.png" id="12_xha3i"]
+[ext_resource type="Texture2D" uid="uid://023k04lif32y" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_12.png" id="13_ltx5s"]
+[ext_resource type="Texture2D" uid="uid://din4duwtyl7iv" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_13.png" id="14_q0ktd"]
+[ext_resource type="Texture2D" uid="uid://c7p7xo4x1tiax" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_14.png" id="15_rqeil"]
+[ext_resource type="Texture2D" uid="uid://dm6jjlfkx21r6" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_15.png" id="16_ku6hp"]
+[ext_resource type="Texture2D" uid="uid://bvgihsk4m8678" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_16.png" id="17_alsto"]
+[ext_resource type="Texture2D" uid="uid://bqbmwo8ij3pef" path="res://assets/Unit/Player/bubing/hero_bubing-Attack1_17.png" id="18_v1f0a"]
+[ext_resource type="Texture2D" uid="uid://cg6ttcv58hes4" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_0.png" id="19_vh4lq"]
+[ext_resource type="Texture2D" uid="uid://bwguukl0b4ixd" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_1.png" id="20_pr5su"]
+[ext_resource type="Texture2D" uid="uid://crmhtkdg4cj06" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_2.png" id="21_apx6x"]
+[ext_resource type="Texture2D" uid="uid://cgid777vb8nhk" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_3.png" id="22_evhrg"]
+[ext_resource type="Texture2D" uid="uid://d2jdr8o0v4dg4" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_4.png" id="23_nggka"]
+[ext_resource type="Texture2D" uid="uid://pib8oskpptid" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_5.png" id="24_6q77p"]
+[ext_resource type="Texture2D" uid="uid://chpkbsdci1qf8" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_6.png" id="25_gktqa"]
+[ext_resource type="Texture2D" uid="uid://cayykd6n3uksn" path="res://assets/Unit/Player/bubing/hero_bubing-BeAttacked_7.png" id="26_qhc6m"]
+[ext_resource type="Texture2D" uid="uid://b5c28low8rnc6" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_00.png" id="27_e71sp"]
+[ext_resource type="Texture2D" uid="uid://c1uv5ynyfyglm" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_01.png" id="28_xhnol"]
+[ext_resource type="Texture2D" uid="uid://806lvyrht8nj" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_02.png" id="29_tt33i"]
+[ext_resource type="Texture2D" uid="uid://cndj2v6gt60dq" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_03.png" id="30_x38mc"]
+[ext_resource type="Texture2D" uid="uid://3wvgnbbq70np" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_04.png" id="31_8d2vg"]
+[ext_resource type="Texture2D" uid="uid://d02fd66axsb3b" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_05.png" id="32_ge6f1"]
+[ext_resource type="Texture2D" uid="uid://bql8y0qiw6r64" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_06.png" id="33_x5d0i"]
+[ext_resource type="Texture2D" uid="uid://bkjk6e13xjip3" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_07.png" id="34_yvlaq"]
+[ext_resource type="Texture2D" uid="uid://bdvuqyek5wyb1" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_08.png" id="35_rmo42"]
+[ext_resource type="Texture2D" uid="uid://c6j8gjk0tvb14" path="res://assets/Unit/Player/bubing/hero_bubing-Celebrate_09.png" id="36_q8ohq"]
+[ext_resource type="Texture2D" uid="uid://dhvb0ijrgkwl7" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_00.png" id="37_5l3tc"]
+[ext_resource type="Texture2D" uid="uid://bmflk3b4eg24l" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_01.png" id="38_xcenj"]
+[ext_resource type="Texture2D" uid="uid://bnnphwgmmwct4" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_02.png" id="39_6rxni"]
+[ext_resource type="Texture2D" uid="uid://cmict40gwuyfb" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_03.png" id="40_5b6n3"]
+[ext_resource type="Texture2D" uid="uid://d0ebr16eix0ab" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_04.png" id="41_ldcxt"]
+[ext_resource type="Texture2D" uid="uid://boe7e7w0xbh48" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_05.png" id="42_gyuee"]
+[ext_resource type="Texture2D" uid="uid://bsjhl0v4ur4v4" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_06.png" id="43_ck7xc"]
+[ext_resource type="Texture2D" uid="uid://bp6uuj2lgen2l" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_07.png" id="44_el2lk"]
+[ext_resource type="Texture2D" uid="uid://buthnb05ls27e" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_08.png" id="45_gigei"]
+[ext_resource type="Texture2D" uid="uid://dvtjmlqdg1ewh" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_09.png" id="46_kp2yh"]
+[ext_resource type="Texture2D" uid="uid://ckqifpsvm3jw4" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_10.png" id="47_ancj4"]
+[ext_resource type="Texture2D" uid="uid://f8x651xygckp" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_11.png" id="48_elv0c"]
+[ext_resource type="Texture2D" uid="uid://dy8usfpvkamk8" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_12.png" id="49_0dojw"]
+[ext_resource type="Texture2D" uid="uid://hk7x3aep8pjm" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_13.png" id="50_pbip6"]
+[ext_resource type="Texture2D" uid="uid://c06v73dvumvly" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_14.png" id="51_rtucl"]
+[ext_resource type="Texture2D" uid="uid://dguj8ua7b0oy5" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_15.png" id="52_hdhns"]
+[ext_resource type="Texture2D" uid="uid://xjudoblg344x" path="res://assets/Unit/Player/bubing/hero_bubing-Deaded_16.png" id="53_iscmj"]
+[ext_resource type="Texture2D" uid="uid://d4c61dvplnwjx" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_00.png" id="54_p0d1u"]
+[ext_resource type="Texture2D" uid="uid://b8dl8i44j2nfi" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_01.png" id="55_onjv6"]
+[ext_resource type="Texture2D" uid="uid://cmbn1yexhqd2o" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_02.png" id="56_7qe1k"]
+[ext_resource type="Texture2D" uid="uid://b5ikruxwhj7qs" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_03.png" id="57_g1cek"]
+[ext_resource type="Texture2D" uid="uid://ckdreg7pl1r7h" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_04.png" id="58_r1w8y"]
+[ext_resource type="Texture2D" uid="uid://cpeae565nyysk" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_05.png" id="59_y5pti"]
+[ext_resource type="Texture2D" uid="uid://bx4piipa0sidf" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_06.png" id="60_4duwq"]
+[ext_resource type="Texture2D" uid="uid://dyl2sqxapp2ad" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_07.png" id="61_aj00y"]
+[ext_resource type="Texture2D" uid="uid://den74p82rm5kr" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_08.png" id="62_1qb3a"]
+[ext_resource type="Texture2D" uid="uid://dhu576l4vuhhu" path="res://assets/Unit/Player/bubing/hero_bubing-Idle_09.png" id="63_8hx53"]
+[ext_resource type="Texture2D" uid="uid://df1umgeh7684h" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_00.png" id="64_ddgiw"]
+[ext_resource type="Texture2D" uid="uid://d1c22e3kgvpjm" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_01.png" id="65_edrov"]
+[ext_resource type="Texture2D" uid="uid://c6rgfe2pn1pos" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_02.png" id="66_wjc63"]
+[ext_resource type="Texture2D" uid="uid://byjfv5jixh0t6" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_03.png" id="67_i1hyv"]
+[ext_resource type="Texture2D" uid="uid://r06akr0jvhmk" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_04.png" id="68_bio1i"]
+[ext_resource type="Texture2D" uid="uid://sbmb8m10mole" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_05.png" id="69_6id2x"]
+[ext_resource type="Texture2D" uid="uid://vv1uefcbsepi" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_06.png" id="70_amruj"]
+[ext_resource type="Texture2D" uid="uid://ctadelh8dheem" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_07.png" id="71_lge4n"]
+[ext_resource type="Texture2D" uid="uid://ndnxbem1bckc" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_08.png" id="72_fho5u"]
+[ext_resource type="Texture2D" uid="uid://c20nor2ah4gn5" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_09.png" id="73_ud1i2"]
+[ext_resource type="Texture2D" uid="uid://dj0jlx1olkutm" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_10.png" id="74_7xxtj"]
+[ext_resource type="Texture2D" uid="uid://c3fiul70kxm6v" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_11.png" id="75_dwdom"]
+[ext_resource type="Texture2D" uid="uid://bn4ft3kcaavgf" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_12.png" id="76_vuu0x"]
+[ext_resource type="Texture2D" uid="uid://dq26iy2le7y3p" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_13.png" id="77_6b71x"]
+[ext_resource type="Texture2D" uid="uid://bwjhnjwlsfbk" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_14.png" id="78_2pbe3"]
+[ext_resource type="Texture2D" uid="uid://cbikiu2wvphvk" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_15.png" id="79_l4dc6"]
+[ext_resource type="Texture2D" uid="uid://wakqr6qv5oqa" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_16.png" id="80_spu5s"]
+[ext_resource type="Texture2D" uid="uid://cvqn8dkblrtcw" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_17.png" id="81_qbv01"]
+[ext_resource type="Texture2D" uid="uid://b6jbly8xjj2wc" path="res://assets/Unit/Player/bubing/hero_bubing-Individuality_18.png" id="82_nj4q2"]
+[ext_resource type="Texture2D" uid="uid://cvhi8ths2qsfm" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_0.png" id="83_2647w"]
+[ext_resource type="Texture2D" uid="uid://sww5likvewrr" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_1.png" id="84_dqjty"]
+[ext_resource type="Texture2D" uid="uid://yuryva02wou8" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_2.png" id="85_fcch5"]
+[ext_resource type="Texture2D" uid="uid://noq3xwc0ihrs" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_3.png" id="86_qls6m"]
+[ext_resource type="Texture2D" uid="uid://cwcrx1qkl4c0q" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_4.png" id="87_218no"]
+[ext_resource type="Texture2D" uid="uid://b43oef8726x3p" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_5.png" id="88_1cq7k"]
+[ext_resource type="Texture2D" uid="uid://dshfepnvqjjxm" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_6.png" id="89_yhsm3"]
+[ext_resource type="Texture2D" uid="uid://3u1dkfo5epq2" path="res://assets/Unit/Player/bubing/hero_bubing-Movement_7.png" id="90_ulrbn"]
+[ext_resource type="Texture2D" uid="uid://o8rm60agydgp" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_00.png" id="91_os002"]
+[ext_resource type="Texture2D" uid="uid://dv057ni44e3ln" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_01.png" id="92_1d0va"]
+[ext_resource type="Texture2D" uid="uid://udgisfl35f0q" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_02.png" id="93_5ffmd"]
+[ext_resource type="Texture2D" uid="uid://dmb542kla0evj" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_03.png" id="94_sts1h"]
+[ext_resource type="Texture2D" uid="uid://bi0pg5bownoj8" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_04.png" id="95_xrbxk"]
+[ext_resource type="Texture2D" uid="uid://ba7dfmh3ssnja" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_05.png" id="96_b72ak"]
+[ext_resource type="Texture2D" uid="uid://bbsys6apnnsli" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_06.png" id="97_k2ob1"]
+[ext_resource type="Texture2D" uid="uid://8j0rc5fybw2p" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_07.png" id="98_pna7y"]
+[ext_resource type="Texture2D" uid="uid://ntd2gs70jj41" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_08.png" id="99_tm1l3"]
+[ext_resource type="Texture2D" uid="uid://byqb2ybgk6wmk" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_09.png" id="100_yfyub"]
+[ext_resource type="Texture2D" uid="uid://4y0f5hg53vm4" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_10.png" id="101_um0rm"]
+[ext_resource type="Texture2D" uid="uid://bp2nagdl1wfws" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_11.png" id="102_qwml5"]
+[ext_resource type="Texture2D" uid="uid://blnec4g2ff6ja" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_12.png" id="103_kiqv5"]
+[ext_resource type="Texture2D" uid="uid://bmsk02bghjqf7" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_13.png" id="104_5lvuk"]
+[ext_resource type="Texture2D" uid="uid://47yp620yimuh" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_14.png" id="105_ikgm1"]
+[ext_resource type="Texture2D" uid="uid://cssm53esbq3lq" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_15.png" id="106_w6mtj"]
+[ext_resource type="Texture2D" uid="uid://ceke5y45027bm" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_16.png" id="107_pdhvj"]
+[ext_resource type="Texture2D" uid="uid://b6n2tbgpl1433" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_17.png" id="108_2g2q6"]
+[ext_resource type="Texture2D" uid="uid://dsjjirj1asihl" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_18.png" id="109_2jghj"]
+[ext_resource type="Texture2D" uid="uid://dwoenwmxgjaow" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_19.png" id="110_euj64"]
+[ext_resource type="Texture2D" uid="uid://bsonlqac2urgr" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_20.png" id="111_c1de8"]
+[ext_resource type="Texture2D" uid="uid://b8wcv6gaorl7r" path="res://assets/Unit/Player/bubing/hero_bubing-Skill_21.png" id="112_r36nt"]
 
 [resource]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("2_xha3i")
+"texture": ExtResource("1_8axht")
 }, {
 "duration": 1.0,
-"texture": ExtResource("3_ltx5s")
+"texture": ExtResource("2_swpju")
 }, {
 "duration": 1.0,
-"texture": ExtResource("5_rqeil")
+"texture": ExtResource("3_dh7kj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("7_alsto")
+"texture": ExtResource("4_l53bs")
 }, {
 "duration": 1.0,
-"texture": ExtResource("9_vh4lq")
+"texture": ExtResource("5_tfgdm")
 }, {
 "duration": 1.0,
-"texture": ExtResource("11_apx6x")
+"texture": ExtResource("6_1hjk2")
 }, {
 "duration": 1.0,
-"texture": ExtResource("13_nggka")
+"texture": ExtResource("7_511dd")
 }, {
 "duration": 1.0,
-"texture": ExtResource("15_gktqa")
+"texture": ExtResource("8_2dncs")
 }, {
 "duration": 1.0,
-"texture": ExtResource("17_e71sp")
+"texture": ExtResource("9_5qbs8")
 }, {
 "duration": 1.0,
-"texture": ExtResource("19_tt33i")
+"texture": ExtResource("10_3a3dr")
 }, {
 "duration": 1.0,
-"texture": ExtResource("21_8d2vg")
+"texture": ExtResource("11_fjfb1")
 }, {
 "duration": 1.0,
-"texture": ExtResource("22_ge6f1")
+"texture": ExtResource("12_xha3i")
 }, {
 "duration": 1.0,
-"texture": ExtResource("23_x5d0i")
+"texture": ExtResource("13_ltx5s")
 }, {
 "duration": 1.0,
-"texture": ExtResource("24_yvlaq")
+"texture": ExtResource("14_q0ktd")
 }, {
 "duration": 1.0,
-"texture": ExtResource("25_rmo42")
+"texture": ExtResource("15_rqeil")
 }, {
 "duration": 1.0,
-"texture": ExtResource("26_q8ohq")
+"texture": ExtResource("16_ku6hp")
 }, {
 "duration": 1.0,
-"texture": ExtResource("27_5l3tc")
+"texture": ExtResource("17_alsto")
 }, {
 "duration": 1.0,
-"texture": ExtResource("28_xcenj")
+"texture": ExtResource("18_v1f0a")
 }],
 "loop": false,
 "name": &"attack1",
@@ -176,28 +176,28 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("29_6rxni")
+"texture": ExtResource("19_vh4lq")
 }, {
 "duration": 1.0,
-"texture": ExtResource("30_5b6n3")
+"texture": ExtResource("20_pr5su")
 }, {
 "duration": 1.0,
-"texture": ExtResource("31_ldcxt")
+"texture": ExtResource("21_apx6x")
 }, {
 "duration": 1.0,
-"texture": ExtResource("32_gyuee")
+"texture": ExtResource("22_evhrg")
 }, {
 "duration": 1.0,
-"texture": ExtResource("33_ck7xc")
+"texture": ExtResource("23_nggka")
 }, {
 "duration": 1.0,
-"texture": ExtResource("34_el2lk")
+"texture": ExtResource("24_6q77p")
 }, {
 "duration": 1.0,
-"texture": ExtResource("35_gigei")
+"texture": ExtResource("25_gktqa")
 }, {
 "duration": 1.0,
-"texture": ExtResource("36_kp2yh")
+"texture": ExtResource("26_qhc6m")
 }],
 "loop": false,
 "name": &"beattacked",
@@ -205,34 +205,34 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("37_ancj4")
+"texture": ExtResource("27_e71sp")
 }, {
 "duration": 1.0,
-"texture": ExtResource("38_elv0c")
+"texture": ExtResource("28_xhnol")
 }, {
 "duration": 1.0,
-"texture": ExtResource("39_0dojw")
+"texture": ExtResource("29_tt33i")
 }, {
 "duration": 1.0,
-"texture": ExtResource("40_pbip6")
+"texture": ExtResource("30_x38mc")
 }, {
 "duration": 1.0,
-"texture": ExtResource("41_rtucl")
+"texture": ExtResource("31_8d2vg")
 }, {
 "duration": 1.0,
-"texture": ExtResource("42_hdhns")
+"texture": ExtResource("32_ge6f1")
 }, {
 "duration": 1.0,
-"texture": ExtResource("43_iscmj")
+"texture": ExtResource("33_x5d0i")
 }, {
 "duration": 1.0,
-"texture": ExtResource("44_p0d1u")
+"texture": ExtResource("34_yvlaq")
 }, {
 "duration": 1.0,
-"texture": ExtResource("45_onjv6")
+"texture": ExtResource("35_rmo42")
 }, {
 "duration": 1.0,
-"texture": ExtResource("46_7qe1k")
+"texture": ExtResource("36_q8ohq")
 }],
 "loop": false,
 "name": &"celebrate",
@@ -240,55 +240,55 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("47_g1cek")
+"texture": ExtResource("37_5l3tc")
 }, {
 "duration": 1.0,
-"texture": ExtResource("48_r1w8y")
+"texture": ExtResource("38_xcenj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("49_y5pti")
+"texture": ExtResource("39_6rxni")
 }, {
 "duration": 1.0,
-"texture": ExtResource("50_4duwq")
+"texture": ExtResource("40_5b6n3")
 }, {
 "duration": 1.0,
-"texture": ExtResource("51_aj00y")
+"texture": ExtResource("41_ldcxt")
 }, {
 "duration": 1.0,
-"texture": ExtResource("52_1qb3a")
+"texture": ExtResource("42_gyuee")
 }, {
 "duration": 1.0,
-"texture": ExtResource("53_8hx53")
+"texture": ExtResource("43_ck7xc")
 }, {
 "duration": 1.0,
-"texture": ExtResource("54_ddgiw")
+"texture": ExtResource("44_el2lk")
 }, {
 "duration": 1.0,
-"texture": ExtResource("55_edrov")
+"texture": ExtResource("45_gigei")
 }, {
 "duration": 1.0,
-"texture": ExtResource("56_wjc63")
+"texture": ExtResource("46_kp2yh")
 }, {
 "duration": 1.0,
-"texture": ExtResource("57_i1hyv")
+"texture": ExtResource("47_ancj4")
 }, {
 "duration": 1.0,
-"texture": ExtResource("58_bio1i")
+"texture": ExtResource("48_elv0c")
 }, {
 "duration": 1.0,
-"texture": ExtResource("59_6id2x")
+"texture": ExtResource("49_0dojw")
 }, {
 "duration": 1.0,
-"texture": ExtResource("60_amruj")
+"texture": ExtResource("50_pbip6")
 }, {
 "duration": 1.0,
-"texture": ExtResource("61_lge4n")
+"texture": ExtResource("51_rtucl")
 }, {
 "duration": 1.0,
-"texture": ExtResource("62_fho5u")
+"texture": ExtResource("52_hdhns")
 }, {
 "duration": 1.0,
-"texture": ExtResource("63_ud1i2")
+"texture": ExtResource("53_iscmj")
 }],
 "loop": false,
 "name": &"dead",
@@ -296,34 +296,34 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("64_7xxtj")
+"texture": ExtResource("54_p0d1u")
 }, {
 "duration": 1.0,
-"texture": ExtResource("65_dwdom")
+"texture": ExtResource("55_onjv6")
 }, {
 "duration": 1.0,
-"texture": ExtResource("66_vuu0x")
+"texture": ExtResource("56_7qe1k")
 }, {
 "duration": 1.0,
-"texture": ExtResource("67_6b71x")
+"texture": ExtResource("57_g1cek")
 }, {
 "duration": 1.0,
-"texture": ExtResource("68_2pbe3")
+"texture": ExtResource("58_r1w8y")
 }, {
 "duration": 1.0,
-"texture": ExtResource("69_l4dc6")
+"texture": ExtResource("59_y5pti")
 }, {
 "duration": 1.0,
-"texture": ExtResource("70_spu5s")
+"texture": ExtResource("60_4duwq")
 }, {
 "duration": 1.0,
-"texture": ExtResource("71_qbv01")
+"texture": ExtResource("61_aj00y")
 }, {
 "duration": 1.0,
-"texture": ExtResource("72_nj4q2")
+"texture": ExtResource("62_1qb3a")
 }, {
 "duration": 1.0,
-"texture": ExtResource("73_2647w")
+"texture": ExtResource("63_8hx53")
 }],
 "loop": true,
 "name": &"idle",
@@ -331,61 +331,61 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("74_dqjty")
+"texture": ExtResource("64_ddgiw")
 }, {
 "duration": 1.0,
-"texture": ExtResource("75_fcch5")
+"texture": ExtResource("65_edrov")
 }, {
 "duration": 1.0,
-"texture": ExtResource("76_qls6m")
+"texture": ExtResource("66_wjc63")
 }, {
 "duration": 1.0,
-"texture": ExtResource("77_218no")
+"texture": ExtResource("67_i1hyv")
 }, {
 "duration": 1.0,
-"texture": ExtResource("78_1cq7k")
+"texture": ExtResource("68_bio1i")
 }, {
 "duration": 1.0,
-"texture": ExtResource("79_yhsm3")
+"texture": ExtResource("69_6id2x")
 }, {
 "duration": 1.0,
-"texture": ExtResource("80_ulrbn")
+"texture": ExtResource("70_amruj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("81_os002")
+"texture": ExtResource("71_lge4n")
 }, {
 "duration": 1.0,
-"texture": ExtResource("82_1d0va")
+"texture": ExtResource("72_fho5u")
 }, {
 "duration": 1.0,
-"texture": ExtResource("83_5ffmd")
+"texture": ExtResource("73_ud1i2")
 }, {
 "duration": 1.0,
-"texture": ExtResource("84_sts1h")
+"texture": ExtResource("74_7xxtj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("85_xrbxk")
+"texture": ExtResource("75_dwdom")
 }, {
 "duration": 1.0,
-"texture": ExtResource("86_b72ak")
+"texture": ExtResource("76_vuu0x")
 }, {
 "duration": 1.0,
-"texture": ExtResource("87_k2ob1")
+"texture": ExtResource("77_6b71x")
 }, {
 "duration": 1.0,
-"texture": ExtResource("88_pna7y")
+"texture": ExtResource("78_2pbe3")
 }, {
 "duration": 1.0,
-"texture": ExtResource("89_tm1l3")
+"texture": ExtResource("79_l4dc6")
 }, {
 "duration": 1.0,
-"texture": ExtResource("90_yfyub")
+"texture": ExtResource("80_spu5s")
 }, {
 "duration": 1.0,
-"texture": ExtResource("91_um0rm")
+"texture": ExtResource("81_qbv01")
 }, {
 "duration": 1.0,
-"texture": ExtResource("92_qwml5")
+"texture": ExtResource("82_nj4q2")
 }],
 "loop": false,
 "name": &"individuality",
@@ -393,28 +393,28 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("93_kiqv5")
+"texture": ExtResource("83_2647w")
 }, {
 "duration": 1.0,
-"texture": ExtResource("94_5lvuk")
+"texture": ExtResource("84_dqjty")
 }, {
 "duration": 1.0,
-"texture": ExtResource("95_ikgm1")
+"texture": ExtResource("85_fcch5")
 }, {
 "duration": 1.0,
-"texture": ExtResource("96_w6mtj")
+"texture": ExtResource("86_qls6m")
 }, {
 "duration": 1.0,
-"texture": ExtResource("97_pdhvj")
+"texture": ExtResource("87_218no")
 }, {
 "duration": 1.0,
-"texture": ExtResource("98_2g2q6")
+"texture": ExtResource("88_1cq7k")
 }, {
 "duration": 1.0,
-"texture": ExtResource("99_2jghj")
+"texture": ExtResource("89_yhsm3")
 }, {
 "duration": 1.0,
-"texture": ExtResource("100_euj64")
+"texture": ExtResource("90_ulrbn")
 }],
 "loop": true,
 "name": &"run",
@@ -422,70 +422,70 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("101_c1de8")
+"texture": ExtResource("91_os002")
 }, {
 "duration": 1.0,
-"texture": ExtResource("102_r36nt")
+"texture": ExtResource("92_1d0va")
 }, {
 "duration": 1.0,
-"texture": ExtResource("103_ebxp3")
+"texture": ExtResource("93_5ffmd")
 }, {
 "duration": 1.0,
-"texture": ExtResource("104_x07c8")
+"texture": ExtResource("94_sts1h")
 }, {
 "duration": 1.0,
-"texture": ExtResource("105_fepgx")
+"texture": ExtResource("95_xrbxk")
 }, {
 "duration": 1.0,
-"texture": ExtResource("106_gewam")
+"texture": ExtResource("96_b72ak")
 }, {
 "duration": 1.0,
-"texture": ExtResource("107_bps80")
+"texture": ExtResource("97_k2ob1")
 }, {
 "duration": 1.0,
-"texture": ExtResource("108_sxeje")
+"texture": ExtResource("98_pna7y")
 }, {
 "duration": 1.0,
-"texture": ExtResource("109_v4556")
+"texture": ExtResource("99_tm1l3")
 }, {
 "duration": 1.0,
-"texture": ExtResource("110_djxkn")
+"texture": ExtResource("100_yfyub")
 }, {
 "duration": 1.0,
-"texture": ExtResource("111_n3myd")
+"texture": ExtResource("101_um0rm")
 }, {
 "duration": 1.0,
-"texture": ExtResource("112_odbf4")
+"texture": ExtResource("102_qwml5")
 }, {
 "duration": 1.0,
-"texture": ExtResource("113_ishd8")
+"texture": ExtResource("103_kiqv5")
 }, {
 "duration": 1.0,
-"texture": ExtResource("114_qdwi6")
+"texture": ExtResource("104_5lvuk")
 }, {
 "duration": 1.0,
-"texture": ExtResource("115_n1q40")
+"texture": ExtResource("105_ikgm1")
 }, {
 "duration": 1.0,
-"texture": ExtResource("116_we61y")
+"texture": ExtResource("106_w6mtj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("117_aqqhh")
+"texture": ExtResource("107_pdhvj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("118_qugv1")
+"texture": ExtResource("108_2g2q6")
 }, {
 "duration": 1.0,
-"texture": ExtResource("119_no4ee")
+"texture": ExtResource("109_2jghj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("120_qtr46")
+"texture": ExtResource("110_euj64")
 }, {
 "duration": 1.0,
-"texture": ExtResource("121_732rh")
+"texture": ExtResource("111_c1de8")
 }, {
 "duration": 1.0,
-"texture": ExtResource("122_lnopf")
+"texture": ExtResource("112_r36nt")
 }],
 "loop": false,
 "name": &"skill",

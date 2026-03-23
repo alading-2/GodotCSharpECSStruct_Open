@@ -29,6 +29,9 @@ public struct ObjectPoolNames
 
     /// <summary> 特效实体对象池 </summary>
     public const string EffectPool = "EffectPool";
+
+    /// <summary> 连线闪电特效池 </summary>
+    public const string LightningLinePool = "LightningLinePool";
 }
 
 /// <summary>
@@ -128,6 +131,18 @@ public partial class ObjectPoolInit
                 InitialSize = 100,
                 MaxSize = 500,
                 ParentPath = "UI/UI/DamageNumberUI"
+            }
+        );
+
+        // 初始化 LightningLinePool (连线闪电特效对象池)
+        new ObjectPool<LightningLineEffect>(
+            () => (LightningLineEffect)ResourceManagement.Load<PackedScene>(ResourcePaths.Entity_Effect_LightningLineEffect_LightningLineEffect, ResourceCategory.Entity).Instantiate(),
+            new ObjectPoolConfig
+            {
+                Name = ObjectPoolNames.LightningLinePool,
+                InitialSize = 10,
+                MaxSize = 50,
+                ParentPath = "Ability/LightningLineEffect"
             }
         );
 

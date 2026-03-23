@@ -3,12 +3,12 @@ extends ColorRect
 
 const TablesPluginSettingsClass := preload("res://addons/resources_spreadsheet_view/settings_grid.gd")
 
-@onready var editor_view : Control = $"../../../../../.."
-@onready var grid_scroll : ScrollContainer = $"../../Scroll"
-@onready var grid : Container = $"../../Scroll/MarginContainer/TableGrid"
+@onready var editor_view: Control = $"../../../../../.."
+@onready var grid_scroll: ScrollContainer = $"../../Scroll"
+@onready var grid: Container = $"../../Scroll/MarginContainer/TableGrid"
 
-var children : Array[Control] = []
-var children_copy_cells : Array[Control] = []
+var children: Array[Control] = []
+var children_copy_cells: Array[Control] = []
 
 
 func _ready() -> void:
@@ -21,7 +21,7 @@ func _on_grid_updated() -> void:
 		hide()
 		return
 
-	visible = ProjectSettings.get_setting(TablesPluginSettingsClass.PREFIX + "freeze_first_column")
+	hide()
 	for x in get_children():
 		x.queue_free()
 
@@ -30,6 +30,7 @@ func _on_grid_updated() -> void:
 	size.x = 0.0
 
 	await get_tree().process_frame
+	await get_tree().process_frame
 
 	var first_visible_column := 0
 	for i in editor_view.columns.size():
@@ -37,7 +38,7 @@ func _on_grid_updated() -> void:
 			first_visible_column = i
 			break
 
-	var total_column_count : int = editor_view.columns.size()
+	var total_column_count: int = editor_view.columns.size()
 	children.resize(grid.get_child_count() / total_column_count)
 	children_copy_cells.resize(children.size())
 	for i in children.size():
@@ -50,10 +51,11 @@ func _on_grid_updated() -> void:
 	size.y = grid.size.y
 	color = get_theme_color(&"background", &"Editor")
 	color.a *= 0.9
+	visible = ProjectSettings.get_setting(TablesPluginSettingsClass.PREFIX + "freeze_first_column")
 	_on_scroll_updated(0.0)
 
 
-func _on_scroll_updated(_new_value : float):
+func _on_scroll_updated(_new_value: float):
 	position = Vector2(0.0, -grid_scroll.scroll_vertical)
 	for i in children.size():
 		children[i].size = children_copy_cells[i].size

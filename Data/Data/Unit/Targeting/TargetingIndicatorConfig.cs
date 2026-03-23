@@ -13,13 +13,13 @@ namespace Slime.Config.Units
         /// <summary>
         /// 是否显示血条
         /// </summary>
-        [DataKey(DataKey.IsShowHealthBar)]
+        [DataKey(nameof(DataKey.IsShowHealthBar))]
         [Export] public bool IsShowHealthBar { get; set; } = false;
 
         /// <summary>
         /// 是否无敌
         /// </summary>
-        [DataKey(DataKey.IsInvulnerable)]
+        [DataKey(nameof(DataKey.IsInvulnerable))]
         [Export] public bool IsInvulnerable { get; set; } = true;
     }
 }

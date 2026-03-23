@@ -44,32 +44,35 @@ public class SlamExecutor : IAbilityExecutor
         // 1. 获取技能参数
         var abilityRange = ability.Data.Get<float>(DataKey.AbilityCastRange);      // 选点范围（角色周围圆环半径）
         var damageRadius = ability.Data.Get<float>(DataKey.AbilityEffectRadius);   // 伤害范围（圆形半径）
-        var baseDamage = ability.Data.Get<float>(DataKey.AbilityDamage);
+        var baseDamage = ability.Data.Get<float>(DataKey.BaseSkillDamage);
         var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
 
         // 2. 在角色周围随机选点
-        // 使用 Ring 几何（内径=0，外径=selectRadius）获取随机位置
-        var randomPoint = GeometryCalculator.GetRandomPointInRing(
-            casterNode.GlobalPosition,
-            innerRadius: 0f,
-            outerRadius: abilityRange
-        );
+        // 使用 PositionTargetSelector 和 Circle 几何获取随机位置
+        var pointQuery = new TargetSelectorQuery
+        {
+            Geometry = GeometryType.Circle, // 形状：圆形
+            Origin = casterNode.GlobalPosition, // 位置：施法者位置
+            Range = abilityRange, // 半径：选点半径
+            MaxTargets = 1 // 最大目标数：1
+        };
+        var randomPoint = PositionTargetSelector.Query(pointQuery)[0];
 
         // 3. 在随机点位置查询敌人目标
         var query = new TargetSelectorQuery
         {
-            Geometry = GeometryType.Circle,
-            Origin = randomPoint,
-            Range = damageRadius,
-            CenterEntity = caster,
-            TeamFilter = AbilityTargetTeamFilter.Enemy,
-            Sorting = AbilityTargetSorting.Nearest,
-            MaxTargets = maxTargets
+            Geometry = GeometryType.Circle, // 形状：圆形
+            Origin = randomPoint, // 位置：随机选点
+            Range = damageRadius, // 半径：伤害半径
+            CenterEntity = caster, // 中心实体：施法者
+            TeamFilter = AbilityTargetTeamFilter.Enemy, // 阵营：敌人
+            Sorting = AbilityTargetSorting.HighestThreat, // 排序：最近
+            MaxTargets = maxTargets // 最大目标数
         };
         var targets = EntityTargetSelector.Query(query);
 
         // 4. 生成特效（在随机选点位置）
-        var effectScene = ResourceManagement.Load<PackedScene>(ResourcePaths.Asset_Effect_020, ResourceCategory.Asset);
+        var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);
         if (effectScene != null)
         {
             EffectTool.Spawn(randomPoint, new EffectSpawnOptions(
@@ -87,9 +90,7 @@ public class SlamExecutor : IAbilityExecutor
         }
 
         // 6. 计算最终伤害
-        var finalAttack = caster.Data.Get<float>(DataKey.FinalAttack);
-        var finalSkillDamage = caster.Data.Get<float>(DataKey.FinalSkillDamage);
-        var damage = (baseDamage + finalAttack) * (finalSkillDamage / 100f);
+        var damage = caster.Data.Get<float>(DataKey.FinalSkillDamage);
 
         // 7. 对每个目标应用伤害
         int targetsHit = 0;
@@ -102,8 +103,8 @@ public class SlamExecutor : IAbilityExecutor
                     Attacker = casterNode,
                     Victim = unitVictim,
                     Damage = damage,
-                    Type = DamageType.Physical,
-                    Tags = DamageTags.Area | DamageTags.Melee
+                    Type = DamageType.Magical,
+                    Tags = DamageTags.Area | DamageTags.Magical
                 });
                 targetsHit++;
             }

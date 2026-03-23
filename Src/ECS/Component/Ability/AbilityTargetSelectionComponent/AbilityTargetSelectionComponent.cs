@@ -108,7 +108,7 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
                         CenterEntity = context.Caster,
                         TeamFilter = teamFilter,
                         Sorting = sorting,
-                        MaxTargets = maxTargets > 0 ? maxTargets : 1
+                        MaxTargets = maxTargets != 0 ? maxTargets : 1
                     };
 
                     // 调用目标选择器
@@ -141,7 +141,7 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
                         CenterEntity = context.Caster,
                         TeamFilter = teamFilter,
                         Sorting = sorting,
-                        MaxTargets = maxTargets > 0 ? maxTargets : 1
+                        MaxTargets = maxTargets != 0 ? maxTargets : 1
                     });
 
                     // 命中则填充 Entity 目标；未命中则留空，AbilitySystem 会回退到 Point 异步瞄准

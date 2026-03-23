@@ -5,25 +5,25 @@ using System.Linq;
 /// 特效生成参数（统一独立特效和附着特效）
 /// </summary>
 /// <param name="VisualScene">特效视觉场景</param>
-/// <param name="Host">宿主 Entity 节点（非 null 时为附着模式，跟随宿主位置）</param>
 /// <param name="Name">特效名称（用于调试）</param>
-/// <param name="MaxLifeTime">最大生存时间，-1 表示由动画结束控制</param>
-/// <param name="PlayRate">播放倍率</param>
+/// <param name="MaxLifeTime">特效持续时间，-1 表示由动画结束控制</param>
+/// <param name="Host">宿主 Entity 节点（非 null 时为附着模式，跟随宿主位置）</param>
 /// <param name="Scale">特效缩放</param>
+/// <param name="Rotation">旋转角度（弧度）</param>
+/// <param name="PlayRate">播放倍率</param>
 /// <param name="Offset">生成或附着偏移</param>
 /// <param name="IsLooping">是否循环播放</param>
-/// <param name="Rotation">旋转角度（弧度）</param>
 public readonly record struct EffectSpawnOptions(
     PackedScene VisualScene,
-    Node? Host = null,
     string Name = "Effect",
     float MaxLifeTime = -1f,
-    float PlayRate = 1f,
+    Node? Host = null,
     Vector2? Scale = null,
+    float Rotation = 0f,
+    float PlayRate = 1f,
     Vector2? Offset = null,
-    bool IsLooping = false,
-    float Rotation = 0f
-    );
+    bool IsLooping = false
+);
 
 /// <summary>
 /// 特效工具 - 统一的特效生成和销毁入口

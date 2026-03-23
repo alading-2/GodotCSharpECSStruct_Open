@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using Godot;
 
 /// <summary>
@@ -103,47 +104,33 @@ public class Data
     /// <returns>最终计算值</returns>
     public T Get<T>(string key, object? defaultValue = null)
     {
-        // 步骤 1：获取元数据
+        // ── 快速路径：未注册键直接查字典，零约束开销 ──────────────────────
         var meta = DataRegistry.GetMeta(key);
-
-        // 步骤 2：确定默认值（优先级：用户提供 > meta 默认值 > 类型推断）
-        if (defaultValue == null)
+        if (meta == null)
         {
-            if (meta != null)
-            {
-                defaultValue = meta.GetDefaultValue();
-            }
-            else
-            {
-                defaultValue = DataMeta.GetTypeDefaultValue(typeof(T));
-            }
+            object fallback = defaultValue ?? DataMeta.GetTypeDefaultValue(typeof(T));
+            return _data.TryGetValue(key, out var rawValue) && rawValue != null
+                ? (T)ConvertValueBoxed(rawValue, typeof(T), fallback)
+                : (T)fallback;
         }
 
-        // 步骤 3：检查是否为计算数据（Computed Data）
-        // 计算数据是由其他数据派生的，具有最高优先级
-        if (meta != null && meta.IsComputed)
+        // ── 计算键：最高优先级 ────────────────────────────────────────────
+        if (meta.IsComputed)
         {
-            return (T)GetComputedValueBoxed(key, meta, defaultValue, typeof(T));
+            object computedFallback = defaultValue ?? meta.GetDefaultValue();
+            return (T)GetComputedValueBoxed(key, meta, computedFallback, typeof(T));
         }
 
-        // 步骤 4：获取基础值（Base Value）
-        // 如果基础字典中没有该键，直接返回默认值
+        // ── 普通键：查基础值 ──────────────────────────────────────────────
+        object effectiveDefault = defaultValue ?? meta.GetDefaultValue();
         if (!_data.TryGetValue(key, out var baseValue) || baseValue == null)
-        {
-            return (T)defaultValue;
-        }
+            return (T)effectiveDefault;
 
-        // 步骤 5：检查是否支持修改器（Modifiers）
-        // 只有在 DataRegistry 中声明支持修改器的数据才会进入修改器逻辑
-        if (!DataRegistry.SupportModifiers(key))
-        {
-            // 不支持修改器，直接进行类型转换后返回
-            return (T)ConvertValueBoxed(baseValue, typeof(T), defaultValue);
-        }
+        // ── 属性键：有修改器时才进入修改器路径（避免无效进入） ────────────
+        if (meta.SupportModifiers == true && _modifiers.ContainsKey(key))
+            return (T)GetModifiedValueBoxed(key, baseValue, effectiveDefault, typeof(T));
 
-        // 步骤 6：应用修改器并返回最终值
-        // 该方法内部包含缓存逻辑
-        return (T)GetModifiedValueBoxed(key, baseValue, defaultValue, typeof(T));
+        return (T)ConvertValueBoxed(baseValue, typeof(T), effectiveDefault);
     }
 
     /// <summary>
@@ -248,24 +235,27 @@ public class Data
             return;
         }
 
-        if (!_modifiers.ContainsKey(key))
-        {
-            _modifiers[key] = new List<DataModifier>();
-        }
+        if (!_modifiers.TryGetValue(key, out var list))
+            _modifiers[key] = list = new List<DataModifier>();
 
         // 检查 ID 冲突
-        if (_modifiers[key].Any(m => m.Id == modifier.Id))
+        for (int i = 0; i < list.Count; i++)
         {
-            _log.Warn($"ID 为 '{modifier.Id}' 的修改器已存在于 '{key}'，已忽略");
-            return;
+            if (list[i].Id == modifier.Id)
+            {
+                _log.Warn($"ID 为 '{modifier.Id}' 的修改器已存在于 '{key}'，已忽略");
+                return;
+            }
         }
 
-        _modifiers[key].Add(modifier);
-        MarkDirty(key);
+        // 插入时维护 Priority 有序（替代每次 Get 时 OrderBy）
+        int insertIndex = list.BinarySearch(modifier, ModifierPriorityComparer.Instance);
+        if (insertIndex < 0) insertIndex = ~insertIndex;
+        list.Insert(insertIndex, modifier);
 
+        MarkDirty(key);
         _log.Debug($"添加修改器: {modifier.Id} ({modifier.Type} {modifier.Value}) -> {key}");
 
-        // 触发变更事件
         var finalValue = Get<float>(key);
         NotifyChanged(key, null, finalValue);
     }
@@ -439,58 +429,48 @@ public class Data
     }
 
     /// <summary>
-    /// 从 Resource 加载数据到容器
-    /// 自动遍历 Resource 的属性并设置到 Data 中
+    /// 反射属性缓存：Type → (PropertyInfo, key)[]，首次访问时构建，后续复用
+    /// </summary>
+    private static readonly Dictionary<Type, (PropertyInfo prop, string key)[]> _resourcePropCache = new();
+
+    /// <summary>
+    /// 从 Resource 加载数据到容器（反射结果静态缓存，波次刷怪时无额外反射开销）
     /// </summary>
     public void LoadFromResource(Resource resource)
     {
         if (resource == null) return;
 
-        var resourceType = resource.GetType();
-        // 获取所有公共实例属性
-        var properties = resourceType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var type = resource.GetType();
+        if (!_resourcePropCache.TryGetValue(type, out var cached))
+            cached = _resourcePropCache[type] = BuildPropertyCache(type);
 
-        foreach (var prop in properties)
+        foreach (var (prop, key) in cached)
         {
-            // 跳过 Godot 内部属性和 Resource 基类属性
-            var declaringType = prop.DeclaringType;
-            if (declaringType == typeof(Resource) ||
-                declaringType == typeof(Godot.RefCounted) ||
-                declaringType == typeof(Godot.GodotObject))
-                continue;
-
-            if (!prop.CanRead)
-                continue;
-
             try
             {
                 var value = prop.GetValue(resource);
-                // 允许 null 值，但也可能跳过
-                if (value == null) continue;
-
-                string key = prop.Name;
-
-                // 优先使用 [DataKey] 特性映射
-                var attribute = Attribute.GetCustomAttribute(prop, typeof(DataKeyAttribute)) as DataKeyAttribute;
-                if (attribute != null)
-                {
-                    key = attribute.Key;
-                }
-                else
-                {
-                    // 如果没有特性，检查属性名是否是有效的 DataKey
-                    // 如果不是有效 Key 且名字不像自定义属性，可以输出警告
-                    // 这里为了兼容性，暂时不强制报错，只在 Debug 模式提示
-                    // if (!DataRegistry.HasKey(key)) _log.Warn($"属性 {prop.Name} 未映射到已知 DataKey");
-                }
-
-                Set(key, value);
+                if (value != null) Set(key, value);
             }
             catch (Exception ex)
             {
                 _log.Warn($"加载属性 {prop.Name} 失败: {ex.Message}");
             }
         }
+    }
+
+    private static (PropertyInfo, string)[] BuildPropertyCache(Type type)
+    {
+        return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead
+                && p.DeclaringType != typeof(Resource)
+                && p.DeclaringType != typeof(Godot.RefCounted)
+                && p.DeclaringType != typeof(Godot.GodotObject))
+            .Select(p =>
+            {
+                var attr = p.GetCustomAttribute<DataKeyAttribute>();
+                return (p, attr?.Key ?? p.Name);
+            })
+            .ToArray();
     }
 
     /// <summary>
@@ -555,46 +535,47 @@ public class Data
     }
 
     /// <summary>
-    /// 修改器核心算法实现
-    /// 公式：最终值 = (基础值 + Σ加法修正) × Π乘法修正
+    /// 修改器核心算法（无 LINQ，预排序列表直接遍历）
+    /// 公式：step1 = (base + Σ[Additive]) × Π[Multiplicative] + Σ[FinalAdditive]
+    ///       step2 = Override 存在时取最高优先级值
+    ///       step3 = Cap 存在时取 min(step, cap)
+    ///       step4 = Meta.Clamp 约束
     /// </summary>
-    /// <param name="key">数据键</param>
-    /// <param name="baseValue">基础数值</param>
-    /// <returns>应用修改器并经过元数据约束后的 float 值</returns>
     private float CalculateFinalValue(string key, float baseValue)
     {
-        // 如果没有任何修改器，直接返回基础值
-        if (!_modifiers.TryGetValue(key, out var modifiers) || modifiers.Count == 0)
-        {
+        if (!_modifiers.TryGetValue(key, out var list) || list.Count == 0)
             return baseValue;
-        }
 
-        // 按修改器优先级（Priority）从小到大排序，确保计算顺序一致性
-        var sorted = modifiers.OrderBy(m => m.Priority).ToList();
+        float additive = 0f;
+        float multiplicative = 1f;
+        float finalAdditive = 0f;
+        float? overrideValue = null;
+        float? cap = null;
 
-        // 1. 累加所有加法修改器 (ModifierType.Additive)
-        float additiveSum = sorted
-            .Where(m => m.Type == ModifierType.Additive)
-            .Sum(m => m.Value);
-
-        // 2. 累乘所有乘法修改器 (ModifierType.Multiplicative)
-        // 初始值为 1.0f
-        float multiplicativeProduct = sorted
-            .Where(m => m.Type == ModifierType.Multiplicative)
-            .Aggregate(1f, (acc, m) => acc * m.Value);
-
-        // 3. 应用核心公式计算初步结果
-        float result = (baseValue + additiveSum) * multiplicativeProduct;
-
-        // 4. 应用元数据约束 (Meta Clamp)
-        // 确保最终结果在定义的 MinValue 和 MaxValue 范围内
-        var meta = DataRegistry.GetMeta(key);
-        if (meta != null)
+        foreach (var m in list)  // list 在 AddModifier 时已维护 Priority 有序
         {
-            result = (float)meta.Clamp(result);
+            switch (m.Type)
+            {
+                case ModifierType.Additive: additive += m.Value; break;
+                case ModifierType.Multiplicative: multiplicative *= m.Value; break;
+                case ModifierType.FinalAdditive: finalAdditive += m.Value; break;
+                case ModifierType.Override:
+                    if (!overrideValue.HasValue) overrideValue = m.Value;  // 取最高优先级（Priority最小）
+                    break;
+                case ModifierType.Cap:
+                    cap = cap.HasValue ? Math.Min(cap.Value, m.Value) : m.Value;
+                    break;
+            }
         }
 
-        return result;
+        float result = overrideValue.HasValue
+            ? overrideValue.Value
+            : (baseValue + additive) * multiplicative + finalAdditive;
+
+        if (cap.HasValue) result = Math.Min(result, cap.Value);
+
+        var meta = DataRegistry.GetMeta(key);
+        return meta != null ? (float)meta.Clamp(result) : result;
     }
 
     /// <summary>
@@ -628,6 +609,21 @@ public class Data
             // 下游监听示例: 
             // entity.Events.On<GameEventType.Data.PropertyChangedEvent>(GameEventType.Data.PropertyChanged, evt => ...);
             _owner.Events.Emit(GameEventType.Data.PropertyChanged, new GameEventType.Data.PropertyChangedEventData(key, oldValue, newValue));
+        }
+    }
+
+    /// <summary>
+    /// 修改器优先级比较器（Priority 越小越靠前 = 优先级越高）
+    /// </summary>
+    private sealed class ModifierPriorityComparer : IComparer<DataModifier>
+    {
+        public static readonly ModifierPriorityComparer Instance = new();
+        public int Compare(DataModifier? x, DataModifier? y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+            return x.Priority.CompareTo(y.Priority);
         }
     }
 

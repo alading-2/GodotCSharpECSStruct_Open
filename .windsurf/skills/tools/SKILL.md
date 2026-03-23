@@ -79,9 +79,9 @@ API 文档：`Src/Tools/ObjectPool/ObjectPool.md`
 
 ```csharp
 // 查找范围内最近的 5 个敌人
-var targets = TargetSelector.Query(new TargetSelectorQuery
+var targets = EntityTargetSelector.Query(new TargetSelectorQuery
 {
-    Geometry = AbilityTargetGeometry.Circle,
+    Geometry = GeometryType.Circle,
     Origin = caster.GlobalPosition,
     Range = 200f,
     CenterEntity = caster,
@@ -91,25 +91,25 @@ var targets = TargetSelector.Query(new TargetSelectorQuery
 });
 
 // 扇形范围
-var targets = TargetSelector.Query(new TargetSelectorQuery
+var targets = EntityTargetSelector.Query(new TargetSelectorQuery
 {
-    Geometry = AbilityTargetGeometry.Cone,
+    Geometry = GeometryType.Cone,
     Origin = caster.GlobalPosition,
     Range = 150f,
     Angle = 60f,           // 扇形角度（度）
-    Direction = facing,    // 朝向向量
+    Forward = facing,      // 朝向向量
     TeamFilter = AbilityTargetTeamFilter.Enemy,
     MaxTargets = 10
 });
 
 // 矩形范围
-var targets = TargetSelector.Query(new TargetSelectorQuery
+var targets = EntityTargetSelector.Query(new TargetSelectorQuery
 {
-    Geometry = AbilityTargetGeometry.Rectangle,
+    Geometry = GeometryType.Box,
     Origin = caster.GlobalPosition,
-    Range = 200f,          // 长度
+    Length = 200f,         // 长度
     Width = 80f,           // 宽度
-    Direction = facing,
+    Forward = facing,      // 朝向向量
     TeamFilter = AbilityTargetTeamFilter.Enemy
 });
 ```
@@ -141,6 +141,7 @@ var sysScene = ResourceManagement.Load<PackedScene>("DamageService", ResourceCat
 ResourceCategory 分类：`Entity` / `Component` / `PlayerConfig` / `EnemyConfig` / `System` / ...
 
 例外（允许直接路径）：
+
 - `.tscn` 内部资源引用（Godot 自动管理）
 - `[Export]` 导出属性指向的资源
 - `ResourceGenerator` 等底层工具
@@ -152,6 +153,7 @@ API 文档：`Data/ResourceManagement/ResourceManagement.md`
 ---
 
 ## 关键文件路径
+
 - **TimerManager** → `Src/Tools/Timer/TimerManager.cs` | 文档 → `Src/Tools/Timer/TimerManager.md`
 - **GameTimer** → `Src/Tools/Timer/GameTimer.cs`
 - **ObjectPool** → `Src/Tools/ObjectPool/ObjectPool.cs` | 文档 → `Src/Tools/ObjectPool/ObjectPool.md`

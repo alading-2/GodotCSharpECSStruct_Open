@@ -253,21 +253,35 @@ func fill_property_data_many(resources: Array):
 		_selection.initialize_editors(column_values, column_types, column_hints)
 		return
 	
+	# Split by PROPERTY_USAGE_CATEGORY markers and reverse so base class
+	# properties appear before derived class properties.
+	var segments: Array = []
+	var current_segment: Array[Dictionary] = []
+	for prop in first_resource.get_property_list():
+		if prop[&"usage"] & PROPERTY_USAGE_CATEGORY:
+			segments.append(current_segment)
+			current_segment = []
+		else:
+			current_segment.append(prop)
+	segments.append(current_segment)
+	segments.reverse()
+
 	var current_group := ""
 	var i := -1
-	for prop in first_resource.get_property_list():
-		if prop[&"usage"] & PROPERTY_USAGE_GROUP:
-			current_group = prop[&"name"]
-			continue
-		
-		if can_display_property(prop):
-			i += 1
-			columns.append(prop[&"name"])
-			column_types.append(prop[&"type"])
-			column_hints.append(prop[&"hint"])
-			column_hint_strings.append(prop[&"hint_string"].split(","))
-			column_groups.append(current_group)
-			column_values.append(io.get_value(first_resource, columns[i]))
+	for segment in segments:
+		for prop in segment:
+			if prop[&"usage"] & PROPERTY_USAGE_GROUP:
+				current_group = prop[&"name"]
+				continue
+
+			if can_display_property(prop):
+				i += 1
+				columns.append(prop[&"name"])
+				column_types.append(prop[&"type"])
+				column_hints.append(prop[&"hint"])
+				column_hint_strings.append(prop[&"hint_string"].split(","))
+				column_groups.append(current_group)
+				column_values.append(io.get_value(first_resource, columns[i]))
 
 	_selection.initialize_editors(column_values, column_types, column_hints)
 

@@ -256,10 +256,18 @@ public static class AbilitySystem
 
         var ability = context.Ability;
         var abilityName = ability.Data.Get<string>(DataKey.Name) ?? string.Empty;
+        var executorId = ability.Data.Get<string>(DataKey.Id);
 
-        _log.Debug($"[AbilitySystem] 开始执行技能效果: '{abilityName}'");
+        // 如果模板没有填写指定的逻辑 ID，兼容处理，默认取技能自身名字
+        if (string.IsNullOrEmpty(executorId))
+        {
+            _log.Warn($"技能 {abilityName} 没有填写模板技能 ID");
+            executorId = abilityName;
+        }
+
+        _log.Debug($"[AbilitySystem] 开始执行技能效果: '{abilityName}' (使用逻辑模板执行器: '{executorId}')");
         // 调用执行器注册表
-        var result = AbilityExecutorRegistry.Execute(abilityName, context);
+        var result = AbilityExecutorRegistry.Execute(executorId, context);
         _log.Debug($"[AbilitySystem] 技能效果执行完成: '{abilityName}', 命中: {result.TargetsHit}");
 
         // 发送执行完成事件

@@ -6,36 +6,31 @@ namespace Slime.Config.Units
     public partial class PlayerConfig : UnitConfig
     {
         /// <summary>
-        /// 基础最大法力值
+        /// 基础法力值
         /// </summary>
         [ExportGroup("玩家专有")]
-        [DataKey(DataKey.BaseMana)]
-        [Export] public float BaseMana { get; set; } = 50f;
-        /// <summary>
-        /// 当前法力值
-        /// </summary>
-        [DataKey(DataKey.CurrentMana)]
-        [Export] public float CurrentMana { get; set; } = 50f;
+        [DataKey(nameof(DataKey.BaseMana))]
+        [Export] public float BaseMana { get; set; } = (float)DataKey.BaseMana.DefaultValue!;
         /// <summary>
         /// 基础法力回复 (每秒)
         /// </summary>
-        [DataKey(DataKey.BaseManaRegen)]
-        [Export] public float BaseManaRegen { get; set; } = 2f;
+        [DataKey(nameof(DataKey.BaseManaRegen))]
+        [Export] public float BaseManaRegen { get; set; } = (float)DataKey.BaseManaRegen.DefaultValue!;
 
         /// <summary>
         /// 拾取范围
         /// </summary>
-        [DataKey(DataKey.PickupRange)]
-        [Export] public float PickupRange { get; set; } = 100f;
+        [DataKey(nameof(DataKey.PickupRange))]
+        [Export] public float PickupRange { get; set; } = (float)DataKey.PickupRange.DefaultValue!;
         /// <summary>
         /// 基础技能伤害
         /// </summary>
-        [DataKey(DataKey.BaseSkillDamage)]
-        [Export] public float BaseSkillDamage { get; set; } = 100f;
+        [DataKey(nameof(DataKey.BaseSkillDamage))]
+        [Export] public float BaseSkillDamage { get; set; } = (float)DataKey.BaseSkillDamage.DefaultValue!;
         /// <summary>
         /// 冷却缩减 (%)
         /// </summary>
-        [DataKey(DataKey.CooldownReduction)]
-        [Export] public float CooldownReduction { get; set; } = 0f;
+        [DataKey(nameof(DataKey.CooldownReduction))]
+        [Export] public float CooldownReduction { get; set; } = (float)DataKey.CooldownReduction.DefaultValue!;
     }
 }

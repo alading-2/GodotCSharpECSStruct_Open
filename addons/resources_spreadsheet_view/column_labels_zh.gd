@@ -121,7 +121,7 @@ const LABELS: Dictionary = {
 	"abilitymaxtargets": "最大目标数量",
 
 	# AbilityConfig - 伤害效果
-	"abilitydamage": "技能伤害",
+	"BaseSkillDamage": "技能伤害",
 }
 
 

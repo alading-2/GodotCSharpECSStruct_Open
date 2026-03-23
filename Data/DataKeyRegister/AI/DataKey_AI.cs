@@ -37,52 +37,59 @@ public enum AIState
 
 public static partial class DataKey
 {
-    // ========== AI 行为状态 ==========
-
-    /// <summary>AI状态（Idle/Chasing/Attacking/Patrolling/Fleeing）</summary>
-    public const string AIState = "AIState";
-
-    /// <summary>威胁值（仇恨值，用于多目标优先级排序）</summary>
-    public const string Threat = "Threat";
-
-    /// <summary>当前目标节点引用（Node2D，AI运行时临时数据）</summary>
+    // TargetNode 是 Node2D 引用，不走 DataRegistry 类型约束
     public const string TargetNode = "TargetNode";
 
-    /// <summary>AI 是否启用（bool，可用于暂停 AI 逻辑）</summary>
-    public const string AIEnabled = "AIEnabled";
+    // ========== AI 行为状态 ==========
+    // AI状态
+    public static readonly DataMeta AIState = DataRegistry.Register(
+        new DataMeta { Key = nameof(AIState), DisplayName = "AI状态", Description = "Idle/Chasing/Attacking/Patrolling/Fleeing", Category = DataCategory_AI.Basic, Type = typeof(global::AIState), DefaultValue = global::AIState.Idle });
+
+    // 威胁值
+    public static readonly DataMeta Threat = DataRegistry.Register(
+        new DataMeta { Key = nameof(Threat), DisplayName = "威胁值", Description = "仇恨值", Category = DataCategory_AI.Combat, Type = typeof(float), DefaultValue = 0f });
+
+    // AI是否启用
+    public static readonly DataMeta AIEnabled = DataRegistry.Register(
+        new DataMeta { Key = nameof(AIEnabled), DisplayName = "AI是否启用", Description = "可用于暂停 AI 逻辑", Category = DataCategory_AI.Basic, Type = typeof(bool), DefaultValue = false });
 
     // ========== AI 感知参数 ==========
+    // 索敌范围
+    public static readonly DataMeta DetectionRange = DataRegistry.Register(
+        new DataMeta { Key = nameof(DetectionRange), DisplayName = "索敌范围", Description = "圆形检测半径", Category = DataCategory_AI.Combat, Type = typeof(float), DefaultValue = 500f, MinValue = 0 });
 
-    /// <summary>索敌范围（圆形检测半径）</summary>
-    public const string DetectionRange = "DetectionRange";
-
-    /// <summary>丢失目标范围（超出此范围后放弃追逐，通常 > DetectionRange）</summary>
-    public const string LoseTargetRange = "LoseTargetRange";
+    // 丢失目标范围
+    public static readonly DataMeta LoseTargetRange = DataRegistry.Register(
+        new DataMeta { Key = nameof(LoseTargetRange), DisplayName = "丢失目标范围", Description = "超出此范围后放弃追逐", Category = DataCategory_AI.Combat, Type = typeof(float), DefaultValue = 800f, MinValue = 0 });
 
     // ========== AI 移动参数 ==========
+    // 巡逻半径
+    public static readonly DataMeta PatrolRadius = DataRegistry.Register(
+        new DataMeta { Key = nameof(PatrolRadius), DisplayName = "巡逻半径", Description = "以出生点为中心的随机巡逻范围", Category = DataCategory_AI.Basic, Type = typeof(float), DefaultValue = 500f, MinValue = 0 });
 
-    /// <summary>巡逻半径（以出生点为中心的随机巡逻范围）</summary>
-    public const string PatrolRadius = "PatrolRadius";
+    // 巡逻等待时间
+    public static readonly DataMeta PatrolWaitTime = DataRegistry.Register(
+        new DataMeta { Key = nameof(PatrolWaitTime), DisplayName = "巡逻等待时间", Description = "到达巡逻点后等待多久再移动", Category = DataCategory_AI.Basic, Type = typeof(float), DefaultValue = 2f, MinValue = 0 });
 
-    /// <summary>巡逻等待时间（秒，到达巡逻点后等待多久再移动）</summary>
-    public const string PatrolWaitTime = "PatrolWaitTime";
+    // ========== AI 黑板数据 ==========
+    // 出生位置
+    public static readonly DataMeta SpawnPosition = DataRegistry.Register(
+        new DataMeta { Key = nameof(SpawnPosition), DisplayName = "出生位置", Description = "用于巡逻计算基准点", Category = DataCategory_AI.Basic, Type = typeof(Godot.Vector2), DefaultValue = Godot.Vector2.Zero });
 
-    // ========== AI 黑板数据（运行时使用，不建议外部设置） ==========
+    // 巡逻目标点
+    public static readonly DataMeta PatrolTargetPoint = DataRegistry.Register(
+        new DataMeta { Key = nameof(PatrolTargetPoint), DisplayName = "巡逻目标点", Description = "当前巡逻目标点", Category = DataCategory_AI.Basic, Type = typeof(Godot.Vector2), DefaultValue = Godot.Vector2.Zero });
 
-    /// <summary>出生位置（用于巡逻计算基准点）</summary>
-    public const string SpawnPosition = "SpawnPosition";
+    // 巡逻等待完成
+    public static readonly DataMeta PatrolWaitDone = DataRegistry.Register(
+        new DataMeta { Key = nameof(PatrolWaitDone), DisplayName = "巡逻等待完成", Description = "TimerManager回调写入的完成标记", Category = DataCategory_AI.Basic, Type = typeof(bool), DefaultValue = false });
 
-    /// <summary>当前巡逻目标点</summary>
-    public const string PatrolTargetPoint = "PatrolTargetPoint";
+    // ========== AI 移动意图 ==========
+    // AI请求移动方向
+    public static readonly DataMeta AIMoveDirection = DataRegistry.Register(
+        new DataMeta { Key = nameof(AIMoveDirection), DisplayName = "AI请求移动方向", Description = "请求的移动方向（归一化），Zero表示停止", Category = DataCategory_AI.Basic, Type = typeof(Godot.Vector2), DefaultValue = Godot.Vector2.Zero });
 
-    /// <summary>巡逻等待完成标记（bool，由 TimerManager 回调写入）</summary>
-    public const string PatrolWaitDone = "PatrolWaitDone";
-
-    // ========== AI 移动意图（由 AI 行为树写入，EnemyMovementComponent 执行） ==========
-
-    /// <summary>AI 请求的移动方向（Vector2，归一化方向，Vector2.Zero 表示停止移动）</summary>
-    public const string AIMoveDirection = "AIMoveDirection";
-
-    /// <summary>AI 请求的移动速度倍率（float，默认 1.0f，巡逻时可设为 0.5f 等）</summary>
-    public const string AIMoveSpeedMultiplier = "AIMoveSpeedMultiplier";
+    // AI移动速度倍率
+    public static readonly DataMeta AIMoveSpeedMultiplier = DataRegistry.Register(
+        new DataMeta { Key = nameof(AIMoveSpeedMultiplier), DisplayName = "AI移动速度倍率", Description = "请求的移动速度倍率（默认1.0）", Category = DataCategory_AI.Basic, Type = typeof(float), DefaultValue = 1.0f, MinValue = 0 });
 }
