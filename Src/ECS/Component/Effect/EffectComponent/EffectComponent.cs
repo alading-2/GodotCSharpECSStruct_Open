@@ -95,28 +95,12 @@ public partial class EffectComponent : Node, IComponent
         _data = null;
     }
 
-    // ================= Godot 生命周期 =================
-
-    /// <inheritdoc/>
-    public override void _Process(double delta)
-    {
-        if (_hostNode == null) return;
-        if (_entity is not Node2D selfNode) return;
-
-        if (!GodotObject.IsInstanceValid(_hostNode))
-        {
-            _log.Debug("宿主已销毁，特效自动销毁");
-            DestroySelf();
-            return;
-        }
-
-        selfNode.GlobalPosition = _hostNode.GlobalPosition + Offset;
-    }
-
     // ================= 初始化 =================
 
     /// <summary>
-    /// 设置附着模式：查找宿主节点、缓存引用、监听宿主销毁事件
+    /// 设置附着模式：查找宿主节点，写入 MoveMode=AttachToHost + MoveTargetNode，
+    /// 由 EntityMovementComponent 的 AttachToHostStrategy 负责每帧位置跟随。
+    /// EffectComponent 保留宿主销毁监听（生命周期职责）。
     /// </summary>
     private void SetupAttachment()
     {
@@ -141,7 +125,11 @@ public partial class EffectComponent : Node, IComponent
             _hostNode = host2D;
             _log.Debug($"附着到宿主: {hostNode.Name}");
 
-            // 监听宿主销毁事件
+            // 写入移动系统参数，由 AttachToHostStrategy 执行位置跟随
+            _data!.Set(DataKey.MoveTargetNode, host2D);
+            _data.Set(DataKey.MoveMode, MoveMode.AttachToHost);
+
+            // 监听宿主销毁事件（生命周期职责，不属于移动系统）
             GlobalEventBus.Global.On<GameEventType.Global.EntityDestroyedEventData>(
                 GameEventType.Global.EntityDestroyed, OnHostDestroyed);
         }

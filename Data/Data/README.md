@@ -1,52 +1,129 @@
 # Godot Resource 属性映射规则 (DataKey 机制)
 
-本文档说明了如何将 Godot Resource (Config 类) 中的属性正确映射到游戏的 `Data` 容器系统。
+本文档说明 `Data/Data/` 目录下的 **Config / Resource 数据配置类** 如何映射到运行时 `Data` 容器。
 
-## 1. 核心机制：[DataKey] 特性
+## 1. 这个目录放什么
 
-为了保证类型安全并防止拼写错误，我们使用 `[DataKey]` 特性来显式指定属性对应的键名。
+`Data/Data/` 存放的是**可被 `Data.LoadFromResource()` 读取的数据配置类**，例如：
 
-### 推荐写法 (类型安全)
+- `UnitConfig`
+- `PlayerConfig`
+- `EnemyConfig`
+- 技能配置
+- 目标指示器配置
 
-使用 `DataKey` 常量类中的定义。这样如果 `DataKey` 发生变化，编译器会帮你检查错误。
+它们的职责不是实现逻辑，而是声明：
+
+- 这个配置暴露哪些字段
+- 每个字段对应哪个 `DataKey`
+- 每个字段的默认值是多少
+
+## 2. 当前推荐写法
+
+### 2.1 使用 `[DataKey(nameof(DataKey.Xxx))]`
+
+当前 Data 系统中，主流 `DataKey` 已升级为 `static readonly DataMeta`，因此 **Attribute 参数必须使用 `nameof`**，而不是直接传 `DataKey.Xxx`。
 
 ```csharp
-[DataKey(DataKey.BaseHp)]
-[Export] public float BaseHp { get; set; }
+[DataKey(nameof(DataKey.BaseHp))]
+[Export] public float BaseHp { get; set; } = (float)DataKey.BaseHp.DefaultValue!;
 ```
 
-### 兼容写法 (按名映射)
-
-如果不加 `[DataKey]` 特性，系统会 fallback 到使用 **属性名** 作为键名。
+### 2.2 默认值直接读取 `DataKey.Xxx.DefaultValue`
 
 ```csharp
-// 系统会尝试寻找名为 "MoveSpeed" 的 DataKey
+[DataKey(nameof(DataKey.MoveSpeed))]
+[Export] public float MoveSpeed { get; set; } = (float)DataKey.MoveSpeed.DefaultValue!;
+
+[DataKey(nameof(DataKey.Team))]
+[Export] public Team Team { get; set; } = (Team)DataKey.Team.DefaultValue!;
+```
+
+这样可以保证：
+
+- 配置默认值与 `DataMeta` 注册值保持一致
+- 不需要手动再去查 `DataRegistry.GetMeta(...)`
+- `DataKey` 初始化时就会完成注册，避免旧方案的时序问题
+
+## 3. 映射原理
+
+系统在调用 `Data.LoadFromResource(resource)` 时，会执行以下逻辑：
+
+1. 遍历 Resource 对象的公共属性
+2. 检查属性上是否存在 `DataKeyAttribute`
+3. 确定键名：
+   - 有 `[DataKey]`：使用特性中的 `Key`
+   - 没有 `[DataKey]`：回退到属性名
+4. 将该属性值写入 `Data` 容器对应键位
+
+## 4. 推荐与兼容写法
+
+### 推荐写法
+
+```csharp
+[DataKey(nameof(DataKey.AttackRange))]
+[Export] public float AttackRange { get; set; } = (float)DataKey.AttackRange.DefaultValue!;
+```
+
+### 兼容写法（按属性名回退）
+
+```csharp
 [Export] public float MoveSpeed { get; set; }
 ```
 
 > [!WARNING]
-> **风险提示**：按名映射没有任何编译检查。如果你把 `MoveSpeed` 改名为 `Speed`，但 `Data` 系统期望的是 `"MoveSpeed"`，那么数据加载将会静默失败。**强烈建议所有核心战斗属性都使用 `[DataKey]` 特性。**
+> 按属性名回退没有编译期保护。
+> 如果属性名改了，而目标 `DataKey` 没改，加载会静默偏离预期。
+> **核心战斗数据、系统关键字段、跨组件共享字段必须显式写 `[DataKey(nameof(DataKey.Xxx))]`。**
 
-## 2. 映射原理
+## 5. 放到 `Data/Data/` 还是 `Data/Config/`
 
-系统在调用 `Data.LoadFromResource(resource)` 时，会执行以下逻辑：
+放到 `Data/Data/` 的情况：
 
-1. 扫描属性：遍历 Resource 对象的所有公共属性。
-2. 提取特性：检查属性上是否存在 `DataKeyAttribute`。
-3. 确定键值：
-   * 有特性：使用特性中指定的 `Key`。
-   * 没有特性：使用该属性的 `Name`。
-4. 注入数据：将该属性的值存入 `Data` 容器中对应的键位。
+- 会被 `Data.LoadFromResource()` 注入 Entity 的 `Data` 容器
+- 字段本质上属于某个 Entity / Ability / Effect 的配置输入
+- 字段需要映射到 `DataKey`
 
-## 3. 常见问答
+放到 `Data/Config/` 的情况：
 
-**Q: 为什么我要费力写标签，而不直接起个一样的名字？**
-A: 标签提供了**编译时保护**。属性名是字符串，写错了编译器不知道；标签参数是常量，写错了代码就编译不过。此外，标签允许你的 C# 属性名和 Data 系统里的键名不一样（例如属性叫 `HP`，但映射到 `DataKey.BaseHp`）。
+- 是系统级全局参数
+- 不是某个 Entity 的 Data 初始值
+- 不需要通过 `DataKey` 注入运行时 Data 容器
 
-**Q: 我新增了一个属性，需要做什么？**
+## 6. 新增一个配置字段的步骤
 
-A:
+1. 先在 `Data/DataKey/` 对应域中新增 `DataKey`
+2. 为该键补齐 `DataMeta`（类型、默认值、分类、约束）
+3. 在 `Data/Data/` 对应配置类中增加 `[Export]` 属性
+4. 使用 `[DataKey(nameof(DataKey.Xxx))]` 显式绑定
+5. 默认值优先直接取 `DataKey.Xxx.DefaultValue`
 
-1. 在 `DataKey` 类中定义一个新的常量。
-2. 在 Config 类中添加属性，并加上 `[DataKey(DataKey.YourNewKey)]`。
-3. 确保在 `DataRegistry` 中注册了该 Key 的元数据（如果有的话）。
+## 7. 常见误区
+
+- ❌ `[DataKey(DataKey.BaseHp)]`
+- ❌ 手写字符串：`[DataKey("BaseHp")]`
+- ❌ 配置默认值自己重复写一份，与 `DataMeta.DefaultValue` 脱节
+- ❌ 把系统全局规则也塞进 `Data/Data/`
+
+## 8. 正确示例
+
+```csharp
+[GlobalClass]
+public partial class UnitConfig : Resource
+{
+    [DataKey(nameof(DataKey.Name))]
+    [Export] public string Name { get; set; } = (string)DataKey.Name.DefaultValue!;
+
+    [DataKey(nameof(DataKey.BaseHp))]
+    [Export] public float BaseHp { get; set; } = (float)DataKey.BaseHp.DefaultValue!;
+
+    [DataKey(nameof(DataKey.MoveSpeed))]
+    [Export] public float MoveSpeed { get; set; } = (float)DataKey.MoveSpeed.DefaultValue!;
+}
+```
+
+## 9. 相关文档
+
+- `Data/README.md`：`Data/` 顶层目录分工
+- `Data/DataKey/README.md`：DataKey 与 DataMeta 定义规范
+- `Src/ECS/Data/README.md`：运行时 Data 容器说明

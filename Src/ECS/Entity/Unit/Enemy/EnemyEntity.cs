@@ -51,6 +51,7 @@ public partial class EnemyEntity : CharacterBody2D, IPoolable, IUnit
     /// </summary>
     public void OnPoolAcquire()
     {
+        Data.Set(DataKey.DefaultMoveMode, MoveMode.AIControlled);
         // 直接订阅即可（EntityManager 已自动清空事件）
     }
 

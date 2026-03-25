@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Src/Test/SingleTest/ECS/Movement/MovementComponentTestScene.cs" id="1_scene_script"]
+[ext_resource type="Script" path="res://Src/Test/SingleTest/ECS/Movement/MovementTestEntity.cs" id="2_entity_script"]
+[ext_resource type="Script" path="res://Src/ECS/Component/Movement/EntityMovementComponent.cs" id="3_movement_component"]
+
+[node name="MovementComponentTestScene" type="Node2D"]
+script = ExtResource("1_scene_script")
+
+[node name="MovementTestEntity" type="Node2D" parent="."]
+position = Vector2(120, 360)
+script = ExtResource("2_entity_script")
+
+[node name="EntityMovementComponent" type="Node" parent="MovementTestEntity"]
+script = ExtResource("3_movement_component")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(576, 324)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Hint" type="Label" parent="CanvasLayer"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 760.0
+offset_bottom = 56.0
+text = "MovementComponentTestScene: 默认 TargetPoint 模式。MoveMaxDuration/MoveMaxDistance = -1 表示不限制。"

@@ -243,7 +243,7 @@ _entity.Events.On<GameEventType.Attack.CancelledEventData>(
 | [AttackComponent.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/AttackComponent/AttackComponent.cs) | 状态机核心实现 |
 | [GameEventType_Attack.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/Attack/GameEventType_Attack.cs) | 攻击生命周期事件定义 |
 | [GameEventType_Unit.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit.cs) | StopAnimationRequested 事件 |
-| [DataKey_Attribute.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/DataKeyRegister/Attribute/DataKey_Attribute.cs) | AttackWindUpTime / AttackRecoveryTime |
-| [DataKey_Unit.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/DataKeyRegister/Unit/DataKey_Unit.cs) | AttackState（状态枚举存储键） |
+| [DataKey_Attribute.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/DataKey/Attribute/DataKey_Attribute.cs) | AttackWindUpTime / AttackRecoveryTime |
+| [DataKey_Unit.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/DataKey/Unit/DataKey_Unit.cs) | AttackState（状态枚举存储键） |
 | [EnemyBehaviorTreeBuilder.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/AI/Nodes/EnemyBehaviorTreeBuilder.cs) | AI 节点如何发起/等待攻击 |
 | [UnitAnimationComponent.cs](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.cs) | 监听 StopAnimation 中断动画 |

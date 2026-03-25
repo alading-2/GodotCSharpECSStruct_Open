@@ -1,0 +1,18 @@
+/// <summary>
+/// Unit 运动相关事件定义（由 EntityMovementComponent 发出）
+/// </summary>
+public static partial class GameEventType
+{
+    public static partial class Unit
+    {
+        /// <summary>运动开始事件 Key</summary>
+        public const string MovementStarted = "unit:movement:started";
+        /// <summary>运动开始事件数据</summary>
+        public readonly record struct MovementStartedEventData(global::MoveMode Mode);
+
+        /// <summary>运动完成事件 Key（时间/距离到达阈值，或到达目标点/目标实体）</summary>
+        public const string MovementCompleted = "unit:movement:completed";
+        /// <summary>运动完成事件数据</summary>
+        public readonly record struct MovementCompletedEventData(global::MoveMode Mode);
+    }
+}

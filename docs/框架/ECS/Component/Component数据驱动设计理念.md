@@ -71,15 +71,17 @@ if (hp <= 0) Kill();
 // ❌ 枚举：无法扩展
 public enum DataKey { Hp, MaxHp }  // Mod 无法添加新键
 
-// ✅ 常量：支持 partial class 扩展
+// ✅ partial DataKey：支持按域扩展
 public static partial class DataKey 
 {
-    public const string Hp = "Hp";  // 核心定义
+    public static readonly DataMeta Hp = DataRegistry.Register(
+        new DataMeta { Key = nameof(Hp), Type = typeof(float), DefaultValue = 0f });
 }
 // Mod 可以扩展
 public static partial class DataKey 
 {
-    public const string CustomStat = "CustomStat";  // Mod 添加
+    public static readonly DataMeta CustomStat = DataRegistry.Register(
+        new DataMeta { Key = nameof(CustomStat), Type = typeof(float), DefaultValue = 0f });
 }
 ```
 
@@ -90,20 +92,20 @@ public static partial class DataKey
 _data.Get<float>("CurrentHp");
 _data.Get<float>("currentHp");  // 拼错了！
 
-// ✅ DataKey 常量：编译期检查
+// ✅ DataKey / DataMeta：编译期检查
 _data.Get<float>(DataKey.CurrentHp);  // 安全
 ```
 
 ---
 
-## DataRegister 的作用
+## DataMeta / DataRegistry 的作用
 
 ### 运行时类型验证
 
 ```csharp
 DataRegistry.Register(new DataMeta 
 {
-    Key = DataKey.CurrentHp,
+    Key = nameof(DataKey.CurrentHp),
     Type = typeof(float),  // 类型验证
     DefaultValue = 100f    // 默认值
 });
@@ -166,4 +168,4 @@ EntityManager.Destroy()
 | 对象池重置 | 手动重置每个字段 | Data.Clear() 自动清理 |
 | 调试 | 难以查看 | 编辑器可视化 |
 | 扩展性 | 需要修改源码 | DataKey partial 扩展 |
-| 类型安全 | 低（字符串） | 高（DataKey 常量） |
+| 类型安全 | 低（字符串） | 高（DataKey / DataMeta） |

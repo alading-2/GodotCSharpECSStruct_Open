@@ -472,7 +472,7 @@ var tree = new SelectorNode("自定义Boss")
 
 ## 4.1 DataKey（AI 相关）
 
-位于 `Data/DataKeyRegister/AI/DataKey_AI.cs`：
+位于 `Data/DataKey/AI/DataKey_AI.cs`：
 
 - 状态与目标：`AIState`、`TargetNode`、`AIEnabled`
 - 感知：`DetectionRange`、`LoseTargetRange`

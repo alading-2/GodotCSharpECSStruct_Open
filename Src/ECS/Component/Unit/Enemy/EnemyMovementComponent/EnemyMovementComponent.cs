@@ -57,7 +57,7 @@ public partial class EnemyMovementComponent : Node, IComponent
 
     // ================= Godot 生命周期 =================
 
-    /// <summary>物理帧处理：读取 AI 移动意图并执行物理移动和朝向更新</summary>
+    /// <summary>物理帧处理：读取 AI 移动意图，经分层合成后执行物理移动和朝向更新</summary>
     public override void _PhysicsProcess(double delta)
     {
         if (_body == null || _data == null) return;
@@ -81,8 +81,14 @@ public partial class EnemyMovementComponent : Node, IComponent
             UpdateFacing(moveDirection);
         }
 
-        // 计算最终速度并执行物理移动
-        _body.Velocity = moveDirection * moveSpeed * speedMultiplier;
+        // 写入基础速度层（AI 意图速度）
+        _data.Set(DataKey.Velocity, moveDirection * moveSpeed * speedMultiplier);
+
+        // 通过分层合成器获取最终速度（处理击退/锁定/冲量）
+        Vector2 finalVelocity = VelocityResolver.Resolve(_data);
+
+        // 执行物理移动
+        _body.Velocity = finalVelocity;
         _body.MoveAndSlide();
     }
 

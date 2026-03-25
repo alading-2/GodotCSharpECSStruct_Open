@@ -1,71 +1,90 @@
 # Data 目录说明
 
-本目录存放所有的**游戏数据定义**、**配置**与**资源**，严格与 `Src/` 目录下的逻辑代码分离。
+本目录存放所有**数据侧定义**与**数据配置资产**，与 `Src/` 中的运行时逻辑分离。
 
-## 设计理念：逻辑与数据分离 (Logic vs Data)
+## 设计分层
 
-- **Src/** (Logic): 负责 **"怎么做" (How)**。
-  - 包含 ECS 框架、系统运行逻辑、功能实现。
-  - *例如：生命值如何被扣除、事件如何分发。*
-- **Data/** (Data): 负责 **"是什么" (What)**。
-  - 包含 属性定义、事件类型定义、平衡性数值、具体游戏内容。
-  - *例如：有哪些属性（HP, MP）、有哪些事件（Dead, Hitted）、基础血量是多少。*
+- **`Src/`**：负责运行时逻辑与系统实现。
+  - 例如：`Data.cs` 如何读写、`Entity.Events` 如何派发、伤害和技能如何执行。
+- **`Data/`**：负责数据目录结构、配置、键定义与事件协议。
+  - 例如：有哪些配置字段、有哪些 `DataKey`、有哪些事件类型、某个配置默认值是多少。
 
-## 目录结构详解
+## 当前目录职责
 
-### 1. [Config](Config/)
-存放**全局静态配置**。通常是 `static class` 或 `const` 常量。
-- **用途**：定义游戏的基础规则参数，如波次时长、最大属性限制等。
-- **示例**：`Config.cs`, `SpawnSystemConfig.cs`
+### 1. `Config/`
 
-### 2. [Data](Data/)
-存放**数据元定义 (Schema)** 与 **注册表 (Registry)**。
-- **用途**：
-    - **DataKey**: 定义游戏中存在哪些属性键名（如 `DataKey.BaseHp`）。
-    - **Register**: 将这些属性键名注册到 ECS 系统中，并定义其默认值、计算公式等元数据。
-- **示例**：`AttributeDataRegister.cs`, `DataKey_Attribute.cs`
+**系统级配置路径**。
 
-### 3. [EventType](EventType/)
-存放**事件协议定义**。
-- **用途**：定义游戏中存在哪些事件类型（字符串常量）以及事件携带的数据结构（Record Struct）。这里不仅是字符串，更是模块间通信的**契约**。
-- **示例**：`GameEventType_Data.cs`
+- **用途**：存放不属于某个具体 Entity 配置的系统参数、全局规则、生成规则等。
+- **典型内容**：波次配置、Spawn 全局规则、全局开关、系统阈值。
+- **特点**：更偏“系统配置”，不是 Entity 运行时状态，不直接等同于 `Data` 容器内容。
 
-### 4. [Resources](Resources/)
-存放**具体游戏资产** (Godot Resources)。
-- **用途**：Godot 的 `.tscn` 文件。代表具体的游戏实体或组件预制体。
-- **示例**：`Enemy.tscn` (敌人实体模板), `HealthComponent.tscn`.
-- **注意**：纯数值数据（如敌人属性）不再使用 `.tres` 文件，而是使用 `.cs` 静态类定义。
+### 2. `Data/`
 
-### 5. [ResourceManagement](ResourceManagement.cs)
+**数据配置路径**。
 
-**资源注册表** - 统一管理项目中所有 **资产 (Assets)** 的引用。
+- **用途**：存放会被 `Data.LoadFromResource()` 读取的 Resource/Config 类。
+- **典型内容**：`UnitConfig`、`PlayerConfig`、`EnemyConfig`、技能配置、目标指示器配置等。
+- **核心职责**：定义“某类配置暴露哪些字段”，并通过 `[DataKey(nameof(DataKey.Xxx))]` 映射到 `Data` 容器。
+- **详细说明**：见 [`Data/Data/README.md`](Data/README.md)
 
-> 📖 **详细文档**：请参阅 [资源管理系统手册](ResourceManagement.md)
+### 3. `DataKey/`
 
-- **核心功能**：管理场景预制体等 Godot 资源。
-- **配置方式**：在 `Data/ResourceManagement.tscn` 场景中直接配置。
-- **API 示例**：
-    ```csharp
-    // 加载场景
-    ResourceManagement.Load<PackedScene>("EnemyEntity");
-    ```
+**DataKey 定义路径**。
 
-### 6. 纯数据类 (Pure Data Classes)
-- **位置**: `Data/Data/` (如 `EnemyData.cs`, `PlayerData.cs`)
-- **用途**: 定义游戏单位的数值属性和生成规则。
-- **优势**: 纯代码管理，易于重构和搜索，避免了 `.tres` 文件维护的繁琐。
-- **示例**:
-    ```csharp
-    var config = EnemyData.Configs["豺狼人"];
-    ```
+- **用途**：集中定义所有可写入 `Data` 容器的数据键。
+- **当前架构**：主流 DataKey 已从 `const string` 升级为 `static readonly DataMeta`。
+- **核心职责**：定义键名、类型、默认值、分类、约束、是否支持修改器、是否为计算键等元数据。
+- **详细说明**：见 [`Data/DataKey/README.md`](DataKey/README.md)
 
----
+### 4. `EventType/`
 
-## 维护指南
+**事件协议路径**。
 
-- **添加新属性**：在 `Data/Data/` 下对应的分类文件中添加 `DataKey`，并在 `Register` 文件中注册。
-- **添加新事件**：在 `Data/EventType/` 下添加新的 `GameEventType` 定义。
-- **修改平衡性**：
-    - 全局规则：修改 `Data/Config/`。
-    - 属性默认值/公式：修改 `Data/Data/` 下的 `Register`。
-    - 具体单位数值：修改 `Data/Resources/` 下的 `.tres` 文件。
+- **用途**：定义 `Entity.Events` / `GlobalEventBus` 使用的事件类型与事件数据结构。
+- **核心职责**：作为模块间通信契约，统一事件名与事件载荷。
+- **典型内容**：`GameEventType_Data.cs`、Ability/Unit/Base 等分域事件定义。
+
+### 5. `ResourceManagement/`
+
+**资源注册与加载路径**。
+
+- **用途**：集中管理场景、资源、预制体等资产引用。
+- **说明**：这是资源索引系统，不等同于 `Data` 容器数据。
+- **详细文档**：见 [`Data/ResourceManagement/README.md`](ResourceManagement/README.md)
+
+## 与 `Src/ECS/Data` 的关系
+
+- **`Data/` 目录**：定义“配置写什么、键叫什么、事件怎么约定”。
+- **`Src/ECS/Data/`**：定义“运行时怎么加载、怎么存、怎么约束、怎么计算”。
+
+可理解为：
+
+- `Data/` 决定**数据内容与协议**。
+- `Src/ECS/Data/` 决定**数据容器与运行时行为**。
+
+## 常见工作流
+
+### 新增一个可配置数据字段
+
+1. 先在 `Data/DataKey/` 对应域中定义 `DataKey`。
+2. 再在 `Data/Data/` 对应配置类中添加 `[DataKey(nameof(DataKey.Xxx))]` 属性。
+3. 运行时由 `Data.LoadFromResource()` 注入到 Entity 的 `Data` 容器。
+
+### 新增一个系统级规则
+
+1. 放到 `Data/Config/`。
+2. 如果它不是 Entity 运行时状态，通常**不需要**定义 `DataKey`。
+
+### 新增一个事件协议
+
+1. 在 `Data/EventType/` 对应域中定义事件类型与事件数据。
+2. 在系统或组件中通过 `Entity.Events` / `GlobalEventBus` 使用。
+
+## 维护规则
+
+- **不要**把运行时业务逻辑写进 `Data/`。
+- **不要**在 `Data/Data/` 里重复定义 `DataKey`。
+- **不要**新增 `const string` DataKey（特殊引用键除外）。
+- **优先使用** `[DataKey(nameof(DataKey.Xxx))]`，避免字符串字面量。
+- **系统配置**放 `Config/`，**可注入 Data 的配置**放 `Data/`，**键定义**放 `DataKey/`，**事件契约**放 `EventType/`。

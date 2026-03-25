@@ -165,7 +165,7 @@ EntityManager.RemoveAbility(ownerEntity, ability);
 - **技能实体** → `Src/ECS/Entity/Ability/AbilityEntity.cs`
 - **施法上下文** → `Data/EventType/Ability/CastContext.cs`
 - **事件定义** → `Data/EventType/Ability/GameEventType_Ability.cs`
-- **枚举定义** → `Data/DataKeyRegister/Ability/AbilityEnums.cs`
+- **枚举定义** → `Data/DataKey/Ability/AbilityEnums.cs`
 - **触发组件** → `Src/ECS/Component/Ability/TriggerComponent/`
 - **冷却组件** → `Src/ECS/Component/Ability/CooldownComponent/`
 - **充能组件** → `Src/ECS/Component/Ability/ChargeComponent/`

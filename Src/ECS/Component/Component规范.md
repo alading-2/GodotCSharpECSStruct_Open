@@ -114,17 +114,31 @@ public void TakeDamage(float amount) { _hp -= amount; } // 逻辑
 public float CurrentHp => _data.Get<float>("CurrentHp");
 
 // ✅ 数据驱动 (状态归 Data，Component 只管逻辑)
-// 统一使用 DataKey 常量访问数据
+// 统一使用 DataKey / DataMeta 访问数据
 public float CurrentHp => _data.Get<float>(DataKey.CurrentHp);
 float hp = _data.Get<float>(DataKey.CurrentHp);
 _data.Set(DataKey.CurrentHp, 80f);
 _data.Add(DataKey.Score, 10);
 ```
 
-**新增 DataKey 的步骤**：
-1. 在 `DataKey_Unit.cs` 中定义常量：`public const string MyKey = "MyKey";`
-2. 在 `UnitDataRegister.cs` 中注册元数据（重要属性必须注册）
-3. 注册格式：单行、加注释分隔、不空行
+**新增 DataKey 的步骤**（2026-03 更新）：
+
+1. 在对应 `Data/DataKey/{模块}/DataKey_{模块}.cs` 中定义 `static readonly DataMeta`：
+```csharp
+public static readonly DataMeta MyKey = DataRegistry.Register(
+    new DataMeta {
+        Key = nameof(MyKey),
+        DisplayName = "我的键",
+        Description = "用途说明",
+        Category = DataCategory_Unit.Basic,
+        Type = typeof(float),
+        DefaultValue = 0f,
+        MinValue = 0,
+        MaxValue = 100
+    });
+```
+2. Node2D 引用等非注册类型仍使用 `const string`：`public const string TargetNode = "TargetNode";`
+3. DataMeta 通过隐式转换支持 `Data.Get/Set(DataKey.MyKey)`，无需 `.Key` 调用
 
 ---
 

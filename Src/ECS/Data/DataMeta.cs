@@ -25,8 +25,6 @@ public string Description { get; init; } = "";
 /// <summary>数据分类（用于属性面板分组）</summary>
 public Enum? Category { get; init; }
 
-
-
 // === 可选约束字段 ===
 
 /// <summary>默认值（可选，根据 Type 自动推断）</summary>
@@ -37,16 +35,15 @@ public float? MinValue { get; init; }
 
 /// <summary>最大值（可选，仅数值类型有效）</summary>
 public float? MaxValue { get; init; }
+
 /// <summary>是否为百分比值（影响格式化输出）</summary>
 public bool IsPercentage { get; init; } = false;
-
 
 /// <summary>是否支持修改器（可选，属性键设 true，状态键默认 false）</summary>
 public bool? SupportModifiers { get; init; }
 
 /// <summary>图标路径（可选）</summary>
 public string IconPath { get; init; } = "";
-
 
 /// <summary>可选值列表（用于运行时选项验证，索引对应实际存储的 int 值）</summary>
 public List<string>? Options { get; init; }

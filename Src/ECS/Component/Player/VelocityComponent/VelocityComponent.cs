@@ -96,14 +96,17 @@ public partial class VelocityComponent : Node, IComponent
         // 平滑插值
         Vector2 newVelocity = Velocity.Lerp(targetVelocity, 1.0f - Mathf.Exp(-Acceleration * (float)delta));
 
-        // ✅ 通过 Data 更新速度（符合纯数据驱动规范）
+        // 写入基础速度层
         _data.Set(DataKey.Velocity, newVelocity);
 
+        // 通过分层合成器获取最终速度（处理击退/锁定/冲量）
+        Vector2 finalVelocity = VelocityResolver.Resolve(_data);
+
         // 应用位移
-        body.Velocity = Velocity;
+        body.Velocity = finalVelocity;
         body.MoveAndSlide();
 
-        // 同步速度（物理引擎可能会修改）
+        // 同步物理修正后的速度回基础层
         _data.Set(DataKey.Velocity, body.Velocity);
     }
 

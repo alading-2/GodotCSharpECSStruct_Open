@@ -474,6 +474,39 @@ public class Data
     }
 
     /// <summary>
+    /// 按数据分类批量重置为默认值（仅重置容器中已存在的键）
+    /// <para>
+    /// 遍历该 Category 下所有已注册的 DataMeta，若容器中存在对应键则将其设为 DefaultValue。
+    /// 使用 DataRegistry 的缓存查询，适合高频调用。
+    /// </para>
+    /// </summary>
+    /// <param name="category">数据分类枚举值（如 DataCategory_Movement.Orbit）</param>
+    public void ResetByCategory(Enum category)
+    {
+        var metas = DataRegistry.GetCachedMetaByCategory(category);
+        for (int i = 0; i < metas.Length; i++)
+        {
+            var meta = metas[i];
+            if (_data.ContainsKey(meta.Key))
+            {
+                Set(meta.Key, meta.GetDefaultValue());
+            }
+        }
+    }
+
+    /// <summary>
+    /// 按多个数据分类批量重置为默认值
+    /// </summary>
+    /// <param name="categories">要重置的分类列表</param>
+    public void ResetByCategories(params Enum[] categories)
+    {
+        for (int i = 0; i < categories.Length; i++)
+        {
+            ResetByCategory(categories[i]);
+        }
+    }
+
+    /// <summary>
     /// 重置数据容器（用于对象池复用）
     /// </summary>
     public void Reset()

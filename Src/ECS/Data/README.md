@@ -8,13 +8,23 @@ Data 容器是一个增强版的动态数据管理系统，提供类型安全、
 
 ## ✨ 核心特性
 
-- ✅ **类型安全**：使用常量代替字符串，编译期检查，智能提示
-- ✅ **元数据驱动**：数据的类型、约束、描述在定义时声明
+- ✅ **类型安全**：DataKey 为 `static readonly DataMeta`，编译期检查，智能提示
+- ✅ **元数据内嵌**：每个 DataKey 直接携带类型、默认值、约束等信息
+- ✅ **隐式转换**：`DataMeta` 隐式转换为 `string`，保持 `Data.Get/Set(DataKey.*)` 兼容
 - ✅ **修改器系统**：支持 Buff/Debuff，自动计算最终值
 - ✅ **计算数据**：自动依赖追踪，缓存优化
-- ✅ **事件监听**：数据变更自动通知
+- ✅ **事件监听**：数据变更通过 `Entity.Events` 自动通知
 - ✅ **性能优化**：脏标记缓存，避免重复计算
-- ✅ **Mod 友好**：使用常量而非枚举，支持扩展
+
+## 📚 文档分工
+
+本 README 只负责 **`Src/ECS/Data/` 运行时容器**。
+
+- `Data/README.md`：`Data/` 顶层目录分工
+- `Data/Data/README.md`：Config / Resource 到 Data 的映射规范
+- `Data/DataKey/README.md`：DataKey / DataMeta 定义规范
+
+如果你在改 `Data/Config`、`Data/Data`、`Data/DataKey`、`Data/EventType`，优先看这些 `Data/` 目录文档，而不是只看本文件。
 
 ## 🏗️ 架构设计
 
@@ -28,15 +38,10 @@ Data 容器是一个增强版的动态数据管理系统，提供类型安全、
 └─────────────────────────────────────────────────────┘
                         ↓
 ┌─────────────────────────────────────────────────────┐
-│  DataMeta (数据元数据)                               │
-│  - 类型、默认值、约束                                │
-│  - 描述、分类、图标                                  │
-│  - 是否支持修改器                                    │
-└─────────────────────────────────────────────────────┘
-                        ↓
-┌─────────────────────────────────────────────────────┐
-│  DataKey (常量类)                                    │
-│  - 类型安全的数据键                                  │
+│  DataKey (静态 DataMeta 字段)                        │
+│  - 类型安全的键 + 元数据合一                         │
+│  - 隐式转换为 string，兼容 Data.Get/Set              │
+│  - 定义时自动注册到 DataRegistry                     │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -52,34 +57,80 @@ Data 容器是一个增强版的动态数据管理系统，提供类型安全、
 最终值 = (基础值 + Σ加法修改器) × Π乘法修改器
 ```
 
-### 2. DataKey (`DataKey.cs`)
+### 2. DataKey (`Data/DataKey/`)
 
-类型安全的数据键常量定义。
+**新架构（2026-03）**：DataKey 不再是 `const string`，而是 `static readonly DataMeta`。
 
-**数据分类**：
+**目录结构**：
 
-- **基础信息**：Name, Level
-- **生命系统**：MaxHp, HpRegen, LifeSteal, Armor
-- **攻击系统**：Damage, AttackSpeed, CritChance, CritDamage, Range, Knockback
-- **防御系统**：DodgeChance, DamageReduction, Thorns
-- **移动系统**：Speed
-- **资源系统**：PickupRange, ExpGain, LuckBonus
-- **特殊机制**：Pierce, ProjectileCount, AreaSize
-- **计算数据**：AttackInterval, EffectiveHp, DPS
+```
+Data/DataKey/
+├── Base/       → 通用键（Name、Id、Team 等）
+├── Attribute/  → 属性系统（BaseAttack、FinalHp、CritRate 等）
+├── Unit/       → 单位状态（CurrentHp、UnitState 等）
+├── Ability/    → 技能数据（Cooldown、CastRange 等）
+├── Movement/   → 运动参数（MoveMode、OrbitRadius 等）
+├── AI/         → AI 数据（AIState、DetectionRange 等）
+└── Effect/     → 特效数据（EffectScale、EffectPlayRate 等）
+```
+
+**定义示例**：
+
+```csharp
+public static partial class DataKey
+{
+    // 普通属性键
+    public static readonly DataMeta BaseAttack = DataRegistry.Register(
+        new DataMeta { Key = nameof(BaseAttack), DisplayName = "基础攻击力", 
+            Category = DataCategory_Attribute.Attack, Type = typeof(float), 
+            DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+
+    // 计算属性键
+    public static readonly DataMeta FinalAttack = DataRegistry.Register(
+        new DataMeta { Key = nameof(FinalAttack), DisplayName = "攻击力",
+            Category = DataCategory_Attribute.Computed, Type = typeof(float),
+            DefaultValue = 0f, SupportModifiers = false,
+            Dependencies = [nameof(BaseAttack), nameof(AttackBonus)],
+            Compute = (data) => {
+                float baseAttack = data.Get<float>(nameof(BaseAttack));
+                float bonus = data.Get<float>(nameof(AttackBonus));
+                return MyMath.AttributeBonusCalculation(baseAttack, bonus);
+            }});
+
+    // Node2D 引用等非注册类型仍使用 const string
+    public const string TargetNode = "TargetNode";
+}
+```
 
 ### 3. DataMeta (`DataMeta.cs`)
 
-数据元数据，描述数据的所有特性。
+数据元数据，描述数据的所有特性，同时作为 DataKey 的类型。
 
-**包含信息**：
+**核心字段**：
 
-- 键名、显示名称、描述
-- 数据类型（`System.Type`）、分类
-- 默认值、最小值、最大值
-- 是否为百分比
-- 是否支持修改器（根据类型智能推断）
-- 图标路径
-- 固定选项列表（用于枚举类数据，如：稀有度、状态）
+| 字段 | 用途 | 必填 |
+|------|------|------|
+| `Key` | 数据键名 | ✅ |
+| `Type` | 数据类型（`typeof(float)` 等） | ✅ |
+| `DisplayName` | UI 显示名称 | ❌ |
+| `Description` | 描述信息 | ❌ |
+| `Category` | 分类枚举 | ❌ |
+| `DefaultValue` | 默认值 | ❌（自动推断） |
+| `MinValue` / `MaxValue` | 数值约束 | ❌ |
+| `IsPercentage` | 是否为百分比 | ❌ |
+| `SupportModifiers` | 是否支持修改器 | ❌ |
+| `Dependencies` | 计算数据依赖 | ❌ |
+| `Compute` | 计算函数 | ❌ |
+
+**隐式转换**：
+
+```csharp
+// DataMeta 隐式转换为 string（返回 Key 值）
+public static implicit operator string(DataMeta meta) => meta.Key;
+
+// 因此可以直接使用：
+_data.Get<float>(DataKey.BaseAttack);  // 等价于 _data.Get<float>("BaseAttack")
+```
 
 ### 4. DataRegistry (`DataRegistry.cs`)
 
@@ -87,9 +138,10 @@ Data 容器是一个增强版的动态数据管理系统，提供类型安全、
 
 **功能**：
 
-- 静态初始化，无需运行时注册
-- 提供元数据查询接口
-- 管理计算数据的依赖关系
+- `Register(DataMeta)` - 注册元数据并返回同一实例（支持链式定义）
+- `GetMeta(key)` - 查询元数据
+- `SupportModifiers(key)` - 检查是否支持修改器
+- `GetDependentComputedKeys(key)` - 获取依赖此键的计算键
 
 ### 5. DataModifier (`DataModifier.cs`)
 
@@ -99,16 +151,9 @@ Data 容器是一个增强版的动态数据管理系统，提供类型安全、
 
 - **Additive（加法）**：直接加到基础值
 - **Multiplicative（乘法）**：作为乘数（1.0 = 100%，1.5 = 150%）
-
-### 6. ComputedData (`ComputedData.cs`)
-
-计算数据定义，由其他数据派生的只读数据。
-
-**示例**：
-
-- `AttackInterval = 1.0 / (AttackSpeed / 100)`
-- `EffectiveHp = MaxHp / (1 - DamageReduction)`
-- `DPS = Damage × AttackSpeed × (1 + CritChance × CritDamage)`
+- **FinalAdditive**：最终加法（在乘法之后）
+- **Override**：覆盖值（最高优先级）
+- **Cap**：上限约束
 
 ## 🚀 快速开始
 
@@ -633,7 +678,7 @@ public override void _Process(double delta)
 
 ## 📚 相关文档
 
-- [设计文档](../../../../Docs/框架/ECS/System/Data/DataSystem_Design.md) - 详细的架构设计和决策记录
+- [设计文档](../../../../Docs/框架/ECS/Data/DataSystem_Design.md) - 当前 Data 系统主说明文档
 - [项目规则](../../../../.agent/rules/project_rules.md) - 项目级别的使用规范
 
 ## 🔄 版本历史

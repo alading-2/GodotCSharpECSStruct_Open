@@ -53,7 +53,7 @@ public partial class MyComponent : Node, IComponent
 ## Data 读写规范
 
 ```csharp
-// ✅ 读取（使用 DataKey 常量，禁止字符串字面量）
+// ✅ 读取（使用 DataKey / DataMeta，禁止字符串字面量）
 var hp = _data.Get<float>(DataKey.CurrentHp);
 var speed = _data.Get<float>(DataKey.MoveSpeed);
 

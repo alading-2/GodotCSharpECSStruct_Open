@@ -133,15 +133,6 @@ public static partial class DataKey
     public static readonly DataMeta StopDistance = DataRegistry.Register(
         new DataMeta { Key = nameof(StopDistance), DisplayName = "停止距离", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 200f });
 
-    // === VelocityComponent ===
-    // 当前速度向量
-    public static readonly DataMeta Velocity = DataRegistry.Register(
-        new DataMeta { Key = nameof(Velocity), DisplayName = "当前速度向量", Category = DataCategory_Unit.Movement, Type = typeof(Godot.Vector2), DefaultValue = Godot.Vector2.Zero });
-
-    // 加速度
-    public static readonly DataMeta Acceleration = DataRegistry.Register(
-        new DataMeta { Key = nameof(Acceleration), DisplayName = "加速度", Category = DataCategory_Unit.Movement, Type = typeof(float), DefaultValue = 10f });
-
     // === HurtboxComponent ===
     // 无敌计时器
     public static readonly DataMeta InvincibilityTimer = DataRegistry.Register(
