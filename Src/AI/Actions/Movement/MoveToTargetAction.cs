@@ -3,7 +3,8 @@ using Godot;
 /// <summary>
 /// 动作节点：向当前目标移动
 /// <para>
-/// 通过 DataKey 设置移动方向和速度倍率，由 EnemyMovementComponent 执行实际物理移动。
+/// 通过 DataKey 设置移动方向和速度倍率，
+/// 由 EntityMovementComponent 的 AIControlledStrategy 执行实际移动。
 /// </para>
 /// <para>
 /// 返回值：

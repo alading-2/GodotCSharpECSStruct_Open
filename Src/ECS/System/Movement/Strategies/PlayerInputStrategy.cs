@@ -2,43 +2,36 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 11】玩家输入驱动移动 - 专用于 CharacterBody2D 玩家实体
-/// <para>
-/// 读取 InputManager 输入，经 Lerp 平滑加速后写入 <c>DataKey.Velocity</c>。
-/// 不直接修改 GlobalPosition，由 EntityMovementComponent 的 _PhysicsProcess 调用
-/// VelocityResolver + MoveAndSlide 完成实际物理移动。
-/// </para>
-/// <para>
-/// 读取参数：
-/// - <c>DataKey.MoveSpeed</c>：最大移动速度
-/// - <c>DataKey.Acceleration</c>：加速度因子（值越大越快到达目标速度）
-/// - <c>DataKey.Velocity</c>：上一帧速度（用于 Lerp 平滑）
-/// </para>
-/// <para>
-/// 写入参数：
-/// - <c>DataKey.Velocity</c>：本帧目标速度（由 PhysicsProcess 进行 VelocityResolver 合成）
-/// </para>
+/// 【模式 11】玩家输入驱动移动。
+/// <para>每帧读取 <c>InputManager</c> 移动输入，结合 <c>MoveSpeed</c>/<c>Acceleration</c> 平滑插值 Velocity。通常设为玩家的 <c>DefaultMoveMode</c>，临时运动完成后自动回退。</para>
+/// <para>所需 Data（实体属性，非 MovementParams）：<c>DataKey.MoveSpeed</c>（最大速度），<c>DataKey.Acceleration</c>（平滑系数）。</para>
+/// <para>【典型用途】玩家常驻移动，冲刺/击退后自动恢复为本模式。</para>
 /// </summary>
 public class PlayerInputStrategy : IMovementStrategy
 {
     /// <summary>
-    /// 注册玩家输入策略到全局注册表
+    /// 注册玩家输入策略到全局注册表。
     /// </summary>
     [ModuleInitializer]
     public static void Register()
     {
-        MovementStrategyRegistry.Register(MoveMode.PlayerInput, new PlayerInputStrategy());
+        MovementStrategyRegistry.Register(MoveMode.PlayerInput, () => new PlayerInputStrategy());
     }
 
     /// <inheritdoc/>
-    public float Update(IEntity entity, Data data, float delta)
-    {
-        float speed = data.Get<float>(DataKey.MoveSpeed);
-        float acceleration = data.Get<float>(DataKey.Acceleration);
+    public bool UsePhysicsProcess => true;
 
-        Vector2 inputDir = InputManager.GetMoveInput();
+    /// <summary>
+    /// 读取输入方向，按加速度平滑插值到目标速度。
+    /// </summary>
+    public MovementUpdateResult Update(IEntity entity, Data data, float delta, MovementParams @params)
+    {
+        float speed = data.Get<float>(DataKey.MoveSpeed); // 玩家满速时的移动速度
+        float acceleration = data.Get<float>(DataKey.Acceleration); // 速度插値系数，越大响应越快
+
+        Vector2 inputDir = InputManager.GetMoveInput(); // 输入系统给出的移动方向
         Vector2 targetVelocity = inputDir.Normalized() * speed;
-        Vector2 currentVelocity = data.Get<Vector2>(DataKey.Velocity);
+        Vector2 currentVelocity = data.Get<Vector2>(DataKey.Velocity); // 上一帧基础速度，用于平滑过渡
 
         // Lerp 平滑加速（指数衰减公式，帧率无关）
         Vector2 newVelocity = currentVelocity.Lerp(targetVelocity, 1.0f - Mathf.Exp(-acceleration * delta));
@@ -46,6 +39,6 @@ public class PlayerInputStrategy : IMovementStrategy
         data.Set(DataKey.Velocity, newVelocity);
 
         // 返回估算位移量（供 AccumulateTravel 统计，实际位移由 MoveAndSlide 决定）
-        return newVelocity.Length() * delta;
+        return MovementUpdateResult.Continue(newVelocity.Length() * delta);
     }
 }

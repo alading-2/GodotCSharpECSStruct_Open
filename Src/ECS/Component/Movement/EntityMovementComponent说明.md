@@ -1,147 +1,118 @@
-# EntityMovementComponent 说明
+﻿# EntityMovementComponent 说明
 
 ## 1. 组件定位
 
-`EntityMovementComponent` 是**策略调度器**，通过事件驱动切换运动策略，委托当前策略计算运动意图并统一执行位移。
+运动系统的调度器，不决定"为什么移动"，只负责把当前运动策略稳定地跑起来。
 
-- 组件职责：怎么移动（执行层 + 策略分发）
-- 业务职责：为什么移动（由技能/武器/AI/EffectTool 写入参数）
-- 适用实体：`Node2D + IEntity` 与 `CharacterBody2D + IEntity`
-- 双路径执行（调度器负责）：`Node2D/Area2D` 走 `_Process + GlobalPosition`，`CharacterBody2D` 走 `_PhysicsProcess + VelocityResolver + MoveAndSlide`
-- 附着跟随：通过 `MoveMode.AttachToHost` 策略实现，不再硬编码跳过
+- 业务层构建 `MovementParams` 并通过事件传入，不再向 DataKey 写入运动参数
+- 策略负责计算本帧意图速度，只写 `DataKey.Velocity`
+- 组件持有 `MovementParams`、统计字段，执行位移、检查结束、触发事件
+- 适用于 `Node2D + IEntity`、`Area2D + IEntity`、`CharacterBody2D + IEntity`
 
-## 2. 架构（策略模式）
-
-```text
-EntityMovementComponent（调度器）
-  ├── 监听 MovementStarted 事件 → SwitchStrategy() 切换策略
-  ├── RunMovementLogic()：委托当前策略计算运动意图（策略只写 DataKey.Velocity）
-  ├── Node2D/Area2D：ApplyNodeMovement() 执行 GlobalPosition += Velocity * delta
-  ├── CharacterBody2D：VelocityResolver.Resolve() + MoveAndSlide()
-  ├── AccumulateTravel() 累计统计
-  └── CheckEndConditions() / OnMoveComplete() 结束流程 + 自动回退默认模式
-```
-
-- `IMovementStrategy`：策略接口（Update 纯计算只写 Velocity / OnEnter / OnExit）
-- `MovementStrategyRegistry`：MoveMode → Strategy 的静态映射
-- `MovementHelper`：朝向旋转、到达距离等共用方法
-- 策略通过 `[ModuleInitializer]` 自注册，无需手动配置
-
-## 3. 运动模式（12 种）
-
-| MoveMode | 策略类 | 说明 |
-|----------|--------|------|
-| FixedDirection | FixedDirectionStrategy | 沿 Velocity 向量直线飞行 |
-| TargetPoint | TargetPointStrategy | 向目标点冲锋，到达后完成 |
-| TargetEntity | TargetEntityStrategy | 追踪目标实体，丢失后降级为直线 |
-| OrbitPoint | OrbitPointStrategy | 围绕固定点圆周运动 |
-| OrbitEntity | OrbitEntityStrategy | 围绕目标实体动态环绕 |
-| Spiral | SpiralStrategy | 螺旋运动（半径渐变） |
-| SineWave | SineWaveStrategy | 正弦波形前进 |
-| BezierCurve | BezierCurveStrategy | N 阶贝塞尔曲线运动（支持匀速） |
-| Boomerang | BoomerangStrategy | 回旋镖（去程→可选停顿→回程） |
-| AttachToHost | AttachToHostStrategy | 附着跟随宿主位置 + 偏移 |
-| PlayerInput | PlayerInputStrategy | 玩家输入驱动速度 |
-| AIControlled | AIControlledStrategy | AI 移动意图驱动速度 |
-
-> 所有 12 种模式对 Node2D/Area2D 和 CharacterBody2D 通用。策略只写 `DataKey.Velocity`，调度器根据节点类型统一执行位移。
-
-## 4. 默认模式与打断机制
-
-### DefaultMoveMode（DataKey 配置）
-
-由 Entity 初始化时设置 `DataKey.DefaultMoveMode`（如玩家 `PlayerInput`、敌人 `AIControlled`）。
-
-- `OnComponentRegistered` 时读取 `DataKey.DefaultMoveMode` 并自动进入默认策略
-- 临时运动完成后，`OnMoveComplete` 自动回退到默认模式
-- 业务方无需手动还原 MoveMode
-
-### 策略切换方式（事件驱动）
-
-业务方通过发布 `MovementStarted` 事件触发临时运动切换：
+## 2. 私有状态
 
 ```csharp
-// 先写入运动参数
-entity.Data.Set(DataKey.MoveSpeed, 500f);
-entity.Data.Set(DataKey.MoveTargetPoint, targetPos);
-entity.Data.Set(DataKey.MoveMaxDuration, 0.5f);
+private MovementParams _params;          // 本次运动输入参数（由事件传入）
+private float _elapsedTime;              // 已持续时间（秒）
+private float _traveledDistance;         // 已移动距离（像素）
+private bool _moveCompleted;             // 完成标志（防止重复触发）
+private IMovementStrategy? _currentStrategy; // 当前策略实例（每次切换新建）
+```
 
-// 然后发布事件触发切换
+## 3. 执行路径
+
+```text
+死亡检查 / _moveCompleted 守卫
+  -> 策略 Update(entity, data, delta, elapsedTime, in _params) 写入 DataKey.Velocity
+  -> 策略主动返回 Complete -> OnMoveComplete()
+  -> AccumulateTravel(_elapsedTime, _traveledDistance)
+  -> CheckEndConditions() 读 _params.MaxDuration / MaxDistance
+  -> VelocityResolver.Resolve(data) 合成最终速度
+  -> CharacterBody2D: MoveAndSlide() | 其他 Node2D: GlobalPosition += velocity * delta
+  -> MovementHelper.UpdateOrientation(entity, in _params, intentVelocity, visualRoot)
+```
+
+帧率路径由策略 `UsePhysicsProcess` 决定，与节点类型无关。
+
+## 4. 参数传递方式（新 API）
+
+所有运动参数通过 `MovementParams` 一次性传入，不再分散写 DataKey：
+
+```csharp
 entity.Events.Emit(
     GameEventType.Unit.MovementStarted,
-    new GameEventType.Unit.MovementStartedEventData(MoveMode.TargetPoint));
+    new GameEventType.Unit.MovementStartedEventData(MoveMode.TargetPoint, new MovementParams
+    {
+        Mode            = MoveMode.TargetPoint,
+        TargetPoint     = new Vector2(900, 360),
+        MaxDuration     = -1f,          // 可选，-1 不限制
+        DestroyOnComplete = false,      // 可选
+    }));
 ```
 
-流程示例：
+`MovementParams` 是 `record struct`，所有字段均为 `init` 属性，策略只读访问（`in` 参数），无法修改。
 
-```text
-PlayerInput(默认) → 技能发布 MovementStarted(TargetPoint) → 冲锋完成 → OnMoveComplete → 自动回 PlayerInput
-```
+## 5. DefaultMoveMode 与临时模式
 
-### CanBeInterrupted（策略属性）
-
-`IMovementStrategy.CanBeInterrupted`（默认 `true`）控制当前策略是否可被外部打断切换：
-
-- `true`：收到 `MovementStarted` 事件时立即切换
-- `false`：调度器拒绝切换，待当前策略自然完成后才回退
-
-典型用法：冲锋/击退等不可打断运动，在策略类中覆写 `CanBeInterrupted => false`。
-
-### 统计数据重置
-
-每次策略切换（`SwitchStrategy`）时自动重置 `MoveElapsedTime`、`MoveTraveledDistance`、`MoveCompleted`，防止临时运动之间带旧值。
-
-## 5. 结束条件语义（重要）
-
-时间与距离结束条件统一采用：
-
-- `-1`：不限制
-- `>= 0`：有效限制值
-
-对应键：`DataKey.MoveMaxDuration` / `DataKey.MoveMaxDistance`
-
-策略也可通过返回 `-1` 主动触发完成（如 TargetPoint 到达目标、Boomerang 返回起点、AttachToHost 宿主消失）。
-
-## 6. Velocity 分层合成
-
-`VelocityResolver` 解决多组件写入 `DataKey.Velocity` 的冲突：
-
-```
-IsMovementLocked=true → 返回 Zero
-VelocityOverride != Zero → 返回 Override
-否则 → 返回 Velocity + VelocityImpulse
-```
-
-已接入：`EntityMovementComponent`（CharacterBody2D 路径）。
-
-> AI 行为树在非 `MoveMode.AIControlled` 时不会写入 `AIMoveDirection/AIMoveSpeedMultiplier`，用于让位给击退、冲刺等特殊移动模式。
-
-## 7. 最小接入示例
+实体初始化时写入 `DataKey.DefaultMoveMode`，组件注册后自动进入该模式（用空参数构建 `MovementParams`）。
 
 ```csharp
-// Entity 初始化时设置默认模式（在 Entity 类或 Resource 中）
+// Entity 初始化
 entity.Data.Set(DataKey.DefaultMoveMode, MoveMode.PlayerInput);
 entity.Data.Set(DataKey.MoveSpeed, 240f);
-
-// 业务方触发临时运动（如技能冲锋）
-entity.Data.Set(DataKey.MoveTargetPoint, new Vector2(900, 360));
-entity.Data.Set(DataKey.MoveMaxDuration, 0.5f);
-entity.Data.Set(DataKey.RotateToVelocity, true);
-
-entity.Events.Emit(
-    GameEventType.Unit.MovementStarted,
-    new GameEventType.Unit.MovementStartedEventData(MoveMode.TargetPoint));
+entity.Data.Set(DataKey.Acceleration, 10f);
 ```
 
-## 8. 扩展新运动模式
+临时运动结束后若 `DefaultMoveMode` 有效，组件自动回退。
 
-1. 在 `MovementEnums.cs` 的 `MoveMode` 枚举添加新值
-2. 创建策略类实现 `IMovementStrategy`
-3. 添加 `[ModuleInitializer]` 静态方法调用 `MovementStrategyRegistry.Register`
-4. 如需新参数，在 `DataKey_Movement.cs` 添加 DataKey
+### 打断规则
 
-## 9. 测试场景
+- 当前是默认模式：允许直接切换
+- 当前是临时模式且 `CanBeInterrupted = false`：拒绝新 `MovementStarted`，直到自然完成
 
-- `Src/Test/SingleTest/ECS/Movement/MovementComponentTestScene.tscn`
+## 6. SwitchStrategy 重置
 
-运行后默认演示 `TargetPoint` 模式，可在脚本中切换 `MoveMode` 与参数进行验证。
+每次切换只重置三个共享 DataKey（Velocity / VelocityOverride / VelocityImpulse）和组件私有统计字段，其余实体属性（MoveSpeed、IsMovementLocked 等）保持不变。策略运行时状态（角度、起点等）存于策略私有字段，随实例一起丢弃，无需手动清理。
+
+## 7. 结束条件
+
+### MovementParams 通用条件
+
+- `MaxDuration >= 0`：累计时间到达后完成
+- `MaxDistance >= 0`：累计距离到达后完成
+- `DestroyOnComplete = true`：完成后销毁实体，否则发事件并回退默认模式
+
+### 策略主动完成
+
+返回 `MovementUpdateResult.Complete()` 即可，组件统一处理后续清理与回退。
+
+### 完成事件
+
+`MovementCompletedEventData` 直接携带统计数据，无需读 DataKey：
+
+```csharp
+entity.Events.On<GameEventType.Unit.MovementCompletedEventData>(
+    GameEventType.Unit.MovementCompleted,
+    evt => _log.Info($"Mode={evt.Mode} Elapsed={evt.ElapsedTime:F2}s Dist={evt.TraveledDistance:F1}px"));
+```
+
+## 8. Velocity 分层合成
+
+策略写的 `Velocity` 先经过 `VelocityResolver` 再执行位移：
+
+```text
+IsMovementLocked = true  → Zero
+VelocityOverride ≠ Zero  → VelocityOverride
+否则                      → Velocity + VelocityImpulse（用后清零）
+```
+
+## 9. 扩展新运动模式
+
+1. `MovementEnums.cs` 新增枚举值
+2. `MovementParams` 新增所需 `init` 字段（附默认值）
+3. 新建策略类，私有字段存运行时状态，`[ModuleInitializer]` 注册工厂到 `MovementStrategyRegistry`
+4. 补全策略类头注释
+
+## 10. 测试场景
+
+`Src/Test/SingleTest/ECS/Movement/MovementComponentTestScene.tscn`

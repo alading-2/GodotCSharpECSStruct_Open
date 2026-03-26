@@ -2,59 +2,51 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 4】中心点环绕
-/// <para>围绕 DataKey.OrbitCenterPoint 做圆周运动。</para>
-/// <para>首帧自动推算初始极角，避免角度跳变。</para>
+/// 【模式 4】围绕固定点环绕。
+/// <para>让实体围绕固定世界坐标做圆周运动，OnEnter 自动从当前位置推导初始极角，不会出现第一帧跳变。</para>
+/// <para><code>
+/// entity.Events.Emit(GameEventType.Unit.MovementStarted,
+///     new GameEventType.Unit.MovementStartedEventData(MoveMode.OrbitPoint, new MovementParams
+///     {
+///         Mode             = MoveMode.OrbitPoint,
+///         OrbitCenter      = centerPos,
+///         OrbitRadius      = 100f,
+///         OrbitAngularSpeed = Mathf.Pi,   // 弧度/秒
+///         OrbitClockwise   = false,        // 可选，默认逆时针
+///         MaxDuration      = -1f,          // 可选，-1 不限制
+///     }));
+/// </code></para>
+/// <para>
+/// 【典型用途】固定圆心护盾、围绕地面锚点旋转的特效、固定轨道的弹幕圆环。
+/// `OrbitEntityStrategy` 和 `SpiralStrategy` 的进入阶段都会复用本策略的极角初始化逻辑。
+/// </para>
 /// </summary>
 public class OrbitPointStrategy : IMovementStrategy
 {
+    private float _currentAngle;
+
     [ModuleInitializer]
     public static void Register()
     {
-        MovementStrategyRegistry.Register(MoveMode.OrbitPoint, new OrbitPointStrategy());
+        MovementStrategyRegistry.Register(MoveMode.OrbitPoint, () => new OrbitPointStrategy());
     }
 
-    /// <summary>
-    /// 进入时根据实体当前位置推算初始极角，写入 Data 避免首帧角度跳变
-    /// </summary>
-    public void OnEnter(IEntity entity, Data data)
+    public void OnEnter(IEntity entity, Data data, MovementParams @params)
     {
         if (entity is not Node2D node) return;
 
-        Vector2 center = data.Get<Vector2>(DataKey.OrbitCenterPoint);
-        Vector2 toSelf = node.GlobalPosition - center;
-        float initAngle = toSelf.LengthSquared() > 0.001f
-            ? toSelf.Angle()
-            : data.Get<float>(DataKey.OrbitAngle);
-        data.Set(DataKey.OrbitAngle, initAngle);
+        Vector2 toSelf = node.GlobalPosition - @params.OrbitCenter;
+        _currentAngle = toSelf.LengthSquared() > 0.001f ? toSelf.Angle() : 0f;
     }
 
-    public float Update(IEntity entity, Data data, float delta)
+    public MovementUpdateResult Update(IEntity entity, Data data, float delta, MovementParams @params)
     {
-        if (entity is not Node2D node) return 0f;
+        if (entity is not Node2D node) return MovementUpdateResult.Continue();
 
-        Vector2 center = data.Get<Vector2>(DataKey.OrbitCenterPoint);
-        float radius = data.Get<float>(DataKey.OrbitRadius);
-        float angularSpeed = data.Get<float>(DataKey.OrbitAngularSpeed);
-
-        if (radius <= 0f || angularSpeed <= 0f) return 0f;
-
-        bool clockwise = data.Get<bool>(DataKey.OrbitClockwise);
-        float sign = clockwise ? -1f : 1f;
-
-        float angle = data.Get<float>(DataKey.OrbitAngle) + sign * angularSpeed * delta;
-        data.Set(DataKey.OrbitAngle, angle);
-
-        float cos = Mathf.Cos(angle);
-        float sin = Mathf.Sin(angle);
-        Vector2 newPos = center + new Vector2(cos * radius, sin * radius);
-
-        // 将绝对位置意图转换为速度，由调度器统一执行位移
-        Vector2 toTarget = newPos - node.GlobalPosition;
-        float displacement = toTarget.Length();
-        Vector2 velocity = displacement > 0.001f ? toTarget / Mathf.Max(delta, 0.001f) : Vector2.Zero;
-        data.Set(DataKey.Velocity, velocity);
-
-        return displacement;
+        return MovementHelper.OrbitStep(
+            node, data,
+            @params.OrbitCenter, @params.OrbitRadius,
+            @params.OrbitAngularSpeed, @params.OrbitClockwise,
+            ref _currentAngle, delta);
     }
 }

@@ -98,8 +98,7 @@ public partial class EffectComponent : Node, IComponent
     // ================= 初始化 =================
 
     /// <summary>
-    /// 设置附着模式：查找宿主节点，写入 MoveMode=AttachToHost + MoveTargetNode，
-    /// 由 EntityMovementComponent 的 AttachToHostStrategy 负责每帧位置跟随。
+    /// 设置附着模式：查找宿主节点，写入 MoveTargetNode，并发 MovementStarted 事件触发 AttachToHost 策略切换。
     /// EffectComponent 保留宿主销毁监听（生命周期职责）。
     /// </summary>
     private void SetupAttachment()
@@ -125,9 +124,12 @@ public partial class EffectComponent : Node, IComponent
             _hostNode = host2D;
             _log.Debug($"附着到宿主: {hostNode.Name}");
 
-            // 写入移动系统参数，由 AttachToHostStrategy 执行位置跟随
-            _data!.Set(DataKey.MoveTargetNode, host2D);
-            _data.Set(DataKey.MoveMode, MoveMode.AttachToHost);
+            // 通过事件触发策略切换，宿主引用通过 MovementParams.TargetNode 传入（EntityMovementComponent 监听此事件）
+            _entity!.Events.Emit(
+                GameEventType.Unit.MovementStarted,
+                new GameEventType.Unit.MovementStartedEventData(
+                    MoveMode.AttachToHost,
+                    new MovementParams { Mode = MoveMode.AttachToHost, TargetNode = host2D }));
 
             // 监听宿主销毁事件（生命周期职责，不属于移动系统）
             GlobalEventBus.Global.On<GameEventType.Global.EntityDestroyedEventData>(

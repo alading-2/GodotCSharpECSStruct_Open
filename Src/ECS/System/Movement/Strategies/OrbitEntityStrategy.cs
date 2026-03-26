@@ -2,27 +2,55 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 5】实体环绕
-/// <para>以 DataKey.MoveTargetNode 为动态圆心进行环绕。每帧同步目标位置后复用 OrbitPoint 逻辑。</para>
+/// 【模式 5】围绕目标实体环绕。
+/// <para>圆心为 <c>TargetNode</c> 的实时位置，每帧同步后复用固定圆心轨道逻辑。目标失效时停止位移但不主动完成。</para>
+/// <para><code>
+/// entity.Events.Emit(GameEventType.Unit.MovementStarted,
+///     new GameEventType.Unit.MovementStartedEventData(MoveMode.OrbitEntity, new MovementParams
+///     {
+///         Mode             = MoveMode.OrbitEntity,
+///         TargetNode       = targetNode,
+///         OrbitRadius      = 100f,
+///         OrbitAngularSpeed = Mathf.Pi,   // 弧度/秒
+///         OrbitClockwise   = false,        // 可选
+///         MaxDuration      = -1f,          // 可选
+///     }));
+/// </code></para>
+/// <para>【典型用途】围绕敌人旋转的护盾、跟着 Boss 转圈的子弹、盘旋飞行特效。</para>
 /// </summary>
 public class OrbitEntityStrategy : IMovementStrategy
 {
+    private float _currentAngle;
+
     [ModuleInitializer]
     public static void Register()
     {
-        MovementStrategyRegistry.Register(MoveMode.OrbitEntity, new OrbitEntityStrategy());
+        MovementStrategyRegistry.Register(MoveMode.OrbitEntity, () => new OrbitEntityStrategy());
     }
 
-    public float Update(IEntity entity, Data data, float delta)
+    public void OnEnter(IEntity entity, Data data, MovementParams @params)
     {
-        var targetNode = data.Get<Node2D>(DataKey.MoveTargetNode);
-        if (targetNode == null || !GodotObject.IsInstanceValid(targetNode)) return 0f;
+        if (entity is not Node2D node) return;
 
-        // 同步目标位置到环绕圆心
-        data.Set(DataKey.OrbitCenterPoint, targetNode.GlobalPosition);
+        Vector2 center = @params.TargetNode != null && GodotObject.IsInstanceValid(@params.TargetNode)
+            ? @params.TargetNode.GlobalPosition
+            : node.GlobalPosition;
 
-        // 复用 OrbitPoint 策略
-        var orbitStrategy = MovementStrategyRegistry.Get(MoveMode.OrbitPoint);
-        return orbitStrategy?.Update(entity, data, delta) ?? 0f;
+        Vector2 toSelf = node.GlobalPosition - center;
+        _currentAngle = toSelf.LengthSquared() > 0.001f ? toSelf.Angle() : 0f;
+    }
+
+    public MovementUpdateResult Update(IEntity entity, Data data, float delta, MovementParams @params)
+    {
+        if (entity is not Node2D node) return MovementUpdateResult.Continue();
+        if (@params.TargetNode == null || !GodotObject.IsInstanceValid(@params.TargetNode))
+            return MovementUpdateResult.Continue();
+
+        Vector2 center = @params.TargetNode.GlobalPosition;
+        return MovementHelper.OrbitStep(
+            node, data,
+            center, @params.OrbitRadius,
+            @params.OrbitAngularSpeed, @params.OrbitClockwise,
+            ref _currentAngle, delta);
     }
 }

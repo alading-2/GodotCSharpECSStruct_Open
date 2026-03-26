@@ -4,7 +4,7 @@ using Godot;
 /// 动作节点：面向当前目标
 /// <para>
 /// 将 AIMoveDirection 设为面向目标的方向（仅设朝向，不设移动速度）。
-/// 由 EnemyMovementComponent 根据方向执行朝向翻转。
+/// 由 EntityMovementComponent 根据方向执行朝向翻转。
 /// </para>
 /// <para>
 /// 返回值：

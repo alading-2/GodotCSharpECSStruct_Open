@@ -4,7 +4,7 @@ namespace Slime.Test;
 
 /// <summary>
 /// EntityMovementComponent 单场景测试
-/// 默认演示 TargetPoint 模式，并验证 -1 表示不限制
+/// 默认演示 Charge 模式（目标点冲锋），并验证 -1 表示不限制
 /// </summary>
 public partial class MovementComponentTestScene : Node2D
 {
@@ -38,21 +38,17 @@ public partial class MovementComponentTestScene : Node2D
 
         _entity.Position = new Vector2(120, 360);
 
-        _entity.Data.Set(DataKey.MoveMode, MoveMode.TargetPoint);
-        _entity.Data.Set(DataKey.MoveSpeed, 240f);
-        _entity.Data.Set(DataKey.Velocity, Vector2.Right * 240f);
+        _entity.Data.Set(DataKey.DefaultMoveMode, MoveMode.Charge);
 
-        _entity.Data.Set(DataKey.MoveTargetPoint, new Vector2(900, 360));
-        _entity.Data.Set(DataKey.MoveReachDistance, 8f);
-
-        _entity.Data.Set(DataKey.MoveMaxDuration, -1f);
-        _entity.Data.Set(DataKey.MoveMaxDistance, -1f);
-
-        _entity.Data.Set(DataKey.RotateToVelocity, true);
-        _entity.Data.Set(DataKey.MoveCompleted, false);
-        _entity.Data.Set(DataKey.MoveDestroyOnComplete, false);
-        _entity.Data.Set(DataKey.MoveElapsedTime, 0f);
-        _entity.Data.Set(DataKey.MoveTraveledDistance, 0f);
+        // 通过 MovementParams 传入本次运动所有输入参数，通过事件触发策略切换
+        _entity.Events.Emit(
+            GameEventType.Unit.MovementStarted,
+            new GameEventType.Unit.MovementStartedEventData(MoveMode.Charge, new MovementParams
+            {
+                TargetPoint = new Vector2(900, 360),
+                ActionSpeed = 240f,
+                ReachDistance = 8f,
+            }));
     }
 
     private void bindEvents()
@@ -66,10 +62,7 @@ public partial class MovementComponentTestScene : Node2D
 
     private void onMovementCompleted(GameEventType.Unit.MovementCompletedEventData data)
     {
-        if (_entity == null) return;
-
-        float elapsed = _entity.Data.Get<float>(DataKey.MoveElapsedTime);
-        float distance = _entity.Data.Get<float>(DataKey.MoveTraveledDistance);
-        _log.Info($"运动完成 Mode={data.Mode}, Elapsed={elapsed:F2}s, Distance={distance:F1}");
+        // 统计数据直接从事件携带的字段读取，不再轮询 DataKey
+        _log.Info($"运动完成 Mode={data.Mode}, Elapsed={data.ElapsedTime:F2}s, Distance={data.TraveledDistance:F1}");
     }
 }

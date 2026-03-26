@@ -2,93 +2,73 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 9】回旋镖运动
+/// 【模式 9】回旋飞镖。
+/// <para>去程飞向 <c>TargetPoint</c>，可选暂停，再返回起始点后完成。起始点由 OnEnter 自动记录，速度由 <c>DataKey.MoveSpeed</c> 驱动。</para>
 /// <para>
-/// 分两阶段：
-/// 1. 去程：从 BoomerangStartPoint 飞向 MoveTargetPoint（可选停顿 BoomerangPauseTime 秒）
-/// 2. 回程：从 MoveTargetPoint 飞回 BoomerangStartPoint，到达后完成
+/// <list type="bullet">
+/// <item><c>TargetPoint</c>（Vector2，必须）：去程目标坐标。</item>
+/// <item><c>BoomerangPauseTime</c>（float，秒，可选）：到达后停顿时长，0 = 直接返回。</item>
+/// <item><c>ReachDistance</c>（float，可选）：去程和回程的到达判定阈值。</item>
+/// <item><c>MaxDuration / DestroyOnComplete</c>（可选）</item>
+/// </list>
 /// </para>
-/// <para>使用 MoveSpeed 控制飞行速度。BoomerangReturning 标记当前阶段。</para>
+/// <para>【典型用途】回旋飞镖效果、投出后自动回收的技能、来回飞行的特效弹。</para>
 /// </summary>
 public class BoomerangStrategy : IMovementStrategy
 {
+    private Vector2 _startPoint;
+    private bool _returning;
+    private float _pauseTimer;
+
     [ModuleInitializer]
     public static void Register()
     {
-        MovementStrategyRegistry.Register(MoveMode.Boomerang, new BoomerangStrategy());
+        MovementStrategyRegistry.Register(MoveMode.Boomerang, () => new BoomerangStrategy());
     }
 
-    public void OnEnter(IEntity entity, Data data)
+    public void OnEnter(IEntity entity, Data data, MovementParams @params)
     {
-        if (entity is Node2D node)
-        {
-            data.Set(DataKey.BoomerangStartPoint, node.GlobalPosition);
-        }
-        data.Set(DataKey.BoomerangReturning, false);
-        data.Set(DataKey.BoomerangPauseTimer, 0f);
+        _startPoint = entity is Node2D node ? node.GlobalPosition : Vector2.Zero;
+        _returning = false;
+        _pauseTimer = 0f;
     }
 
-    public float Update(IEntity entity, Data data, float delta)
+    public MovementUpdateResult Update(IEntity entity, Data data, float delta, MovementParams @params)
     {
-        if (entity is not Node2D node) return 0f;
+        if (entity is not Node2D node) return MovementUpdateResult.Continue();
 
-        bool returning = data.Get<bool>(DataKey.BoomerangReturning);
-
-        // 停顿阶段检查
-        float pauseTimer = data.Get<float>(DataKey.BoomerangPauseTimer);
-        if (pauseTimer > 0f)
+        if (_pauseTimer > 0f)
         {
-            pauseTimer -= delta;
-            data.Set(DataKey.BoomerangPauseTimer, Mathf.Max(pauseTimer, 0f));
+            _pauseTimer = Mathf.Max(_pauseTimer - delta, 0f);
             data.Set(DataKey.Velocity, Vector2.Zero);
-            return 0f; // 停顿中不移动
+            return MovementUpdateResult.Continue();
         }
 
-        // 确定当前目标
-        Vector2 target = returning
-            ? data.Get<Vector2>(DataKey.BoomerangStartPoint)
-            : data.Get<Vector2>(DataKey.MoveTargetPoint);
-
+        Vector2 target = _returning ? _startPoint : @params.TargetPoint;
         Vector2 toTarget = target - node.GlobalPosition;
         float dist = toTarget.Length();
-        float reach = MovementHelper.GetReachDistance(data);
+        float reach = @params.ReachDistance > 0f ? @params.ReachDistance : 5f;
 
         if (dist <= reach)
         {
-            if (!returning)
+            if (!_returning)
             {
-                // 去程到达，切换为回程（可选停顿）
-                data.Set(DataKey.BoomerangReturning, true);
-                float pauseTime = data.Get<float>(DataKey.BoomerangPauseTime);
-                if (pauseTime > 0f)
-                {
-                    data.Set(DataKey.BoomerangPauseTimer, pauseTime);
-                }
+                _returning = true;
+                if (@params.BoomerangPauseTime > 0f)
+                    _pauseTimer = @params.BoomerangPauseTime;
                 data.Set(DataKey.Velocity, Vector2.Zero);
-                return 0f;
+                return MovementUpdateResult.Continue();
             }
             else
             {
-                // 回程到达，写入精确速度由调度器执行最后一步
                 data.Set(DataKey.Velocity, toTarget / Mathf.Max(delta, 0.001f));
-                return -1f;
+                return MovementUpdateResult.Complete();
             }
         }
 
-        float speed = data.Get<float>(DataKey.MoveSpeed);
-        Vector2 dir = toTarget / dist;
+        float speed = data.Get<float>(DataKey.MoveSpeed); // 实体属性，由属性系统管理
         float step = Mathf.Min(speed * delta, dist);
-
-        Vector2 velocity = dir * speed;
-        data.Set(DataKey.Velocity, velocity);
-
-        // 位移由调度器统一执行
-        return step;
-    }
-
-    public void OnExit(IEntity entity, Data data)
-    {
-        data.Set(DataKey.BoomerangReturning, false);
-        data.Set(DataKey.BoomerangPauseTimer, 0f);
+        data.Set(DataKey.Velocity, (toTarget / dist) * speed);
+        return MovementUpdateResult.Continue(step);
     }
 }

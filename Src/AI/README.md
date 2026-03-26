@@ -261,7 +261,7 @@ var tree = new SelectorNode("Boss")
 
 执行层交给：
 
-- 移动：`EnemyMovementComponent`
+- 移动：`EntityMovementComponent`（默认使用 `DefaultMoveMode = AIControlled`，AI 只写 `AIMoveDirection` / `AIMoveSpeedMultiplier`；临时轨迹通过 `MovementStarted` 切换）
 - 攻击：`AttackComponent`
 - 动画：`UnitAnimationComponent`
 

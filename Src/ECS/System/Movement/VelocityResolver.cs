@@ -10,8 +10,8 @@ using Godot;
 /// 4. 叠加 <c>VelocityImpulse</c> 瞬时冲量（爆炸推力等），用后自动清零
 /// </para>
 /// <para>
-/// 使用方式：在 VelocityComponent / EnemyMovementComponent 的物理帧中调用
-/// <c>VelocityResolver.Resolve(data)</c> 获取最终速度后应用到物理体。
+/// 使用方式：在 EntityMovementComponent 的每帧更新中调用
+/// <c>VelocityResolver.Resolve(data)</c> 获取最终速度后应用位移（所有实体通用）。
 /// </para>
 /// </summary>
 public static class VelocityResolver

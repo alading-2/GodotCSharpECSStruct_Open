@@ -109,7 +109,8 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - **策略接口**：`IMovementStrategy`（Update 纯计算只写 `DataKey.Velocity` / OnEnter / OnExit），返回位移量或 -1 表示完成
 - **注册表**：`MovementStrategyRegistry`（MoveMode → Strategy 的静态映射）
 - **辅助方法**：`MovementHelper`（朝向旋转、到达距离）
-- **双路径执行（调度器负责）**：`Node2D/Area2D` 走 `_Process + GlobalPosition += Velocity * delta`，`CharacterBody2D` 走 `_PhysicsProcess + VelocityResolver + MoveAndSlide`
+- **统一执行路径**：所有实体经 `VelocityResolver.Resolve()` 合成速度后应用位移，`CharacterBody2D` 额外调用 `MoveAndSlide()` 处理碰撞，其他用 `GlobalPosition +=`
+- **帧率选择**：由策略 `UsePhysicsProcess` 声明走 `_Process` 或 `_PhysicsProcess`，与节点类型无关，两条路径逻辑完全相同
 - **策略约束**：禁止直接操作 `GlobalPosition`，所有位移由调度器统一执行
 
 ### 12 种运动模式

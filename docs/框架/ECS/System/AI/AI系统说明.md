@@ -8,7 +8,7 @@
 - `SequenceNode` / `SelectorNode` 的执行逻辑与返回值含义
 - 完整的分支切换、打断、Reset 流程
 - 常见组合模式的完整运行时例子
-- ECS 组件集成（`AIComponent` / `EnemyMovementComponent`）
+- ECS 组件集成（`AIComponent` / `EntityMovementComponent`）
 - 攻击与动画协作（`AttackComponent` / `UnitAnimationComponent`）
 - 关键数据键、事件流与扩展点
 
@@ -25,7 +25,7 @@
 1. **AIComponent** 每帧构建 `AIContext` 并 Tick 行为树。
 2. 行为树节点通过 `DataKey` 写入意图（如移动方向、状态）或发出事件（如攻击请求）。
 3. 执行组件读取意图并执行：
-   - `EnemyMovementComponent`：执行移动与朝向。
+   - `EntityMovementComponent`：在 `DefaultMoveMode = AIControlled` 时读取 AI 移动意图并执行移动/朝向；临时轨迹通过 `MovementStarted`（开始/切换事件）切换。
    - `AttackComponent`：执行攻击状态机与伤害判定。
    - `UnitAnimationComponent`：响应动画事件并驱动动画播放。
 
@@ -389,15 +389,18 @@ var tree = new SelectorNode("自定义Boss")
 
 ---
 
-## 3.5 移动执行组件（`EnemyMovementComponent`）
+## 3.5 移动执行组件（`EntityMovementComponent`）
 
-在 `_PhysicsProcess` 中执行：
+AI 默认移动链路如下：
 
-1. 读取 `DataKey.MoveDirection`
-2. 读取 `DataKey.MoveSpeedMultiplier`
-3. 读取 `DataKey.MoveSpeed`
-4. 计算 `_body.Velocity` 并 `MoveAndSlide()`
-5. 用方向更新 `VisualRoot.Scale.X` 实现朝向翻转
+1. `AIComponent` 驱动行为树，写入 `DataKey.AIMoveDirection` 与 `DataKey.AIMoveSpeedMultiplier`
+2. `EntityMovementComponent` 在注册时按 `DataKey.DefaultMoveMode` 进入默认策略
+3. 默认策略为 `MoveMode.AIControlled` 时，`AIControlledStrategy` 读取 AI 意图并写入 `DataKey.Velocity`
+4. `EntityMovementComponent` 在 `_PhysicsProcess` 中调用 `VelocityResolver.Resolve()` + `MoveAndSlide()`
+5. 组件再根据速度更新朝向与翻转表现
+
+临时轨迹移动不再由 AI 直接接管，而是通过 `GameEventType.Unit.MovementStarted`（开始/切换事件）切入其它策略；完成后由 `MovementCompleted` 回退到 `DefaultMoveMode`。
+切换门禁规则为：当前模式等于 `DefaultMoveMode` 时允许直接切换，当前为非默认临时模式时需满足 `CanBeInterrupted=true`。
 
 这使 AI 只“决策”，移动组件只“执行”。
 
@@ -477,7 +480,7 @@ var tree = new SelectorNode("自定义Boss")
 - 状态与目标：`AIState`、`TargetNode`、`AIEnabled`
 - 感知：`DetectionRange`、`LoseTargetRange`
 - 巡逻：`SpawnPosition`、`PatrolRadius`、`PatrolTargetPoint`、`PatrolWaitTime`、`PatrolWaitDone`
-- 移动意图：`MoveDirection`、`MoveSpeedMultiplier`
+- 移动意图：`AIMoveDirection`、`AIMoveSpeedMultiplier`
 - 攻击动画：`AttackAnimName`
 
 ## 4.2 关键事件
