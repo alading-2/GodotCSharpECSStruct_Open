@@ -6,7 +6,7 @@
 /// 这里放的是多个策略和调度器都会复用的纯工具逻辑，例如朝向更新、到达阈值读取、环绕计算。
 /// </para>
 /// </summary>
-public static class MovementHelper
+public static partial class MovementHelper
 {
     /// <summary>
     /// 统一的朝向更新入口。
@@ -85,38 +85,4 @@ public static class MovementHelper
         return 0f;
     }
 
-    /// <summary>
-    /// 环绕运动单帧计算，供 OrbitPoint / OrbitEntity / Spiral 三个策略共用。
-    /// 根据圆心、当前半径、角速度推进极角并计算本帧轨道点，将结果写入 DataKey.Velocity。
-    /// </summary>
-    /// <param name="node">当前运动节点</param>
-    /// <param name="data">实体数据容器（写入 Velocity）</param>
-    /// <param name="center">本帧圆心坐标</param>
-    /// <param name="radius">本帧环绕半径</param>
-    /// <param name="angularSpeed">角速度（弧度/秒）</param>
-    /// <param name="clockwise">是否顺时针</param>
-    /// <param name="currentAngle">当前极角（弧度），由策略实例持有，每帧更新</param>
-    /// <param name="delta">本帧时间（秒）</param>
-    /// <returns>Continue(displacement) 结果</returns>
-    public static MovementUpdateResult OrbitStep(
-        Node2D node, Data data,
-        Vector2 center, float radius, float angularSpeed, bool clockwise,
-        ref float currentAngle, float delta)
-    {
-        if (radius <= 0f || angularSpeed <= 0f) return MovementUpdateResult.Continue();
-
-        float sign = clockwise ? -1f : 1f;
-        currentAngle += sign * angularSpeed * delta;
-
-        float cos = Mathf.Cos(currentAngle);
-        float sin = Mathf.Sin(currentAngle);
-        Vector2 newPos = center + new Vector2(cos * radius, sin * radius);
-
-        Vector2 toTarget = newPos - node.GlobalPosition;
-        float displacement = toTarget.Length();
-        Vector2 velocity = displacement > 0.001f ? toTarget / Mathf.Max(delta, 0.001f) : Vector2.Zero;
-        data.Set(DataKey.Velocity, velocity);
-
-        return MovementUpdateResult.Continue(displacement);
-    }
 }

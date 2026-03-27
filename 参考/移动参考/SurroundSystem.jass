@@ -1,0 +1,179 @@
+
+library SurroundSystem initializer SurroundSystemInit requires Commom
+     globals
+        private timer tTimer_Surround                //计时器
+        private integer iTimerID_Surround            //计时器ID地址
+        private integer iNum_Surround = 0            //环绕单位数量
+        private integer array iData_Surround         //结构体整数地址，用于判断结构体是否存在
+        private boolean bTimerState_Surround = false
+        constant real rTimerInterval_Surround = 0.03
+        
+        constant integer iSurroundMode_Coord = 1     //环绕坐标
+        constant integer iSurroundMode_Unit  = 2     //环绕单位
+    endglobals
+        
+    function SurroundSystemInit takes nothing returns nothing
+        set tTimer_Surround = CreateTimer()
+        //call TimerStart(tTimer_Surround, rTimerInterval_Surround, true, function SurroundData.TimerAction_Surround)
+        set iTimerID_Surround = GetHandleId(tTimer_Surround)
+    endfunction
+    
+    struct SurroundData
+        private integer iSurroundMode           //环绕模式,1:Coord,2:Unit
+        private real rSurrx                     //初始坐标
+        private real rSurry                     //初始坐标
+        private unit uCentreUnit                //中心单位
+        private unit uOutsideUnit               //外围单位
+        private boolean bIsDestroyUnit = false  //环绕结束是否删除单位
+        //SurroundData
+        private real rUnitFacDegree             //单位面向角度，直接加到rMoveSurrDegree上
+        
+        private real rNowSurrDegree            //初始环绕角度，实际角度
+        private real rTotalSurrDegree           //总环绕角度
+        private real rMoveSurrDegree = 0.       //已经完成(当前)的环绕角度
+        private real rEverySurrDegree           //每次移动的环绕角度
+        
+        private real rTotalTime = 0.            //环绕时间限制
+        private real rMoveTime = 0.             //已经环绕的时间
+        
+        private real rCentreDistance        //当前与中心的距离，需要输入参数，相当于初始距离
+        private real rEveryDistance         //每0.03秒移动的距离，可以小于0
+        
+        static method create takes integer SurroundMode, real Surrx, real Surry, unit CentreUnit, unit OutsideUnit, boolean IsDestroyUnit returns thistype
+            local thistype st
+            if(iNum_Surround < 8190) then
+                set st = thistype.allocate()
+                set st.iSurroundMode = SurroundMode
+                if (SurroundMode==1) then //1:Coord
+                    set st.rSurrx = Surrx
+                    set st.rSurry = Surry
+                elseif (SurroundMode==2) then //2:Unit
+                    set st.uCentreUnit = CentreUnit
+                endif
+                set st.uOutsideUnit = OutsideUnit
+                set st.bIsDestroyUnit = IsDestroyUnit
+                
+                set iNum_Surround = iNum_Surround + 1
+                set iData_Surround[iNum_Surround] = integer(st)
+                
+                if bTimerState_Surround == false then
+                    call TimerStart(tTimer_Surround, rTimerInterval_Surround, true, function SurroundData.TimerAction_Surround)
+                    set bTimerState_Surround = true
+                endif
+                
+                //call BJDebugMsg("Surround_create:" + I2S(iData_Surround[iNum_Surround]))
+                return st
+            else
+                //call BJDebugMsg("当前冲锋数量过多，请等待")
+                return 0
+            endif
+            
+        endmethod
+        
+        static method SetSurroundData takes thistype st, real UnitFacDegree, real NowSurrDegree, real TotalSurrDegree, real EverySurrDegree, real TotalTime, real CentreDistance, real EveryDistance returns nothing
+            if (st!=0) then
+                set st.rUnitFacDegree = UnitFacDegree
+                set st.rNowSurrDegree = NowSurrDegree
+                set st.rTotalSurrDegree = TotalSurrDegree
+                set st.rTotalTime = TotalTime
+                set st.rEverySurrDegree = EverySurrDegree
+                set st.rCentreDistance = CentreDistance
+                set st.rEveryDistance = EveryDistance
+            endif
+        endmethod
+        
+        static method TimerAction_Surround takes nothing returns nothing
+            local integer i = 1
+            local integer Num = iNum_Surround
+            local thistype st
+            local real x
+            local real y
+            //call BJDebugMsg("Running")
+            
+            if (Num==0) then
+                call PauseTimer(tTimer_Surround)
+                set bTimerState_Surround = false
+                //call BJDebugMsg("Pause")
+                return
+            endif
+            
+            loop
+                exitwhen i > Num
+                set st = thistype(iData_Surround[i])
+                if (iData_Surround[i] != 0) and \
+                (st.uOutsideUnit != null) and \
+                ( GetUnitState(st.uOutsideUnit, UNIT_STATE_LIFE)>0 ) and \
+                (st.iSurroundMode!=0) and \
+                (st.rMoveTime<=st.rTotalTime) and \
+                (st.rMoveSurrDegree<=st.rTotalSurrDegree) then
+                    //call BJDebugMsg("Surround")
+                    if (st.iSurroundMode==1) then //1:Coord,2:Unit
+                        //初始坐标固定
+                        set x = st.rSurrx
+                        set y = st.rSurry
+                    elseif (st.iSurroundMode==2) then
+                        set x = GetUnitX(st.uCentreUnit)
+                        set y = GetUnitY(st.uCentreUnit)
+                    endif
+                    set x = x + st.rCentreDistance * Cos(st.rNowSurrDegree * bj_DEGTORAD)   //Cos的参数是弧度，角度转化成弧度
+                    set y = y + st.rCentreDistance * Sin(st.rNowSurrDegree * bj_DEGTORAD)
+                    set x = IsXExceedBoundary(x)      //x坐标边界检测
+                    set y = IsYExceedBoundary(y)      //y坐标边界检测
+                    call SetUnitX(st.uOutsideUnit, x)
+                    call SetUnitY(st.uOutsideUnit, y)
+                    call SetUnitFacing(st.uOutsideUnit, st.rNowSurrDegree + st.rUnitFacDegree)
+                    set st.rNowSurrDegree = st.rNowSurrDegree + st.rEverySurrDegree      //实际角度
+                    set st.rMoveSurrDegree = st.rMoveSurrDegree + st.rEverySurrDegree    //已经完成(当前)的环绕角度
+                    set st.rCentreDistance = st.rCentreDistance + st.rEveryDistance      //中心距离变化
+                    
+                    set st.rMoveTime = st.rMoveTime + rTimerInterval_Surround
+                    
+                    //call DestroyEffect(AddSpecialEffect("Abilities\\Weapons\\AncientProtectorMissile\\AncientProtectorMissile.mdl", d.x, d.y))
+                else
+                    //Done
+                    set iData_Surround[i] = 0
+                    set iNum_Surround = iNum_Surround - 1
+                    call st.destroy()
+                    //排序
+                    if (i != Num) then    //冲锋完毕的结构体不是排在最后，才需要改成排序，当前的清掉，最后的放在当前
+                        set iData_Surround[i] = iData_Surround[Num]
+                    endif
+                    set iData_Surround[Num] = 0
+                    set Num = Num - 1
+                    set i = i - 1
+                endif
+                set i = i + 1
+            endloop
+            
+        endmethod
+        
+        method onDestroy takes nothing returns nothing
+            if (bIsDestroyUnit == true) then
+                call KillUnit(uOutsideUnit)
+            endif
+            
+            set iSurroundMode = 0           //环绕模式,1:Coord,2:Unit
+            set rSurrx = 0.                     //初始坐标
+            set rSurry = 0.                     //初始坐标
+            set uCentreUnit = null                //中心单位
+            set uOutsideUnit = null               //外围单位
+            set bIsDestroyUnit = false  //环绕结束是否删除单位
+            
+            set rUnitFacDegree = 0.             //单位面向角度，直接加到rMoveSurrDegree上
+            
+            set rNowSurrDegree = 0.            //初始环绕角度，实际角度
+            set rTotalSurrDegree = 0.           //总环绕角度
+            set rMoveSurrDegree = 0.       //已经完成(当前)的环绕角度
+            set rEverySurrDegree = 0.           //每次移动的环绕角度
+            
+            set rTotalTime = 0.            //环绕时间限制
+            set rMoveTime = 0.             //已经环绕的时间
+            
+            set rCentreDistance = 0.        //当前与中心的距离，需要输入参数，相当于初始距离
+            set rEveryDistance = 0.         //每0.03秒移动的距离，可以小于0
+            
+        endmethod
+        
+    endstruct
+endlibrary
+

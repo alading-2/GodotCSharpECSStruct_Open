@@ -66,7 +66,7 @@ public record struct MovementParams
     public bool isTrackTarget { get; init; } = false;
     /// <summary>
     /// 目标节点引用，多策略复用：
-    /// Charge（冲锋方向源 / 追踪目标）/ OrbitEntity（环绕中心）/ AttachToHost（宿主）
+    /// Charge（冲锋方向源 / 追踪目标）/ Orbit（实体跟随环绕圆心）/ AttachToHost（宿主）
     /// </summary>
     public Node2D? TargetNode { get; init; } = null;
     /// <summary>移动方向角度（弧度），Charge 方向备选（优先级最低），0 = 向右，正值顺时针</summary>
@@ -74,20 +74,41 @@ public record struct MovementParams
     /// <summary>到达距离阈值（像素），0 = 不启用；需要判断到达时自行设置并检查</summary>
     public float ReachDistance { get; init; } = 0f;
 
-    // ======== 环绕 / 螺旋 ========
+    // ======== 环绕（Orbit）========
 
-    /// <summary>环绕圆心坐标（OrbitPoint / Spiral 模式）</summary>
+    /// <summary>圆心坐标（固定点模式；设置 <c>TargetNode</c> 时以实体实时位置为主）</summary>
     public Vector2 OrbitCenter { get; init; } = Vector2.Zero;
-    /// <summary>环绕初始半径（像素）</summary>
-    public float OrbitRadius { get; init; } = 100f;
-    /// <summary>角速度（弧度/秒）</summary>
-    public float OrbitAngularSpeed { get; init; } = Mathf.Pi;
-    /// <summary>螺旋目标半径（Spiral 模式，半径最终收敛到此值）</summary>
-    public float OrbitTargetRadius { get; init; } = 50f;
-    /// <summary>径向变化速度（像素/秒，Spiral 模式）</summary>
-    public float OrbitRadialSpeed { get; init; } = 50f;
+    /// <summary>
+    /// 初始角度（弧度）；<c>null</c> = 从实体当前位置到圆心的方向自动推导，避免第一帧跳变。
+    /// 0 = 右方，<c>Mathf.Pi * 0.5f</c> = 下方（Godot Y 向下），<c>Mathf.Pi</c> = 左方。
+    /// 典型用途：多颗卫星均匀分布 → 每颗设置 <c>Mathf.Tau / N * i</c>。
+    /// </summary>
+    public float? OrbitInitAngle { get; init; } = null;
+    /// <summary>初始环绕半径（像素）</summary>
+    public float OrbitRadius { get; init; } = 0f;
+    /// <summary>
+    /// 初始角速度（弧度/秒）。
+    /// 三选二推导：<c>OrbitAngularSpeed &gt; 0</c> 直接用；否则从 <c>OrbitTotalAngle / MaxDuration</c> 推算。
+    /// </summary>
+    public float OrbitAngularSpeed { get; init; } = 0f;
+    /// <summary>角加速度（弧度/秒²），0 = 匀速，正值加速，负值减速（减至 0 停转）</summary>
+    public float OrbitAngularAcceleration { get; init; } = 0f;
+    /// <summary>
+    /// 总环绕角度（弧度），-1 = 不限制。
+    /// <c>Mathf.Tau * N</c> = 恰好 N 圈后完成。配合 <c>MaxDuration</c> 可三选二推算 <c>OrbitAngularSpeed</c>。
+    /// </summary>
+    public float OrbitTotalAngle { get; init; } = -1f;
     /// <summary>是否顺时针旋转（默认 false = 逆时针）</summary>
-    public bool OrbitClockwise { get; init; } = false;
+    public bool IsOrbitClockwise { get; init; } = false;
+    /// <summary>
+    /// 径向速度（像素/秒）：正值向外扩大半径，负值向内收缩，0 = 半径不变。
+    /// 受 <c>OrbitRadialMin</c> / <c>OrbitRadialMax</c> 双向限制。
+    /// </summary>
+    public float OrbitRadialSpeed { get; init; } = 0f;
+    /// <summary>最小环绕半径（像素），-1 = 不限制。向内收缩时的下限，到达后停止继续缩小。</summary>
+    public float OrbitRadialMin { get; init; } = -1f;
+    /// <summary>最大环绕半径（像素），-1 = 不限制。向外扩大时的上限，到达后停止继续扩大。</summary>
+    public float OrbitRadialMax { get; init; } = -1f;
 
     // ======== 波形 ========
 

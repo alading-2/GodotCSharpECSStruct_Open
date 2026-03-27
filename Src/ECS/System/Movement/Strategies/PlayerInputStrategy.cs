@@ -26,7 +26,7 @@ public class PlayerInputStrategy : IMovementStrategy
     /// </summary>
     public MovementUpdateResult Update(IEntity entity, Data data, float delta, MovementParams @params)
     {
-        float speed = data.Get<float>(DataKey.MoveSpeed); // 玩家满速时的移动速度
+        float speed = data.Get<float>(DataKey.FinalMoveSpeed); // 最终移动速度
         float acceleration = data.Get<float>(DataKey.Acceleration); // 速度插値系数，越大响应越快
 
         Vector2 inputDir = InputManager.GetMoveInput(); // 输入系统给出的移动方向

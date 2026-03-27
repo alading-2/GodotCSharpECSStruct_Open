@@ -85,7 +85,7 @@ public partial class TargetingIndicatorControlComponent : Node, IComponent
         if (aimInput.LengthSquared() > 0.1f)
         {
             // 获取移动速度，若未配置则使用默认值
-            var moveSpeed = _owner!.Data.Get<float>(DataKey.MoveSpeed);
+            var moveSpeed = _owner!.Data.Get<float>(DataKey.FinalMoveSpeed);
 
             // 根据输入更新相对偏移量
             _relativeOffset += aimInput.Normalized() * moveSpeed * (float)delta;

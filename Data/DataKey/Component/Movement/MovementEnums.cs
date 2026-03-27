@@ -17,35 +17,20 @@ public enum MoveMode
     /// <summary>
     /// 冲锋（统一冲刺 / 追点 / 追踪）。
     /// <para>
-    /// 方向优先级：TargetNode > TargetPoint > Angle > 当前 Velocity 方向。
+    /// 方向优先级：TargetNode > TargetPoint > Angle > 右方向（Vector2.Right 兜底）。
     /// 速度推导（三选二）：ActionSpeed+MaxDuration | ActionSpeed+MaxDistance | MaxDistance+MaxDuration。
     /// </para>
     /// </summary>
     Charge = 1,
 
     /// <summary>
-    /// 围绕固定点环绕。
+    /// 环绕（固定点 / 目标实体）。
     /// <para>
-    /// 读取圆心、半径和角速度，持续做圆周运动。
+    /// 圆心优先级：TargetNode（每帧实时跟随）> OrbitCenter（固定世界坐标）。
+    /// 不设置 TargetNode → 固定点环绕；设置 TargetNode → 实体跟随环绕，目标失效时原地暂停。
     /// </para>
     /// </summary>
-    OrbitPoint = 4,
-
-    /// <summary>
-    /// 围绕目标实体环绕。
-    /// <para>
-    /// 每帧同步目标实体位置为圆心，再复用固定圆心环绕逻辑。
-    /// </para>
-    /// </summary>
-    OrbitEntity = 5,
-
-    /// <summary>
-    /// 螺旋运动。
-    /// <para>
-    /// 在环绕的基础上逐渐改变半径，直到靠近目标半径后继续环绕。
-    /// </para>
-    /// </summary>
-    Spiral = 6,
+    Orbit = 2,
 
     /// <summary>
     /// 正弦波前进。
@@ -53,7 +38,7 @@ public enum MoveMode
     /// 沿基础前进方向移动，同时叠加横向波动位移。
     /// </para>
     /// </summary>
-    SineWave = 7,
+    SineWave = 3,
 
     /// <summary>
     /// 贝塞尔曲线移动。
@@ -61,7 +46,7 @@ public enum MoveMode
     /// 沿控制点定义的曲线前进，可选开启匀速参数化。
     /// </para>
     /// </summary>
-    BezierCurve = 8,
+    BezierCurve = 4,
 
     /// <summary>
     /// 回旋镖运动。
@@ -69,7 +54,7 @@ public enum MoveMode
     /// 去程飞向目标点，可选停顿，再自动回到起点。
     /// </para>
     /// </summary>
-    Boomerang = 9,
+    Boomerang = 5,
 
     /// <summary>
     /// 附着跟随。
@@ -77,7 +62,7 @@ public enum MoveMode
     /// 持续对齐到宿主节点及偏移量，宿主失效时完成。
     /// </para>
     /// </summary>
-    AttachToHost = 10,
+    AttachToHost = 6,
 
     /// <summary>
     /// 玩家输入驱动移动。
@@ -85,7 +70,7 @@ public enum MoveMode
     /// 适合作为玩家默认模式，固定帧率下读取输入并平滑写回速度。
     /// </para>
     /// </summary>
-    PlayerInput = 11,
+    PlayerInput = 7,
 
     /// <summary>
     /// AI 决策驱动移动。
@@ -93,7 +78,7 @@ public enum MoveMode
     /// 适合作为敌人默认模式，固定帧率下读取 AI 写入的方向和速度倍率。
     /// </para>
     /// </summary>
-    AIControlled = 12,
+    AIControlled = 8,
 
 
 }

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 /// 【模式 13】冲锋（统一冲刺 / 追点 / 追踪）。
 /// <para>
 /// 将原有的 Dash / TargetPoint / TargetEntity 三种冲锋策略合并为一。
-/// 方向优先级：<c>TargetNode</c> &gt; <c>TargetPoint</c> &gt; <c>Angle</c> &gt; 当前 <c>Velocity</c> 方向。
+/// 方向优先级：<c>TargetNode</c> &gt; <c>TargetPoint</c> &gt; <c>Angle</c> &gt; 右方向（Vector2.Right 兜底）。
 /// </para>
 /// <para>
 /// <c>isTrackTarget</c>（仅 <c>TargetNode</c> 有效时生效）：
@@ -37,7 +37,7 @@ using System.Runtime.CompilerServices;
 ///         DestroyOnComplete = true,
 ///     }));
 ///
-/// 【使用示例 3：固定方向冲刺（方向角 / 当前速度方向）】
+/// 【使用示例 3：固定方向冲刺（方向角 / 右方向兜底）】
 /// entity.Events.Emit(GameEventType.Unit.MovementStarted,
 ///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Charge, new MovementParams
 ///     {
@@ -97,7 +97,7 @@ public class ChargeStrategy : IMovementStrategy
         return MovementUpdateResult.Continue(@params.ActionSpeed * delta);
     }
 
-    /// <summary>OnEnter 时解析初始方向（优先级：TargetPoint > Angle > 右方向）</summary>
+    /// <summary>OnEnter 时解析初始方向（优先级：TargetNode 采样位置 > TargetPoint > Angle > 右方向兜底）</summary>
     private static Vector2 ResolveDirection(Node2D node, MovementParams @params)
     {
         // 1. 目标实体（OnEnter 时采样位置，之后方向锁定）

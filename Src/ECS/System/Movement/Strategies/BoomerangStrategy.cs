@@ -3,14 +3,30 @@ using System.Runtime.CompilerServices;
 
 /// <summary>
 /// 【模式 9】回旋飞镖。
-/// <para>去程飞向 <c>TargetPoint</c>，可选暂停，再返回起始点后完成。起始点由 OnEnter 自动记录，速度由 <c>DataKey.MoveSpeed</c> 驱动。</para>
+/// <para>去程飞向 <c>TargetPoint</c>，可选暂停，再返回起始点后完成。起始点由 OnEnter 自动记录，速度由 <c>DataKey.MoveSpeed</c>（实体属性）驱动。</para>
 /// <para>
 /// <list type="bullet">
 /// <item><c>TargetPoint</c>（Vector2，必须）：去程目标坐标。</item>
-/// <item><c>BoomerangPauseTime</c>（float，秒，可选）：到达后停顿时长，0 = 直接返回。</item>
-/// <item><c>ReachDistance</c>（float，可选）：去程和回程的到达判定阈值。</item>
-/// <item><c>MaxDuration / DestroyOnComplete</c>（可选）</item>
+/// <item><c>BoomerangPauseTime</c>（float，秒，可选）：到达目标后停顿时长，0 = 直接返回。</item>
+/// <item><c>ReachDistance</c>（float，可选）：到达判定阈值（像素），0 = 使用默认 5px。</item>
+/// <item><c>MaxDuration</c>（float，可选）：-1 = 不限制，由飞行距离 / 速度自然决定飞行时长。</item>
+/// <item><c>DestroyOnComplete</c>（bool，可选）：返回起点后是否自动销毁实体。</item>
 /// </list>
+/// </para>
+/// <para>
+/// <code>
+/// 【使用示例：回旋飞镖弹到目标点后回收】
+/// entity.Events.Emit(GameEventType.Unit.MovementStarted,
+///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Boomerang, new MovementParams
+///     {
+///         Mode               = MoveMode.Boomerang,
+///         TargetPoint        = targetPos,    // 必须：去程目标坐标
+///         BoomerangPauseTime = 0.2f,         // 可选：到达后停顿 0.2 秒再返回，0 = 立即返回
+///         ReachDistance      = 20f,          // 可选：到达判定距离（像素）
+///         MaxDuration        = -1f,          // -1 不限制，自然完成
+///         DestroyOnComplete  = true,
+///     }));
+/// </code>
 /// </para>
 /// <para>【典型用途】回旋飞镖效果、投出后自动回收的技能、来回飞行的特效弹。</para>
 /// </summary>
@@ -66,7 +82,7 @@ public class BoomerangStrategy : IMovementStrategy
             }
         }
 
-        float speed = data.Get<float>(DataKey.MoveSpeed); // 实体属性，由属性系统管理
+        float speed = data.Get<float>(DataKey.FinalMoveSpeed); // 实体属性，由属性系统管理
         float step = Mathf.Min(speed * delta, dist);
         data.Set(DataKey.Velocity, (toTarget / dist) * speed);
         return MovementUpdateResult.Continue(step);
