@@ -12,46 +12,46 @@ public static partial class MovementHelper
     /// 统一的朝向更新入口。
     /// <para>
     /// 如果实体有 `VisualRoot`，优先通过 `FlipH` 表示左右朝向，适合角色类资源。
-    /// 如果没有 `VisualRoot`，则退化为根据 `RotateToVelocity` 旋转整个节点，适合子弹和特效。
+    /// 如果没有 `VisualRoot`，则退化为根据方向向量旋转整个节点，适合子弹和特效。
     /// </para>
     /// </summary>
     /// <param name="entity">当前运动实体</param>
     /// <param name="params">本次运动参数（读取 RotateToVelocity）</param>
-    /// <param name="velocity">用于判断朝向的意图速度</param>
+    /// <param name="direction">用于判断朝向的意图方向，可来自速度、切线或显式面向向量</param>
     /// <param name="visualRoot">角色视觉根节点，可为空</param>
     public static void UpdateOrientation(
         IEntity entity,
         MovementParams @params,
-        Vector2 velocity,
+        Vector2 direction,
         AnimatedSprite2D? visualRoot = null)
     {
-        if (velocity.LengthSquared() < 0.001f) return;
+        if (direction.LengthSquared() < 0.001f) return;
 
         if (visualRoot != null)
         {
             // 角色只关心左右朝向，接近竖直移动时不翻面，避免视觉抖动。
-            if (Mathf.Abs(velocity.X) < 0.1f) return;
+            if (Mathf.Abs(direction.X) < 0.1f) return;
 
-            visualRoot.FlipH = velocity.X < 0;
+            visualRoot.FlipH = direction.X < 0;
             return;
         }
 
-        ApplyRotation(entity, @params, velocity);
+        ApplyRotation(entity, @params, direction);
     }
 
     /// <summary>
-    /// 当 `RotateToVelocity=true` 时，让实体朝向速度方向。
+    /// 当 `RotateToVelocity=true` 时，让实体朝向给定方向。
     /// <para>
-    /// 该逻辑只对没有 `VisualRoot` 的普通 `Node2D` 有效，速度过小时会跳过旋转以避免角度抖动。
+    /// 该逻辑只对没有 `VisualRoot` 的普通 `Node2D` 有效，方向向量过小时会跳过旋转以避免角度抖动。
     /// </para>
     /// </summary>
-    public static void ApplyRotation(IEntity entity, MovementParams @params, Vector2 velocity)
+    public static void ApplyRotation(IEntity entity, MovementParams @params, Vector2 direction)
     {
         if (!@params.RotateToVelocity) return;
         if (entity is not Node2D node) return;
-        if (velocity.LengthSquared() < 0.001f) return;
+        if (direction.LengthSquared() < 0.001f) return;
 
-        node.Rotation = velocity.Angle();
+        node.RotationDegrees = Mathf.RadToDeg(direction.Angle());
     }
 
     /// <summary>

@@ -9,7 +9,8 @@
 /// 1. 只负责计算本帧的运动意图，并把结果写入 <c>DataKey.Velocity</c>
 /// 2. 不直接修改 <c>GlobalPosition</c>，真正位移始终由调度器统一执行
 /// 3. 不负责通用结束条件与累计统计，时间和距离限制统一由组件处理
-/// 4. 输入参数通过 <c>in MovementParams</c> 传入，运行时状态存于策略私有字段
+/// 4. 如需将“面向方向”与“位移方向”解耦，可通过 <c>MovementUpdateResult</c> 显式返回本帧朝向意图
+/// 5. 输入参数通过 <c>in MovementParams</c> 传入，运行时状态存于策略私有字段
 /// </para>
 /// </summary>
 public interface IMovementStrategy
@@ -43,6 +44,8 @@ public interface IMovementStrategy
 
     /// <summary>
     /// 每帧更新一次运动意图，将结果写入 <c>DataKey.Velocity</c>，禁止直接修改节点位置。
+    /// 如当前轨迹的视觉朝向不应直接取 <c>Velocity</c>（例如正弦波/曲线路径的切线方向），
+    /// 可通过返回值显式附带本帧朝向意图。
     /// </summary>
     /// <param name="entity">当前运动实体</param>
     /// <param name="data">实体数据容器</param>

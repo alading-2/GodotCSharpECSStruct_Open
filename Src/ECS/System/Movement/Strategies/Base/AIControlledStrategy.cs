@@ -2,7 +2,7 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 12】AI 决策驱动移动。
+/// 【模式】AI 决策驱动移动。
 /// <para>不做寻路/索敌，只消费 AI 层写入的方向与倍率。通常设为敌人/NPC 的 <c>DefaultMoveMode</c>，临时策略完成后自动回退。</para>
 /// <para>AI 每帧持续写入 Data（非 MovementParams）：
 /// <list type="bullet">

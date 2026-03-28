@@ -2,7 +2,7 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 11】玩家输入驱动移动。
+/// 【模式】玩家输入驱动移动。
 /// <para>每帧读取 <c>InputManager</c> 移动输入，结合 <c>MoveSpeed</c>/<c>Acceleration</c> 平滑插值 Velocity。通常设为玩家的 <c>DefaultMoveMode</c>，临时运动完成后自动回退。</para>
 /// <para>所需 Data（实体属性，非 MovementParams）：<c>DataKey.MoveSpeed</c>（最大速度），<c>DataKey.Acceleration</c>（平滑系数）。</para>
 /// <para>【典型用途】玩家常驻移动，冲刺/击退后自动恢复为本模式。</para>

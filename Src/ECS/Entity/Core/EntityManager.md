@@ -339,7 +339,7 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
   - `false`：通过 ResourceManagement 加载场景实例化（适用于 Player, UniqueBoss）。
 - `PoolName`：**必填** (当 `UsingObjectPool` 为 true 时)。对象池名称（如 `ObjectPoolNames.EnemyPool`）。
 - `Position`：(可选) 初始位置 `Vector2`。
-- `Rotation`：(可选) 初始旋转角度（弧度）。
+- `Rotation`：(可选) 初始旋转角度（角度）。
 
 **代码示例**：
 

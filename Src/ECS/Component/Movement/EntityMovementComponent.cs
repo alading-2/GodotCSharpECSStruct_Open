@@ -50,6 +50,9 @@ public partial class EntityMovementComponent : Node, IComponent
     /// <summary>本次运动是否已完成（组件内部标志，防止重复触发）</summary>
     private bool _moveCompleted;
 
+    /// <summary>当前帧显式朝向意图（由策略通过 MovementUpdateResult 返回；Zero = 回退到 Velocity 方向）</summary>
+    private Vector2 _facingDirection;
+
     // ================= 节点类型缓存 =================
 
     /// <summary>CharacterBody2D 引用缓存（非 CharacterBody2D 实体时为 null）</summary>
@@ -74,6 +77,7 @@ public partial class EntityMovementComponent : Node, IComponent
         _currentStrategy = null;
         _params = default;
         _moveCompleted = false;
+        _facingDirection = Vector2.Zero;
 
         _body = entity as CharacterBody2D;
         _visualRoot = entity.GetNodeOrNull<AnimatedSprite2D>("VisualRoot");
@@ -107,6 +111,7 @@ public partial class EntityMovementComponent : Node, IComponent
         _params = default;
         _body = null;
         _visualRoot = null;
+        _facingDirection = Vector2.Zero;
     }
 
     // ================= Godot 生命周期 =================
@@ -137,7 +142,7 @@ public partial class EntityMovementComponent : Node, IComponent
 
     /// <summary>
     /// 统一运动更新入口（_Process 和 _PhysicsProcess 执行完全相同的逻辑）
-    /// <para>流程：死亡检查 → 策略写入 Velocity → VelocityResolver 合成 → 位移执行 → 朝向更新</para>
+    /// <para>流程：死亡检查 → 策略写 Velocity/可选 Facing → VelocityResolver 合成 → 位移执行 → 朝向更新</para>
     /// </summary>
     private void UpdateMovement(float delta)
     {
@@ -147,6 +152,7 @@ public partial class EntityMovementComponent : Node, IComponent
         if (_data.Get<bool>(DataKey.IsDead))
         {
             _data.Set(DataKey.Velocity, Vector2.Zero);
+            _facingDirection = Vector2.Zero;
             if (_body != null)
             {
                 _body.Velocity = Vector2.Zero;
@@ -231,6 +237,7 @@ public partial class EntityMovementComponent : Node, IComponent
 
         // 委托策略计算运动意图（策略只写 DataKey.Velocity，不直接操作 GlobalPosition）
         MovementUpdateResult result = _currentStrategy.Update(_entity!, _data!, delta, _params);
+        _facingDirection = result.HasFacingDirection ? result.FacingDirection : Vector2.Zero;
 
         // 策略主动完成
         if (result.IsCompleted)
@@ -259,8 +266,9 @@ public partial class EntityMovementComponent : Node, IComponent
 
         // 分层速度合成（眩晕/击退/冲量对所有实体通用）
         Vector2 finalVelocity = VelocityResolver.Resolve(_data!);
-        // 朝向取策略意图速度（合成前），保证 speedMultiplier=0 时也能转向
+        // 朝向优先取策略显式提供的方向；未提供时回退到策略意图速度（合成前）
         Vector2 intentVelocity = _data!.Get<Vector2>(DataKey.Velocity);
+        Vector2 facingDirection = _facingDirection.LengthSquared() >= 0.001f ? _facingDirection : intentVelocity;
 
         if (_body != null)
         {
@@ -273,12 +281,14 @@ public partial class EntityMovementComponent : Node, IComponent
         else
         {
             // Node2D/Area2D：直接位移
-            if (finalVelocity.LengthSquared() < 0.001f) return;
-            node.GlobalPosition += finalVelocity * delta;
+            if (finalVelocity.LengthSquared() >= 0.001f)
+            {
+                node.GlobalPosition += finalVelocity * delta;
+            }
         }
 
-        // 根据策略意图方向更新朝向（从 _params 读取 RotateToVelocity，不再走 DataKey）
-        MovementHelper.UpdateOrientation(_entity!, _params, intentVelocity, _visualRoot);
+        // 根据策略显式朝向或意图速度更新朝向（从 _params 读取 RotateToVelocity）
+        MovementHelper.UpdateOrientation(_entity!, _params, facingDirection, _visualRoot);
     }
 
     // ================= 辅助工具方法 =================
@@ -295,6 +305,7 @@ public partial class EntityMovementComponent : Node, IComponent
         _data.Set(DataKey.Velocity, Vector2.Zero);
         _data.Set(DataKey.VelocityOverride, Vector2.Zero);
         _data.Set(DataKey.VelocityImpulse, Vector2.Zero);
+        _facingDirection = Vector2.Zero;
 
         // 重置组件内部完成标志
         _moveCompleted = false;

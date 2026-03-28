@@ -2,7 +2,7 @@ using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 4】环绕（固定点 / 目标实体，含螺旋参数化）。
+/// 【模式】环绕（固定点 / 目标实体，含螺旋参数化）。
 /// <para>
 /// 圆心优先级：<c>TargetNode</c>（每帧实时跟随实体位置）&gt; <c>OrbitCenter</c>（固定世界坐标）。
 /// 目标失效时原地暂停（不主动完成）。
@@ -27,7 +27,7 @@ using System.Runtime.CompilerServices;
 ///         OrbitTotalAngle   = 360 * 3f,   // 总环绕角度/距离
 ///         MaxDuration       = 3f, // 最大持续时间
 ///         // OrbitAngularSpeed = 180,   // 角速度（可选）
-///         // OrbitAngularAcceleration = 0f, // 加速度（可选）
+///         // OrbitAngularAcceleration = 0f, // 角加速度（度/秒²，可选）
 ///         // IsOrbitClockwise  = false,  // 逆时针（可选），默认逆时针
 ///         // OrbitInitAngle    = 0f,     // 初始角度（可选），不设置从entity的位置推导
 ///         DestroyOnComplete = true,   // 完成后销毁
@@ -58,7 +58,7 @@ using System.Runtime.CompilerServices;
 ///         OrbitCenter             = centerPos,
 ///         OrbitRadius             = 300f,
 ///         OrbitAngularSpeed       = 0f,              // 初始角速度为 0
-///         OrbitAngularAcceleration = 1f, // 逐渐加速
+///         OrbitAngularAcceleration = 60f, // 逐渐加速（度/秒²）
 ///         MaxDuration             = 6f,
 ///     }));
 ///
@@ -69,7 +69,7 @@ using System.Runtime.CompilerServices;
 ///         Mode              = MoveMode.Orbit,
 ///         OrbitCenter       = centerPos,
 ///         OrbitRadius       = 200f,
-///         OrbitAngularSpeed = Mathf.Pi,
+///         OrbitAngularSpeed = 180f,
 ///         OrbitRadialSpeed  = -60f,
 ///         OrbitRadialMin    = 0f,
 ///     }));
@@ -80,10 +80,10 @@ using System.Runtime.CompilerServices;
 ///         Mode              = MoveMode.Orbit,
 ///         OrbitCenter       = centerPos,
 ///         OrbitRadius       = 20f,
-///         OrbitAngularSpeed = Mathf.Pi * 0.8f,
+///         OrbitAngularSpeed = 144f,
 ///         OrbitRadialSpeed  = 40f,
 ///         OrbitRadialMax    = 200f,
-///         OrbitTotalAngle   = Mathf.Tau * 2f,
+///         OrbitTotalAngle   = 720f,
 ///     }));
 /// </code>
 /// </para>
@@ -97,13 +97,13 @@ public class OrbitStrategy : IMovementStrategy
     /// </summary>
     private float _currentAngle;
 
-    /// <summary>当前角速度（弧度/秒）。OnEnter 时三选二推算，此后每帧按角加速度更新。</summary>
+    /// <summary>当前角速度（度/秒）。OnEnter 时三选二推算，此后每帧按角加速度更新。</summary>
     private float _currentAngularSpeed;
 
     /// <summary>当前环绕半径（像素）。OnEnter 时取 OrbitRadius，此后按 OrbitRadialSpeed 变化，受 OrbitRadialMin/OrbitRadialMax 限制。</summary>
     private float _currentRadius;
 
-    /// <summary>已累计的环绕角度（弧度），用于 OrbitTotalAngle 终止检测。</summary>
+    /// <summary>已累计的环绕角度（度），用于 OrbitTotalAngle 终止检测。</summary>
     private float _traveledAngle;
 
     [ModuleInitializer]
@@ -133,7 +133,7 @@ public class OrbitStrategy : IMovementStrategy
         else
         {
             Vector2 toSelf = node.GlobalPosition - center;
-            _currentAngle = toSelf.LengthSquared() > 0.001f ? toSelf.Angle() : 0f;
+            _currentAngle = toSelf.LengthSquared() > 0.001f ? Mathf.RadToDeg(toSelf.Angle()) : 0f;
         }
     }
 
@@ -149,21 +149,25 @@ public class OrbitStrategy : IMovementStrategy
         if (!Mathf.IsZeroApprox(@params.OrbitAngularAcceleration))
             _currentAngularSpeed = Mathf.Max(0f, _currentAngularSpeed + @params.OrbitAngularAcceleration * delta);
 
+        float actualRadialSpeed = 0f;
+
         // 径向速度：向外扩大或向内收缩，受 OrbitRadialMin（内限）/ OrbitRadialMax（外限）双向限制
         if (!Mathf.IsZeroApprox(@params.OrbitRadialSpeed))
         {
+            float previousRadius = _currentRadius;
             _currentRadius += @params.OrbitRadialSpeed * delta;
             if (@params.OrbitRadialMin >= 0f)
                 _currentRadius = Mathf.Max(_currentRadius, @params.OrbitRadialMin);
             if (@params.OrbitRadialMax >= 0f)
                 _currentRadius = Mathf.Min(_currentRadius, @params.OrbitRadialMax);
             _currentRadius = Mathf.Max(0f, _currentRadius); // 半径不能为负
+            actualRadialSpeed = (_currentRadius - previousRadius) / Mathf.Max(delta, 0.001f);
         }
 
         // 核心轨道计算
         var result = MovementHelper.OrbitStep(
             node, data, @params,
-            center.Value, _currentRadius, _currentAngularSpeed,
+            center.Value, _currentRadius, _currentAngularSpeed, actualRadialSpeed,
             ref _currentAngle, delta);
 
         // 总角度终止检测（OrbitTotalAngle）

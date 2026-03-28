@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// 【模式 10】附着宿主。
+/// 【模式】附着宿主。
 /// <para>每帧将实体位置对齐到 <c>TargetNode</c>，叠加 <c>DataKey.EffectOffset</c> 偏移。宿主失效时主动完成。</para>
 /// <para>
 /// <list type="bullet">

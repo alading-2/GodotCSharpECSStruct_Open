@@ -9,7 +9,7 @@ using System.Linq;
 /// <param name="MaxLifeTime">特效持续时间，-1 表示由动画结束控制</param>
 /// <param name="Host">宿主 Entity 节点（非 null 时为附着模式，跟随宿主位置）</param>
 /// <param name="Scale">特效缩放</param>
-/// <param name="Rotation">旋转角度（弧度）</param>
+/// <param name="Rotation">旋转角度（度，2D 下 0=右、90=下、180=左，正值顺时针；内部按需转弧度）</param>
 /// <param name="PlayRate">播放倍率</param>
 /// <param name="Offset">生成或附着偏移</param>
 /// <param name="IsLooping">是否循环播放</param>
@@ -215,7 +215,7 @@ public static partial class EffectTool
         }
 
         entity.GlobalPosition = finalPosition;
-        entity.GlobalRotation = options.Rotation;
+        entity.GlobalRotationDegrees = options.Rotation;
         entity.Scale = options.Scale ?? Vector2.One;
         entity.ForceUpdateTransform();
     }

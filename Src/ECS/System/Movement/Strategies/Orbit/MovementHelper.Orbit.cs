@@ -36,9 +36,10 @@ public static partial class MovementHelper
     /// <para>
     /// 【算法流程】
     /// <list type="number">
-    /// <item>按 <c>angularSpeed</c>（弧度/秒）推进极角 <c>currentAngle</c></item>
+    /// <item>按 <c>angularSpeed</c>（度/秒）推进极角 <c>currentAngle</c>（度）</item>
     /// <item>由极角 + 半径算出本帧目标轨道点 <c>newPos = center + (cos, sin) * radius</c></item>
     /// <item>将 <c>(newPos - node.GlobalPosition) / delta</c> 写入 <c>DataKey.Velocity</c></item>
+    /// <item>使用切向速度 + 径向速度合成轨迹切线，作为显式朝向意图返回</item>
     /// </list>
     /// 速度驱动（而非直接赋值 GlobalPosition），碰撞体走 MoveAndSlide 后若有偏移，下一帧速度会自动拉回轨道。
     /// </para>
@@ -57,23 +58,25 @@ public static partial class MovementHelper
     /// <param name="center">本帧圆心坐标（调用方已处理 null 检测）</param>
     /// <param name="radius">本帧环绕半径（调用方已处理径向变化，如螺旋 <c>_currentRadius</c>）</param>
     /// <param name="angularSpeed">本帧角速度（调用方已处理加速度，恒 >= 0）</param>
+    /// <param name="radialSpeed">本帧实际径向速度（像素/秒），用于计算螺旋轨迹的视觉朝向</param>
     /// <param name="currentAngle">
-    /// 当前极角（弧度），由策略实例持有，OnEnter 时从实体位置初始化（避免第一帧跳变），此后每帧累加。
+    /// 当前极角（度），由策略实例持有，OnEnter 时从实体位置初始化（避免第一帧跳变），此后每帧累加。
     /// </param>
     /// <param name="delta">本帧时间（秒）</param>
     /// <returns>Continue(本帧位移量)</returns>
     public static MovementUpdateResult OrbitStep(
         Node2D node, Data data, MovementParams @params,
-        Vector2 center, float radius, float angularSpeed,
+        Vector2 center, float radius, float angularSpeed, float radialSpeed,
         ref float currentAngle, float delta)
     {
         if (radius <= 0f || angularSpeed <= 0f) return MovementUpdateResult.Continue();
-
-        float sign = @params.IsOrbitClockwise ? -1f : 1f;
+        // 0 = 向右、90 = 向下、180 = 向左
+        float sign = @params.IsOrbitClockwise ? 1f : -1f;
         currentAngle += sign * angularSpeed * delta;
 
-        float cos = Mathf.Cos(currentAngle);
-        float sin = Mathf.Sin(currentAngle);
+        float currentAngleRad = Mathf.DegToRad(currentAngle);
+        float cos = Mathf.Cos(currentAngleRad);
+        float sin = Mathf.Sin(currentAngleRad);
         Vector2 newPos = center + new Vector2(cos * radius, sin * radius);
 
         Vector2 toTarget = newPos - node.GlobalPosition;
@@ -81,6 +84,32 @@ public static partial class MovementHelper
         Vector2 velocity = displacement > 0.001f ? toTarget / Mathf.Max(delta, 0.001f) : Vector2.Zero;
         data.Set(DataKey.Velocity, velocity);
 
-        return MovementUpdateResult.Continue(displacement);
+        // 视觉朝向取解析轨迹切线，而不是当前位置到轨道点的纠偏向量。
+        // 这样做的好处：朝向基于预期轨迹而非实际偏差，避免碰撞偏移导致的朝向抖动。
+
+        // 1. 计算径向单位向量：从圆心指向当前位置
+        Vector2 radialDirection = new Vector2(cos, sin);
+
+        // 2. 计算切向单位向量：垂直于径向，顺时针/逆时针由 sign 决定
+        //    数学推导：对 (cosθ, sinθ) 求导得到 (-sinθ, cosθ)，即切线方向
+        Vector2 tangentialDirection = new Vector2(-sin, cos) * sign;
+
+        // 3. 将角速度转换为弧度制（用于速度计算）
+        float angularSpeedRad = Mathf.DegToRad(angularSpeed);
+
+        // 4. 速度合成：切向速度 + 径向速度 = 瞬时速度方向
+        //    - 切向速度 = 半径 × 角速度（圆周运动的线速度）
+        //    - 径向速度 = 螺旋运动的径向变化率
+        //    - 合成方向即为实体在轨道上的瞬时运动方向
+        Vector2 facingDirection = tangentialDirection * (radius * angularSpeedRad) + radialDirection * radialSpeed;
+
+        // 5. 处理零速度特殊情况：当角速度和径向速度都接近 0 时
+        if (facingDirection.LengthSquared() < 0.001f)
+        {
+            // 优先使用切向方向（纯圆周运动的预期方向）
+            facingDirection = tangentialDirection;
+        }
+
+        return MovementUpdateResult.Continue(displacement, facingDirection);
     }
 }

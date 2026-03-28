@@ -21,7 +21,7 @@ public string? PoolName { get; init; }
 /// <summary>初始位置（可选，仅对 Node2D 生效）</summary>
 public Vector2? Position { get; init; }
 
-/// <summary>初始旋转角度（可选，仅对 Node2D 生效）</summary>
+/// <summary>初始旋转角度（度，可选，仅对 Node2D 生效；2D 下 0=右、90=下、180=左，正值顺时针）</summary>
 public float? Rotation { get; init; }
 }
 
@@ -121,7 +121,7 @@ public static partial class EntityManager
     ///     Config = playerData,
     ///     UsingObjectPool = false,  // 自动使用 "Player" 查找 ResourceManagement
     ///     Position = new Vector2(500, 300),
-    ///     Rotation = Mathf.Pi / 4
+    ///     Rotation = 45f
     /// });
     /// </code>
     /// </summary>
@@ -188,7 +188,7 @@ public static partial class EntityManager
         if (entity is Node2D entity2D)
         {
             if (config.Position.HasValue) entity2D.GlobalPosition = config.Position.Value;
-            if (config.Rotation.HasValue) entity2D.GlobalRotation = config.Rotation.Value;
+            if (config.Rotation.HasValue) entity2D.GlobalRotationDegrees = config.Rotation.Value;
 
             // 关键：强制同步 Transform，避免物理 server 在启用碰撞时仍使用旧物理位置
             entity2D.ForceUpdateTransform();

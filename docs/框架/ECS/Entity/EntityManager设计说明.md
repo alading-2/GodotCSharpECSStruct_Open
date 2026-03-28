@@ -156,7 +156,7 @@ public static T? Spawn<T>(EntitySpawnConfig config) where T : Node, IEntity
   - `false`：通过 ResourceManagement 加载场景实例化（适用于 Player, UniqueBoss）
 - `PoolName`：**必填**（当 `UsingObjectPool` 为 true 时）。对象池名称（如 `ObjectPoolNames.EnemyPool`）
 - `Position`：（可选）初始位置 `Vector2`
-- `Rotation`：（可选）初始旋转角度（弧度）
+- `Rotation`：（可选）初始旋转角度（角度）
 
 #### 内部流程
 
@@ -207,7 +207,7 @@ public static T? Spawn<T>(EntitySpawnConfig config) where T : Node, IEntity
         if (config.Position.HasValue)
             entity2D.GlobalPosition = config.Position.Value;
         if (config.Rotation.HasValue)
-            entity2D.GlobalRotation = config.Rotation.Value;
+            entity2D.GlobalRotationDegrees = config.Rotation.Value;
     }
 
     return entity;

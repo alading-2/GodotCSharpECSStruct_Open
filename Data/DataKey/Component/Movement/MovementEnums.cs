@@ -17,7 +17,7 @@ public enum MoveMode
     /// <summary>
     /// 冲锋（统一冲刺 / 追点 / 追踪）。
     /// <para>
-    /// 方向优先级：TargetNode > TargetPoint > Angle > 右方向（Vector2.Right 兜底）。
+    /// 方向优先级：TargetNode > TargetPoint > Angle。
     /// 速度推导（三选二）：ActionSpeed+MaxDuration | ActionSpeed+MaxDistance | MaxDistance+MaxDuration。
     /// </para>
     /// </summary>

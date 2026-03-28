@@ -33,7 +33,7 @@ public static partial class DataKey
     public static readonly DataMeta IsMovementLocked = DataRegistry.Register(
         new DataMeta { Key = nameof(IsMovementLocked), DisplayName = "移动锁定", Description = "眩晕/冻结期间锁定移动", Category = DataCategory_Movement.Basic, Type = typeof(bool), DefaultValue = false });
 
-    /// <summary>加速度（PlayerInputStrategy 读取，由实体属性系统管理）</summary>
+    /// <summary>加速度（仅 PlayerInputStrategy 平滑移动读取，由实体属性系统管理；与 MovementParams.Acceleration 不同）</summary>
     public static readonly DataMeta Acceleration = DataRegistry.Register(
         new DataMeta { Key = nameof(Acceleration), DisplayName = "加速度", Category = DataCategory_Movement.Basic, Type = typeof(float), DefaultValue = 10f });
 
