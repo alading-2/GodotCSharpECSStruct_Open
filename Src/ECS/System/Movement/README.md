@@ -30,7 +30,7 @@ entity.Events.Emit(
 | `OrbitPoint` | OrbitPointStrategy | 围绕固定点环绕 | OrbitCenter, OrbitRadius, OrbitAngularSpeed |
 | `OrbitEntity` | OrbitEntityStrategy | 围绕目标实体 | TargetNode, OrbitRadius, OrbitAngularSpeed |
 | `Spiral` | SpiralStrategy | 螺旋收缩/扩张 | OrbitCenter, OrbitRadius, OrbitTargetRadius, OrbitAngularSpeed |
-| `SineWave` | SineWaveStrategy | 正弦波弹道 | WaveAmplitude, WaveFrequency（先写 DataKey.Velocity） |
+| `SineWave` | SineWaveStrategy | 正弦波弹道 | WaveAmplitude / WaveFrequency + 可选 `WaveAmplitudeScalarDriver` / `WaveFrequencyScalarDriver` |
 | `BezierCurve` | BezierCurveStrategy | 曲线弹道 | BezierPoints, BezierDuration |
 | `Boomerang` | BoomerangStrategy | 去程 + 回程 | TargetPoint, BoomerangPauseTime |
 | `AttachToHost` | AttachToHostStrategy | 附着特效 | TargetNode（+DataKey.EffectOffset） |
@@ -63,12 +63,22 @@ VelocityOverride ≠ Zero  → VelocityOverride（击退/硬控）
 ## 扩展新策略
 
 1. `MovementEnums.cs` 新增 `MoveMode`
-2. `MovementParams` 新增所需 `init` 字段（附默认值）
+2. `MovementParams` 新增所需 `init` 字段（附默认值）；若参数需要在同一策略内连续变化，优先复用 `ScalarDriverParams`
 3. 新建策略类，私有字段存运行时状态，`[ModuleInitializer]` 注册工厂
 4. 补全策略类头注释（描述 + 使用示例 + 典型用途）
+
+## 通用标量驱动
+
+- `ScalarDriverParams` 用于描述同一策略内部的标量参数演化，当前已接入：`OrbitRadiusScalarDriver`、`WaveAmplitudeScalarDriver`、`WaveFrequencyScalarDriver`
+- 基础字段仍保留为静态/初始值，例如 `OrbitRadius`、`WaveAmplitude`、`WaveFrequency`
+- `MovementParams` 中驱动字段推荐使用可空：`null` = 不启用驱动；非 `null` 时再由策略私有 `ScalarDriverState` 接管后续演化
+- 已新增 `ScalarDriver/README.md`，集中说明 `ScalarDriver` 的职责边界、边界模式语义、日志上下文和接入方式
+- 边界响应支持 `Clamp / PingPong / Wrap / Complete / Freeze`；`PingPong` 额外支持 `BounceDecay` 与 `StopSpeedThreshold`
+- Orbit 半径演化统一由 `OrbitRadiusScalarDriver` 管理；Wave 侧则分别由 `WaveAmplitudeScalarDriver`、`WaveFrequencyScalarDriver` 管理
 
 ## 阅读顺序
 
 1. `EntityMovementComponent说明.md`：总流程与切换规则
-2. 对应策略类头注释：所需 `MovementParams` 字段
-3. `VelocityResolver.cs`：速度是否会被上层覆盖
+2. `ScalarDriver/README.md`：通用标量驱动层的职责、调用方式和边界模式语义
+3. 对应策略类头注释：所需 `MovementParams` 字段
+4. `VelocityResolver.cs`：速度是否会被上层覆盖

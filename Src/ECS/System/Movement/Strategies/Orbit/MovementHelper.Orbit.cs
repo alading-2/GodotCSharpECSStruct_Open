@@ -69,7 +69,12 @@ public static partial class MovementHelper
         Vector2 center, float radius, float angularSpeed, float radialSpeed,
         ref float currentAngle, float delta)
     {
+        // 任一关键量为 0 时，本帧不产生有效轨道推进：
+        // - radius <= 0：退化到圆心点
+        // - angularSpeed <= 0：角度不再推进
+        // 统一返回 Continue，让上层终止条件（如总角度/时长）决定是否结束。
         if (radius <= 0f || angularSpeed <= 0f) return MovementUpdateResult.Continue();
+
         // 0 = 向右、90 = 向下、180 = 向左
         float sign = @params.IsOrbitClockwise ? 1f : -1f;
         currentAngle += sign * angularSpeed * delta;
@@ -79,6 +84,8 @@ public static partial class MovementHelper
         float sin = Mathf.Sin(currentAngleRad);
         Vector2 newPos = center + new Vector2(cos * radius, sin * radius);
 
+        // 期望轨道点与当前位置的差，表示本帧需要“拉回轨道”的位移。
+        // 这里不直接写 GlobalPosition，而是转换成速度交给统一运动管线（如 MoveAndSlide）处理。
         Vector2 toTarget = newPos - node.GlobalPosition;
         float displacement = toTarget.Length();
         Vector2 velocity = displacement > 0.001f ? toTarget / Mathf.Max(delta, 0.001f) : Vector2.Zero;
@@ -101,6 +108,8 @@ public static partial class MovementHelper
         //    - 切向速度 = 半径 × 角速度（圆周运动的线速度）
         //    - 径向速度 = 螺旋运动的径向变化率
         //    - 合成方向即为实体在轨道上的瞬时运动方向
+        // 这里的 radialSpeed 由 OrbitStrategy 用 ValueDelta / delta 传入，
+        // 因此可正确表达“本帧向内收缩/向外扩散”的方向信息。
         Vector2 facingDirection = tangentialDirection * (radius * angularSpeedRad) + radialDirection * radialSpeed;
 
         // 5. 处理零速度特殊情况：当角速度和径向速度都接近 0 时

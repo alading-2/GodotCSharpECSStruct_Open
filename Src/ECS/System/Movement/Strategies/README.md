@@ -33,8 +33,10 @@ public interface IMovementStrategy
 
 **关键参数**:
 - `ActionSpeed`: 前进速度（像素/秒）
-- `WaveAmplitude`: 横向振幅（像素）
-- `WaveFrequency`: 波动频率（周期/秒）
+- `WaveAmplitude`: 横向振幅基础值（像素）
+- `WaveAmplitudeScalarDriver`: 振幅动态驱动（可选）
+- `WaveFrequency`: 波动频率基础值（周期/秒）
+- `WaveFrequencyScalarDriver`: 频率动态驱动（可选）
 - `WavePhase`: 初始相位（度）
 
 **技术特点**:
@@ -104,7 +106,7 @@ public interface IMovementStrategy
 
 **运动学参数**:
 - **角运动**: OrbitAngularSpeed, OrbitAngularAcceleration
-- **径向运动**: OrbitRadialSpeed, OrbitRadialMin/Max
+- **径向运动**: OrbitRadius（初始值）+ OrbitRadiusScalarDriver（速度/加速度/边界/触边策略均由此统一描述）
 - **几何参数**: OrbitRadius, OrbitCenter
 
 **数学概念**:
@@ -216,4 +218,38 @@ entity.Events.Emit(GameEventType.Unit.MovementStarted,
 
 ---
 
-*本文档随代码更新持续维护，最后更新时间: 2026-03-27*
+*本文档随代码更新持续维护，最后更新时间: 2026-03-28*
+
+### 通用标量驱动（ScalarDriver）
+
+适用于“同一运动策略内部，某个标量参数会持续变化”的场景，例如：
+
+- Orbit 半径在区间内往返
+- Wave 振幅逐渐变大或逐渐收敛
+- Wave 频率触边后反向并按 `BounceDecay` 衰减
+
+推荐模式：保留基础值字段，再挂载对应 `ScalarDriverParams?`。
+
+- `null` = 不启用驱动，保持基础值常量不变；非 `null` 时再由策略实例私有持有 `ScalarDriverState`。
+- 更完整的职责说明、日志上下文和边界模式语义见 `../ScalarDriver/README.md`。
+
+```csharp
+new MovementParams
+{
+    Mode = MoveMode.SineWave,
+    WaveAmplitude = 20f,
+    WaveAmplitudeScalarDriver = new ScalarDriverParams
+    {
+        Enabled = true,
+        Velocity = 40f,
+        Min = 20f,
+        Max = 80f,
+        MinResponse = new ScalarBoundaryResponse { Mode = ScalarBoundMode.PingPong },
+        MaxResponse = new ScalarBoundaryResponse
+        {
+            Mode = ScalarBoundMode.PingPong,
+            BounceDecay = 0.8f,
+        },
+    },
+}
+```

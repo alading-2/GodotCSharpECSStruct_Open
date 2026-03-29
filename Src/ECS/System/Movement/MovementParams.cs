@@ -94,6 +94,12 @@ public record struct MovementParams
     /// <summary>初始环绕半径（像素）</summary>
     public float OrbitRadius { get; init; } = 0f;
     /// <summary>
+    /// 环绕半径通用驱动器。
+    /// <c>null</c> = 不启用驱动，半径保持 <c>OrbitRadius</c> 常量不变。
+    /// <c>InitialValue = null</c> 时继承 <c>OrbitRadius</c>。
+    /// </summary>
+    public ScalarDriverParams? OrbitRadiusScalarDriver { get; init; } = null;
+    /// <summary>
     /// 初始角速度（度/秒）。
     /// 三选二推导：<c>OrbitAngularSpeed &gt; 0</c> 直接用；否则从 <c>OrbitTotalAngle / MaxDuration</c> 推算。
     /// 策略内部按需转弧度/秒。
@@ -109,22 +115,25 @@ public record struct MovementParams
     public float OrbitTotalAngle { get; init; } = -1f;
     /// <summary>是否顺时针旋转（默认 true = 顺时针）</summary>
     public bool IsOrbitClockwise { get; init; } = true;
-    /// <summary>
-    /// 径向速度（像素/秒）：正值向外扩大半径，负值向内收缩，0 = 半径不变。
-    /// 受 <c>OrbitRadialMin</c> / <c>OrbitRadialMax</c> 双向限制。
-    /// </summary>
-    public float OrbitRadialSpeed { get; init; } = 0f;
-    /// <summary>最小环绕半径（像素），-1 = 不限制。向内收缩时的下限，到达后停止继续缩小。</summary>
-    public float OrbitRadialMin { get; init; } = -1f;
-    /// <summary>最大环绕半径（像素），-1 = 不限制。向外扩大时的上限，到达后停止继续扩大。</summary>
-    public float OrbitRadialMax { get; init; } = -1f;
 
     // ======== 波形 ========
 
     /// <summary>横向振幅（像素，SineWave 模式）</summary>
     public float WaveAmplitude { get; init; } = 50f;
+    /// <summary>
+    /// 波形振幅通用驱动器。
+    /// <c>null</c> = 不启用驱动，振幅保持 <c>WaveAmplitude</c> 常量不变。
+    /// <c>InitialValue = null</c> 时继承 <c>WaveAmplitude</c>。
+    /// </summary>
+    public ScalarDriverParams? WaveAmplitudeScalarDriver { get; init; } = null;
     /// <summary>波形频率（周期/秒，SineWave 模式）</summary>
     public float WaveFrequency { get; init; } = 2f;
+    /// <summary>
+    /// 波形频率通用驱动器。
+    /// <c>null</c> = 不启用驱动，频率保持 <c>WaveFrequency</c> 常量不变。
+    /// <c>InitialValue = null</c> 时继承 <c>WaveFrequency</c>。
+    /// </summary>
+    public ScalarDriverParams? WaveFrequencyScalarDriver { get; init; } = null;
     /// <summary>初始相位偏移（度，SineWave 模式，用于错开多发同向波形弹的起始摆动；策略内部按需转弧度）</summary>
     public float WavePhase { get; init; } = 0f;
 

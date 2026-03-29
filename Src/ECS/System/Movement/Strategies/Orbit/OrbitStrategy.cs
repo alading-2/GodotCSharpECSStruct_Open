@@ -12,8 +12,8 @@ using System.Runtime.CompilerServices;
 /// <c>OrbitAngularSpeed</c>（角速度）/ <c>OrbitTotalAngle</c>（总角度）/ <c>MaxDuration</c>（时间）
 /// </para>
 /// <para>
-/// 【螺旋参数】通过 Orbit 参数即可表达螺旋（不再需要独立策略）：
-/// <c>OrbitRadialSpeed</c>（径向速度）+ <c>OrbitRadialMin</c>/<c>OrbitRadialMax</c>（半径边界）。
+/// 【螺旋参数】通过 <c>OrbitRadiusScalarDriver</c> 即可表达螺旋（不再需要独立策略）。
+/// <c>OrbitRadiusScalarDriver = null</c> 时不驱动半径，保持 <c>OrbitRadius</c> 常量。
 /// </para>
 /// <para>
 /// <code>
@@ -23,18 +23,25 @@ using System.Runtime.CompilerServices;
 ///     {
 ///         Mode              = MoveMode.Orbit,
 ///         OrbitCenter       = new Vector2(400f, 300f),    // 中心点
-///         OrbitRadius       = 300f,   // 半径
 ///         OrbitTotalAngle   = 360 * 3f,   // 总环绕角度/距离
 ///         MaxDuration       = 3f, // 最大持续时间
-///         // OrbitAngularSpeed = 180,   // 角速度（可选）
-///         // OrbitAngularAcceleration = 0f, // 角加速度（度/秒²，可选）
-///         // IsOrbitClockwise  = false,  // 逆时针（可选），默认逆时针
-///         // OrbitInitAngle    = 0f,     // 初始角度（可选），不设置从entity的位置推导
 ///         DestroyOnComplete = true,   // 完成后销毁
-///         // 
-///         // OrbitRadialSpeed = 100f,    // 径向速度（可选），正数向外，负数向内
-///         // OrbitRadialMin = 100f,      // 最小半径（可选）
-///         // OrbitRadialMax = 500f,      // 最大半径（可选）
+///         OrbitRadius       = 300f,   // 半径
+///         [可选]OrbitRadiusScalarDriver = new ScalarDriverParams
+///         {
+///             Velocity = 100f,
+///             Min = 100f,
+///             Max = 500f,
+///             MaxResponse = new ScalarBoundaryResponse
+///             {
+///                 Mode = ScalarBoundMode.PingPong,
+///                 BounceDecay = 0.75f,
+///             },
+///         },
+///         [可选]OrbitAngularSpeed = 180f,   // 角速度（可选）
+///         [可选]OrbitAngularAcceleration = 0f, // 角加速度（度/秒²，可选）
+///         [可选]IsOrbitClockwise  = false,  // 逆时针（可选），默认逆时针
+///         [可选]OrbitInitAngle    = 0f,     // 初始角度（可选），不设置从entity的位置推导
 ///     }));
 ///
 /// 【使用示例 2：3 颗卫星均匀分布，围绕目标实体环绕】
@@ -42,49 +49,13 @@ using System.Runtime.CompilerServices;
 ///     entity.Events.Emit(GameEventType.Unit.MovementStarted,
 ///         new GameEventType.Unit.MovementStartedEventData(MoveMode.Orbit, new MovementParams
 ///         {
-///             Mode              = MoveMode.Orbit,
-///             TargetNode        = bossNode,
-///             OrbitRadius       = 300f,
+///             Mode              = MoveMode.Orbit, // 环绕模式
+///             DestroyOnComplete = true,   // 完成后销毁
+///             TargetNode        = bossNode, // 环绕中心目标实体
+///             OrbitRadius       = 300f, // 半径
 ///             OrbitInitAngle    = 120f * i,  // 0° / 120° / 240° 均匀分布
-///             OrbitAngularSpeed = 180f,
-///         DestroyOnComplete = true,   // 完成后销毁
+///             OrbitAngularSpeed = 180f, // 角速度
 ///        }));
-///
-/// 【使用示例 3：从慢到快加速环绕（初始静止，逐渐加速）】
-/// entity.Events.Emit(GameEventType.Unit.MovementStarted,
-///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Orbit, new MovementParams
-///     {
-///         Mode                    = MoveMode.Orbit,
-///         OrbitCenter             = centerPos,
-///         OrbitRadius             = 300f,
-///         OrbitAngularSpeed       = 0f,              // 初始角速度为 0
-///         OrbitAngularAcceleration = 60f, // 逐渐加速（度/秒²）
-///         MaxDuration             = 6f,
-///     }));
-///
-/// 【使用示例 4：由外向内螺旋收束（使用 Orbit 模式）】
-/// entity.Events.Emit(GameEventType.Unit.MovementStarted,
-///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Orbit, new MovementParams
-///     {
-///         Mode              = MoveMode.Orbit,
-///         OrbitCenter       = centerPos,
-///         OrbitRadius       = 200f,
-///         OrbitAngularSpeed = 180f,
-///         OrbitRadialSpeed  = -60f,
-///         OrbitRadialMin    = 0f,
-///     }));
-/// 【使用示例 5：由内向外螺旋扩散（使用 Orbit 模式）】
-/// entity.Events.Emit(GameEventType.Unit.MovementStarted,
-///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Orbit, new MovementParams
-///     {
-///         Mode              = MoveMode.Orbit,
-///         OrbitCenter       = centerPos,
-///         OrbitRadius       = 20f,
-///         OrbitAngularSpeed = 144f,
-///         OrbitRadialSpeed  = 40f,
-///         OrbitRadialMax    = 200f,
-///         OrbitTotalAngle   = 720f,
-///     }));
 /// </code>
 /// </para>
 /// <para>【典型用途】护卫卫星、弹幕圆环、Boss 护盾、围绕目标的散射弹、螺旋收束/扩散轨迹。</para>
@@ -100,8 +71,11 @@ public class OrbitStrategy : IMovementStrategy
     /// <summary>当前角速度（度/秒）。OnEnter 时三选二推算，此后每帧按角加速度更新。</summary>
     private float _currentAngularSpeed;
 
-    /// <summary>当前环绕半径（像素）。OnEnter 时取 OrbitRadius，此后按 OrbitRadialSpeed 变化，受 OrbitRadialMin/OrbitRadialMax 限制。</summary>
-    private float _currentRadius;
+    /// <summary>环绕半径运行态。OnEnter 时由 <c>OrbitRadius</c> 或 <c>OrbitRadiusScalarDriver.InitialValue</c> 初始化。</summary>
+    private ScalarDriverState _radiusState;
+
+    /// <summary>本次环绕半径驱动配置。<c>null</c> = 不驱动，半径保持常量。</summary>
+    private ScalarDriverParams? _radiusScalarDriver;
 
     /// <summary>已累计的环绕角度（度），用于 OrbitTotalAngle 终止检测。</summary>
     private float _traveledAngle;
@@ -121,7 +95,10 @@ public class OrbitStrategy : IMovementStrategy
         _currentAngularSpeed = MovementHelper.ResolveAngularSpeed(@params);
 
         // 初始化半径和已走角度
-        _currentRadius = @params.OrbitRadius;
+        _radiusScalarDriver = @params.OrbitRadiusScalarDriver;
+        _radiusState = _radiusScalarDriver.HasValue
+            ? ScalarDriver.CreateState(@params.OrbitRadius, _radiusScalarDriver.Value)
+            : new ScalarDriverState { Value = @params.OrbitRadius, Velocity = 0f };
         _traveledAngle = 0f;
 
         // 初始化极角（中心点到环绕entity的角度）：优先使用 OrbitInitAngle；否则从实体当前位置推导（避免第一帧跳变）
@@ -149,26 +126,32 @@ public class OrbitStrategy : IMovementStrategy
         if (!Mathf.IsZeroApprox(@params.OrbitAngularAcceleration))
             _currentAngularSpeed = Mathf.Max(0f, _currentAngularSpeed + @params.OrbitAngularAcceleration * delta);
 
-        float actualRadialSpeed = 0f;
-
-        // 径向速度：向外扩大或向内收缩，受 OrbitRadialMin（内限）/ OrbitRadialMax（外限）双向限制
-        if (!Mathf.IsZeroApprox(@params.OrbitRadialSpeed))
+        ScalarDriverStepResult radiusStep = default;
+        if (_radiusScalarDriver.HasValue)
         {
-            float previousRadius = _currentRadius;
-            _currentRadius += @params.OrbitRadialSpeed * delta;
-            if (@params.OrbitRadialMin >= 0f)
-                _currentRadius = Mathf.Max(_currentRadius, @params.OrbitRadialMin);
-            if (@params.OrbitRadialMax >= 0f)
-                _currentRadius = Mathf.Min(_currentRadius, @params.OrbitRadialMax);
-            _currentRadius = Mathf.Max(0f, _currentRadius); // 半径不能为负
-            actualRadialSpeed = (_currentRadius - previousRadius) / Mathf.Max(delta, 0.001f);
+            ScalarDriverParams radiusMotion = _radiusScalarDriver.Value;
+            radiusStep = ScalarDriver.Step(ref _radiusState, radiusMotion, delta,
+                @params.Mode, nameof(MovementParams.OrbitRadiusScalarDriver));
         }
+
+        // 轨道半径始终约束为 >= 0，避免负半径导致轨道点翻转
+        _radiusState.Value = Mathf.Max(0f, _radiusState.Value);
+
+        // 将“本帧半径变化量”换算为“本帧径向速度（像素/秒）”。
+        // - ValueDelta = newRadius - oldRadius，保留符号：外扩为正、内收为负。
+        // - OrbitStep 需要径向速度来计算螺旋轨迹切线朝向；仅有当前半径值（半径永远是正）无法表达这一帧是向内还是向外。
+        // - 未配置半径驱动时 radiusStep 为 default，ValueDelta = 0，表示本帧无径向变化。
+        float actualRadialSpeed = radiusStep.ValueDelta / Mathf.Max(delta, 0.001f);
 
         // 核心轨道计算
         var result = MovementHelper.OrbitStep(
             node, data, @params,
-            center.Value, _currentRadius, _currentAngularSpeed, actualRadialSpeed,
+            center.Value, _radiusState.Value, _currentAngularSpeed, actualRadialSpeed,
             ref _currentAngle, delta);
+
+        // 仅当启用了半径驱动且驱动器触发 Complete 时，提前结束 Orbit。
+        if (_radiusScalarDriver.HasValue && radiusStep.IsCompleted)
+            return MovementUpdateResult.Complete();
 
         // 总角度终止检测（OrbitTotalAngle）
         _traveledAngle += _currentAngularSpeed * delta;

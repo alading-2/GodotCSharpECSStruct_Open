@@ -8,7 +8,9 @@ using System.Runtime.CompilerServices;
 /// <list type="bullet">
 /// <item><c>ActionSpeed</c>（float，推荐）：前进速度（像素/秒）；也可不设此值，由 DataKey.Velocity 初始长度决定。</item>
 /// <item><c>WaveAmplitude</c>（float，像素）：横向振幅，默认 50。</item>
+/// <item><c>WaveAmplitudeScalarDriver</c>（可选）：振幅驱动参数；<c>null</c> = 不驱动，保持 <c>WaveAmplitude</c> 常量。</item>
 /// <item><c>WaveFrequency</c>（float，周期/秒）：波动频率，默认 2。</item>
+/// <item><c>WaveFrequencyScalarDriver</c>（可选）：频率驱动参数；<c>null</c> = 不驱动，保持 <c>WaveFrequency</c> 常量。</item>
 /// <item><c>WavePhase</c>（float，度，可选）：初始相位，用于错开多发同向弹道的摆动起点（内部按需转弧度）。</item>
 /// <item><c>MaxDistance / MaxDuration / DestroyOnComplete</c>（可选）：不设置 = 不限制，永久运动。</item>
 /// </list>
@@ -48,6 +50,18 @@ public class SineWaveStrategy : IMovementStrategy
     /// </summary>
     private float _baseSpeed;
 
+    /// <summary>振幅运行态</summary>
+    private ScalarDriverState _amplitudeState;
+
+    /// <summary>频率运行态</summary>
+    private ScalarDriverState _frequencyState;
+
+    /// <summary>振幅驱动配置。<c>null</c> = 不驱动振幅。</summary>
+    private ScalarDriverParams? _amplitudeScalarDriver;
+
+    /// <summary>频率驱动配置。<c>null</c> = 不驱动频率。</summary>
+    private ScalarDriverParams? _frequencyScalarDriver;
+
     /// <summary>
     /// 模块初始化器：在模块加载时自动将此策略注册到移动策略注册表
     /// </summary>
@@ -78,6 +92,15 @@ public class SineWaveStrategy : IMovementStrategy
 
         // 确定前进速度：优先使用 ActionSpeed，fallback 使用初始速度长度
         _baseSpeed = @params.ActionSpeed > 0.001f ? @params.ActionSpeed : initVelocity.Length();
+
+        _amplitudeScalarDriver = @params.WaveAmplitudeScalarDriver;
+        _frequencyScalarDriver = @params.WaveFrequencyScalarDriver;
+        _amplitudeState = _amplitudeScalarDriver.HasValue
+            ? ScalarDriver.CreateState(@params.WaveAmplitude, _amplitudeScalarDriver.Value)
+            : new ScalarDriverState { Value = @params.WaveAmplitude, Velocity = 0f };
+        _frequencyState = _frequencyScalarDriver.HasValue
+            ? ScalarDriver.CreateState(@params.WaveFrequency, _frequencyScalarDriver.Value)
+            : new ScalarDriverState { Value = @params.WaveFrequency, Velocity = 0f };
     }
 
     /// <summary>
@@ -99,13 +122,16 @@ public class SineWaveStrategy : IMovementStrategy
     {
         if (_baseSpeed < 0.001f) return MovementUpdateResult.Continue(); // 速度过低，跳过
 
+        var (amplitude, frequency, isCompleted) = SampleWaveState(delta, @params);
+        if (isCompleted) return MovementUpdateResult.Complete();
+
         // 计算垂直于前进方向的横向向量（顺时针旋转 90 度）
         Vector2 perp = new Vector2(-_baseDirection.Y, _baseDirection.X);
 
         // 通过统一波形数学工具计算本帧正弦偏移增量
         float sineDelta = WaveMath.EvaluateSineDelta(
-            @params.WaveAmplitude,
-            @params.WaveFrequency,
+            amplitude,
+            frequency,
             @params.ElapsedTime,
             @params.ElapsedTime + delta,
             @params.WavePhase);
@@ -126,12 +152,61 @@ public class SineWaveStrategy : IMovementStrategy
         Vector2 tangentDirection = WaveMath.EvaluateSineTangent(
             _baseDirection,
             _baseSpeed,
-            @params.WaveAmplitude,
-            @params.WaveFrequency,
+            amplitude,
+            frequency,
             @params.ElapsedTime + delta,
             @params.WavePhase);
 
         // 返回继续移动，并告知实际位移长度
         return MovementUpdateResult.Continue(totalDisp.Length(), tangentDirection);
+    }
+
+    /// <summary>
+    /// 采样波动的动态参数。
+    /// <para>若配置了驱动参数，则通过逻辑步进更新振幅 (Amplitude) 和频率 (Frequency)；否则保持默认值。</para>
+    /// </summary>
+    /// <param name="delta">帧间隔时间</param>
+    /// <param name="params">移动参数</param>
+    /// <returns>包含 sampled 振幅、频率及运动是否结束的元组</returns>
+    private (float amplitude, float frequency, bool isCompleted) SampleWaveState(float delta, MovementParams @params)
+    {
+        // 初始值采样自移动参数，若后续没有驱动器，则作为常量使用
+        float amplitude = @params.WaveAmplitude;
+        float frequency = @params.WaveFrequency;
+        bool isCompleted = false;
+
+        // 处理振幅驱动（例如：随时间衰减或振荡的振幅）
+        if (_amplitudeScalarDriver.HasValue)
+        {
+            ScalarDriverParams amplitudeMotion = _amplitudeScalarDriver.Value;
+            // 通过 ScalarDriver 执行步进逻辑，计算当前帧的新值
+            ScalarDriverStepResult amplitudeStep = ScalarDriver.Step(ref _amplitudeState, amplitudeMotion, delta,
+                @params.Mode, nameof(MovementParams.WaveAmplitudeScalarDriver));
+
+            // 振幅不应为负，进行安全裁剪
+            amplitude = Mathf.Max(0f, amplitudeStep.Value);
+            // 更新内部运行态，供下一帧使用
+            _amplitudeState.Value = amplitude;
+            // 累加完成状态：任一驱动器完成即视为波形动态周期结束（通常取决于配置）
+            isCompleted |= amplitudeStep.IsCompleted;
+        }
+
+        // 处理频率驱动（例如：逐渐加快的波动频率）
+        if (_frequencyScalarDriver.HasValue)
+        {
+            ScalarDriverParams frequencyMotion = _frequencyScalarDriver.Value;
+            // 通过 ScalarDriver 执行步进逻辑，计算当前帧的新值
+            ScalarDriverStepResult frequencyStep = ScalarDriver.Step(ref _frequencyState, frequencyMotion, delta,
+                @params.Mode, nameof(MovementParams.WaveFrequencyScalarDriver));
+
+            // 频率不应为负，进行安全裁剪
+            frequency = Mathf.Max(0f, frequencyStep.Value);
+            // 更新内部运行态，供下一帧使用
+            _frequencyState.Value = frequency;
+            // 累加完成状态
+            isCompleted |= frequencyStep.IsCompleted;
+        }
+        // 返回当前帧的振幅、频率和是否完成
+        return (amplitude, frequency, isCompleted);
     }
 }

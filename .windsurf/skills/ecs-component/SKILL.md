@@ -108,7 +108,7 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - **调度器**：`EntityMovementComponent` 检测 `DataKey.MoveMode` 变化，自动切换 `IMovementStrategy`
 - **策略接口**：`IMovementStrategy`（Update 纯计算只写 `DataKey.Velocity` / OnEnter / OnExit）；如视觉朝向不应直接取 `Velocity`，通过 `MovementUpdateResult.Continue(distance, facingDirection)` 显式返回朝向
 - **注册表**：`MovementStrategyRegistry`（MoveMode → Strategy 的静态映射）
-- **辅助方法**：`MovementHelper`（朝向旋转、到达距离）
+- **辅助方法**：`MovementHelper`（朝向旋转、到达距离） + `ScalarDriver`（策略内标量参数演化）
 - **统一执行路径**：所有实体经 `VelocityResolver.Resolve()` 合成速度后应用位移，`CharacterBody2D` 额外调用 `MoveAndSlide()` 处理碰撞，其他用 `GlobalPosition +=`
 - **帧率选择**：由策略 `UsePhysicsProcess` 声明走 `_Process` 或 `_PhysicsProcess`，与节点类型无关，两条路径逻辑完全相同
 - **策略约束**：禁止直接操作 `GlobalPosition`，所有位移由调度器统一执行
@@ -134,11 +134,15 @@ FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral 
 1. `MovementEnums.cs` 添加 MoveMode 枚举值
 2. 创建策略类实现 `IMovementStrategy`
 3. 用 `[ModuleInitializer]` 自注册到 `MovementStrategyRegistry`
-4. 如需新参数在 `DataKey_Movement.cs` 添加 DataKey
+4. 如果新参数只是当前策略私有配置，优先加到 `MovementParams`；若属于“同策略内部连续变化的标量”，优先复用 `ScalarDriverParams`
 5. 如果策略轨迹是曲线/环绕/波形，先判断视觉朝向是否应直接取 `Velocity`；若否，显式返回 `facingDirection`
 
-### ⚠️ 策略类是单例
-策略实例在注册表中全局共享，**禁止持有实例级业务状态**。所有状态必须存 `Data`。
+### ⚠️ 策略实例语义
+注册表保存的是工厂函数，不是单例对象。每次切换运动模式都会新建策略实例：
+
+- **允许** 持有策略私有运行态（如 `_currentAngle`、`ScalarDriverState`、贝塞尔 LUT）
+- **禁止** 把可跨系统观察的业务状态偷偷藏在策略里；这类状态仍应进入 `Data`
+- `ScalarDriverState` 这类“仅服务当前策略公式”的局部运行态，应该由策略实例私有持有
 
 ### Velocity 分层合成
 `VelocityResolver.Resolve(data)` 解决多组件写入冲突：
