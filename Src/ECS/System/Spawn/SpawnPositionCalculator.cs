@@ -163,7 +163,7 @@ public static class SpawnPositionCalculator
     private static Vector2 GetRandomRectanglePosition(SpawnPositionParams p)
     {
         var rect = new Rect2(p.MinX, p.MinY, p.MaxX - p.MinX, p.MaxY - p.MinY);
-        return GeometryCalculator.GetRandomPointInAABB(rect);
+        return Geometry2D.GetRandomPointInAABB(rect);
     }
 
     /// <summary>
@@ -171,7 +171,7 @@ public static class SpawnPositionCalculator
     /// </summary>
     private static Vector2 GetRandomCirclePosition(SpawnPositionParams p)
     {
-        return GeometryCalculator.GetRandomPointInCircle(p.Center, p.Radius);
+        return Geometry2D.GetRandomPointInCircle(p.Center, p.Radius);
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ public static class SpawnPositionCalculator
     /// </summary>
     private static Vector2 GetPerimeterPosition(SpawnPositionParams p)
     {
-        return GeometryCalculator.GetRandomPointOnPerimeter(p.Center, p.Radius);
+        return Geometry2D.GetRandomPointOnPerimeter(p.Center, p.Radius);
     }
 
     /// <summary>
@@ -207,7 +207,7 @@ public static class SpawnPositionCalculator
         // 外部大矩形
         var outerRect = new Rect2(p.MinX, p.MinY, p.MaxX - p.MinX, p.MaxY - p.MinY);
 
-        return GeometryCalculator.GetRandomPointInHollowBox(outerRect, innerRect);
+        return Geometry2D.GetRandomPointInHollowBox(outerRect, innerRect);
     }
 
     /// <summary>
@@ -259,5 +259,4 @@ public static class SpawnPositionCalculator
         return center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
     }
 }
-
 

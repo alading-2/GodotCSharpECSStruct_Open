@@ -161,5 +161,6 @@ API 文档：`Data/ResourceManagement/ResourceManagement.md`
 - **ObjectPoolManager** → `Src/Tools/ObjectPool/ObjectPoolManager.cs`
 - **TargetSelector** → `Src/Tools/TargetSelector/TargetSelector.cs` | 文档 → `Src/Tools/TargetSelector/README.md`
 - **TargetSelectorQuery** → `Src/Tools/TargetSelector/TargetSelectorQuery.cs`
+- **WaveMath** → `Src/Tools/Math/WaveMath.cs` | 场景：标准正弦波采样、偏移差分、频率转角频率
 - **ResourceManagement** → `Data/ResourceManagement/ResourceManagement.cs` | 文档 → `Data/ResourceManagement/ResourceManagement.md`
 - **ResourcePaths（自动生成）** → `Data/ResourceManagement/ResourcePaths.cs`

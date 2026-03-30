@@ -24,10 +24,12 @@ using Godot;
 /// </summary>
 public record struct MovementParams
 {
-    /// <summary>显式无参构造函数（C# CS8983：带属性初始化值的 struct 必须声明显式构造函数）</summary>
+    /// <summary>
+    /// 带默认值的 struct 需要显式无参构造函数。
+    /// </summary>
     public MovementParams() { }
 
-    // ======== 运行时统计（由调度器维护，策略只读） ========
+    // ======== 运行时统计 ========
 
     /// <summary>本次运动已持续时间（秒），由 EntityMovementComponent 每帧写入</summary>
     public float ElapsedTime { get; set; } = 0f;
@@ -35,7 +37,6 @@ public record struct MovementParams
     public float TraveledDistance { get; set; } = 0f;
 
     // ======== 通用参数 ========
-
     /// <summary>移动模式（由 EntityMovementComponent.SwitchStrategy 自动填入，调用方通常不需要手动设置）</summary>
     public MoveMode Mode { get; init; } = MoveMode.None;
     /// <summary>最大持续时间（秒），-1 = 不限制</summary>
@@ -57,7 +58,6 @@ public record struct MovementParams
     public bool DestroyOnCollision { get; init; } = false;
 
     // ======== 目标 / 方向 ========
-
     /// <summary>
     /// 目标点坐标，多策略复用：
     /// TargetPoint（目的地）/ Dash（OnEnter 采样方向）/ Boomerang（去程目标）/ BezierCurve（兼容模式终点）
@@ -148,14 +148,50 @@ public record struct MovementParams
     /// <summary>是否使用弧长参数化实现匀速移动（BezierCurve 模式）</summary>
     public bool IsBezierUniformSpeed { get; init; } = false;
 
+    // ======== 抛物线 ========
+
+    /// <summary>
+    /// 抛物线顶点高度偏移，单位像素。
+    /// 正值表示向上拱起，负值表示向下下坠，0 表示退化为直线。
+    /// </summary>
+    public float ParabolaApexHeight { get; init; } = 0f;
+
+    // ======== 圆弧 ========
+
+    /// <summary>
+    /// 圆弧半径，单位像素。
+    /// 小于等于 0 时退化为直线移动。
+    /// </summary>
+    public float CircularArcRadius { get; init; } = 0f;
+
+    /// <summary>
+    /// 圆弧方向。
+    /// false = 逆时针短弧，true = 顺时针短弧。
+    /// </summary>
+    public bool CircularArcClockwise { get; init; } = false;
+
     // ======== 回旋镖 ========
 
-    /// <summary>到达目标点后的停顿时间（秒），0 = 不停顿直接返回</summary>
+    /// <summary>
+    /// 到达去程终点后的停顿时间，单位秒。
+    /// </summary>
     public float BoomerangPauseTime { get; init; } = 0f;
 
     /// <summary>
-    /// 返程速度倍率（相对于去程 <c>ActionSpeed</c>）。
-    /// 1 = 同速，>1 = 加速返回（如 1.5 = 1.5 倍速），0 = 视同 1。
+    /// 返程速度倍率。
+    /// 小于等于 0 时策略内部回退为 1。
     /// </summary>
     public float BoomerangReturnSpeedMultiplier { get; init; } = 1f;
+
+    /// <summary>
+    /// 回旋镖弧高，单位像素。
+    /// 小于等于 0 时按当前阶段弦长自动估算。
+    /// </summary>
+    public float BoomerangArcHeight { get; init; } = 0f;
+
+    /// <summary>
+    /// 回旋镖方向：true：顺时针，false：逆时针。
+    /// 返程会自动反向，形成镜像回收轨迹。
+    /// </summary>
+    public bool BoomerangIsClockwise { get; init; } = false;
 }

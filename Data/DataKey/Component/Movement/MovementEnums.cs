@@ -80,5 +80,19 @@ public enum MoveMode
     /// </summary>
     AIControlled = 8,
 
+    /// <summary>
+    /// 抛物线移动。
+    /// <para>
+    /// 由起点、终点和顶高定义的单段抛物线路径。
+    /// </para>
+    /// </summary>
+    Parabola = 9,
 
+    /// <summary>
+    /// 圆弧移动。
+    /// <para>
+    /// 由起点、终点、半径和方向定义的单段圆弧路径。
+    /// </para>
+    /// </summary>
+    CircularArc = 10,
 }

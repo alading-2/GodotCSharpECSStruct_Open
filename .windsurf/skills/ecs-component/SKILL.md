@@ -112,6 +112,7 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - **统一执行路径**：所有实体经 `VelocityResolver.Resolve()` 合成速度后应用位移，`CharacterBody2D` 额外调用 `MoveAndSlide()` 处理碰撞，其他用 `GlobalPosition +=`
 - **帧率选择**：由策略 `UsePhysicsProcess` 声明走 `_Process` 或 `_PhysicsProcess`，与节点类型无关，两条路径逻辑完全相同
 - **策略约束**：禁止直接操作 `GlobalPosition`，所有位移由调度器统一执行
+- **曲线性能约束**：`ArcLengthLut` 只用于静态曲线的进入阶段预计算；动态追踪目标时禁止在 `Update` 中逐帧重建 LUT，改用 `Evaluate/EvaluateTangent` + 轻量长度估算
 
 ### 朝向语义
 - `Velocity` = “本帧怎么移动”，服务于位移执行与速度分层合成
@@ -119,8 +120,8 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - 已接入显式朝向的曲线路径：`SineWaveStrategy`（正弦切线）、`BezierCurveStrategy`（贝塞尔切线）、`OrbitStrategy`（切向+径向合成切线）
 - 直线/追踪/输入类策略若 `Velocity` 本身就是想看的方向，可继续只返回 `Continue(distance)`
 
-### 12 种运动模式
-FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral / SineWave / BezierCurve / Boomerang / AttachToHost / PlayerInput / AIControlled
+### 14 种运动模式
+FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral / SineWave / BezierCurve / Boomerang / AttachToHost / PlayerInput / AIControlled / Parabola / CircularArc
 
 - 所有 12 种模式对 Node2D/Area2D 和 CharacterBody2D 通用
 - `AIControlled` 读取 `AIMoveDirection/AIMoveSpeedMultiplier`，AI 行为树在非 `AIControlled` 模式下暂停写入移动意图

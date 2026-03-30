@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// 空间位置生成工具
-/// 利用 GeometryCalculator 进行形状检测，生成指定数量的有效随机坐标点
+/// 利用 Geometry2D/GeometryCalculator 进行形状采样，生成指定数量的随机坐标点
 /// </summary>
 public static class PositionTargetSelector
 {

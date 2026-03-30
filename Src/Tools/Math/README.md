@@ -1,34 +1,71 @@
-# Math 数学工具库
+﻿# Math 数学工具层
 
-## 概述
+## 定位
 
-**路径**: `Src/Tools/Math/`
+路径：`Src/Tools/Math/`
 
-提供项目中常用的数学计算辅助方法，并按职责拆分为多个工具类，避免所有数学逻辑堆积到单一文件中。
-
-## 常用功能
+这一层只放可复用的纯数学能力，不处理 ECS 生命周期、事件或业务规则。当前已经明确分成三类：
 
 - `MyMath.cs`
-  - 属性加成计算
-  - 冷却缩减计算
-  - 护甲减伤/负护甲增伤计算
-  - 概率判定
-
+  - 属性倍率、冷却缩减、护甲减伤、概率判定等数值公式
 - `WaveMath.cs`
-  - 标准正弦波采样：`y = A × sin(2π × f × t + φ)`
-  - 正弦波两时刻偏移增量计算
-  - 频率到角频率换算
-  - 适用于蛇形弹道、浮动、周期位移等场景
-
+  - 正弦波采样与周期运动相关公式
 - `Bezier/BezierCurve.cs`
-  - 任意阶贝塞尔曲线求值
-  - 导数、切线、曲率、分割
-  - 弧长参数化与匀速运动支持
+  - 通用贝塞尔曲线求值、切线、曲率、分裂与弧长参数化
 
-## 设计原则
+## 本轮新增
 
-- `MyMath`：放“通用数值公式”，如属性、冷却、减伤、概率
-- `WaveMath`：放“波形/周期运动数学”，如正弦波、相位、频率
-- `BezierCurve`：放“曲线几何与参数化”
+### `Curves/`
 
-当某个公式已经具备明确业务语义（例如波动、轨迹、曲线），优先拆到独立工具类，而不是继续扩展 `MyMath`.
+- `ArcLengthLut.cs`
+  - 负责累计弧长表归一化与 `progress -> t` 映射
+- `EllipseArc2D.cs`
+  - 由起点、终点、弧高、侧偏方向定义的二维弧线
+  - 目前用于 `BoomerangStrategy`
+- `Parabola2D.cs`
+  - 由起点、终点、顶高定义的二维抛物线
+- `CircularArc2D.cs`
+  - 由起点、终点、半径、方向定义的二维圆弧
+
+### `Geometry/`
+
+- `Geometry2D.cs`
+  - 统一提供 Circle/Ring/Box/Capsule/Cone 判定
+  - 提供点到线段距离与随机采样
+
+## 设计边界
+
+- 数学层负责：点采样、切线采样、长度近似、弧长映射、几何判定、随机采样。
+- 数学层不负责：`MovementParams`、`DataKey.Velocity`、实体过滤、目标排序、策略阶段机。
+- 运行时仍统一使用 Godot `Vector2`，不引入新的运行时数学库抽象。
+
+## 使用建议
+
+### 曲线运动
+
+如果需要“按路程匀速推进”，优先使用：
+
+1. 曲线对象的 `BuildArcLengthTable(...)`
+2. `EvaluateByArcProgress(...)`
+3. `EvaluateTangentByArcProgress(...)`
+
+而不是直接把公式参数 `t` 当成匀速进度。
+
+但要注意一条运行时约束：
+
+- 只有静态曲线适合预建 `ArcLengthLut`
+- 如果终点会在运行时持续变化，不要在 `Update` 中逐帧重建 LUT
+- 动态曲线优先使用 `Evaluate(...)` / `EvaluateTangent(...)` 加轻量长度估算
+
+### 几何查询
+
+- 纯算法请优先调 `Geometry2D`
+- 兼容旧调用可继续使用 `GeometryCalculator`
+- `TargetSelectorQuery`、`GeometryType` 仍属于 `TargetSelector` 领域层，不下沉到数学层
+
+## 当前接入情况
+
+- `BoomerangStrategy` 已切到 `EllipseArc2D`
+- 新增移动模式：`MoveMode.Parabola`、`MoveMode.CircularArc`
+- `TargetSelector` 相关几何算法已下沉到 `Geometry2D`
+- `GeometryCalculator` 保留为兼容门面
