@@ -3,28 +3,40 @@ using System.Runtime.CompilerServices;
 
 /// <summary>
 /// 【模式】回旋飞镖。
-/// <para>去程飞向 <c>TargetPoint</c>，可选暂停，再返回起始点后完成。起始点由 OnEnter 自动记录，速度由 <c>DataKey.MoveSpeed</c>（实体属性）驱动。</para>
+/// <para>
+/// 去程飞向 <c>TargetPoint</c>，可选暂停，再返回持有者（<c>TargetNode</c>）的<b>当前</b>位置后完成。
+/// 返程目标每帧实时更新，确保飞镖始终追回持有者的最新位置，而非发射时的旧坐标。
+/// </para>
+/// <para>
+/// 速度完全由 <c>ActionSpeed</c>（像素/秒）驱动，与实体的 <c>FinalMoveSpeed</c> 属性无关。
+/// 不允许被外部运动事件打断（<c>CanBeInterrupted = false</c>）。
+/// </para>
 /// <para>
 /// <list type="bullet">
 /// <item><c>TargetPoint</c>（Vector2，必须）：去程目标坐标。</item>
+/// <item><c>ActionSpeed</c>（float，必须）：飞行速度（像素/秒），决定去程和返程基准速度。</item>
+/// <item><c>TargetNode</c>（Node2D，强烈推荐）：持有者节点引用（通常为玩家），返程时实时追踪其当前位置；
+///   未设置或节点已离开场景树时，回退到发射时记录的起始坐标。</item>
 /// <item><c>BoomerangPauseTime</c>（float，秒，可选）：到达目标后停顿时长，0 = 直接返回。</item>
-/// <item><c>ReachDistance</c>（float，可选）：到达判定阈值（像素），0 = 使用默认 5px。</item>
-/// <item><c>MaxDuration</c>（float，可选）：-1 = 不限制，由飞行距离 / 速度自然决定飞行时长。</item>
-/// <item><c>DestroyOnComplete</c>（bool，可选）：返回起点后是否自动销毁实体。</item>
+/// <item><c>BoomerangReturnSpeedMultiplier</c>（float，可选）：返程速度倍率，1 = 同速，>1 = 加速返回。</item>
+/// <item><c>ReachDistance</c>（float，可选）：到达判定阈值（像素），0 = 使用默认 8px。</item>
+/// <item><c>DestroyOnComplete</c>（bool，可选）：返回持有者后是否自动销毁实体。</item>
 /// </list>
 /// </para>
 /// <para>
 /// <code>
-/// 【使用示例：回旋飞镖弹到目标点后回收】
+/// 【使用示例】
 /// entity.Events.Emit(GameEventType.Unit.MovementStarted,
 ///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Boomerang, new MovementParams
 ///     {
-///         Mode               = MoveMode.Boomerang,
-///         TargetPoint        = targetPos,    // 必须：去程目标坐标
-///         BoomerangPauseTime = 0.2f,         // 可选：到达后停顿 0.2 秒再返回，0 = 立即返回
-///         ReachDistance      = 20f,          // 可选：到达判定距离（像素）
-///         MaxDuration        = -1f,          // -1 不限制，自然完成
-///         DestroyOnComplete  = true,
+///         Mode                           = MoveMode.Boomerang,
+///         TargetPoint                    = targetPos,   // 必须：去程目标坐标
+///         TargetNode                     = player,      // 强烈推荐：返程动态追踪持有者
+///         ActionSpeed                    = 600f,        // 必须：飞行速度（像素/秒）
+///         BoomerangPauseTime             = 0.1f,        // 可选：到达后停顿
+///         BoomerangReturnSpeedMultiplier = 1.5f,        // 可选：返程 1.5 倍速
+///         ReachDistance                  = 20f,         // 可选：到达判定距离
+///         DestroyOnComplete              = true,        // 返回后销毁
 ///     }));
 /// </code>
 /// </para>
@@ -32,114 +44,111 @@ using System.Runtime.CompilerServices;
 /// </summary>
 public class BoomerangStrategy : IMovementStrategy
 {
-    /// <summary>
-    /// 起始位置坐标，在 OnEnter 时记录，用于返回阶段的导航
-    /// </summary>
+    /// <summary>发射时记录的起始坐标，当 TargetNode 不可用时作为返程备用目标</summary>
     private Vector2 _startPoint;
 
-    /// <summary>
-    /// 是否处于返回阶段：false = 去程（飞向目标点），true = 返程（返回起点）
-    /// </summary>
+    /// <summary>持有者 Entity（IUnit），在 OnEnter 时通过 EntityRelationshipManager 查找并缓存</summary>
+    private IUnit? _ownerEntity;
+
+    /// <summary>当前阶段：false = 去程（飞向 TargetPoint），true = 返程（追回持有者）</summary>
     private bool _returning;
 
-    /// <summary>
-    /// 暂停计时器：到达目标点后的停顿倒计时，>0 时暂停移动
-    /// </summary>
+    /// <summary>暂停倒计时（秒），>0 时速度清零，等待再出发</summary>
     private float _pauseTimer;
 
-    /// <summary>
-    /// 模块初始化器：在模块加载时自动将此策略注册到移动策略注册表
-    /// </summary>
+    /// <summary>回旋镖一旦发出不允许被外部事件打断，必须完整走完去程 + 返程</summary>
+    public bool CanBeInterrupted => false;
+
+    /// <summary>模块初始化器：自动注册回旋镖策略到移动策略注册表。</summary>
     [ModuleInitializer]
     public static void Register()
     {
         MovementStrategyRegistry.Register(MoveMode.Boomerang, () => new BoomerangStrategy());
     }
 
-    /// <summary>
-    /// 策略进入时的初始化处理
-    /// <para>主要任务：</para>
-    /// <list type="bullet">
-    /// <item>记录当前实体位置作为起始点（用于返程导航）</item>
-    /// <item>重置状态：设置为去程模式，清空暂停计时器</item>
-    /// </list>
-    /// </summary>
-    /// <param name="entity">移动实体</param>
-    /// <param name="data">实体数据容器</param>
-    /// <param name="params">移动参数</param>
+    /// <inheritdoc/>
     public void OnEnter(IEntity entity, Data data, MovementParams @params)
     {
-        _startPoint = entity is Node2D node ? node.GlobalPosition : Vector2.Zero;
-        _returning = false; // 初始为去程模式
-        _pauseTimer = 0f;   // 清空暂停计时器
+        _startPoint = Vector2.Zero;
+        _ownerEntity = null;
+        if (entity is Node2D node)
+        {
+            _startPoint = node.GlobalPosition;
+            _ownerEntity = EntityRelationshipManager.FindAncestorOfType<IUnit>(node);
+        }
+        _returning = false;
+        _pauseTimer = 0f;
     }
 
-    /// <summary>
-    /// 每帧更新移动状态
-    /// <para>状态机逻辑：</para>
-    /// <list type="bullet">
-    /// <item>暂停状态：倒计时清零，速度置零，等待继续</item>
-    /// <item>去程状态：飞向 TargetPoint，到达后切换到暂停或返程</item>
-    /// <item>返程状态：飞向 StartPoint，到达后完成移动</item>
-    /// </list>
-    /// </summary>
-    /// <param name="entity">移动实体</param>
-    /// <param name="data">实体数据容器</param>
-    /// <param name="delta">帧间隔时间</param>
-    /// <param name="params">移动参数</param>
-    /// <returns>移动更新结果（继续/完成）</returns>
+    /// <inheritdoc/>
     public MovementUpdateResult Update(IEntity entity, Data data, float delta, MovementParams @params)
     {
         if (entity is not Node2D node) return MovementUpdateResult.Continue();
 
-        // === 暂停状态处理 ===
+        // === 暂停阶段 ===
         if (_pauseTimer > 0f)
         {
-            _pauseTimer = Mathf.Max(_pauseTimer - delta, 0f); // 倒计时递减
-            data.Set(DataKey.Velocity, Vector2.Zero);         // 速度置零，暂停移动
+            _pauseTimer = Mathf.Max(_pauseTimer - delta, 0f);
+            data.Set(DataKey.Velocity, Vector2.Zero);
             return MovementUpdateResult.Continue();
         }
 
-        // === 目标选择和距离计算 ===
-        Vector2 target = _returning ? _startPoint : @params.TargetPoint; // 根据状态选择目标
-        Vector2 toTarget = target - node.GlobalPosition;                   // 计算到目标的向量
-        float dist = toTarget.Length();                                     // 计算距离
-        float reach = @params.ReachDistance > 0f ? @params.ReachDistance : 5f; // 到达判定阈值
+        // === 确定本帧目标 ===
+        Vector2 targetPoint;    // 目标位置
+        // 是否返程
+        if (_returning)
+        {
+            // 返程：每帧实时追踪持有者当前位置；不可用时回退到发射起始点
+            targetPoint = (_ownerEntity is Node2D ownerNode && ownerNode.IsInsideTree())
+                ? ownerNode.GlobalPosition
+                : _startPoint;
+        }
+        else
+        {
+            targetPoint = @params.TargetPoint;
+        }
 
-        // === 到达目标检测 ===
-        if (dist <= reach)
+        Vector2 toTarget = targetPoint - node.GlobalPosition;
+        float dist = toTarget.Length();
+
+        // === 到达检测 ===
+        if (MovementHelper.HasReachedTarget(node.GlobalPosition, targetPoint, @params.ReachDistance, 8f))
         {
             if (!_returning)
             {
-                // 去程到达目标：切换到返程状态
+                // 去程抵达：切换到返程，可选停顿
                 _returning = true;
-
-                // 若设置了暂停时间，进入暂停状态
                 if (@params.BoomerangPauseTime > 0f)
                     _pauseTimer = @params.BoomerangPauseTime;
 
-                data.Set(DataKey.Velocity, Vector2.Zero); // 停止移动
+                data.Set(DataKey.Velocity, Vector2.Zero);
                 return MovementUpdateResult.Continue();
             }
             else
             {
-                // 返程到达起点：完成移动
-                data.Set(DataKey.Velocity, toTarget / Mathf.Max(delta, 0.001f)); // 设置最终速度
+                // 返程抵达持有者：完成
+                data.Set(DataKey.Velocity, Vector2.Zero);
                 return MovementUpdateResult.Complete();
             }
         }
 
-        // === 正常移动逻辑 ===
-        // 获取实体移动速度（由属性系统管理）
-        float speed = data.Get<float>(DataKey.FinalMoveSpeed);
+        // === 飞行阶段 ===
+        // 速度来自 ActionSpeed 参数（可通过 MaxDistance+MaxDuration 推导），与实体属性无关
+        float speed = @params.ActionSpeed > 0f ? @params.ActionSpeed : 300f;
+        if (_returning)
+        {
+            float mult = @params.BoomerangReturnSpeedMultiplier > 0f
+                ? @params.BoomerangReturnSpeedMultiplier : 1f;
+            speed *= mult;
+        }
 
-        // 计算本帧移动距离，防止 overshoot
+        // 防过冲：单帧位移不超过剩余距离
         float step = Mathf.Min(speed * delta, dist);
+        Vector2 dir = toTarget / dist;
 
-        // 设置速度向量（指向目标方向）
-        data.Set(DataKey.Velocity, (toTarget / dist) * speed);
+        data.Set(DataKey.Velocity, dir * speed);
 
-        // 返回继续移动，并告知实际位移长度
-        return MovementUpdateResult.Continue(step);
+        // 显式传入切线方向，让实体始终面向飞行方向
+        return MovementUpdateResult.Continue(step, dir);
     }
 }

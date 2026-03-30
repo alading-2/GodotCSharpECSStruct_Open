@@ -64,14 +64,14 @@ public record struct MovementParams
     /// </summary>
     public Vector2 TargetPoint { get; init; } = Vector2.Zero;
     /// <summary>
-    /// 是否实时追踪 <c>TargetNode</c>（仅 Charge 模式生效）。
-    /// true = 每帧重算朝向目标方向（追踪/锁定模式），目标消失后维持最后方向。
-    /// false（默认）= OnEnter 时一次性采样方向后锁定。
+    /// 是否实时追踪 <c>TargetNode</c>（Charge / BezierCurve 模式生效）。
+    /// true = 每帧更新朝向/终点至目标当前位置，目标消失后维持最后状态。
+    /// false（默认）= OnEnter 时一次性采样后锁定。
     /// </summary>
     public bool isTrackTarget { get; init; } = false;
     /// <summary>
     /// 目标节点引用，多策略复用：
-    /// Charge（冲锋方向源 / 追踪目标）/ AttachToHost（宿主）
+    /// Charge（追踪目标）用于重复、BezierCurve、BezierCurve追踪终点、AttachToHost等
     /// </summary>
     public Node2D? TargetNode { get; init; } = null;
     /// <summary>
@@ -145,13 +145,17 @@ public record struct MovementParams
     /// 第 0 个点会在 OnEnter 时自动替换为实体当前位置。
     /// </summary>
     public Vector2[]? BezierPoints { get; init; } = null;
-    /// <summary>从起点走到终点的总时长（秒）</summary>
-    public float BezierDuration { get; init; } = 1f;
-    /// <summary>是否使用弧长参数化实现匀速移动</summary>
-    public bool BezierUniformSpeed { get; init; } = false;
+    /// <summary>是否使用弧长参数化实现匀速移动（BezierCurve 模式）</summary>
+    public bool IsBezierUniformSpeed { get; init; } = false;
 
     // ======== 回旋镖 ========
 
     /// <summary>到达目标点后的停顿时间（秒），0 = 不停顿直接返回</summary>
     public float BoomerangPauseTime { get; init; } = 0f;
+
+    /// <summary>
+    /// 返程速度倍率（相对于去程 <c>ActionSpeed</c>）。
+    /// 1 = 同速，>1 = 加速返回（如 1.5 = 1.5 倍速），0 = 视同 1。
+    /// </summary>
+    public float BoomerangReturnSpeedMultiplier { get; init; } = 1f;
 }

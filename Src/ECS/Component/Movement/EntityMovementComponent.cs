@@ -363,6 +363,9 @@ public partial class EntityMovementComponent : Node, IComponent
         // 标记完成（防止本帧重复触发）
         _moveCompleted = true;
 
+        // 调用策略自然完成回调（OnEnd 仅自然完成触发；强制打断只走 OnExit）
+        _currentStrategy?.OnEnd(_entity, _data, _params);
+
         // 发送 MovementCompleted 事件，携带本次运动统计数据
         _entity.Events.Emit(
             GameEventType.Unit.MovementCompleted,

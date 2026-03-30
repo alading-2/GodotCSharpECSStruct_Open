@@ -27,8 +27,9 @@ using System.Runtime.CompilerServices;
 ///         MaxDuration       = 2f,          // 最大持续时间，追踪不需要设置距离
 ///         DestroyOnComplete = true,
 ///         // Charge
-///         isTrackTarget     = true,        // 打开追踪目标
-///         TargetNode        = enemyNode,   // 必须：追踪目标
+///         isTrackTarget     = true,        // 【可选】打开追踪目标
+///         TargetNode        = enemyNode,   // 【可选】必须：追踪目标
+///         ReachDistance = 20, // 【可选】到达距离阈值，追踪一般都要设置
 ///     }));
 ///
 /// 【使用示例 2：冲向固定坐标点】
@@ -107,6 +108,32 @@ public class ChargeStrategy : IMovementStrategy
         }
 
         if (_lockedDirection.LengthSquared() < 0.001f) return MovementUpdateResult.Continue();
+
+        // ReachDistance 到达判定：追踪目标节点 / 目标坐标时，进入阈值范围则提前完成
+        if (@params.ReachDistance > 0f)
+        {
+            Vector2 checkPos;
+            bool hasTarget;
+
+            if (@params.isTrackTarget && @params.TargetNode != null && GodotObject.IsInstanceValid(@params.TargetNode))
+            {
+                checkPos = @params.TargetNode.GlobalPosition;
+                hasTarget = true;
+            }
+            else if (@params.TargetPoint != Vector2.Zero)
+            {
+                checkPos = @params.TargetPoint;
+                hasTarget = true;
+            }
+            else
+            {
+                checkPos = Vector2.Zero;
+                hasTarget = false;
+            }
+
+            if (hasTarget && MovementHelper.HasReachedTarget(node.GlobalPosition, checkPos, @params.ReachDistance))
+                return MovementUpdateResult.Complete();
+        }
 
         data.Set(DataKey.Velocity, _lockedDirection * _currentSpeed);
         return MovementUpdateResult.Continue(_currentSpeed * delta);

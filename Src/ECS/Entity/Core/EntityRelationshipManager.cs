@@ -463,6 +463,29 @@ public static class EntityRelationshipManager
     }
 
     // ==================== 所有权链查找 ====================
+    /// <summary>
+    /// 查找第一个符合类型的实体（包括自身或沿 PARENT 关系向上查找）
+    /// <para>便捷重载，自动获取实体 ID。</para>
+    /// <para>优先检查传入节点本身是否符合目标类型，如果是则直接返回。</para>
+    /// <para>找不到时会自动打印警告日志。</para>
+    /// </summary>
+    public static T? FindAncestorOfType<T>(Godot.Node entity, int maxDepth = 10) where T : class
+    {
+        if (entity == null)
+        {
+            _log.Error($"FindAncestorOfType 传入节点为 null，无法查找 {typeof(T).Name}");
+            return null;
+        }
+
+        // 1. 首先检查传入的节点本身是否符合目标类型
+        if (entity is T typedEntity)
+        {
+            return typedEntity;
+        }
+
+        // 2. 沿 PARENT 关系向上查找
+        return FindAncestorOfType<T>(entity.GetInstanceId().ToString(), maxDepth);
+    }
 
     /// <summary>
     /// 查找第一个符合类型的实体（包括自身或沿 PARENT 关系向上查找）
@@ -521,30 +544,6 @@ public static class EntityRelationshipManager
         // 找不到时打印警告
         _log.Warn($"未能在实体 {entityId}({startEntity?.GetType().Name ?? "null"}) 的层级链上找到类型 {typeof(T).Name}");
         return null;
-    }
-
-    /// <summary>
-    /// 查找第一个符合类型的实体（包括自身或沿 PARENT 关系向上查找）
-    /// <para>便捷重载，自动获取实体 ID。</para>
-    /// <para>优先检查传入节点本身是否符合目标类型，如果是则直接返回。</para>
-    /// <para>找不到时会自动打印警告日志。</para>
-    /// </summary>
-    public static T? FindAncestorOfType<T>(Godot.Node entity, int maxDepth = 10) where T : class
-    {
-        if (entity == null)
-        {
-            _log.Error($"FindAncestorOfType 传入节点为 null，无法查找 {typeof(T).Name}");
-            return null;
-        }
-
-        // 1. 首先检查传入的节点本身是否符合目标类型
-        if (entity is T typedEntity)
-        {
-            return typedEntity;
-        }
-
-        // 2. 沿 PARENT 关系向上查找
-        return FindAncestorOfType<T>(entity.GetInstanceId().ToString(), maxDepth);
     }
 
     /// <summary>

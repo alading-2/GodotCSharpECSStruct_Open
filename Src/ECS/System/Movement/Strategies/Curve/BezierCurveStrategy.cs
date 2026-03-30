@@ -3,41 +3,47 @@ using System.Runtime.CompilerServices;
 
 /// <summary>
 /// 【模式】贝塞尔曲线移动。
-/// <para>沿 N 阶贝塞尔曲线前进，由 <c>ElapsedTime / BezierDuration</c> 驱动参数 t。OnEnter 自动将第 0 个控制点替换为当前位置。</para>
+/// <para>沿 N 阶贝塞尔曲线前进，由 <c>ElapsedTime / MaxDuration</c> 驱动参数 t（0→1）。OnEnter 自动将第 0 个控制点替换为当前位置。</para>
 /// <para>
 /// <list type="bullet">
-/// <item><c>BezierPoints</c>（Vector2[]，必须）：完整控制点数组（含起点和终点，至少 2 点）。起点会被 OnEnter 替换为当前位置，只需填写控制点和终点即可。</item>
-/// <item><c>BezierDuration</c>（float，必须）：从起点走到终点的总时长（秒），控制整体速度。</item>
-/// <item><c>BezierUniformSpeed</c>（bool，可选）：true = 弧长参数化匀速移动，false（默认）= 非匀速（参数 t 线性）。</item>
-/// <item><c>MaxDuration</c>（float，可选）：-1 = 不限制；若设置比 BezierDuration 小，则会提前结束。通常不需要，直接依赖 BezierDuration 完成。</item>
+/// <item><c>MaxDuration</c>（float，<b>必须 &gt; 0</b>）：从起点走到终点的总时长（秒），控制整体速度。此策略不支持 -1（无限制）。</item>
+/// <item><c>BezierPoints</c>（Vector2[]，推荐）：完整控制点数组（含起点和终点，至少 2 点）。起点会被 OnEnter 替换为当前位置，只需填写控制点和终点即可。若未提供则以 <c>TargetPoint</c> 作终点降级为直线。</item>
+/// <item><c>TargetPoint</c>（Vector2，可选）：设置后会覆盖 <c>BezierPoints</c> 的终点（最后一个控制点），可在保留曲线形状的同时动态指定落点；未提供 <c>BezierPoints</c> 时降级为直线。</item>
+/// <item><c>TargetNode</c> + <c>isTrackTarget</c>（可选）：<c>isTrackTarget = true</c> 时每帧将终点更新为 <c>TargetNode</c> 的当前位置，目标消失后终点冻结在最后位置。</item>
+/// <item><c>BezierUniformSpeed</c>（bool，可选）：true = 弧长参数化匀速移动，false（默认）= 非匀速（参数 t 线性推进）。<b>当 <c>isTrackTarget=true</c> 时会被自动禁用</b>，避免每帧重建 LUT 的性能开销。</item>
 /// <item><c>DestroyOnComplete</c>（bool，可选）：到达终点后是否自动销毁实体。</item>
 /// </list>
 /// </para>
-/// <para>若 <c>BezierPoints</c> 为空则降级为直线（以 <c>TargetPoint</c> 作终点）。</para>
+/// <para>若 <c>BezierPoints</c> 为空或不足 2 点，且 <c>TargetPoint != Vector2.Zero</c>，则自动降级为当前位置 → TargetPoint 的直线移动。</para>
 /// <para>
 /// <code>
-/// 【使用示例：抛物线弹道（三阶贝塞尔）】
+/// 【使用示例：曲线追踪目标（isTrackTarget，终点每帧跟随 TargetNode）】
 /// entity.Events.Emit(GameEventType.Unit.MovementStarted,
 ///     new GameEventType.Unit.MovementStartedEventData(MoveMode.BezierCurve, new MovementParams
 ///     {
 ///         Mode            = MoveMode.BezierCurve,
-///         BezierPoints    = new Vector2[]            // 起点会被 OnEnter 自动替换为当前位置
-///         {
-///             Vector2.Zero,                          // [0] 占位，OnEnter 自动替换
-///             new Vector2(200f, -300f),              // [1] 控制点（决定弧高）
-///             new Vector2(400f, -300f),              // [2] 控制点
-///             new Vector2(600f,  100f),              // [3] 终点
-///         },
-///         BezierDuration      = 1.5f,               // 总飞行时长（秒）
-///         BezierUniformSpeed  = false,               // 可选：true = 匀速，false = 非匀速
+///         MaxDuration     = 2f,
 ///         DestroyOnComplete   = true,
+///         isTrackTarget   = true,                    // 【可选】每帧将终点更新到 TargetNode 位置
+///         TargetNode      = enemyNode,               // 【可选】追踪目标
+///         ReachDistance = 20, // 【可选】到达距离阈值，追踪一般都要设置
+///         BezierPoints    = new Vector2[]
+///         {
+///             Vector2.Zero,                          // [0] 占位，OnEnter 替换为起点
+///             new Vector2(0f,   -200f),              // [1] 控制点（曲线弧度）
+///             new Vector2(200f, -200f),              // [2] 控制点
+///             Vector2.Zero,                          // [3] 占位，每帧替换为目标位置
+///             [一般不需要设置]IsBezierUniformSpeed = false,   // 是否使用弧长参数化实现匀速移动
+///         },
 ///     }));
 /// </code>
 /// </para>
-/// <para>【典型用途】弧形投射物、技能抛物线、沿预设动画曲线移动的特效体。</para>
+/// <para>【典型用途】弧形投射物、技能抛物线、沿预设动画曲线移动的特效体、曲线追踪导弹。</para>
 /// </summary>
 public class BezierCurveStrategy : IMovementStrategy
 {
+    private static readonly Log _log = new Log("BezierCurveStrategy");
+
     /// <summary>
     /// 最终控制点数组（包含起点和终点），OnEnter 时会将起点替换为实体当前位置
     /// </summary>
@@ -72,11 +78,26 @@ public class BezierCurveStrategy : IMovementStrategy
     {
         if (entity is not Node2D node) return;
 
+        // MaxDuration 必须 > 0，否则无法驱动参数 t
+        if (@params.MaxDuration <= 0f)
+            _log.Warn($"MaxDuration={@params.MaxDuration} 无效，必须 > 0，曲线将不会移动");
+
+        if (@params.isTrackTarget && @params.TargetNode == null)
+            _log.Warn("isTrackTarget=true 但 TargetNode 未设置，追踪将无效，终点保持初始值。");
+
         if (@params.BezierPoints != null && @params.BezierPoints.Length >= 2)
         {
             // ⚠️ Clone 后修改，避免污染调用方传入的共享数组
             _finalPoints = (Vector2[])@params.BezierPoints.Clone();
             _finalPoints[0] = node.GlobalPosition; // 将起点修正为当前位置
+            // 若 TargetPoint 有效，覆盖终点（最后一个控制点）
+            if (@params.TargetPoint != Vector2.Zero)
+                _finalPoints[_finalPoints.Length - 1] = @params.TargetPoint;
+        }
+        else if (@params.TargetPoint != Vector2.Zero)
+        {
+            // 降级为直线：当前位置 → TargetPoint
+            _finalPoints = new Vector2[] { node.GlobalPosition, @params.TargetPoint };
         }
         else
         {
@@ -86,10 +107,15 @@ public class BezierCurveStrategy : IMovementStrategy
         // 重置查找表
         _lengthLut = null;
 
+        // 是否使用贝塞尔曲线匀速模式，追踪模式下禁用，因为BuildLengthTable计算量较大
+        bool useUniformSpeed = @params.IsBezierUniformSpeed && !@params.isTrackTarget;
+
         // 若启用匀速模式且控制点有效，预计算弧长查找表
-        if (@params.BezierUniformSpeed && _finalPoints.Length >= 2)
+        // 自适应 segments：阶数 * 8，最少 16（三阶=24，五阶=40），避免固定 64 的过度开销
+        if (useUniformSpeed && _finalPoints.Length >= 2)
         {
-            _lengthLut = BezierCurve.BuildLengthTable(_finalPoints, 64); // 64 段采样精度
+            int lutSegments = System.Math.Max(16, (_finalPoints.Length - 1) * 8);
+            _lengthLut = BezierCurve.BuildLengthTable(_finalPoints, lutSegments);
         }
     }
 
@@ -113,19 +139,32 @@ public class BezierCurveStrategy : IMovementStrategy
         if (entity is not Node2D node) return MovementUpdateResult.Continue();
         if (_finalPoints.Length < 2) return MovementUpdateResult.Continue(); // 控制点不足，跳过
 
-        float duration = @params.BezierDuration;
-        if (duration <= 0f) return MovementUpdateResult.Continue(); // 无效时长，跳过
+        float duration = @params.MaxDuration;
+        if (duration <= 0f) return MovementUpdateResult.Continue(); // MaxDuration 无效（忘记设置或为 -1），跳过
+
+        // 是否使用贝塞尔曲线匀速模式，追踪模式下禁用，因为BuildLengthTable计算量较大
+        bool useUniformSpeed = @params.IsBezierUniformSpeed && !@params.isTrackTarget;
+
+        // 追踪模式：每帧将终点（最后一个控制点）更新为目标当前位置
+        if (@params.isTrackTarget && @params.TargetNode != null && GodotObject.IsInstanceValid(@params.TargetNode))
+        {
+            _finalPoints[_finalPoints.Length - 1] = @params.TargetNode.GlobalPosition;
+
+            // 追踪模式下的 ReachDistance 提前到达判定（无隐式默认，需调用方显式设置）
+            if (MovementHelper.HasReachedTarget(node.GlobalPosition, @params.TargetNode.GlobalPosition, @params.ReachDistance))
+                return MovementUpdateResult.Complete();
+        }
 
         // 计算当前参数 t（0~1），基于已用时间 + 当前帧增量的预测位置
         float t = Mathf.Clamp((@params.ElapsedTime + delta) / duration, 0f, 1f);
 
         // 根据匀速模式选择求值方法
-        Vector2 newPos = (@params.BezierUniformSpeed && _lengthLut != null)
+        Vector2 newPos = (useUniformSpeed && _lengthLut != null)
             ? BezierCurve.EvaluateUniform(_finalPoints, t, _lengthLut) // 匀速：弧长参数化
             : BezierCurve.Evaluate(_finalPoints, t);                    // 非匀速：直接参数求值
 
         // 朝向使用曲线在同一参数点的切线，而不是当前位置到采样点的纠偏向量
-        Vector2 facingDirection = (@params.BezierUniformSpeed && _lengthLut != null)
+        Vector2 facingDirection = (useUniformSpeed && _lengthLut != null)
             ? BezierCurve.EvaluateUniformTangent(_finalPoints, t, _lengthLut)
             : BezierCurve.EvaluateTangent(_finalPoints, t);
 

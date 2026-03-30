@@ -85,4 +85,22 @@ public static partial class MovementHelper
         return 0f;
     }
 
+    /// <summary>
+    /// 判断是否已到达目标位置的阈值范围ReachDistance内
+    /// </summary>
+    /// <param name="from">当前位置（实体 GlobalPosition）</param>
+    /// <param name="to">目标位置</param>
+    /// <param name="reachDistance">来自 <c>MovementParams.ReachDistance</c> 的设定阈值（像素），0 = 未设置</param>
+    /// <param name="defaultReach">
+    /// 当 <c>reachDistance == 0</c> 时的兜底阈值（像素）。
+    /// 传 0（默认）= 不启用默认判定（需调用方显式设置 ReachDistance 才会触发）；
+    /// 传正值 = 为该策略提供隐式默认（如 Boomerang 传 8f）。
+    /// </param>
+    public static bool HasReachedTarget(Vector2 from, Vector2 to, float reachDistance, float defaultReach = 0f)
+    {
+        float threshold = reachDistance > 0f ? reachDistance : defaultReach;
+        if (threshold <= 0f) return false;
+        return (to - from).LengthSquared() <= threshold * threshold;
+    }
+
 }

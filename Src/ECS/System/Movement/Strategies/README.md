@@ -56,14 +56,14 @@ public interface IMovementStrategy
 - **参数域**: t ∈ [0, 1]
 
 **关键参数**:
-- `BezierPoints`: 控制点数组（含起点和终点）
-- `BezierDuration`: 移动总时长（秒）
-- `BezierUniformSpeed`: 是否启用匀速模式
+- `MaxDuration`: 移动总时长（秒，**必须 > 0**，此策略不支持 -1）
+- `BezierPoints`: 控制点数组（含起点和终点，推荐）；若未提供则以 `TargetPoint` 降级直线
+- `BezierUniformSpeed`: 是否启用弧长参数化匀速模式
 
 **技术特点**:
 - 控制点克隆：避免污染原始数据
 - 起点修正：OnEnter 时将第0个控制点设为实体当前位置
-- LUT 预计算：64段采样精度的弧长查找表
+- LUT 自适应分段：`Math.Max(16, 阶数 * 8)`（三阶=24，五阶=40），替代固定 64 的过度开销
 
 ---
 
@@ -177,7 +177,7 @@ entity.Events.Emit(GameEventType.Unit.MovementStarted,
 | 场景 | 推荐策略 | 关键参数 |
 |------|----------|----------|
 | 蛇形子弹 | SineWave | WaveAmplitude, WaveFrequency |
-| 复杂路径 | BezierCurve | BezierPoints, BezierDuration |
+| 复杂路径 | BezierCurve | BezierPoints, MaxDuration（必须 > 0） |
 | 往返攻击 | Boomerang | TargetPoint, BoomerangPauseTime |
 | 突进攻击 | Charge | ActionSpeed, Acceleration |
 | 护卫卫星 | Orbit | OrbitRadius, OrbitAngularSpeed |

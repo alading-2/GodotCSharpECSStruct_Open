@@ -31,7 +31,7 @@ entity.Events.Emit(
 | `OrbitEntity` | OrbitEntityStrategy | 围绕目标实体 | TargetNode, OrbitRadius, OrbitAngularSpeed |
 | `Spiral` | SpiralStrategy | 螺旋收缩/扩张 | OrbitCenter, OrbitRadius, OrbitTargetRadius, OrbitAngularSpeed |
 | `SineWave` | SineWaveStrategy | 正弦波弹道 | WaveAmplitude / WaveFrequency + 可选 `WaveAmplitudeScalarDriver` / `WaveFrequencyScalarDriver` |
-| `BezierCurve` | BezierCurveStrategy | 曲线弹道 | BezierPoints, BezierDuration |
+| `BezierCurve` | BezierCurveStrategy | 曲线弹道 | BezierPoints, MaxDuration（必须 > 0） |
 | `Boomerang` | BoomerangStrategy | 去程 + 回程 | TargetPoint, BoomerangPauseTime |
 | `AttachToHost` | AttachToHostStrategy | 附着特效 | TargetNode（+DataKey.EffectOffset） |
 | `PlayerInput` | PlayerInputStrategy | 玩家常驻（DefaultMoveMode） | 无，读 DataKey.MoveSpeed/Acceleration |
