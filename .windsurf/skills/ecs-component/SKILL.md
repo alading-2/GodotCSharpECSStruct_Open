@@ -100,6 +100,12 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - ❌ 使用 Godot Signal 处理核心逻辑 → 用 `EventBus`
 - ❌ `_Process` 中 `new` 对象或 LINQ
 
+## 碰撞组件约定（2026-03）
+- `CollisionSensorComponent` 只负责碰撞采样与事件分发，不直接承载接触伤害业务
+- 接触伤害、拾取等业务组件应优先消费事件中的 `TargetEntity`，不要假设 `Target` 一定就是根 `Entity`
+- 如果必须从任意碰撞子节点回溯宿主实体，使用 `EntityManager.ResolveOwningIEntity(node)`
+- 组件需要修改碰撞形状时，应改 `VisualRoot/Collision` 模板或生成器规则，不要把 shape 重新硬编码回 Entity 根场景
+
 ## EntityMovementComponent（策略调度器）
 
 `EntityMovementComponent` 已重构为**策略模式调度器**，不再包含内联运动逻辑。

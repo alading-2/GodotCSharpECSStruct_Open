@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[node name="EnemyCollision" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 5

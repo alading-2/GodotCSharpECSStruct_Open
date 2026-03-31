@@ -76,10 +76,9 @@ func generate_from_paths(paths: PackedStringArray) -> void:
 ## 批量处理预设路径下的所有角色文件夹（递归扫描）
 func _generate_all_from_predefined_paths() -> void:
 	var total_generated := 0
-	var batch_paths: PackedStringArray = Config.BATCH_PATHS
 	var valid_folders: Array[String] = []
 
-	for base_path in batch_paths:
+	for base_path in _get_scan_roots():
 		if not DirAccess.dir_exists_absolute(base_path):
 			print("[SpriteFramesGenerator] 路径不存在: %s" % base_path)
 			continue
@@ -103,8 +102,10 @@ func _scan_folder_recursively(dir_path: String, results: Array[String]) -> void:
 	if _has_png_files(dir_path):
 		# 预检：如果能提取出动画分组，则认为是一个有效的角色文件夹
 		var groups := _find_sprite_sequences(dir_path)
-		if groups.size() > 0:
-			results.append(dir_path)
+		var standalone_sprite := _find_standalone_sprite(dir_path)
+		if groups.size() > 0 or not standalone_sprite.is_empty():
+			if not results.has(dir_path):
+				results.append(dir_path)
 
 	# 2. 遍历子文件夹
 	var dir := DirAccess.open(dir_path)
@@ -192,23 +193,18 @@ func _has_png_files(path: String) -> bool:
 
 ## 判断当前文件夹是否处于配置的统一命名路径下，返回匹配的目标动画名（未匹配返回空字符串）
 func _get_unified_anim_name(folder_path: String) -> String:
-	var unified_name_paths: Dictionary = Config.UNIFIED_NAME_PATHS
-	var normalized_folder := folder_path.replace("\\", "/")
-	for anim_name in unified_name_paths:
-		var paths: Array = unified_name_paths[anim_name]
-		for p in paths:
-			if p.strip_edges().is_empty():
-				continue
-			var normalized_path: String = p.replace("\\", "/")
-			if normalized_folder.begins_with(normalized_path):
-				return anim_name
-	return ""
+	var rule := _match_rule(folder_path)
+	if rule.is_empty():
+		return ""
+	return rule.get("unified_animation_name", "")
 
 
 ## 核心逻辑：扫描文件夹并生成 SpriteFrames 资源和场景
 func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> void:
 	# 复用解析逻辑
 	var anim_groups := _find_sprite_sequences(folder_path)
+	var standalone_sprite_path := _find_standalone_sprite(folder_path)
+	var rule := _match_rule(folder_path)
 
 	# 如果该文件夹匹配统一命名路径，对所有动画按字母序统一重命名为 Key, Key1, Key2...
 	var unified_name := _get_unified_anim_name(folder_path)
@@ -223,7 +219,8 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 			idx += 1
 		anim_groups = new_groups
 
-	if anim_groups.size() == 0:
+	var is_animated_scene := anim_groups.size() > 0
+	if not is_animated_scene and standalone_sprite_path.is_empty():
 		if trigger_scan:
 			push_warning("[%s] 未识别到有效的序列帧命名格式 (示例: attack_0.png)" % folder_path)
 		return
@@ -238,30 +235,31 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 	if folder_name.is_empty():
 		folder_name = "AnimatedSprite2D" # 兜底
 
-	# --- 读取配置 ---
-	var default_fps: float = Config.DEFAULT_FPS
+	var sprite_frames: SpriteFrames = null
+	var res_path := ""
 
-	# --- 阶段 1: 构建 SpriteFrames 资源 ---
-	var sprite_frames := SpriteFrames.new()
-	if sprite_frames.has_animation("default"):
-		sprite_frames.remove_animation("default")
+	if is_animated_scene:
+		# --- 读取配置 ---
+		var default_fps: float = Config.DEFAULT_FPS
 
-	for anim_name in anim_groups:
-		# 按帧序号升序排列
-		var frames: Array = anim_groups[anim_name]
-		frames.sort_custom(func(a, b): return a["index"] < b["index"] if a["index"] != b["index"] else a["name"] < b["name"])
+		# --- 阶段 1: 构建 SpriteFrames 资源 ---
+		sprite_frames = SpriteFrames.new()
+		if sprite_frames.has_animation("default"):
+			sprite_frames.remove_animation("default")
 
-		sprite_frames.add_animation(anim_name) # 添加动画
-		sprite_frames.set_animation_speed(anim_name, default_fps) # 使用设置中的帧率
-		# 只有白名单中的动画循环播放，或者是以 idle 开头的命名，其他动画播放一次
-		var should_loop: bool = anim_name in Config.LOOP_ANIMATIONS or anim_name.begins_with("idle")
-		sprite_frames.set_animation_loop(anim_name, should_loop)
+		for anim_name in anim_groups:
+			var frames: Array = anim_groups[anim_name]
+			frames.sort_custom(func(a, b): return a["index"] < b["index"] if a["index"] != b["index"] else a["name"] < b["name"])
 
-		for frame_data in frames:
-			# 加载纹理并添加到动画帧
-			var texture: Texture2D = load(frame_data["path"])
-			if texture != null:
-				sprite_frames.add_frame(anim_name, texture)
+			sprite_frames.add_animation(anim_name)
+			sprite_frames.set_animation_speed(anim_name, default_fps)
+			var should_loop: bool = anim_name in Config.LOOP_ANIMATIONS or anim_name.begins_with("idle")
+			sprite_frames.set_animation_loop(anim_name, should_loop)
+
+			for frame_data in frames:
+				var texture: Texture2D = load(frame_data["path"])
+				if texture != null:
+					sprite_frames.add_frame(anim_name, texture)
 
 	# --- 阶段 2: 保存 SpriteFrames 资源 (.tres) ---
 	# 在当前目录下创建 "AnimatedSprite2D" 子文件夹存放生成结果
@@ -273,19 +271,19 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 			printerr("创建文件夹失败: %s, 错误: %s" % [sub_folder_path, error_string(make_dir_err)])
 			return
 
-	# 使用文件夹名作为资源文件名: "豺狼人.tres"
-	var res_path := sub_folder_path.path_join("%s.tres" % folder_name)
-	sprite_frames.resource_path = res_path # 设置资源路径，确保序列化时引用正确
-	var res_err := ResourceSaver.save(sprite_frames, res_path)
+	if sprite_frames != null:
+		res_path = sub_folder_path.path_join("%s.tres" % folder_name)
+		sprite_frames.resource_path = res_path
+		var res_err := ResourceSaver.save(sprite_frames, res_path)
 
-	if res_err != OK:
-		printerr("资源保存失败: %s" % error_string(res_err))
-		return
+		if res_err != OK:
+			printerr("资源保存失败: %s" % error_string(res_err))
+			return
 
 	# --- 阶段 3: 创建并保存 AnimatedSprite2D 场景 (.tscn) ---
 	# 目标路径：在子文件夹中生成 "豺狼人.tscn"
 	var scene_path := sub_folder_path.path_join("%s.tscn" % folder_name)
-	var sprite_node: AnimatedSprite2D = null
+	var visual_node: Node2D = null
 	var is_new_scene := true
 
 	# -------------------------------------------------------------------------
@@ -295,8 +293,8 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 		var existing_scene: PackedScene = load(scene_path)
 		if existing_scene != null:
 			var instance := existing_scene.instantiate()
-			if instance is AnimatedSprite2D:
-				sprite_node = instance
+			if (is_animated_scene and instance is AnimatedSprite2D) or (not is_animated_scene and instance is Sprite2D):
+				visual_node = instance
 				is_new_scene = false
 				print_rich("[color=cyan][Generator] 智能更新现有场景: %s (属性已保留)[/color]" % folder_path)
 			else:
@@ -305,55 +303,124 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 	# -------------------------------------------------------------------------
 	# 场景创建逻辑 (New Scene Creation)
 	# -------------------------------------------------------------------------
-	if sprite_node == null:
-		sprite_node = AnimatedSprite2D.new()
-		# 设置节点名称为文件夹名，方便调试 (如 "豺狼人")
-		sprite_node.name = folder_name
-		sprite_node.transform = Transform2D.IDENTITY
-		sprite_node.centered = true
+	if visual_node == null:
+		visual_node = AnimatedSprite2D.new() if is_animated_scene else Sprite2D.new()
+		visual_node.name = folder_name
+		visual_node.transform = Transform2D.IDENTITY
+		if visual_node is AnimatedSprite2D:
+			visual_node.centered = true
+		elif visual_node is Sprite2D:
+			visual_node.centered = true
 		print("[Generator] 创建全新场景: %s" % folder_path)
 	else:
 		# 即使是旧场景，也强制更新节点名称，确保一致性
-		if sprite_node.name != folder_name:
-			sprite_node.name = folder_name
+		if visual_node.name != folder_name:
+			visual_node.name = folder_name
 
 	# -------------------------------------------------------------------------
 	# 统一更新逻辑 (Unified Update)
 	# -------------------------------------------------------------------------
-	sprite_node.sprite_frames = sprite_frames
+	if is_animated_scene and visual_node is AnimatedSprite2D:
+		visual_node.sprite_frames = sprite_frames
 
-	# 检查当前设置的动画名是否依然有效
-	if not sprite_frames.has_animation(sprite_node.animation):
-		if sprite_frames.has_animation("Effect"):
-			sprite_node.animation = "Effect"
-		elif sprite_frames.has_animation("idle"):
-			sprite_node.animation = "idle"
-		elif sprite_frames.get_animation_names().size() > 0:
-			sprite_node.animation = sprite_frames.get_animation_names()[0]
+		if not sprite_frames.has_animation(visual_node.animation):
+			if sprite_frames.has_animation("Effect"):
+				visual_node.animation = "Effect"
+			elif sprite_frames.has_animation("idle"):
+				visual_node.animation = "idle"
+			elif sprite_frames.get_animation_names().size() > 0:
+				visual_node.animation = sprite_frames.get_animation_names()[0]
+	elif not is_animated_scene and visual_node is Sprite2D:
+		visual_node.texture = load(standalone_sprite_path)
+
+	_sync_collision_scene(visual_node, rule.get("collision_scene_path", "") if not rule.is_empty() else "")
 
 	# -------------------------------------------------------------------------
 	# 保存场景 (Save Scene)
 	# -------------------------------------------------------------------------
 	var packed_scene := PackedScene.new()
-	var pack_err := packed_scene.pack(sprite_node)
+	var pack_err := packed_scene.pack(visual_node)
 
 	if pack_err == OK:
 		var scene_save_err := ResourceSaver.save(packed_scene, scene_path)
 		if scene_save_err == OK:
 			var action := "创建" if is_new_scene else "更新"
 			print_rich("[color=green]成功%s场景: %s[/color]" % [action, scene_path])
-			print_rich("[color=green]成功生成资源文件: %s[/color]" % res_path)
+			if not res_path.is_empty():
+				print_rich("[color=green]成功生成资源文件: %s[/color]" % res_path)
 		else:
 			printerr("场景保存失败: %s" % error_string(scene_save_err))
 	else:
 		printerr("场景打包失败: %s" % error_string(pack_err))
 
 	# 释放节点内存
-	sprite_node.queue_free()
+	visual_node.queue_free()
 
 	# 触发资源扫描
 	if trigger_scan:
 		EditorInterface.get_resource_filesystem().scan()
+
+
+func _get_scan_roots() -> Array[String]:
+	var roots: Array[String] = []
+	for path in Config.BATCH_PATHS:
+		if not roots.has(path):
+			roots.append(path)
+
+	for rule in Config.RULES:
+		for path in rule.get("paths", []):
+			if not roots.has(path):
+				roots.append(path)
+
+	return roots
+
+
+func _match_rule(folder_path: String) -> Dictionary:
+	var normalized_folder := folder_path.replace("\\", "/")
+	for rule in Config.RULES:
+		for path in rule.get("paths", []):
+			var normalized_path := String(path).replace("\\", "/")
+			if not normalized_path.is_empty() and normalized_folder.begins_with(normalized_path):
+				return rule
+	return {}
+
+
+func _find_standalone_sprite(folder_path: String) -> String:
+	var dir := DirAccess.open(folder_path)
+	if dir == null:
+		return ""
+
+	var png_files: Array[String] = []
+	for file_name in dir.get_files():
+		if file_name.ends_with(".png") and not file_name.ends_with(".import"):
+			png_files.append(file_name)
+
+	if png_files.size() != 1:
+		return ""
+
+	return folder_path.path_join(png_files[0])
+
+
+func _sync_collision_scene(visual_node: Node, collision_scene_path: String) -> void:
+	# 清理旧版本遗留的 "Collision" 命名节点（迁移兼容）
+	for old_name in ["Collision", "CollisionShape2D"]:
+		var existing := visual_node.get_node_or_null(old_name)
+		if existing != null:
+			visual_node.remove_child(existing)
+			existing.queue_free()
+
+	if collision_scene_path.is_empty():
+		return
+
+	var collision_scene: PackedScene = load(collision_scene_path)
+	if collision_scene == null:
+		printerr("[Generator] 碰撞场景加载失败: %s" % collision_scene_path)
+		return
+
+	var collision_node := collision_scene.instantiate()
+	collision_node.name = "CollisionShape2D"
+	visual_node.add_child(collision_node)
+	collision_node.owner = visual_node
 
 
 # =============================================================================

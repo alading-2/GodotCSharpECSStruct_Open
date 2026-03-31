@@ -32,10 +32,24 @@ const LOOP_ANIMATIONS: PackedStringArray = [
 	"run",
 ]
 
-# --- 统一动画命名路径字典 ---
-# Key: 目标动画名（字符串），Value: 路径列表（PackedStringArray）
-# 位于对应路径下的所有动画，将按字母序统一重命名为 Key, Key1, Key2...
-# 比如res://assets/Effect路径下的动画名全部改成effect, effect1, effect2...
-const UNIFIED_NAME_PATHS: Dictionary = {
-	"effect": ["res://assets/Effect"],
-}
+# --- 统一规则表 ---
+const RULES: Array = [
+	{
+		"key": "Player",
+		"paths": ["res://assets/Unit/Player"],
+		"unified_animation_name": "",
+		"collision_scene_path": "res://Data/Data/Collision/Unit/PlayerCollision.tscn",
+	},
+	{
+		"key": "Enemy",
+		"paths": ["res://assets/Unit/Enemy"],
+		"unified_animation_name": "",
+		"collision_scene_path": "res://Data/Data/Collision/Unit/EnemyCollision.tscn",
+	},
+	{
+		"key": "Effect",
+		"paths": ["res://assets/Effect"],
+		"unified_animation_name": "Effect",
+		"collision_scene_path": "res://Data/Data/Collision/Effect/EffectCollision.tscn",
+	},
+]

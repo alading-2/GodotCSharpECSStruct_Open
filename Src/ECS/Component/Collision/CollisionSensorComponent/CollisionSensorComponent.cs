@@ -8,13 +8,40 @@ using Godot;
 /// 2. 向实体局部的 EventBus 抛出标准的物理碰撞事件 (CollisionEntered / CollisionExited)
 /// 3. 本组件绝不包含任何诸如“造成伤害”、“扣减穿透次数”等业务逻辑，它只是一个情报发送机。
 /// </para>
+/// <para>
+/// 使用方式：
+/// - 在编辑器 Inspector 中选择 SensorType，组件会在 _Ready 时自动应用对应的 layer/mask
+/// - SensorType = Custom 时不修改 layer/mask（使用场景中手动配置的值）
+/// - 预设场景位于 Data/Data/Collision/Sensor/*.tscn
+/// </para>
 /// </summary>
 public partial class CollisionSensorComponent : Area2D, IComponent
 {
     private static readonly Log _log = new(nameof(CollisionSensorComponent));
 
+    // ================= 导出属性 =================
+
+    /// <summary>
+    /// 碰撞类型标识（Inspector 中选择）
+    /// 非 Custom 时，_Ready 自动从 CollisionTypeRegistry 应用对应的 layer/mask
+    /// </summary>
+    [Export] public CollisionType SensorType { get; set; } = CollisionType.Custom;
+
     // ================= 组件依赖 =================
     private IEntity? _entity;
+
+    // ================= Godot 生命周期 =================
+
+    public override void _Ready()
+    {
+        if (SensorType != CollisionType.Custom)
+        {
+            var (layer, mask) = CollisionTypeRegistry.GetLayerMask(SensorType);
+            CollisionLayer = layer;
+            CollisionMask = mask;
+            _log.Debug($"SensorType={SensorType} 已应用 layer={layer}, mask={mask}");
+        }
+    }
 
     // ================= IComponent 实现 =================
     /// <summary>
@@ -33,7 +60,7 @@ public partial class CollisionSensorComponent : Area2D, IComponent
 
         SetDeferred(Area2D.PropertyName.Monitoring, true);
         SetDeferred(Area2D.PropertyName.Monitorable, true);
-        _log.Debug($"[{entity.Name}] 碰撞感应器注册完成，开始监听 Area/Body 进入与离开。");
+        _log.Debug($"[{entity.Name}] 碰撞感应器注册完成（SensorType={SensorType}），开始监听 Area/Body 进入与离开。");
     }
 
     /// <summary>
@@ -69,7 +96,8 @@ public partial class CollisionSensorComponent : Area2D, IComponent
 
         _entity.Events.Emit(GameEventType.Collision.CollisionEntered, new GameEventType.Collision.CollisionEnteredEventData(
             _entity,
-            node
+            node,
+            SensorType
         ));
     }
 
@@ -88,7 +116,8 @@ public partial class CollisionSensorComponent : Area2D, IComponent
 
         _entity.Events.Emit(GameEventType.Collision.CollisionExited, new GameEventType.Collision.CollisionExitedEventData(
             _entity,
-            node
+            node,
+            SensorType
         ));
     }
 }

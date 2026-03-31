@@ -22,7 +22,11 @@ class ResourceGenerator
     private static readonly string[] ExcludePaths = {
         "addons",
         ".godot",
+        "Data/Data/Collision", // 碰撞类型由 GenerateCollisionTypeRegistry 单独处理
     };
+
+    private const string CollisionDataPath = "Data/Data/Collision";
+    private const string CollisionRegistryOutputFile = "Data/Data/Collision/CollisionTypeRegistry.cs";
 
     private const string OutputFile = "Data/ResourceManagement/ResourcePaths.cs";
 
@@ -100,6 +104,9 @@ class ResourceGenerator
 
         // 3. 生成代码
         GenerateCode(projectRoot, resourcesByCategory);
+
+        // 4. 生成碰撞类型注册表
+        GenerateCollisionTypeRegistry(projectRoot);
 
         // 统计总数
         int totalResources = resourcesByCategory.Sum(x => x.Value.Count);
@@ -249,12 +256,151 @@ class ResourceGenerator
         if (relPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)) relPath = relPath.Substring(0, relPath.Length - 5);
         if (relPath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)) relPath = relPath.Substring(0, relPath.Length - 5);
 
-        if (relPath.Contains("/AnimatedSprite2D/", StringComparison.OrdinalIgnoreCase))
+        // 过滤掉 AnimatedSprite2D 中间目录，仅保留有效路径段
+        var parts = relPath.Replace("\\", "/").Split('/');
+        var filteredParts = System.Array.FindAll(parts,
+            p => !string.Equals(p, "AnimatedSprite2D", StringComparison.OrdinalIgnoreCase));
+
+        // 只取文件名（最后一段）；若同分类内出现重名，ResourceGenerator 日志会提示
+        return filteredParts.Last().Replace("-", "_");
+    }
+
+    // ==================== 碰撞类型注册表生成 ====================
+
+    private struct CollisionEntry
+    {
+        public string NodeName;
+        public uint Layer;
+        public uint Mask;
+        public int EnumValue;
+    }
+
+    /// <summary>
+    /// 扫描 Data/Data/Collision 目录下所有 .tscn 文件，提取节点名称和 layer/mask，
+    /// 生成 CollisionType 枚举 + CollisionTypeRegistry 查找表到 CollisionTypeRegistry.cs
+    /// </summary>
+    private static void GenerateCollisionTypeRegistry(string projectRoot)
+    {
+        var collisionDir = Path.Combine(projectRoot, CollisionDataPath);
+        if (!Directory.Exists(collisionDir))
         {
-            relPath = relPath.Split(new string[] { "/AnimatedSprite2D/", "/animatedsprite2d/" }, StringSplitOptions.None)[0];
+            Console.WriteLine($"[警告] 碰撞目录不存在，跳过 CollisionTypeRegistry 生成: {collisionDir}");
+            return;
         }
 
-        return relPath.Replace("/", "_").Replace("\\", "_").Replace("-", "_");
+        var tscnFiles = Directory.GetFiles(collisionDir, "*.tscn", SearchOption.AllDirectories);
+        var entries = new List<CollisionEntry>();
+
+        foreach (var file in tscnFiles)
+        {
+            var entry = ParseCollisionTscn(file);
+            if (!string.IsNullOrEmpty(entry.NodeName))
+                entries.Add(entry);
+        }
+
+        if (entries.Count == 0)
+        {
+            Console.WriteLine("[警告] Data/Data/Collision 未找到有效 .tscn 文件，跳过 CollisionTypeRegistry 生成。");
+            return;
+        }
+
+        // 按节点名字母序排列（保证枚举值稳定）
+        entries.Sort((a, b) => string.Compare(a.NodeName, b.NodeName, StringComparison.OrdinalIgnoreCase));
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var e = entries[i];
+            e.EnumValue = i + 1; // 0 保留给 Custom
+            entries[i] = e;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("//------------------------------------------------------------------------------");
+        sb.AppendLine("//* <ResourceGenerator>");
+        sb.AppendLine("//*     此文件由 ResourceGenerator 自动生成，请勿手动修改。");
+        sb.AppendLine("//*     来源：Data/Data/Collision/ 目录下所有 .tscn 文件（按节点名称字母序排列）。");
+        sb.AppendLine("//*     重新运行 ResourceGenerator 会覆盖本文件。");
+        sb.AppendLine("//* </ResourceGenerator>");
+        sb.AppendLine("//------------------------------------------------------------------------------");
+        sb.AppendLine();
+        sb.AppendLine("using System.Collections.Generic;");
+        sb.AppendLine();
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine("/// 碰撞类型枚举");
+        sb.AppendLine("/// 值来源：Data/Data/Collision/ 目录下 .tscn 场景的根节点名称（字母序）");
+        sb.AppendLine("/// Custom = 0 永远保留；添加新场景请勿改变已有场景文件名，否则枚举值会错位");
+        sb.AppendLine("/// </summary>");
+        sb.AppendLine("public enum CollisionType");
+        sb.AppendLine("{");
+        sb.AppendLine("    Custom = 0,");
+        foreach (var e in entries)
+            sb.AppendLine($"    {e.NodeName} = {e.EnumValue},      // layer={e.Layer}, mask={e.Mask}");
+        sb.AppendLine("}");
+        sb.AppendLine();
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine("/// 碰撞类型注册表 - 提供 CollisionType ↔ (Layer, Mask) 双向 O(1) 查找");
+        sb.AppendLine("/// </summary>");
+        sb.AppendLine("public static class CollisionTypeRegistry");
+        sb.AppendLine("{");
+        sb.AppendLine("    /// <summary>CollisionType → (Layer, Mask) 正向查找</summary>");
+        sb.AppendLine("    public static readonly IReadOnlyDictionary<CollisionType, (uint Layer, uint Mask)> LayerMaskByType =\n        new Dictionary<CollisionType, (uint Layer, uint Mask)>");
+        sb.AppendLine("    {");
+        foreach (var e in entries)
+            sb.AppendLine($"        {{ CollisionType.{e.NodeName}, ({e.Layer}u, {e.Mask}u) }},");
+        sb.AppendLine("    };");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>Layer → CollisionType 反向查找（仅 layer != 0 的唯一层）</summary>");
+        sb.AppendLine("    public static readonly IReadOnlyDictionary<uint, CollisionType> TypeByLayer =\n        new Dictionary<uint, CollisionType>");
+        sb.AppendLine("    {");
+        foreach (var e in entries.Where(e => e.Layer != 0))
+            sb.AppendLine($"        {{ {e.Layer}u, CollisionType.{e.NodeName} }},");
+        sb.AppendLine("    };");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>通过 collision_layer 反向查找 CollisionType（O(1)）</summary>");
+        sb.AppendLine("    public static CollisionType FromLayer(uint layer) =>");
+        sb.AppendLine("        TypeByLayer.TryGetValue(layer, out var t) ? t : CollisionType.Custom;");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>通过 CollisionType 获取对应 (Layer, Mask)（O(1)），未找到返回 (0, 0)</summary>");
+        sb.AppendLine("    public static (uint Layer, uint Mask) GetLayerMask(CollisionType type) =>");
+        sb.AppendLine("        LayerMaskByType.TryGetValue(type, out var lm) ? lm : (0u, 0u);");
+        sb.AppendLine("}");
+
+        var outputPath = Path.Combine(projectRoot, CollisionRegistryOutputFile);
+        File.WriteAllText(outputPath, sb.ToString());
+        Console.WriteLine($"[碰撞注册表] 已生成 {entries.Count} 个 CollisionType 枚举值 → {CollisionRegistryOutputFile}");
+    }
+
+    private static CollisionEntry ParseCollisionTscn(string filePath)
+    {
+        var entry = new CollisionEntry();
+        try
+        {
+            foreach (var line in File.ReadLines(filePath))
+            {
+                var trimmed = line.Trim();
+                if (trimmed.StartsWith("[node name=", StringComparison.OrdinalIgnoreCase))
+                {
+                    var nameStart = trimmed.IndexOf('"') + 1;
+                    var nameEnd = trimmed.IndexOf('"', nameStart);
+                    if (nameStart > 0 && nameEnd > nameStart)
+                        entry.NodeName = trimmed.Substring(nameStart, nameEnd - nameStart);
+                }
+                else if (trimmed.StartsWith("collision_layer =", StringComparison.OrdinalIgnoreCase))
+                {
+                    var val = trimmed.Split('=')[1].Trim();
+                    if (uint.TryParse(val, out var l)) entry.Layer = l;
+                }
+                else if (trimmed.StartsWith("collision_mask =", StringComparison.OrdinalIgnoreCase))
+                {
+                    var val = trimmed.Split('=')[1].Trim();
+                    if (uint.TryParse(val, out var m)) entry.Mask = m;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[警告] 解析碰撞场景失败: {filePath}: {ex.Message}");
+        }
+        return entry;
     }
 
     private static void GenerateCode(string projectRoot, Dictionary<ResourceCategory, Dictionary<string, string>> resourcesByCategory)
