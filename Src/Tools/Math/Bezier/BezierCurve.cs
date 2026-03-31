@@ -9,11 +9,6 @@ using System;
 /// - 天然支持曲线分割（Split）
 /// - 任意阶：控制点数量 = 阶数 + 1（2点=线性，3点=二次，4点=三阶…）
 /// </para>
-/// <para>
-/// 弧长参数化（Arc-Length Parameterization）：
-/// 贝塞尔曲线的 t 参数与实际弧长不成正比，导致匀速运动时速度不均匀。
-/// 通过 BuildLengthTable + EvaluateUniform 可实现等速运动。
-/// </para>
 /// </summary>
 public static class BezierCurve
 {
@@ -192,7 +187,7 @@ public static class BezierCurve
         }
     }
 
-    // ======================== 弧长相关 ========================
+    // ======================== 实用工具 - 弧长估算 ========================
 
     /// <summary>
     /// 用分段线性近似估算曲线总弧长
@@ -215,129 +210,6 @@ public static class BezierCurve
             prev = curr;
         }
         return totalLength;
-    }
-
-    /// <summary>
-    /// 构建弧长参数化查找表（Arc-Length LUT）
-    /// <para>
-    /// 【核心问题】贝塞尔曲线的 t 参数与实际弧长不成正比，导致匀速运动时速度不均匀。
-    /// 例如：t=0.5 不一定是曲线中点，在弯曲处 t 变化慢，平缓处 t 变化快。
-    /// </para>
-    /// <para>
-    /// 【解决方案】预计算每个 t 值对应的累积弧长比例，建立"t → 弧长比例"的映射表。
-    /// 后续可通过 EvaluateUniform() 将均匀的 u∈[0,1]（真正匀速）映射到正确的 t∈[0,1]。
-    /// </para>
-    /// <para>
-    /// 【算法步骤】
-    /// 1. 从 t=0 开始，分段采样曲线上的点
-    /// 2. 计算相邻采样点之间的直线距离（弧长近似）
-    /// 3. 累积得到每个 t 值对应的总弧长比例
-    /// 4. 归一化为 [0,1] 范围
-    /// </para>
-    /// <para>
-    /// 【精度参考】对于 3-5 阶贝塞尔：
-    /// - segments=16：误差约 0.4%（游戏场景可接受）
-    /// - segments=32：误差约 0.1%（推荐默认值）
-    /// - segments=64：误差约 0.025%（过度精细，游戏场景不必要）
-    /// 推荐自适应：<c>Math.Max(16, 阶数 * 8)</c>，如三阶传 24，五阶传 40。
-    /// </para>
-    /// </summary>
-    /// <param name="points">控制点数组（至少 2 个点）</param>
-    /// <param name="segments">采样段数（默认 32，3-5 阶游戏场景精度足够）</param>
-    /// <returns>弧长比例查找表，lut[i] = 从 t=0 到 t=i/segments 的累积弧长占比 [0,1]</returns>
-    public static float[] BuildLengthTable(ReadOnlySpan<Vector2> points, int segments = 32)
-    {
-        // 创建查找表：segments+1 个点，对应 t=0, 1/segments, 2/segments, ..., 1
-        float[] lut = new float[segments + 1];
-        if (points.Length < 2)
-        {
-            // 退化情况：没有足够的控制点，全部填 0（永远不会被使用）
-            return lut;
-        }
-
-        // 起点：t=0 处弧长比例为 0
-        lut[0] = 0f;
-
-        // 从 t=0 开始采样，累积计算弧长
-        Vector2 prev = Evaluate(points, 0f);
-        float totalLength = 0f;
-
-        // 分段采样：i=1 到 segments，对应 t=i/segments
-        for (int i = 1; i <= segments; i++)
-        {
-            float t = (float)i / segments;                    // 当前 t 值
-            Vector2 curr = Evaluate(points, t);             // 曲线上当前 t 对应的点
-            totalLength += prev.DistanceTo(curr);           // 累加这段弧长（直线近似）
-            lut[i] = totalLength;                           // 记录到当前 t 的累积弧长
-            prev = curr;                                    // 更新前一个点，为下一段做准备
-        }
-
-        // 归一化：将总弧长映射到 [0,1] 范围，lut[i] 变成弧长比例
-        if (totalLength > 1e-6f) // 避免除零，曲线长度太小时不处理
-        {
-            float inv = 1f / totalLength;                   // 计算倒数，避免重复除法
-            for (int i = 1; i <= segments; i++)
-            {
-                lut[i] *= inv;                             // 每个累积弧长除以总长度，得到比例
-            }
-        }
-        lut[segments] = 1f; // 确保末尾精确为 1（消除浮点误差）
-
-        return lut;
-    }
-
-    /// <summary>
-    /// 弧长参数化求值：将均匀参数 u∈[0,1] 映射为曲线上等距点
-    /// <para>
-    /// 解决贝塞尔曲线 t 参数速度不均匀的问题。
-    /// 先用 BuildLengthTable 预计算 LUT，再每帧调用本方法。
-    /// </para>
-    /// </summary>
-    /// <param name="points">控制点数组</param>
-    /// <param name="u">均匀参数 [0, 1]（与弧长成正比）</param>
-    /// <param name="lut">由 BuildLengthTable 生成的查找表</param>
-    /// <returns>曲线上的点（等速分布）</returns>
-    public static Vector2 EvaluateUniform(ReadOnlySpan<Vector2> points, float u, float[] lut)
-    {
-        float t = MapUniformToT(u, lut);
-        return Evaluate(points, t);
-    }
-
-    /// <summary>
-    /// 弧长参数化切线：与 EvaluateUniform 配套，获取等速运动时的切线方向
-    /// </summary>
-    public static Vector2 EvaluateUniformTangent(ReadOnlySpan<Vector2> points, float u, float[] lut)
-    {
-        float t = MapUniformToT(u, lut);
-        return EvaluateTangent(points, t);
-    }
-
-    /// <summary>
-    /// 将均匀参数 u 映射到贝塞尔参数 t（通过 LUT 二分查找 + 线性插值）
-    /// </summary>
-    /// <param name="u">均匀参数 [0, 1]</param>
-    /// <param name="lut">弧长比例查找表</param>
-    /// <returns>对应的贝塞尔参数 t</returns>
-    public static float MapUniformToT(float u, float[] lut)
-    {
-        if (lut == null || lut.Length < 2) return u;
-
-        u = Mathf.Clamp(u, 0f, 1f);
-        int segments = lut.Length - 1;
-
-        // 二分查找：找到 lut[lo] <= u < lut[lo+1]
-        int lo = 0, hi = segments;
-        while (lo < hi - 1)
-        {
-            int mid = (lo + hi) >> 1;
-            if (lut[mid] < u) lo = mid;
-            else hi = mid;
-        }
-
-        // 在 [lo, lo+1] 区间内线性插值
-        float segLen = lut[hi] - lut[lo];
-        float frac = segLen > 1e-8f ? (u - lut[lo]) / segLen : 0f;
-        return ((float)lo + frac) / segments;
     }
 
     // ======================== 实用工具 ========================
@@ -364,27 +236,6 @@ public static class BezierCurve
         }
 
         return new Rect2(min, max - min);
-    }
-
-    /// <summary>
-    /// 在曲线上均匀采样多个点（基于弧长参数化）
-    /// </summary>
-    /// <param name="points">控制点数组</param>
-    /// <param name="sampleCount">采样点数量（至少 2）</param>
-    /// <param name="lutSegments">LUT 精度</param>
-    /// <returns>均匀分布的采样点数组</returns>
-    public static Vector2[] SampleUniform(ReadOnlySpan<Vector2> points, int sampleCount, int lutSegments = 64)
-    {
-        sampleCount = Math.Max(2, sampleCount);
-        var lut = BuildLengthTable(points, lutSegments);
-        var samples = new Vector2[sampleCount];
-
-        for (int i = 0; i < sampleCount; i++)
-        {
-            float u = (float)i / (sampleCount - 1);
-            samples[i] = EvaluateUniform(points, u, lut);
-        }
-        return samples;
     }
 
     /// <summary>

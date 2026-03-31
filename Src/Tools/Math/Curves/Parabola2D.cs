@@ -115,57 +115,9 @@ public readonly struct Parabola2D
     }
 
     /// <summary>
-    /// 按弧长 progress [0, 1] 采样点。
-    /// 需要预先构建 normalizedTable。
-    /// </summary>
-    public Vector2 EvaluateByArcProgress(float progress, ReadOnlySpan<float> normalizedTable)
-    {
-        float t = ArcLengthLut.MapProgressToParameter(progress, normalizedTable);
-        return Evaluate(t);
-    }
-
-    /// <summary>
-    /// 按弧长 progress [0, 1] 采样切线方向。
-    /// </summary>
-    public Vector2 EvaluateTangentByArcProgress(float progress, ReadOnlySpan<float> normalizedTable)
-    {
-        float t = ArcLengthLut.MapProgressToParameter(progress, normalizedTable);
-        return EvaluateTangent(t);
-    }
-
-    /// <summary>
-    /// 构建弧长表并归一化。
-    /// </summary>
-    /// <param name="table">用于存储采样点的 Span，长度决定采样精度。</param>
-    /// <returns>曲线的总弧长。</returns>
-    public float BuildArcLengthTable(Span<float> table)
-    {
-        if (!IsValid || table.Length < 2)
-        {
-            if (table.Length > 0) table.Clear();
-            return 0f;
-        }
-
-        table[0] = 0f;
-        Vector2 previous = Evaluate(0f);
-        int segments = table.Length - 1;
-
-        for (int i = 1; i <= segments; i++)
-        {
-            float t = (float)i / segments;
-            Vector2 current = Evaluate(t);
-            // 累加离散点之间的距离
-            table[i] = table[i - 1] + previous.DistanceTo(current);
-            previous = current;
-        }
-
-        return ArcLengthLut.NormalizeTable(table);
-    }
-
-    /// <summary>
     /// 近似计算曲线总弧长。
     /// </summary>
-    public float ApproximateLength(int _ = ArcLengthLut.DefaultSegments)
+    public float ApproximateLength()
     {
         if (!IsValid) return 0f;
 

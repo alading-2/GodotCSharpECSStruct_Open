@@ -1,11 +1,12 @@
-﻿# 绉诲姩绛栫暐绯荤粺鏂囨。
+﻿# 移动策略系统文档
 
-## 姒傝堪
+## 概述
 
-绉诲姩绛栫暐绯荤粺鏄?ECS 鏋舵瀯涓殑鏍稿績缁勪欢锛岃礋璐ｅ疄鐜板悇绉嶅鏉傜殑瀹炰綋杩愬姩妯″紡銆傛瘡涓瓥鐣ラ兘鏄?`IMovementStrategy` 鎺ュ彛鐨勫叿浣撳疄鐜帮紝閫氳繃 `MovementStrategyRegistry` 缁熶竴绠＄悊銆?
-## 鏋舵瀯璁捐
+移动策略系统是 ECS 架构中的核心组件，负责实现各种复杂的实体运动模式。每个策略都是 `IMovementStrategy` 接口的具体实现，通过 `MovementStrategyRegistry` 统一管理。
 
-### 鏍稿績鎺ュ彛
+## 架构设计
+
+### 核心接口
 ```csharp
 public interface IMovementStrategy
 {
@@ -14,131 +15,149 @@ public interface IMovementStrategy
 }
 ```
 
-### 鍙傛暟绯荤粺
-- **MovementParams**: 绉诲姩鍙傛暟瀹瑰櫒锛屽寘鍚墍鏈夌瓥鐣ラ渶瑕佺殑閰嶇疆
-- **杩愯鏃剁粺璁?*: ElapsedTime, TraveledDistance锛堢敱璋冨害鍣ㄧ淮鎶わ級
-- **绛栫暐鐘舵€?*: 绉佹湁瀛楁瀛樺偍锛堝 _baseDirection, _currentAngle锛?
-## 绛栫暐鍒嗙被
+### 参数系统
+- **MovementParams**: 移动参数容器，包含所有策略需要的配置
+- **运行时统计**: ElapsedTime, TraveledDistance（由调度器维护）
+- **策略状态**: 私有字段存储（如 _baseDirection, _currentAngle）
 
-### 馃寠 娉㈠姩绫?(Wave/)
-#### SineWaveStrategy - 姝ｅ鸡娉㈠墠杩?**鐢ㄩ€?*: 铔囧舰瀛愬脊銆佹尝娴兘閲忔潫銆佽閬块鍒ょ殑鎽嗗姩椋炶鐗?
-**鏁板鍘熺悊**:
+## 策略分类
+
+### 🌊 波动类 (Wave/)
+#### SineWaveStrategy - 正弦波前进
+**用途**: 蛇形子弹、波浪能量束、规避预判的摆动飞行物
+
+**数学原理**:
 ```
-浣嶇疆(t) = 鍩哄噯鏂瑰悜 脳 鍓嶈繘閫熷害 脳 t + 鍨傜洿鏂瑰悜 脳 鎸箙 脳 sin(2蟺 脳 棰戠巼 脳 t + 鐩镐綅)
+位置(t) = 基准方向 × 前进速度 × t + 垂直方向 × 振幅 × sin(2π × 频率 × t + 相位)
 ```
 
-**鍏抽敭鍙傛暟**:
-- `ActionSpeed`: 鍓嶈繘閫熷害锛堝儚绱?绉掞級
-- `WaveAmplitude`: 妯悜鎸箙鍩虹鍊硷紙鍍忕礌锛?- `WaveAmplitudeScalarDriver`: 鎸箙鍔ㄦ€侀┍鍔紙鍙€夛級
-- `WaveFrequency`: 娉㈠姩棰戠巼鍩虹鍊硷紙鍛ㄦ湡/绉掞級
-- `WaveFrequencyScalarDriver`: 棰戠巼鍔ㄦ€侀┍鍔紙鍙€夛級
-- `WavePhase`: 鍒濆鐩镐綅锛堝害锛?
-**鎶€鏈壒鐐?*:
-- OnEnter 閿佸畾鍩哄噯鏂瑰悜锛岄槻姝㈡尝鍔ㄥ垎閲忔薄鏌?- 澧為噺璁＄畻娉曪細`sin(new) - sin(old)` 閬垮厤绱Н璇樊
-- 鍨傜洿鍚戦噺璁＄畻锛歚(-Y, X)` 瀹炵幇椤烘椂閽?0搴︽棆杞?
----
-
-### 馃搱 鏇茬嚎绫?(Curve/)
-#### BezierCurveStrategy - 璐濆灏旀洸绾跨Щ鍔?**鐢ㄩ€?*: 澶嶆潅寮归亾璺緞銆佸钩婊戣建杩瑰姩鐢汇€佺簿纭矾寰勬帶鍒?
-**鏁板鍘熺悊**:
-- **De Casteljau 绠楁硶**: 鏁板€肩ǔ瀹氱殑璐濆灏旀洸绾挎眰鍊?- **寮ч暱鍙傛暟鍖?*: 瀹炵幇鐪熸鐨勫寑閫熺Щ鍔?- **鍙傛暟鍩?*: t 鈭?[0, 1]
-
-**鍏抽敭鍙傛暟**:
-- `MaxDuration`: 绉诲姩鎬绘椂闀匡紙绉掞紝**蹇呴』 > 0**锛屾绛栫暐涓嶆敮鎸?-1锛?- `BezierPoints`: 鎺у埗鐐规暟缁勶紙鍚捣鐐瑰拰缁堢偣锛屾帹鑽愶級锛涜嫢鏈彁渚涘垯浠?`TargetPoint` 闄嶇骇鐩寸嚎
-- `BezierUniformSpeed`: 鏄惁鍚敤寮ч暱鍙傛暟鍖栧寑閫熸ā寮?
-**鎶€鏈壒鐐?*:
-- 鎺у埗鐐瑰厠闅嗭細閬垮厤姹℃煋鍘熷鏁版嵁
-- 璧风偣淇锛歄nEnter 鏃跺皢绗?涓帶鍒剁偣璁句负瀹炰綋褰撳墠浣嶇疆
-- LUT 鑷€傚簲鍒嗘锛歚Math.Max(16, 闃舵暟 * 8)`锛堜笁闃?24锛屼簲闃?40锛夛紝鏇夸唬鍥哄畾 64 鐨勮繃搴﹀紑閿€
-
----
-
-### 馃幆 鎶涘皠鐗╃被 (Projectile/)
-#### BoomerangStrategy - 回旋镖移动
-**用途**: 回旋镖武器、往返巡逻、回收型投射物
-**阶段逻辑**:
-1. **去程**: 从发射点到 `TargetPoint` 走上半椭圆
-2. **暂停**: 命中终点后可选停顿 `BoomerangPauseTime`
-3. **返程**: 从折返点到 `TargetNode` 当前坐标走下半椭圆
-4. **完成**: 回到宿主或发射点后结束
 **关键参数**:
-- `TargetPoint`: 去程终点
-- `TargetNode`: 返程跟随目标，通常为宿主
-- `BoomerangPauseTime`: 折返点停顿时长
-- `BoomerangReturnSpeedMultiplier`: 返程速度倍率
-- `BoomerangArcHeight`: 弧线高度，0 = 自动按弦长推导
-- `BoomerangIsClockwise`: 回旋偏移方向
-- `ReachDistance`: 到达判定阈值
+- `ActionSpeed`: 前进速度（像素/秒）
+- `WaveAmplitude`: 横向振幅基础值（像素）
+- `WaveAmplitudeScalarDriver`: 振幅动态驱动（可选）
+- `WaveFrequency`: 波动频率基础值（周期/秒）
+- `WaveFrequencyScalarDriver`: 频率动态驱动（可选）
+- `WavePhase`: 初始相位（度）
+
 **技术特点**:
-- 双半椭圆参数化：去程和返程分别采样半椭圆，不再是“直线出去再直线回来”
-- 返程动态追踪：每帧重新采样宿主当前位置，宿主失效时回退到发射起点
-- 朝向取曲线切线：视觉会顺着弧线转向，而不是硬朝目标点
+- OnEnter 锁定基准方向，防止波动分量污染
+- 增量计算法：`sin(new) - sin(old)` 避免累积误差
+- 垂直向量计算：`(-Y, X)` 实现顺时针90度旋转
 
 ---
 
-### 鈿?鍐查攱绫?(Charge/)
-#### ChargeStrategy - 鐩寸嚎鍐查攱
-**鐢ㄩ€?*: 绐佽繘鏀诲嚮銆佺洿绾垮啿鍒恒€佸揩閫熸帴杩戠洰鏍?
-**鏍稿績鐗规€?*:
-- **杩借釜妯″紡**: 瀹炴椂鏇存柊鐩爣鏂瑰悜
-- **閿佸畾妯″紡**: OnEnter 鏃朵竴娆℃€ч噰鏍锋柟鍚?- **鍔犻€熷害鏀寔**: 鍖€鍔犻€熻繍鍔?
----
+### 📈 曲线类 (Curve/)
+#### BezierCurveStrategy - 贝塞尔曲线移动
+**用途**: 复杂弹道路径、平滑轨迹动画、精确路径控制
 
-### 馃攧 鐜粫绫?(Orbit/)
-#### OrbitStrategy - 鐜粫杩愬姩
-**鐢ㄩ€?*: 鎶ゅ崼鍗槦銆佺幆缁曟敾鍑汇€佽灪鏃嬭繍鍔?
-**杩愬姩瀛﹀弬鏁?*:
-- **瑙掕繍鍔?*: OrbitAngularSpeed, OrbitAngularAcceleration
-- **寰勫悜杩愬姩**: OrbitRadius锛堝垵濮嬪€硷級+ OrbitRadiusScalarDriver锛堥€熷害/鍔犻€熷害/杈圭晫/瑙﹁竟绛栫暐鍧囩敱姝ょ粺涓€鎻忚堪锛?- **鍑犱綍鍙傛暟**: OrbitRadius, OrbitCenter
+**数学原理**:
+- **De Casteljau 算法**: 数值稳定的贝塞尔曲线求值
+- **参数域**: t ∈ [0, 1]，由 `ElapsedTime / MaxDuration` 驱动
 
-**鏁板姒傚康**:
-- **鍚戝績鍔犻€熷害**: a_c = 蠅虏 脳 r
-- **绾块€熷害**: v = 蠅 脳 r
-- **铻烘棆杩愬姩**: 瑙掕繍鍔?+ 寰勫悜杩愬姩鐨勫悎鎴?
----
+**关键参数**:
+- `MaxDuration`: 移动总时长（秒，**必须 > 0**，此策略不支持 -1）
+- `BezierPoints`: 控制点数组（含起点和终点，推荐）；若未提供则以 `TargetPoint` 降级直线
 
-### 馃幃 鎺у埗绫?(Base/)
-#### AIControlledStrategy - AI鎺у埗
-#### PlayerInputStrategy - 鐜╁杈撳叆
-#### AttachToHostStrategy - 闄勭潃瀹夸富
+**技术特点**:
+- 控制点克隆：避免污染原始数据
+- 起点修正：OnEnter 时将第0个控制点设为实体当前位置
+- 每帧直接调用 `BezierCurve.Evaluate(t)` / `EvaluateTangent(t)` 采样，无需查找表
 
 ---
 
-## 鏁板涓庣墿鐞嗗熀纭€
+### 🎯 抛射物类 (Projectile/)
+#### BoomerangStrategy - 回旋镖移动
+**用途**: 回旋镖武器、往返巡逻、往返攻击
 
-### 鍧愭爣绯荤粺
-- **Godot 2D**: 宸︿笂瑙掑師鐐癸紝X鍚戝彸涓烘锛孻鍚戜笅涓烘
-- **瑙掑害绯荤粺**: 0掳鍚戝彸锛?0掳鍚戜笅锛屾鍊奸『鏃堕拡
-- **瑙掑害杞崲**: `寮у害 = 瑙掑害 脳 蟺 / 180`
+**状态机逻辑**:
+1. **去程**: 飞向 TargetPoint
+2. **暂停**: 到达后可选停顿（BoomerangPauseTime）
+3. **返程**: 飞回 StartPoint
+4. **完成**: 返回起点后结束
 
-### 鍚戦噺杩愮畻
+**关键参数**:
+- `TargetPoint`: 目标点坐标
+- `BoomerangPauseTime`: 到达后停顿时间（秒）
+- `ReachDistance`: 到达判定阈值（像素）
+
+**技术特点**:
+- 起点记录：OnEnter 时记录当前位置作为返程目标
+- 状态管理：_returning 标志控制去程/返程
+- 防过冲：`Mathf.Min(speed * delta, dist)` 限制单帧移动
+
+---
+
+### ⚡ 冲锋类 (Charge/)
+#### ChargeStrategy - 直线冲锋
+**用途**: 突进攻击、直线冲刺、快速接近目标
+
+**核心特性**:
+- **追踪模式**: 实时更新目标方向
+- **锁定模式**: OnEnter 时一次性采样方向
+- **加速度支持**: 匀加速运动
+
+---
+
+### 🔄 环绕类 (Orbit/)
+#### OrbitStrategy - 环绕运动
+**用途**: 护卫卫星、环绕攻击、螺旋运动
+
+**运动学参数**:
+- **角运动**: OrbitAngularSpeed, OrbitAngularAcceleration
+- **径向运动**: OrbitRadius（初始值）+ OrbitRadiusScalarDriver（速度/加速度/边界/触边策略均由此统一描述）
+- **几何参数**: OrbitRadius, OrbitCenter
+
+**数学概念**:
+- **向心加速度**: a_c = ω² × r
+- **线速度**: v = ω × r
+- **螺旋运动**: 角运动 + 径向运动的合成
+
+---
+
+### 🎮 控制类 (Base/)
+#### AIControlledStrategy - AI控制
+#### PlayerInputStrategy - 玩家输入
+#### AttachToHostStrategy - 附着宿主
+
+---
+
+## 数学与物理基础
+
+### 坐标系统
+- **Godot 2D**: 左上角原点，X向右为正，Y向下为正
+- **角度系统**: 0°向右，90°向下，正值顺时针
+- **角度转换**: `弧度 = 角度 × π / 180`
+
+### 向量运算
 ```csharp
-// 鍗曚綅鍚戦噺
+// 单位向量
 direction = vector.Normalized();
 
-// 鍨傜洿鍚戦噺锛堥『鏃堕拡90搴︼級
+// 垂直向量（顺时针90度）
 perp = new Vector2(-direction.Y, direction.X);
 
-// 浣嶇Щ涓庨€熷害
+// 位移与速度
 velocity = displacement / time;
 displacement = velocity * time;
 ```
 
-### 姝ｅ鸡娉㈠姩
+### 正弦波动
 ```csharp
-// 鏍囧噯姝ｅ鸡鍑芥暟
-y = A 脳 sin(2蟺 脳 f 脳 t + 蠁)
+// 标准正弦函数
+y = A × sin(2π × f × t + φ)
 
-// 澧為噺璁＄畻锛堥伩鍏嶇疮绉宸級
-deltaY = sin(t + 螖t) - sin(t)
+// 增量计算（避免累积误差）
+deltaY = sin(t + Δt) - sin(t)
 ```
 
-### 鏁板€肩ǔ瀹氭€?- **闃查櫎闆?*: `Mathf.Max(delta, 0.001f)`
-- **鍚戦噺闀垮害妫€鏌?*: `LengthSquared()` 閬垮厤寮€鏂?- **闃堝€煎垽鏂?*: `> 0.001f` 澶勭悊娴偣绮惧害
+### 数值稳定性
+- **防除零**: `Mathf.Max(delta, 0.001f)`
+- **向量长度检查**: `LengthSquared()` 避免开方
+- **阈值判断**: `> 0.001f` 处理浮点精度
 
-## 浣跨敤鎸囧崡
+## 使用指南
 
-### 鍩烘湰鐢ㄦ硶
+### 基本用法
 ```csharp
 entity.Events.Emit(GameEventType.Unit.MovementStarted,
     new GameEventType.Unit.MovementStartedEventData(MoveMode.SineWave, new MovementParams
@@ -152,53 +171,66 @@ entity.Events.Emit(GameEventType.Unit.MovementStarted,
     }));
 ```
 
-### 绛栫暐閫夋嫨
-| 鍦烘櫙 | 鎺ㄨ崘绛栫暐 | 鍏抽敭鍙傛暟 |
+### 策略选择
+| 场景 | 推荐策略 | 关键参数 |
 |------|----------|----------|
-| 铔囧舰瀛愬脊 | SineWave | WaveAmplitude, WaveFrequency |
-| 澶嶆潅璺緞 | BezierCurve | BezierPoints, MaxDuration锛堝繀椤?> 0锛?|
-| 寰€杩旀敾鍑?| Boomerang | TargetPoint, TargetNode, BoomerangPauseTime, BoomerangReturnSpeedMultiplier, BoomerangArcHeight, BoomerangIsClockwise |
-| 绐佽繘鏀诲嚮 | Charge | ActionSpeed, Acceleration |
-| 鎶ゅ崼鍗槦 | Orbit | OrbitRadius, OrbitAngularSpeed |
+| 蛇形子弹 | SineWave | WaveAmplitude, WaveFrequency |
+| 复杂路径 | BezierCurve | BezierPoints, MaxDuration（必须 > 0） |
+| 往返攻击 | Boomerang | TargetPoint, BoomerangPauseTime |
+| 突进攻击 | Charge | ActionSpeed, Acceleration |
+| 护卫卫星 | Orbit | OrbitRadius, OrbitAngularSpeed |
 
-### 鎬ц兘鑰冭檻
-- **OnEnter**: 涓€娆℃€у垵濮嬪寲锛岄伩鍏嶆瘡甯ч噸澶嶈绠?- **澧為噺璁＄畻**: 浣跨敤宸垎鑰岄潪绉垎锛屽噺灏戠疮绉宸?- **瀵硅薄澶嶇敤**: 绛栫暐瀹炰緥澶嶇敤锛岄伩鍏嶉绻?GC
-- **鏁板€间紭鍖?*: 浣跨敤 `LengthSquared()` 閬垮厤涓嶅繀瑕佺殑寮€鏂硅繍绠?
-## 鎵╁睍寮€鍙?
-### 鏂板绛栫暐姝ラ
-1. 瀹炵幇 `IMovementStrategy` 鎺ュ彛
-2. 娣诲姞 `[ModuleInitializer]` 闈欐€佹敞鍐屾柟娉?3. 鍦?`MovementParams` 涓坊鍔犳墍闇€鍙傛暟
-4. 鏇存柊 `MoveMode` 鏋氫妇
-5. 缂栧啓鍗曞厓娴嬭瘯
+### 性能考虑
+- **OnEnter**: 一次性初始化，避免每帧重复计算
+- **增量计算**: 使用差分而非积分，减少累积误差
+- **对象复用**: 策略实例复用，避免频繁 GC
+- **数值优化**: 使用 `LengthSquared()` 避免不必要的开方运算
 
-### 浠ｇ爜瑙勮寖
-- 浣跨敤涓枃娉ㄩ噴
-- 閬靛惊鐜版湁鍛藉悕绾﹀畾
-- 娣诲姞璇︾粏鐨?XML 鏂囨。
-- 澶勭悊杈圭晫鎯呭喌鍜屾暟鍊肩ǔ瀹氭€?
-## 璋冭瘯涓庝紭鍖?
-### 甯歌闂
-1. **鏂瑰悜璺冲彉**: 妫€鏌?OnEnter 鏄惁姝ｇ‘閿佸畾鍩哄噯鏂瑰悜
-2. **绱Н璇樊**: 纭繚浣跨敤澧為噺璁＄畻鑰岄潪绉垎
-3. **鏁板€间笉绋冲畾**: 娣诲姞闃堝€兼鏌ュ拰闃查櫎闆朵繚鎶?4. **鎬ц兘闂**: 閬垮厤鍦?Update 涓繘琛岄噸閲忕骇璁＄畻
+## 扩展开发
 
-### 璋冭瘯宸ュ叿
-- **鍙鍖栬建杩?*: 缁樺埗绉诲姩璺緞
-- **鍙傛暟鐩戞帶**: 瀹炴椂鏄剧ず鍏抽敭鍙傛暟
-- **鎬ц兘鍒嗘瀽**: 鐩戞帶甯х巼鍜?GC 鍘嬪姏
+### 新增策略步骤
+1. 实现 `IMovementStrategy` 接口
+2. 添加 `[ModuleInitializer]` 静态注册方法
+3. 在 `MovementParams` 中添加所需参数
+4. 更新 `MoveMode` 枚举
+5. 编写单元测试
+
+### 代码规范
+- 使用中文注释
+- 遵循现有命名约定
+- 添加详细的 XML 文档
+- 处理边界情况和数值稳定性
+
+## 调试与优化
+
+### 常见问题
+1. **方向跳变**: 检查 OnEnter 是否正确锁定基准方向
+2. **累积误差**: 确保使用增量计算而非积分
+3. **数值不稳定**: 添加阈值检查和防除零保护
+4. **性能问题**: 避免在 Update 中进行重量级计算
+
+### 调试工具
+- **可视化轨迹**: 绘制移动路径
+- **参数监控**: 实时显示关键参数
+- **性能分析**: 监控帧率和 GC 压力
 
 ---
 
-*鏈枃妗ｉ殢浠ｇ爜鏇存柊鎸佺画缁存姢锛屾渶鍚庢洿鏂版椂闂? 2026-03-28*
+*本文档随代码更新持续维护，最后更新时间: 2026-03-28*
 
-### 閫氱敤鏍囬噺椹卞姩锛圫calarDriver锛?
-閫傜敤浜庘€滃悓涓€杩愬姩绛栫暐鍐呴儴锛屾煇涓爣閲忓弬鏁颁細鎸佺画鍙樺寲鈥濈殑鍦烘櫙锛屼緥濡傦細
+### 通用标量驱动（ScalarDriver）
 
-- Orbit 鍗婂緞鍦ㄥ尯闂村唴寰€杩?- Wave 鎸箙閫愭笎鍙樺ぇ鎴栭€愭笎鏀舵暃
-- Wave 棰戠巼瑙﹁竟鍚庡弽鍚戝苟鎸?`BounceDecay` 琛板噺
+适用于“同一运动策略内部，某个标量参数会持续变化”的场景，例如：
 
-鎺ㄨ崘妯″紡锛氫繚鐣欏熀纭€鍊煎瓧娈碉紝鍐嶆寕杞藉搴?`ScalarDriverParams?`銆?
-- `null` = 涓嶅惎鐢ㄩ┍鍔紝淇濇寔鍩虹鍊煎父閲忎笉鍙橈紱闈?`null` 鏃跺啀鐢辩瓥鐣ュ疄渚嬬鏈夋寔鏈?`ScalarDriverState`銆?- 鏇村畬鏁寸殑鑱岃矗璇存槑銆佹棩蹇椾笂涓嬫枃鍜岃竟鐣屾ā寮忚涔夎 `../ScalarDriver/README.md`銆?
+- Orbit 半径在区间内往返
+- Wave 振幅逐渐变大或逐渐收敛
+- Wave 频率触边后反向并按 `BounceDecay` 衰减
+
+推荐模式：保留基础值字段，再挂载对应 `ScalarDriverParams?`。
+
+- `null` = 不启用驱动，保持基础值常量不变；非 `null` 时再由策略实例私有持有 `ScalarDriverState`。
+- 更完整的职责说明、日志上下文和边界模式语义见 `../ScalarDriver/README.md`。
+
 ```csharp
 new MovementParams
 {
@@ -219,4 +251,3 @@ new MovementParams
     },
 }
 ```
-

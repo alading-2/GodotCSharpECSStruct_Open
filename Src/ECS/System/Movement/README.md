@@ -32,7 +32,7 @@ entity.Events.Emit(
 | `Spiral` | SpiralStrategy | 螺旋收缩/扩张 | OrbitCenter, OrbitRadius, OrbitTargetRadius, OrbitAngularSpeed |
 | `SineWave` | SineWaveStrategy | 正弦波弹道 | WaveAmplitude / WaveFrequency + 可选 `WaveAmplitudeScalarDriver` / `WaveFrequencyScalarDriver` |
 | `BezierCurve` | BezierCurveStrategy | 曲线弹道 | BezierPoints, MaxDuration（必须 > 0） |
-| `Boomerang` | BoomerangStrategy | 双半椭圆回旋弹道 | TargetPoint, TargetNode, BoomerangPauseTime, BoomerangReturnSpeedMultiplier, BoomerangArcHeight, BoomerangIsClockwise |
+| `Boomerang` | BoomerangStrategy | 双半椭圆回旋弹道 | TargetPoint, TargetNode, ActionSpeed 或 MaxDuration, BoomerangPauseTime, BoomerangReturnSpeedMultiplier, BoomerangArcHeight, BoomerangIsClockwise |
 | `Parabola` | ParabolaStrategy | 抛物线弹道 / 跳跃位移 | TargetPoint 或 TargetNode, ParabolaApexHeight, ActionSpeed, ReachDistance |
 | `CircularArc` | CircularArcStrategy | 单段圆弧弹道 / 侧切轨迹 | TargetPoint 或 TargetNode, CircularArcRadius, CircularArcClockwise, ActionSpeed, ReachDistance |
 | `AttachToHost` | AttachToHostStrategy | 附着特效 | TargetNode（+DataKey.EffectOffset） |
@@ -79,12 +79,13 @@ VelocityOverride ≠ Zero  → VelocityOverride（击退/硬控）
 - Orbit 半径演化统一由 `OrbitRadiusScalarDriver` 管理；Wave 侧则分别由 `WaveAmplitudeScalarDriver`、`WaveFrequencyScalarDriver` 管理
 - Boomerang 不是直线往返，而是双半椭圆回旋采样；`BoomerangArcHeight` 控制弧线张力，`BoomerangIsClockwise` 控制偏移方向
 
-## 曲线性能约束
+## 曲线策略设计原则
 
-- `ArcLengthLut` 只用于静态曲线的预计算，不允许在 `Update` 中逐帧重建
-- `BezierCurve`、`Parabola`、`CircularArc`、`Boomerang` 这类曲线策略，如果目标点在 `OnEnter` 后不再变化，可以在进入阶段一次性构建 LUT 并缓存
-- 动态追踪目标时不强求弧长连续化；直接使用参数采样 `Evaluate/EvaluateTangent`，再配合轻量长度估算推进进度即可
-- 这一约束优先级高于“理论上的绝对匀速”，目标是避免曲线策略在高频更新中重复采样整张弧长表
+- 曲线策略（Parabola / CircularArc / Boomerang）每帧直接调用 `Evaluate(t)` / `EvaluateTangent(t)` 采样，无需弧长查找表
+- 进度推进统一使用 `speed * delta / curveLength` 驱动，`curveLength` 通过 `ApproximateLength()` 获取
+- 静态目标（`!isTrackTarget`）在 `OnEnter` 时缓存曲线对象和长度，避免每帧重建；动态追踪目标每帧重建曲线
+- `BezierCurveStrategy` 由 `ElapsedTime / MaxDuration` 驱动参数 t，直接调用 `BezierCurve.Evaluate/EvaluateTangent`，无缓存需求
+- 每帧直接参数采样在游戏精度范围内已足够；不追求数学上的绝对匀速
 
 ## 阅读顺序
 

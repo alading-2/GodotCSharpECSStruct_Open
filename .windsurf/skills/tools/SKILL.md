@@ -1,82 +1,166 @@
 ﻿---
 name: tools
-description: 使用 TimerManager、ObjectPool、TargetSelector、ResourceManagement 等工具层能力时使用。适用于定时器、对象池、范围查询、随机落点、资源加载与工具层框架说明同步。
+description: 使用 TimerManager 计时器、ObjectPool 对象池、TargetSelector 目标查询、ResourceManagement 资源加载时使用。适用于：需要延迟/循环定时器，高频生成销毁对象，范围内查找敌人，加载场景或配置资源。触发关键词：TimerManager、定时器、延迟执行、对象池、ObjectPool、TargetSelector、范围查找、ResourceManagement、加载资源。
 ---
 
-# tools skill
+# 工具类使用规范
 
-## TimerManager
+## TimerManager - 计时器
 
-禁止直接 `new Timer()` 或 `GetTree().CreateTimer()`。
-统一使用 `TimerManager`。
+禁止 `new Timer()` 和 `GetTree().CreateTimer()`，统一用 `TimerManager`。
 
-## ObjectPool
+```csharp
+// 延迟执行
+TimerManager.Instance.Delay(2.0f).OnComplete(() => DoSomething());
 
-高频对象禁止手写 `new + QueueFree()`。
-统一通过 `EntityManager.Spawn(... UsingObjectPool=true ...)` 与 `EntityManager.Destroy(...)` 使用对象池。
+// 循环执行
+var timer = TimerManager.Instance.Loop(1.0f).OnLoop(() => DamageOverTime());
 
-## TargetSelector / Geometry2D
+// 带参数
+TimerManager.Instance.Delay(0.5f).OnComplete(() => Explode(damage));
 
-### 目标选择层
+// 清理（重要！在 _ExitTree 或 OnPoolRelease 中取消）
+public override void _ExitTree() { timer?.Cancel(); }
+public void OnPoolRelease() { timer?.Cancel(); }
+```
 
-优先使用：
+API 文档：`Src/Tools/Timer/TimerManager.md`
 
-- `EntityTargetSelector`
-- `PositionTargetSelector`
-- `TargetSelectorQuery`
+---
 
-适用场景：
+## ObjectPool - 对象池
 
-- 查找范围内敌人
-- 按阵营/类型过滤
-- 按距离/血量排序
-- 在几何范围内批量生成随机点
+禁止手动 `new` + `QueueFree()`，高频对象必须走对象池。
 
-### 纯几何层
+强制场景：子弹、伤害数字、特效、敌人。
 
-如果只需要算法，不需要目标选择协议，优先使用：
+```csharp
+// 通过 EntityManager 使用对象池生成
+var bullet = EntityManager.Spawn<BulletEntity>(new EntitySpawnConfig
+{
+    Config = bulletData,
+    UsingObjectPool = true,
+    PoolName = ObjectPoolNames.BulletPool,
+    Position = spawnPosition,
+    Rotation = angle
+});
 
-- `Geometry2D`
+// 销毁（自动归还对象池）
+EntityManager.Destroy(bullet);
 
-当前已提供：
+// 对象池初始化：ObjectPoolInit.cs（已配置，无需修改）
+```
 
-- Circle / Ring / Box / Capsule / Cone 判定
-- 点到线段距离
-- 圆 / 环 / 盒 / 扇形 / AABB / HollowBox 随机采样
+实现 `IPoolable` 接口：
 
-### 兼容层
+```csharp
+public void OnPoolAcquire() { /* 取出时初始化 */ }
+public void OnPoolRelease() { /* 归还时清理 */ }
+public void OnPoolReset()   { /* 数据重置，通常留空 */ }
+```
 
-- `GeometryCalculator` 仍然保留
-- 老代码可以继续调用
-- 新代码优先直接调 `Geometry2D`
+API 文档：`Src/Tools/ObjectPool/ObjectPool.md`
 
-## Math 曲线工具
+### 对象池实体激活时序（重要）
 
-当前已接入的通用曲线工具：
+对象池中的 **IEntity** 必须使用“两阶段激活”：
 
-- `EllipseArc2D`
-- `Parabola2D`
-- `CircularArc2D`
-- `BezierCurve`
-- `ArcLengthLut`
+1. `ObjectPool.Get()` 出池后先保持禁用（`ProcessMode=Disabled`，碰撞禁用模式为 `Remove`）。
+2. `EntityManager.Spawn()` 完成数据注入、位置/旋转设置、组件注册。
+3. 通过 `GameEventType.Global.EntitySpawned` 事件通知对象池做最终激活（恢复处理与可见）。
 
-适用场景：
+这样可避免复用对象在旧位置短暂参与物理，触发伪 `body_entered`。
 
-- 轨迹采样
-- 切线朝向
-- 弧长近似
-- 匀速曲线推进
+---
 
-性能约束：
+## TargetSelector - 目标选择
 
-- `ArcLengthLut` 只适合静态曲线的预计算
-- 不要在逐帧更新里为追踪目标反复重建 LUT
-- 动态曲线优先 `Evaluate(...)` / `EvaluateTangent(...)`，再配合轻量长度估算推进
+禁止 `GetTree().GetNodesInGroup()` 和手写距离计算。
 
-不要把曲线公式继续手写回运动策略内部。
-优先抽到 `Src/Tools/Math/Curves/` 再由策略调用。
+```csharp
+// 查找范围内最近的 5 个敌人
+var targets = EntityTargetSelector.Query(new TargetSelectorQuery
+{
+    Geometry = GeometryType.Circle,
+    Origin = caster.GlobalPosition,
+    Range = 200f,
+    CenterEntity = caster,
+    TeamFilter = AbilityTargetTeamFilter.Enemy,
+    Sorting = AbilityTargetSorting.Nearest,
+    MaxTargets = 5
+});
 
-## ResourceManagement
+// 扇形范围
+var targets = EntityTargetSelector.Query(new TargetSelectorQuery
+{
+    Geometry = GeometryType.Cone,
+    Origin = caster.GlobalPosition,
+    Range = 150f,
+    Angle = 60f,           // 扇形角度（度）
+    Forward = facing,      // 朝向向量
+    TeamFilter = AbilityTargetTeamFilter.Enemy,
+    MaxTargets = 10
+});
 
-禁止 `GD.Load<T>("res://...")` 或硬编码路径加载。
-统一使用 `ResourceManagement.Load(...)`。
+// 矩形范围
+var targets = EntityTargetSelector.Query(new TargetSelectorQuery
+{
+    Geometry = GeometryType.Box,
+    Origin = caster.GlobalPosition,
+    Length = 200f,         // 长度
+    Width = 80f,           // 宽度
+    Forward = facing,      // 朝向向量
+    TeamFilter = AbilityTargetTeamFilter.Enemy
+});
+```
+
+TeamFilter 选项：`Enemy` / `Ally` / `All` / `Self`
+Sorting 选项：`Nearest` / `Farthest` / `LowestHp` / `HighestHp` / `Random`
+
+API 文档：`Src/Tools/TargetSelector/README.md`
+
+---
+
+## ResourceManagement - 资源加载
+
+禁止 `GD.Load<T>("res://...")` 和硬编码字符串路径。
+
+```csharp
+// 加载场景（Entity/Component）
+var scene = ResourceManagement.Load<PackedScene>("EnemyEntity", ResourceCategory.Entity);
+var compScene = ResourceManagement.Load<PackedScene>("HealthComponent", ResourceCategory.Component);
+
+// 加载配置
+var config = ResourceManagement.Load<Resource>("德鲁伊", ResourceCategory.PlayerConfig);
+var enemyConfig = ResourceManagement.Load<Resource>("史莱姆", ResourceCategory.EnemyConfig);
+
+// 加载系统场景
+var sysScene = ResourceManagement.Load<PackedScene>("DamageService", ResourceCategory.System);
+```
+
+ResourceCategory 分类：`Entity` / `Component` / `PlayerConfig` / `EnemyConfig` / `System` / ...
+
+例外（允许直接路径）：
+
+- `.tscn` 内部资源引用（Godot 自动管理）
+- `[Export]` 导出属性指向的资源
+- `ResourceGenerator` 等底层工具
+
+新增资源后运行 ResourceGenerator 自动更新 `ResourcePaths.cs`。
+
+API 文档：`Data/ResourceManagement/ResourceManagement.md`
+
+---
+
+## 关键文件路径
+
+- **TimerManager** → `Src/Tools/Timer/TimerManager.cs` | 文档 → `Src/Tools/Timer/TimerManager.md`
+- **GameTimer** → `Src/Tools/Timer/GameTimer.cs`
+- **ObjectPool** → `Src/Tools/ObjectPool/ObjectPool.cs` | 文档 → `Src/Tools/ObjectPool/ObjectPool.md`
+- **IPoolable 接口** → `Src/Tools/ObjectPool/IPoolable.cs`
+- **ObjectPoolManager** → `Src/Tools/ObjectPool/ObjectPoolManager.cs`
+- **TargetSelector** → `Src/Tools/TargetSelector/TargetSelector.cs` | 文档 → `Src/Tools/TargetSelector/README.md`
+- **TargetSelectorQuery** → `Src/Tools/TargetSelector/TargetSelectorQuery.cs`
+- **WaveMath** → `Src/Tools/Math/WaveMath.cs` | 场景：标准正弦波采样、偏移差分、频率转角频率
+- **ResourceManagement** → `Data/ResourceManagement/ResourceManagement.cs` | 文档 → `Data/ResourceManagement/ResourceManagement.md`
+- **ResourcePaths（自动生成）** → `Data/ResourceManagement/ResourcePaths.cs`

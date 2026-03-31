@@ -11,21 +11,23 @@ using System.Runtime.CompilerServices;
 /// 1. 圆心解析：给定起点 A、终点 B 和半径 R。圆心 C 必然位于 AB 的中垂线上，且与 AB 的中点距离为 d = sqrt(R^2 - (AB/2)^2)。
 /// 2. 多解处理：对于给定的 A, B, R，通常存在两个可能的圆心。策略通过 <c>CircularArcClockwise</c> 参数结合向量叉积来锁定唯一的圆心。
 /// 3. 退化检查：若 R &lt; AB/2，则无法构成圆弧，此时策略会自动降级为直线移动。
-/// 4. 匀速性质：类似于抛物线，圆弧也使用“弧长查找表（Arc Length LUT）”来抵消三角函数参数化带来的非均匀位移，实现恒定的线速度。
+/// 4. 匀速性质：圆弧参数 t 与弧长严格成正比（角度线性推进），天然匀速；每帧按 speed * delta / curveLength 推进进度，直接按参数 t 采样。
 /// <code>
 /// 【使用示例：圆弧追踪目标（终点每帧跟随 TargetNode）】
 /// entity.Events.Emit(GameEventType.Unit.MovementStarted,
 ///     new GameEventType.Unit.MovementStartedEventData(MoveMode.CircularArc, new MovementParams
 ///     {
 ///         Mode = MoveMode.CircularArc,
-///         MaxDuration = 2f,
-///         DestroyOnComplete = true,
+///         MaxDuration = 2f,                // 最大持续时间
+///         ActionSpeed = 420f,              // 【可选】沿圆弧前进速度
+///         DestroyOnComplete = true,        // 结束销毁
 ///         isTrackTarget = true,            // 【可选】每帧将终点更新到 TargetNode 位置
 ///         TargetNode = enemyNode,          // 【可选】追踪目标
 ///         ReachDistance = 20f,             // 【可选】到达距离阈值
+///         // 圆弧
 ///         CircularArcRadius = 220f,        // 必须：圆弧半径
 ///         CircularArcClockwise = true,     // 【可选】顺时针短弧
-///         ActionSpeed = 420f,              // 【可选】沿圆弧前进速度
+///         BowWorldUp = true,               // 【可选】弧弧始终朝向屏幕上方，适用于攻击投射物
 ///     }));
 /// </code>
 /// </para>
@@ -35,9 +37,6 @@ public class CircularArcStrategy : IMovementStrategy
 {
     /// <summary>默认运动速度（当 Params 未指定时）。</summary>
     private const float DefaultActionSpeed = 300f;
-
-    /// <summary>弧长查找表缓冲区，用于实现匀速曲线运动。</summary>
-    private readonly float[] _curveLut = new float[ArcLengthLut.DefaultSegments + 1];
 
     /// <summary>进入状态时的起始坐标。</summary>
     private Vector2 _startPoint;
@@ -116,10 +115,10 @@ public class CircularArcStrategy : IMovementStrategy
             return UpdateLinear(node, data, delta, targetPoint, speed);
         }
 
-        bool useCachedArcLength = !@params.isTrackTarget && _cachedCurve.IsValid && _cachedCurveLength > 0.001f;
-        CircularArc2D curve = useCachedArcLength
+        bool useCachedCurve = !@params.isTrackTarget && _cachedCurve.IsValid && _cachedCurveLength > 0.001f;
+        CircularArc2D curve = useCachedCurve
             ? _cachedCurve
-            : CircularArc2D.Create(_startPoint, targetPoint, @params.CircularArcRadius, @params.CircularArcClockwise);
+            : CircularArc2D.Create(_startPoint, targetPoint, @params.CircularArcRadius, ResolveEffectiveClockwise(_startPoint, targetPoint, @params));
 
         if (!curve.IsValid)
         {
@@ -127,9 +126,9 @@ public class CircularArcStrategy : IMovementStrategy
             return UpdateLinear(node, data, delta, targetPoint, speed);
         }
 
-        float curveLength = useCachedArcLength
+        float curveLength = useCachedCurve
             ? _cachedCurveLength
-            : curve.ApproximateLength(); // 通过圆心角 * 半径快速计算精确弧长
+            : curve.ApproximateLength();
 
         if (curveLength <= 0.001f)
         {
@@ -140,11 +139,10 @@ public class CircularArcStrategy : IMovementStrategy
         float progressDelta = speed * delta / curveLength;
         float nextProgress = Mathf.Clamp(_progress + progressDelta, 0f, 1f);
 
-        // 采样新位置：优先使用基于弧长的匀速采样
-        Vector2 nextPoint = useCachedArcLength
-            ? curve.EvaluateByArcProgress(nextProgress, _curveLut)
-            : curve.Evaluate(nextProgress);
+        // 按参数 t 直接采样曲线点
+        Vector2 nextPoint = curve.Evaluate(nextProgress);
 
+        // 计算位移向量并更新速度
         Vector2 displacement = nextPoint - node.GlobalPosition;
         float displacementLength = displacement.Length();
 
@@ -158,31 +156,43 @@ public class CircularArcStrategy : IMovementStrategy
                 : Vector2.Zero);
 
         // 采样切线方向用于朝向同步
-        Vector2 facingDirection = useCachedArcLength
-            ? curve.EvaluateTangentByArcProgress(nextProgress, _curveLut)
-            : curve.EvaluateTangent(nextProgress);
+        Vector2 facingDirection = curve.EvaluateTangent(nextProgress);
 
         return MovementUpdateResult.Continue(displacementLength, facingDirection);
     }
 
+    /// <summary>
+    /// 预计算并缓存静态圆弧曲线信息。
+    /// <para>
+    /// 为了避免在非追踪模式（!isTrackTarget）下每帧重复执行复杂的几何计算（如圆心解析、长度采样等），
+    /// 策略会在初始化或目标锁定后提前生成 <see cref="CircularArc2D"/> 对象并缓存其近似长度。
+    /// </para>
+    /// </summary>
+    /// <param name="params">移动配置参数，包含圆弧半径和追踪开关。</param>
     private void CacheStaticCurve(MovementParams @params)
     {
+        // 彻底重置缓存状态
         _cachedCurve = default;
         _cachedCurveLength = 0f;
 
+        // 如果开启了追踪模式、未锁定有效目标或半径参数非法，则无法或无需进行静态缓存
         if (@params.isTrackTarget || !_hasLockedTarget || @params.CircularArcRadius <= 0.001f)
         {
             return;
         }
 
-        _cachedCurve = CircularArc2D.Create(_startPoint, _lockedTargetPoint, @params.CircularArcRadius, @params.CircularArcClockwise);
+        // 尝试构建圆弧：根据起点、终点和半径锁定唯一圆心
+        _cachedCurve = CircularArc2D.Create(_startPoint, _lockedTargetPoint, @params.CircularArcRadius, ResolveEffectiveClockwise(_startPoint, _lockedTargetPoint, @params));
+
+        // 若构建失败（如半径小于两点间距的一半），标记为无效
         if (!_cachedCurve.IsValid)
         {
             _cachedCurve = default;
             return;
         }
 
-        _cachedCurveLength = _cachedCurve.BuildArcLengthTable(_curveLut);
+        // 计算曲线总长度，用于后续将物理速度 [px/s] 转换为参数进度增量 [t/s]
+        _cachedCurveLength = _cachedCurve.ApproximateLength();
         if (_cachedCurveLength <= 0.001f)
         {
             _cachedCurve = default;
@@ -232,8 +242,28 @@ public class CircularArcStrategy : IMovementStrategy
     }
 
     /// <summary>
-    /// 退化后的匀速直线运动更新。
+    /// 根据 <c>BowWorldUp</c> 计算实际使用的顺逆时针方向。
+    /// BowWorldUp 开启时自动使弓起朝向屏幕上方：向右攻击取逆时针，向左攻击取顺时针。
     /// </summary>
+    private static bool ResolveEffectiveClockwise(Vector2 start, Vector2 target, MovementParams @params)
+    {
+        if (!@params.BowWorldUp) return @params.CircularArcClockwise;
+        return (target - start).X < 0f;
+    }
+
+    /// <summary>
+    /// 退化后的匀速直线运动更新。
+    /// <para>
+    /// 当圆弧路径无法构建（例如指定的半径 R 小于两点间距的一半，或半径为 0）时，
+    /// 为了保证逻辑健壮性，策略会自动降级为从当前位置向目标点执行标准的匀速直线移动。
+    /// </para>
+    /// </summary>
+    /// <param name="node">当前执行移动的节点。</param>
+    /// <param name="data">实体的运行时数据容器，用于回写速度信息。</param>
+    /// <param name="delta">帧时间步长。</param>
+    /// <param name="targetPoint">最终目标坐标点。</param>
+    /// <param name="speed">匀速移动的速度值 (像素/秒)。</param>
+    /// <returns>包含本帧位移距离和移动方向的更新结果。</returns>
     private static MovementUpdateResult UpdateLinear(
         Node2D node,
         Data data,
@@ -241,19 +271,26 @@ public class CircularArcStrategy : IMovementStrategy
         Vector2 targetPoint,
         float speed)
     {
+        // 计算当前位置到目标的向量
         Vector2 toTarget = targetPoint - node.GlobalPosition;
         float distance = toTarget.Length();
+
+        // 若已极度接近目标（小于 0.001 像素），直接判定为到达
         if (distance <= 0.001f)
         {
             data.Set(DataKey.Velocity, Vector2.Zero);
             return MovementUpdateResult.Complete();
         }
 
+        // 确定本帧步长，确保不会越过目标点
         float step = Mathf.Min(speed * delta, distance);
         Vector2 direction = toTarget / distance;
 
-        // 步长除以 delta 得到物理瞬时速度
+        // 【同步速度】将步长映射回瞬时物理速度 [px/s]，供物理同步或外部监听使用
+        // 注意：除以 delta 时需防止除零异常
         data.Set(DataKey.Velocity, direction * (step / Mathf.Max(delta, 0.001f)));
+
+        // 返回继续移动状态，传入本帧产生的位移量和切线方向（即移动方向）
         return MovementUpdateResult.Continue(step, direction);
     }
 }

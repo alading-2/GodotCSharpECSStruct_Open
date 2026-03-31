@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using System.Runtime.CompilerServices;
 
 /// <summary>
@@ -14,20 +14,22 @@ using System.Runtime.CompilerServices;
 ///    - **停顿 (Pause)**：到达目标点后，在原位悬停一段时间，模拟回旋镖在顶点处的速度损失。
 ///    - **返程 (Return)**：从当前位置回到宿主（如玩家）。此时目标点是动态追踪的（Tracking），
 ///      即圆弧的终点每帧随宿主移动，起点则是进入返程时的固定点。
-/// 2. 匀速性质：利用 <see cref="ArcLengthLut"/> 实现弧线采样，确保沿曲线的物理线速度不因斜率变化而波动。
+/// 2. 速度来源：优先使用 <c>ActionSpeed</c>；若未设置且 <c>MaxDuration &gt; 0</c>，则自动将
+///    <c>MaxDuration - BoomerangPauseTime</c> 均分为去程/返程两段飞行时间，并按当前曲线长度反推速度。
 /// 3. 动态弧高：如果未显式配置弧高，策略会根据起终点弦长自动缩放弧高，保证在追踪移动宿主时轨迹始终自然。
 /// 4. 健壮性降级：当两点距离过近无法构成有效圆弧时，自动降级为直线追逐，防止投射物卡死或跳变。
 /// </para>
 /// <para>
 /// <code>
-/// 【使用示例：飞到目标点后停顿，再沿反向弧线回到发射者】
+/// 【使用示例 1：显式指定 ActionSpeed，飞到目标点后停顿，再沿反向弧线回到发射者】
 /// entity.Events.Emit(GameEventType.Unit.MovementStarted,
 ///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Boomerang, new MovementParams
 ///     {
 ///         Mode = MoveMode.Boomerang,
 ///         TargetPoint = enemyNode.GlobalPosition,  // 设置目标点
 ///         TargetNode = ownerNode,                  // 设置发出回旋镖的实体，用于返程时实时跟随宿主
-///         ActionSpeed = 480f,                      // 速度
+///         MaxDuration = 1.2f,                      // 总时长 = 去程 + 停顿 + 返程
+///         ActionSpeed = 480f,                      // 【可选】速度，优先级高于 MaxDuration 推导
 ///         DestroyOnComplete = true,                // 可选：返程完成后是否自动销毁实体
 ///         // 回旋镖参数
 ///         BoomerangPauseTime = 0.12f,              // 去程结束后停顿时间
@@ -45,18 +47,14 @@ public class BoomerangStrategy : IMovementStrategy
     private const float DefaultReachDistance = 8f;
     /// <summary>未配置基础速度时的兜底速度。</summary>
     private const float DefaultActionSpeed = 300f;
+    /// <summary>总时长推导速度时的最小有效时长，避免除零。</summary>
+    private const float MinDuration = 0.001f;
     /// <summary>自动估算弧高时采用的比例（弧高 = 弦长 * 0.35）。</summary>
     private const float DefaultArcHeightRatio = 0.35f;
     /// <summary>自动弧高的下限，确保短距离也有明显的曲线感。</summary>
     private const float MinArcHeight = 24f;
     /// <summary>自动弧高的上限，防止长距离下曲线跨度过大。</summary>
     private const float MaxAutoArcHeight = 220f;
-
-    /// <summary>
-    /// 弧长分布查找表（LUT）。通过将弧线等分为若干段并离散采样长度，
-    /// 用于将“线性进度”映射到“曲线采样参数 t”，从而实现沿轨迹的匀速运动。
-    /// </summary>
-    private readonly float[] _curveLut = new float[ArcLengthLut.DefaultSegments + 1];
 
     /// <summary>发射时的初始全球坐标。作为返程找不到宿主时的兜底终点。</summary>
     private Vector2 _launchPoint;
@@ -141,13 +139,6 @@ public class BoomerangStrategy : IMovementStrategy
         }
 
         // --- 阶段处理 3: 运动轨道参数计算 ---
-        float speed = ResolveCurrentSpeed(@params);
-        if (speed <= 0.001f)
-        {
-            data.Set(DataKey.Velocity, Vector2.Zero);
-            return MovementUpdateResult.Continue();
-        }
-
         // 计算当前阶段的弦长与弧高（可能是动态的，随宿主位置实时变化）。
         float chordLength = _phaseStartPoint.DistanceTo(phaseEndPoint);
         float arcHeight = ResolveArcHeight(chordLength, @params);
@@ -156,25 +147,32 @@ public class BoomerangStrategy : IMovementStrategy
         bool clockwise = _returning ? !@params.BoomerangIsClockwise : @params.BoomerangIsClockwise;
 
         // 缓存策略：去程是静态点，可以使用 OnEnter 时预算的缓存；返程因为目标实时移动，必须实时构建
-        bool useCachedArcLength = !_returning && _cachedPhaseCurve.IsValid && _cachedPhaseCurveLength > 0.001f;
+        bool useCachedCurve = !_returning && _cachedPhaseCurve.IsValid && _cachedPhaseCurveLength > 0.001f;
 
-        EllipseArc2D curve = useCachedArcLength
+        EllipseArc2D curve = useCachedCurve
             ? _cachedPhaseCurve
             : EllipseArc2D.Create(_phaseStartPoint, phaseEndPoint, arcHeight, clockwise);
 
         // 稳定性退化处理：如果弧线构造失败（由于目标太近）或高度太低（退化为直线），回退到线性追逐，防止物体卡死。
         if (!curve.IsValid || arcHeight <= 0.001f)
         {
-            return UpdateLinear(node, data, delta, @params, phaseEndPoint, speed);
+            return UpdateLinear(node, data, delta, @params, phaseEndPoint, ResolveCurrentSpeed(@params, chordLength));
         }
 
-        float curveLength = useCachedArcLength
+        float curveLength = useCachedCurve
             ? _cachedPhaseCurveLength
             : curve.ApproximateLength(); // 虽然是实时构建，但 EllipseArc2D.ApproximateLength 求值极快
 
         if (curveLength <= 0.001f)
         {
-            return UpdateLinear(node, data, delta, @params, phaseEndPoint, speed);
+            return UpdateLinear(node, data, delta, @params, phaseEndPoint, DefaultActionSpeed);
+        }
+
+        float speed = ResolveCurrentSpeed(@params, curveLength);
+        if (speed <= 0.001f)
+        {
+            data.Set(DataKey.Velocity, Vector2.Zero);
+            return MovementUpdateResult.Continue();
         }
 
         // 计算这一帧应该推进的进度比例。
@@ -182,9 +180,7 @@ public class BoomerangStrategy : IMovementStrategy
         float progressDelta = speed * delta / curveLength;
         float nextProgress = Mathf.Clamp(_phaseProgress + progressDelta, 0f, 1f);
 
-        Vector2 nextPoint = useCachedArcLength
-            ? curve.EvaluateByArcProgress(nextProgress, _curveLut)
-            : curve.Evaluate(nextProgress);
+        Vector2 nextPoint = curve.Evaluate(nextProgress);
 
         Vector2 displacement = nextPoint - node.GlobalPosition;
         float displacementLength = displacement.Length();
@@ -199,9 +195,7 @@ public class BoomerangStrategy : IMovementStrategy
                 : Vector2.Zero);
 
         // 采样切线，用于处理投射物的旋转朝向
-        Vector2 facingDirection = useCachedArcLength
-            ? curve.EvaluateTangentByArcProgress(nextProgress, _curveLut)
-            : curve.EvaluateTangent(nextProgress);
+        Vector2 facingDirection = curve.EvaluateTangent(nextProgress);
 
         return MovementUpdateResult.Continue(displacementLength, facingDirection);
     }
@@ -290,16 +284,46 @@ public class BoomerangStrategy : IMovementStrategy
     /// <summary>
     /// 计算本帧的移动速度。
     /// </summary>
-    private float ResolveCurrentSpeed(MovementParams @params)
+    private float ResolveCurrentSpeed(MovementParams @params, float travelLength)
     {
-        float speed = @params.ActionSpeed > 0f ? @params.ActionSpeed : DefaultActionSpeed;
-        if (!_returning) return speed;
+        if (@params.ActionSpeed > 0f)
+        {
+            float speed = @params.ActionSpeed;
+            if (!_returning) return speed;
 
-        // 返程支持特定的速度倍率，通常为了“回收感”会设置得比去程更快。
-        float multiplier = @params.BoomerangReturnSpeedMultiplier > 0f
-            ? @params.BoomerangReturnSpeedMultiplier
-            : 1f;
-        return speed * multiplier;
+            // 返程支持特定的速度倍率，通常为了“回收感”会设置得比去程更快。
+            float multiplier = @params.BoomerangReturnSpeedMultiplier > 0f
+                ? @params.BoomerangReturnSpeedMultiplier
+                : 1f;
+            return speed * multiplier;
+        }
+
+        // 若未显式指定 ActionSpeed，则兼容 MaxDuration：
+        // 去程飞行 + 返程飞行均分（MaxDuration - PauseTime）。
+        if (@params.MaxDuration > 0f && travelLength > 0.001f)
+        {
+            float phaseDuration = ResolveBoomerangPhaseDuration(@params);
+            if (phaseDuration > MinDuration)
+            {
+                return travelLength / phaseDuration;
+            }
+        }
+
+        return DefaultActionSpeed;
+    }
+
+    /// <summary>
+    /// 计算去程/返程单段飞行时长。
+    /// </summary>
+    private static float ResolveBoomerangPhaseDuration(MovementParams @params)
+    {
+        float flyDuration = @params.MaxDuration - Mathf.Max(@params.BoomerangPauseTime, 0f);
+        if (flyDuration <= MinDuration)
+        {
+            return 0f;
+        }
+
+        return flyDuration * 0.5f;
     }
 
     /// <summary>
@@ -338,7 +362,7 @@ public class BoomerangStrategy : IMovementStrategy
             return;
         }
 
-        _cachedPhaseCurveLength = _cachedPhaseCurve.BuildArcLengthTable(_curveLut);
+        _cachedPhaseCurveLength = _cachedPhaseCurve.ApproximateLength();
         if (_cachedPhaseCurveLength <= 0.001f)
         {
             _cachedPhaseCurve = default;

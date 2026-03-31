@@ -17,8 +17,6 @@
 
 ### `Curves/`
 
-- `ArcLengthLut.cs`
-  - 负责累计弧长表归一化与 `progress -> t` 映射
 - `EllipseArc2D.cs`
   - 由起点、终点、弧高、侧偏方向定义的二维弧线
   - 目前用于 `BoomerangStrategy`
@@ -43,19 +41,7 @@
 
 ### 曲线运动
 
-如果需要“按路程匀速推进”，优先使用：
-
-1. 曲线对象的 `BuildArcLengthTable(...)`
-2. `EvaluateByArcProgress(...)`
-3. `EvaluateTangentByArcProgress(...)`
-
-而不是直接把公式参数 `t` 当成匀速进度。
-
-但要注意一条运行时约束：
-
-- 只有静态曲线适合预建 `ArcLengthLut`
-- 如果终点会在运行时持续变化，不要在 `Update` 中逐帧重建 LUT
-- 动态曲线优先使用 `Evaluate(...)` / `EvaluateTangent(...)` 加轻量长度估算
+每帧直接调用 `Evaluate(t)` / `EvaluateTangent(t)` 采样，进度由 `speed * delta / ApproximateLength()` 驱动，游戏精度范围内已足够。
 
 ### 几何查询
 

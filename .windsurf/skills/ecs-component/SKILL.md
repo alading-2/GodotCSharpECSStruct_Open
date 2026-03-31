@@ -112,19 +112,20 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - **统一执行路径**：所有实体经 `VelocityResolver.Resolve()` 合成速度后应用位移，`CharacterBody2D` 额外调用 `MoveAndSlide()` 处理碰撞，其他用 `GlobalPosition +=`
 - **帧率选择**：由策略 `UsePhysicsProcess` 声明走 `_Process` 或 `_PhysicsProcess`，与节点类型无关，两条路径逻辑完全相同
 - **策略约束**：禁止直接操作 `GlobalPosition`，所有位移由调度器统一执行
-- **曲线性能约束**：`ArcLengthLut` 只用于静态曲线的进入阶段预计算；动态追踪目标时禁止在 `Update` 中逐帧重建 LUT，改用 `Evaluate/EvaluateTangent` + 轻量长度估算
+- **曲线采样原则**：所有曲线策略每帧直接调用 `Evaluate(t)` / `EvaluateTangent(t)` 采样，进度由 `speed * delta / ApproximateLength()` 驱动；无需弧长查找表
 
 ### 朝向语义
 - `Velocity` = “本帧怎么移动”，服务于位移执行与速度分层合成
 - `FacingDirection` = “本帧朝哪看”，服务于 `VisualRoot.FlipH` 或 `Node2D.RotationDegrees`
-- 已接入显式朝向的曲线路径：`SineWaveStrategy`（正弦切线）、`BezierCurveStrategy`（贝塞尔切线）、`OrbitStrategy`（切向+径向合成切线）
+- 已接入显式朝向的曲线路径：`SineWaveStrategy`（正弦切线）、`BezierCurveStrategy`（贝塞尔切线）、`OrbitStrategy`（切向+径向合成切线）、`ParabolaStrategy`/`CircularArcStrategy`/`BoomerangStrategy`（曲线切线）
 - 直线/追踪/输入类策略若 `Velocity` 本身就是想看的方向，可继续只返回 `Continue(distance)`
 
 ### 14 种运动模式
 FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral / SineWave / BezierCurve / Boomerang / AttachToHost / PlayerInput / AIControlled / Parabola / CircularArc
 
-- 所有 12 种模式对 Node2D/Area2D 和 CharacterBody2D 通用
+- 所有 14 种模式对 Node2D/Area2D 和 CharacterBody2D 通用
 - `AIControlled` 读取 `AIMoveDirection/AIMoveSpeedMultiplier`，AI 行为树在非 `AIControlled` 模式下暂停写入移动意图
+- `Boomerang` 支持两种速度来源：`ActionSpeed` 优先；未设置时可由 `MaxDuration` 扣除 `BoomerangPauseTime` 后均分去/返程飞行时间
 
 ### 附着跟随模式（AttachToHost）
 - `EffectComponent` 仅负责查找宿主与生命周期监听
@@ -141,7 +142,7 @@ FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral 
 ### ⚠️ 策略实例语义
 注册表保存的是工厂函数，不是单例对象。每次切换运动模式都会新建策略实例：
 
-- **允许** 持有策略私有运行态（如 `_currentAngle`、`ScalarDriverState`、贝塞尔 LUT）
+- **允许** 持有策略私有运行态（如 `_currentAngle`、`ScalarDriverState`、缓存曲线对象）
 - **禁止** 把可跨系统观察的业务状态偷偷藏在策略里；这类状态仍应进入 `Data`
 - `ScalarDriverState` 这类“仅服务当前策略公式”的局部运行态，应该由策略实例私有持有
 

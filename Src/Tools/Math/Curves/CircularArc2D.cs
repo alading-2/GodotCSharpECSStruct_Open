@@ -108,41 +108,6 @@ public readonly struct CircularArc2D
         return tangent.LengthSquared() > 0.001f ? tangent.Normalized() : Vector2.Right;
     }
 
-    public Vector2 EvaluateByArcProgress(float progress, ReadOnlySpan<float> normalizedTable)
-    {
-        float t = ArcLengthLut.MapProgressToParameter(progress, normalizedTable);
-        return Evaluate(t);
-    }
-
-    public Vector2 EvaluateTangentByArcProgress(float progress, ReadOnlySpan<float> normalizedTable)
-    {
-        float t = ArcLengthLut.MapProgressToParameter(progress, normalizedTable);
-        return EvaluateTangent(t);
-    }
-
-    public float BuildArcLengthTable(Span<float> table)
-    {
-        if (!IsValid || table.Length < 2)
-        {
-            if (table.Length > 0) table.Clear();
-            return 0f;
-        }
-
-        table[0] = 0f;
-        Vector2 previous = Evaluate(0f);
-        int segments = table.Length - 1;
-
-        for (int i = 1; i <= segments; i++)
-        {
-            float t = (float)i / segments;
-            Vector2 current = Evaluate(t);
-            table[i] = table[i - 1] + previous.DistanceTo(current);
-            previous = current;
-        }
-
-        return ArcLengthLut.NormalizeTable(table);
-    }
-
     /// <summary>
     /// 计算圆弧总弧长。
     /// <para>公式：L = |SweepAngle| * Radius</para>

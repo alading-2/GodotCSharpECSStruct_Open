@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 
 /// <summary>
 /// 单次移动的完整上下文：输入参数 + 运行时统计，存储于 <see cref="EntityMovementComponent"/>，按值传给策略。
@@ -22,6 +22,7 @@ using Godot;
 /// </code>
 /// </para>
 /// </summary>
+/// TODO MovementParams有30个参数，每个运动策略的MovementParams都有这么多参数，要不要拆分，内存优化？
 public record struct MovementParams
 {
     /// <summary>
@@ -43,7 +44,10 @@ public record struct MovementParams
     public float MaxDuration { get; init; } = -1f;
     /// <summary>最大移动距离（像素），-1 = 不限制</summary>
     public float MaxDistance { get; init; } = -1f;
-    /// <summary>移动模式下的移动速度（像素/秒），用于 Dash 等有明确动作速度的策略</summary>
+    /// <summary>
+    /// 移动模式下的移动速度（像素/秒），用于 Dash 等有明确动作速度的策略。
+    /// 若某些策略同时支持 <c>ActionSpeed</c> 与 <c>MaxDuration</c>（如 Boomerang），则始终以 <c>ActionSpeed</c> 优先。
+    /// </summary>
     public float ActionSpeed { get; init; } = 0f;
     /// <summary>
     /// 通用加速度参数（单位由策略解释）：
@@ -145,14 +149,22 @@ public record struct MovementParams
     /// 第 0 个点会在 OnEnter 时自动替换为实体当前位置。
     /// </summary>
     public Vector2[]? BezierPoints { get; init; } = null;
-    /// <summary>是否使用弧长参数化实现匀速移动（BezierCurve 模式）</summary>
-    public bool IsBezierUniformSpeed { get; init; } = false;
+
+    // ======== 曲线通用（抛物线 / 圆弧共用）========
+
+    /// <summary>
+    /// 是否自动调整弓起方向，使弧线始终朝向屏幕上方（Y 减小方向）。
+    /// 适用于 <c>Parabola</c> 和 <c>CircularArc</c> 两种模式。
+    /// 启用后，无论攻击方向如何，投射物弧线均弓向上方，避免攻击左右两侧时视觉不一致。
+    /// </summary>
+    public bool BowWorldUp { get; init; } = false;
 
     // ======== 抛物线 ========
 
     /// <summary>
     /// 抛物线顶点高度偏移，单位像素。
     /// 正值表示向上拱起，负值表示向下下坠，0 表示退化为直线。
+    /// 启用 <c>BowWorldUp</c> 时，该值的正负符号会被自动修正，仅绝对值有效。
     /// </summary>
     public float ParabolaApexHeight { get; init; } = 0f;
 
@@ -167,6 +179,7 @@ public record struct MovementParams
     /// <summary>
     /// 圆弧方向。
     /// false = 逆时针短弧，true = 顺时针短弧。
+    /// 启用 <c>BowWorldUp</c> 时，该值被忽略，方向由攻击方向自动决定。
     /// </summary>
     public bool CircularArcClockwise { get; init; } = false;
 
@@ -174,6 +187,7 @@ public record struct MovementParams
 
     /// <summary>
     /// 到达去程终点后的停顿时间，单位秒。
+    /// 若 Boomerang 使用 <c>MaxDuration</c> 驱动，则总时长会先扣除该停顿，再由去程/返程均分剩余飞行时间。
     /// </summary>
     public float BoomerangPauseTime { get; init; } = 0f;
 

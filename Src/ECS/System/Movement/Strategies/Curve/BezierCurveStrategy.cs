@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 /// <item><c>BezierPoints</c>（Vector2[]，推荐）：完整控制点数组（含起点和终点，至少 2 点）。起点会被 OnEnter 替换为当前位置，只需填写控制点和终点即可。若未提供则以 <c>TargetPoint</c> 作终点降级为直线。</item>
 /// <item><c>TargetPoint</c>（Vector2，可选）：设置后会覆盖 <c>BezierPoints</c> 的终点（最后一个控制点），可在保留曲线形状的同时动态指定落点；未提供 <c>BezierPoints</c> 时降级为直线。</item>
 /// <item><c>TargetNode</c> + <c>isTrackTarget</c>（可选）：<c>isTrackTarget = true</c> 时每帧将终点更新为 <c>TargetNode</c> 的当前位置，目标消失后终点冻结在最后位置。</item>
-/// <item><c>BezierUniformSpeed</c>（bool，可选）：true = 弧长参数化匀速移动，false（默认）= 非匀速（参数 t 线性推进）。<b>当 <c>isTrackTarget=true</c> 时会被自动禁用</b>，避免每帧重建 LUT 的性能开销。</item>
 /// <item><c>DestroyOnComplete</c>（bool，可选）：到达终点后是否自动销毁实体。</item>
 /// </list>
 /// </para>
@@ -33,7 +32,6 @@ using System.Runtime.CompilerServices;
 ///             new Vector2(0f,   -200f),              // [1] 控制点（曲线弧度）
 ///             new Vector2(200f, -200f),              // [2] 控制点
 ///             Vector2.Zero,                          // [3] 占位，每帧替换为目标位置
-///             [一般不需要设置]IsBezierUniformSpeed = false,   // 是否使用弧长参数化实现匀速移动
 ///         },
 ///     }));
 /// </code>
@@ -48,11 +46,6 @@ public class BezierCurveStrategy : IMovementStrategy
     /// 最终控制点数组（包含起点和终点），OnEnter 时会将起点替换为实体当前位置
     /// </summary>
     private Vector2[] _finalPoints = System.Array.Empty<Vector2>();
-
-    /// <summary>
-    /// 弧长参数化查找表（LUT），用于匀速移动时的弧长到参数 t 的映射
-    /// </summary>
-    private float[]? _lengthLut;
 
     /// <summary>
     /// 模块初始化器：在模块加载时自动将此策略注册到移动策略注册表
@@ -104,19 +97,6 @@ public class BezierCurveStrategy : IMovementStrategy
             _finalPoints = System.Array.Empty<Vector2>();
         }
 
-        // 重置查找表
-        _lengthLut = null;
-
-        // 是否使用贝塞尔曲线匀速模式，追踪模式下禁用，因为BuildLengthTable计算量较大
-        bool useUniformSpeed = @params.IsBezierUniformSpeed && !@params.isTrackTarget;
-
-        // 若启用匀速模式且控制点有效，预计算弧长查找表
-        // 自适应 segments：阶数 * 8，最少 16（三阶=24，五阶=40），避免固定 64 的过度开销
-        if (useUniformSpeed && _finalPoints.Length >= 2)
-        {
-            int lutSegments = System.Math.Max(16, (_finalPoints.Length - 1) * 8);
-            _lengthLut = BezierCurve.BuildLengthTable(_finalPoints, lutSegments);
-        }
     }
 
     /// <summary>
@@ -124,7 +104,7 @@ public class BezierCurveStrategy : IMovementStrategy
     /// <para>计算流程：</para>
     /// <list type="bullet">
     /// <item>根据已用时间计算参数 t（0~1）</item>
-    /// <item>根据匀速模式选择求值方法：弧长参数化 或 直接参数求值</item>
+    /// <item>按参数 t 直接采样曲线点与切线方向</item>
     /// <item>计算新位置并更新速度向量</item>
     /// <item>检测是否到达终点（t >= 1）</item>
     /// </list>
@@ -142,9 +122,6 @@ public class BezierCurveStrategy : IMovementStrategy
         float duration = @params.MaxDuration;
         if (duration <= 0f) return MovementUpdateResult.Continue(); // MaxDuration 无效（忘记设置或为 -1），跳过
 
-        // 是否使用贝塞尔曲线匀速模式，追踪模式下禁用，因为BuildLengthTable计算量较大
-        bool useUniformSpeed = @params.IsBezierUniformSpeed && !@params.isTrackTarget;
-
         // 追踪模式：每帧将终点（最后一个控制点）更新为目标当前位置
         if (@params.isTrackTarget && @params.TargetNode != null && GodotObject.IsInstanceValid(@params.TargetNode))
         {
@@ -158,15 +135,9 @@ public class BezierCurveStrategy : IMovementStrategy
         // 计算当前参数 t（0~1），基于已用时间 + 当前帧增量的预测位置
         float t = Mathf.Clamp((@params.ElapsedTime + delta) / duration, 0f, 1f);
 
-        // 根据匀速模式选择求值方法
-        Vector2 newPos = (useUniformSpeed && _lengthLut != null)
-            ? BezierCurve.EvaluateUniform(_finalPoints, t, _lengthLut) // 匀速：弧长参数化
-            : BezierCurve.Evaluate(_finalPoints, t);                    // 非匀速：直接参数求值
-
-        // 朝向使用曲线在同一参数点的切线，而不是当前位置到采样点的纠偏向量
-        Vector2 facingDirection = (useUniformSpeed && _lengthLut != null)
-            ? BezierCurve.EvaluateUniformTangent(_finalPoints, t, _lengthLut)
-            : BezierCurve.EvaluateTangent(_finalPoints, t);
+        // 按参数 t 直接采样曲线点和切线方向
+        Vector2 newPos = BezierCurve.Evaluate(_finalPoints, t);
+        Vector2 facingDirection = BezierCurve.EvaluateTangent(_finalPoints, t);
 
         // 计算位移向量并更新速度
         Vector2 toTarget = newPos - node.GlobalPosition;

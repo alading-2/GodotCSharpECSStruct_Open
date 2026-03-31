@@ -10,20 +10,21 @@ using System.Runtime.CompilerServices;
 /// 1. 建立局部坐标系：将起点映射为 (0,0)，终点映射为 (L, 0)，其中 L 是起点到终点的欧氏距离。
 /// 2. 在局部系下，抛物线方程为 y = ax^2 + bx + c。由于过 (0,0) 则 c=0。
 /// 3. 通过顶点高度 H（在 L/2 处达到）和终点 (L,0) 求解系数 a, b。
-/// 4. 匀速性质：默认的参数化（基于 x 线性增加）在斜率较大处会导致物理速度变快。本策略使用“弧长查找表（Arc Length LUT）”
-///    将进度参数 [0, 1] 映射为均匀的路径长度进度，从而实现真正的匀速运动。
+/// 4. 进度推进：每帧根据 speed * delta / curveLength 计算进度增量，直接按参数 t 采样曲线点。
 /// <code>
 /// 【使用示例：抛物线追踪目标（终点每帧跟随 TargetNode）】
 /// entity.Events.Emit(GameEventType.Unit.MovementStarted,
 ///     new GameEventType.Unit.MovementStartedEventData(MoveMode.Parabola, new MovementParams
 ///     {
 ///         Mode = MoveMode.Parabola,
-///         MaxDuration = 2f,
-///         DestroyOnComplete = true,
-///         isTrackTarget = true,            // 【可选】每帧将终点更新到 TargetNode 位置
-///         TargetNode = enemyNode,          // 【可选】追踪目标
-///         ReachDistance = 20f,             // 【可选】到达距离阈值
+///         MaxDuration = 2f,                // 最大持续时间
+///         DestroyOnComplete = true,        // 结束销毁
+///         isTrackTarget = true,            // 每帧将终点更新到 TargetNode 位置
+///         TargetNode = enemyNode,          // 追踪目标
+///         ReachDistance = 20f,             // 到达距离阈值
 ///         ParabolaApexHeight = 180f,       // 必须：抛物线顶高
+///         // 抛物线
+///         BowWorldUp = true,               // 弧弧始终朝向屏幕上方，适用于攻击投射物
 ///         ActionSpeed = 420f,              // 【可选】沿曲线前进速度
 ///     }));
 /// </code>
@@ -34,9 +35,6 @@ public class ParabolaStrategy : IMovementStrategy
 {
     /// <summary>默认运动速度（当 Params 未指定时）。</summary>
     private const float DefaultActionSpeed = 300f;
-
-    /// <summary>弧长查找表缓冲区，用于实现匀速曲线运动。</summary>
-    private readonly float[] _curveLut = new float[ArcLengthLut.DefaultSegments + 1];
 
     /// <summary>进入状态时的起始坐标。</summary>
     private Vector2 _startPoint;
@@ -116,13 +114,13 @@ public class ParabolaStrategy : IMovementStrategy
             return UpdateLinear(node, data, delta, targetPoint, speed);
         }
 
-        // 判定是否使用缓存数据（静态路径下为了性能和匀速表现，优先使用缓存）
-        bool useCachedArcLength = !@params.isTrackTarget && _cachedCurve.IsValid && _cachedCurveLength > 0.001f;
+        // 静态目标下优先使用 OnEnter 时预计算的缓存曲线，避免每帧重建
+        bool useCachedCurve = !@params.isTrackTarget && _cachedCurve.IsValid && _cachedCurveLength > 0.001f;
 
         // 构建或获取当前曲线实例
-        Parabola2D curve = useCachedArcLength
+        Parabola2D curve = useCachedCurve
             ? _cachedCurve
-            : Parabola2D.Create(_startPoint, targetPoint, @params.ParabolaApexHeight);
+            : Parabola2D.Create(_startPoint, targetPoint, ResolveEffectiveApexHeight(_startPoint, targetPoint, @params));
 
         if (!curve.IsValid)
         {
@@ -130,9 +128,9 @@ public class ParabolaStrategy : IMovementStrategy
         }
 
         // 获取路径总长度用于计算进度增量
-        float curveLength = useCachedArcLength
+        float curveLength = useCachedCurve
             ? _cachedCurveLength
-            : curve.ApproximateLength(); // 非缓存模式下通过数值估算（步进采样）获取长度
+            : curve.ApproximateLength();
 
         if (curveLength <= 0.001f)
         {
@@ -145,11 +143,8 @@ public class ParabolaStrategy : IMovementStrategy
         float progressDelta = speed * delta / curveLength;
         float nextProgress = Mathf.Clamp(_progress + progressDelta, 0f, 1f);
 
-        // 5. 采样新位置
-        // 如果有 LUT，使用基于弧长参数化的更精准采样以实现完美匀速
-        Vector2 nextPoint = useCachedArcLength
-            ? curve.EvaluateByArcProgress(nextProgress, _curveLut)
-            : curve.Evaluate(nextProgress);
+        // 5. 按参数 t 直接采样曲线点
+        Vector2 nextPoint = curve.Evaluate(nextProgress);
 
         // 计算本帧位移（相对于 Node2D 的移动）
         Vector2 displacement = nextPoint - node.GlobalPosition;
@@ -158,7 +153,6 @@ public class ParabolaStrategy : IMovementStrategy
         _progress = nextProgress;
 
         // 6. 设置速度以供物理系统或同步逻辑使用。
-        // 注意：这里推导的速度是“瞬时速度”，确保在跨帧插值时表现平滑。
         data.Set(
             DataKey.Velocity,
             displacementLength > 0.001f
@@ -166,31 +160,41 @@ public class ParabolaStrategy : IMovementStrategy
                 : Vector2.Zero);
 
         // 采样切线方向，用于自动转向逻辑
-        Vector2 facingDirection = useCachedArcLength
-            ? curve.EvaluateTangentByArcProgress(nextProgress, _curveLut)
-            : curve.EvaluateTangent(nextProgress);
+        Vector2 facingDirection = curve.EvaluateTangent(nextProgress);
 
         return MovementUpdateResult.Continue(displacementLength, facingDirection);
     }
 
+    /// <summary>
+    /// 预计算并缓存静态抛物线路径。
+    /// <para>当移动目标点在 OnEnter 时已确定且不再随帧变化时，预先构建曲线并测量其弧长，减少 Update 循环中的计算开销。</para>
+    /// </summary>
     private void CacheStaticCurve(MovementParams @params)
     {
+        // 初始重置缓存状态
         _cachedCurve = default;
         _cachedCurveLength = 0f;
 
+        // 如果开启了实时追踪（终点动态变化）、尚未锁定任何目标、或顶点高度过小（路径退化为直线），则无需缓存静态曲线
         if (@params.isTrackTarget || !_hasLockedTarget || Mathf.Abs(@params.ParabolaApexHeight) <= 0.001f)
         {
             return;
         }
 
-        _cachedCurve = Parabola2D.Create(_startPoint, _lockedTargetPoint, @params.ParabolaApexHeight);
+        // 尝试构建静态抛物线实例
+        _cachedCurve = Parabola2D.Create(_startPoint, _lockedTargetPoint, ResolveEffectiveApexHeight(_startPoint, _lockedTargetPoint, @params));
+        
+        // 构建失败（如起点终点重合）则放弃缓存
         if (!_cachedCurve.IsValid)
         {
             _cachedCurve = default;
             return;
         }
 
-        _cachedCurveLength = _cachedCurve.BuildArcLengthTable(_curveLut);
+        // 预计算曲线近似长度，用于进度步进计算
+        _cachedCurveLength = _cachedCurve.ApproximateLength();
+        
+        // 长度过小时路径无效，清理缓存
         if (_cachedCurveLength <= 0.001f)
         {
             _cachedCurve = default;
@@ -240,8 +244,24 @@ public class ParabolaStrategy : IMovementStrategy
     }
 
     /// <summary>
-    /// 退化后的匀速直线运动更新。
+    /// 根据 <c>BowWorldUp</c> 计算实际使用的顶点高度。
+    /// BowWorldUp 开启时自动修正符号使弓起朝向屏幕上方：向右攻击取负高度，向左攻击取正高度。
     /// </summary>
+    private static float ResolveEffectiveApexHeight(Vector2 start, Vector2 target, MovementParams @params)
+    {
+        if (!@params.BowWorldUp) return @params.ParabolaApexHeight;
+        float h = Mathf.Abs(@params.ParabolaApexHeight);
+        return (target - start).X > 0f ? -h : h;
+    }
+
+    /// <summary>
+    /// 当路径退化为直线（如顶点高度为 0 或曲线构建失败）时的匀速补间更新。
+    /// </summary>
+    /// <param name="node">执行移动的 Node2D 节点。</param>
+    /// <param name="data">用于存储 Velocity 等物理状态的数据容器。</param>
+    /// <param name="delta">帧时长。</param>
+    /// <param name="targetPoint">直线运动的目标终点。</param>
+    /// <param name="speed">线速度。</param>
     private static MovementUpdateResult UpdateLinear(
         Node2D node,
         Data data,
@@ -249,19 +269,26 @@ public class ParabolaStrategy : IMovementStrategy
         Vector2 targetPoint,
         float speed)
     {
+        // 计算当前位置指向目标的位移矢量
         Vector2 toTarget = targetPoint - node.GlobalPosition;
         float distance = toTarget.Length();
+
+        // 距离判定：若已在目标点附近，直接标记完成并停滞速度
         if (distance <= 0.001f)
         {
             data.Set(DataKey.Velocity, Vector2.Zero);
             return MovementUpdateResult.Complete();
         }
 
+        // 计算本帧预期步长，并确保不会因浮点误差越过目标点
         float step = Mathf.Min(speed * delta, distance);
         Vector2 direction = toTarget / distance;
 
-        // 步长除以 delta 得到物理瞬时速度
+        // 根据本帧实际步长反推物理瞬时速度（Velocity = Displacement / Time）
+        // 这样做可以确保当物体因距离过近而减速刹车时，速度状态能被正确同步
         data.Set(DataKey.Velocity, direction * (step / Mathf.Max(delta, 0.001f)));
+
+        // 返回包含位移量和朝向的更新结果，通知外部系统（如动画或旋转）
         return MovementUpdateResult.Continue(step, direction);
     }
 }
