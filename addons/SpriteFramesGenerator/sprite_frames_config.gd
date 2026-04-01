@@ -37,36 +37,40 @@ const LOOP_ANIMATIONS: PackedStringArray = [
 	"run",
 ]
 
+# --- 默认碰撞形状参数 ---
+# [仅首次生成有效] 智能更新时自动保留用户手动调整的形状。
+# RULES 中各规则可通过 collision_shape 字典覆盖对应字段，未填写的字段回退到此处的值。
+const DEFAULT_COLLISION_SHAPE: Dictionary = {
+	"radius": 30.0,
+	"height": 70.0,
+	"position": Vector2.ZERO,
+}
+
 # --- 统一规则表 ---
+# 规则字典字段说明：
+# - key: String, 规则标识（仅供辨识）
+# - paths: Array, 该规则适用的资源路径列表
+# - unified_animation_name: String, 统一动画名称（非空则将该目录下所有动画按顺序重命名，如: Effect, Effect1...）
+# - collision_scene_path: String, 碰撞模板场景路径（注入为 CollisionShape2D 子节点）
+# - collision_shape: Dictionary（可选），覆盖默认形状参数，支持字段：radius / height / position
 const RULES: Array = [
 	{
 		"key": "Player",
 		"paths": ["res://assets/Unit/Player"],
 		"unified_animation_name": "",
-		"collision_scene_path": "res://Data/Data/Collision/Unit/PlayerCollision.tscn",
-		# CollisionShape2D 首次生成时使用的默认胶囊体参数（智能更新时自动保留手动调整结果）
-		"default_shape_radius": 30.0,
-		"default_shape_height": 70.0,
-		"default_shape_position": Vector2(-7.0, 29.0),
+		"collision_scene_path": "res://Src/ECS/Component/Presets/Collision/Unit/PlayerCollision.tscn",
+		# "collision_shape": {"radius": 30.0, "height": 70.0, "position": Vector2(-7.0, 29.0)},
 	},
 	{
 		"key": "Enemy",
 		"paths": ["res://assets/Unit/Enemy"],
 		"unified_animation_name": "",
-		"collision_scene_path": "res://Data/Data/Collision/Unit/EnemyCollision.tscn",
-		# CollisionShape2D 首次生成时使用的默认胶囊体参数
-		"default_shape_radius": 20.0,
-		"default_shape_height": 40.0,
-		"default_shape_position": Vector2(0.0, 0.0),
+		"collision_scene_path": "res://Src/ECS/Component/Presets/Collision/Unit/EnemyCollision.tscn",
 	},
 	{
 		"key": "Effect",
 		"paths": ["res://assets/Effect"],
 		"unified_animation_name": "Effect",
-		"collision_scene_path": "res://Data/Data/Collision/Effect/EffectCollision.tscn",
-		# CollisionShape2D 首次生成时使用的默认胶囊体参数
-		"default_shape_radius": 10.0,
-		"default_shape_height": 20.0,
-		"default_shape_position": Vector2(0.0, 0.0),
+		"collision_scene_path": "res://Src/ECS/Component/Presets/Collision/Effect/EffectCollision.tscn",
 	},
 ]

@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://dq8m5nvk2r7wp" path="res://Src/ECS/Component/Unit/Common/RecoveryComponent/RecoveryComponent.tscn" id="5_bplmq"]
 [ext_resource type="PackedScene" uid="uid://bx7k2n4qaqmva" path="res://Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.tscn" id="6_anim"]
 [ext_resource type="PackedScene" uid="uid://bpgdbip0j58ml" path="res://Src/ECS/Component/Movement/EntityMovementComponent.tscn" id="7_p1ieu"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Collision/CollisionComponent/CollisionComponent.tscn" id="8_fthh2"]
 
 [node name="UnitCorePreset" type="Node2D" unique_id=292361174]
 
@@ -23,3 +24,5 @@
 [node name="UnitAnimationComponent" parent="." unique_id=-447676240 instance=ExtResource("6_anim")]
 
 [node name="EntityMovementComponent" parent="." unique_id=1104470704 instance=ExtResource("7_p1ieu")]
+
+[node name="CollisionComponent" parent="." unique_id=1500808119 instance=ExtResource("8_fthh2")]

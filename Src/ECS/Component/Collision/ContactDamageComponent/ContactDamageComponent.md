@@ -2,31 +2,122 @@
 
 ## 1. 组件概述
 
-`ContactDamageComponent` 是专职处理“实体间身体接触引发伤害”的逻辑组件。它严格遵循 ECS 的“逻辑组件”原则：**不持有状态，不探测空间，纯靠事件响应驱动**。
+`ContactDamageComponent` 是专职处理“实体碰到敌人时，自身持续受到接触伤害”的逻辑组件。
+
+它严格遵循 ECS 的职责拆分：
+
+- **不直接监听原生 Godot 碰撞信号**
+- **不做空间查询**
+- **不决定碰撞节点从哪里来**
+- **只消费 `CollisionComponent` 转发出来的统一碰撞事件**
 
 ## 2. 核心责任边界
 
-本组件的**唯一职责**是：处理“我碰到了什么后果”，而完全不关心“我究竟是怎么碰到它的”。
+本组件只回答一个问题：
 
-- **不查物理**：没有 `_PhysicsProcess` 去轮询物理接触，完全依靠事件驱动。
-- **伤害计时**：为每一个判定为敌对的碰触对象，动态维护并绑定一个循环定时器（`GameTimer`），实现如同毒圈掉血的持续伤害。
-- **下发伤害**：在满足时间与敌对逻辑条件时，将触发信息打包为 `DamageInfo` 交由系统的全局 `DamageService` 处理。
+> 当我身上的受击感应区碰到了敌对实体，应该如何持续结算接触伤害？
 
-## 3. 工作流程与运行机制
+它的职责包括：
 
-- **进入接触 (OnCollisionEntered):**
-  - 判断目标是否为符合要求的实体（阵营不同且非中立）。
-  - 首先触发一次即时触碰伤害 `ApplyDamageFrom`（防穿人）。
-  - 根据目标的 `AttackInterval` 为其分配独立的循环掉血计时器。
+- **事件消费**：监听 `CollisionEntered / CollisionExited`
+- **类型过滤**：只处理 `CollisionType.Hurtbox`
+- **敌对判定**：只对非中立且敌对阵营生效
+- **伤害节流**：为每个接触目标维护独立循环计时器
+- **伤害结算**：通过 `DamageService.Instance.Process()` 发起标准伤害请求
 
-- **持续接触 (OnBodyDamageTick):**
-  - Timer 触发时，进行双向判活检查（若自身或目标已死亡/失活则自动取消特定定时器）。
-  - 若满足条件则读取目标身上的 `FinalAttack` 造成伤害。
+## 3. 与碰撞系统的协作关系
 
-- **离开接触 (OnCollisionExited):**
-  - 找到并销毁该对象相绑定的专属 `GameTimer`，阻止该敌人继续被扣血。
+`ContactDamageComponent` 自己不负责把 `Area2D` 接入事件总线。
 
-## 4. 兜底设计与应用方式
+当前标准链路是：
 
-1. **组合应用**：将 `ContactDamageComponent.tscn` 拖拽到实体的 `Components` 节点之下，并且**实体必须要带有能监听并抛出碰撞响应事件的源头**（即配合 `CollisionSensorComponent` 一起使用）才能有效果。
-2. **强兜底设计机制**：不仅会在脱离区域时刻及时销毁计时器，并在每次扣血逻辑真正生效前实时校验自身及目标的生存状态 (如检查 `DataKey.IsDead`)。这样即使引擎底层的出界事件遗失，依然能通过生死判定完美兜住“尸体扣空气血甚至引爆内存泄漏”的毁灭级 Bug。
+```text
+实体上的 Hurtbox Sensor 触发原生碰撞
+  ↓
+CollisionComponent 统一桥接为 CollisionEntered / CollisionExited
+  ↓
+ContactDamageComponent 按 CollisionType.Hurtbox 过滤
+  ↓
+对敌对实体结算接触伤害
+```
+
+因此，`ContactDamageComponent` 的前置条件是：
+
+- 实体身上有可用的 Hurtbox 碰撞模板
+- 实体挂有 `CollisionComponent`
+
+## 4. 工作流程与运行机制
+
+### 4.1 进入接触
+
+- 收到 `CollisionEntered`
+- 先过滤 `CollisionType.Hurtbox`
+- 再判断 `Target` 是否为敌对实体
+- 首次进入时立即调用一次 `ApplyDamageFrom()`
+- 为该目标创建独立循环计时器，按 `AttackInterval` 持续扣血
+
+### 4.2 持续接触
+
+- 计时器触发时执行 `OnBodyDamageTick()`
+- 若自己已死亡，则清理全部计时器
+- 若目标节点失效，则只移除对应目标计时器
+- 若仍有效，则继续调用 `ApplyDamageFrom()`
+
+### 4.3 离开接触
+
+- 收到 `CollisionExited`
+- 先过滤 `CollisionType.Hurtbox`
+- 取消该目标对应的循环计时器
+
+## 5. 伤害来源语义
+
+这里的接触伤害语义是：
+
+- **受害者**：当前挂有 `ContactDamageComponent` 的实体
+- **攻击者**：碰到它的敌对实体
+
+也就是：
+
+> 把 `ContactDamageComponent` 挂到某个实体后，该实体自己的 Hurtbox 一旦碰到敌人，就会按敌人的攻击间隔和攻击值持续受伤。
+
+当前数值读取方式：
+
+- 伤害值：攻击者 `DataKey.FinalAttack`
+- 伤害间隔：攻击者 `DataKey.AttackInterval`
+
+## 6. 应用方式
+
+标准组合方式如下：
+
+1. 给实体添加 `CollisionComponent`
+2. 在实体根节点下放置 `Collision` 容器
+3. 在 `Collision` 容器内实例化 Hurtbox 模板（如 `PlayerHurtboxSensor`）
+4. 给实体挂上 `ContactDamageComponent`
+
+示意结构：
+
+```text
+Entity Root
+  ├─ Component
+  │   ├─ CollisionComponent
+  │   └─ ContactDamageComponent
+  └─ Collision
+      └─ PlayerHurtboxSensor / EnemyHurtboxSensor
+          └─ CollisionShape2D
+```
+
+## 7. 兜底与稳定性设计
+
+本组件具备两层稳定性保障：
+
+1. **事件层清理**：收到 `CollisionExited` 时及时取消对应计时器
+2. **运行时判活**：每次计时触发前都再次校验自身与目标的有效性
+
+这样即使底层偶发漏掉离开事件，也不会无限制地对无效目标持续结算伤害。
+
+## 8. 关键文件
+
+- 组件实现：`Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.cs`
+- 组件场景：`Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.tscn`
+- 桥接组件：`Src/ECS/Component/Collision/CollisionComponent/CollisionComponent.cs`
+- 碰撞总览：`Docs/框架/ECS/Collision/碰撞系统说明.md`

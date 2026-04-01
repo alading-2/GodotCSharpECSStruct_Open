@@ -76,6 +76,12 @@ EntityMovementComponent.HandleMovementCollision()
      → EntityManager.Destroy
 ```
 
+其中：
+
+- `Target` 是碰撞到的 `Node2D?`
+- `CollisionType` 是本次碰撞来源语义
+- 如果业务要拿到目标实体，应自行从 `evt.Target` 回溯宿主 `IEntity`
+
 ### 典型用法：发射炮弹打敌人
 
 ```csharp
@@ -94,7 +100,8 @@ bullet.Events.Emit(GameEventType.Unit.MovementStarted,
 // 3. 命中回调（在炮弹所属的技能组件中）
 private void OnBulletHit(GameEventType.Unit.MovementCollisionEventData evt)
 {
-    if (evt.Target is not IEntity targetEntity) return;
+    var targetEntity = EntityManager.ResolveOwningIEntity(evt.Target);
+    if (targetEntity == null) return;
     DamageService.Instance.Process(new DamageInfo { ... });
 }
 ```

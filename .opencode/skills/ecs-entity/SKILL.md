@@ -10,6 +10,14 @@ description: 创建新 Entity、管理 Entity 生命周期（Spawn/Register/Dest
 - **统一生命周期**：必须通过 `EntityManager.Spawn/Register/Destroy`，禁止直接 `new` 或 `QueueFree()`
 - **两种类型**：对象池版（高频：Enemy/Bullet/Item）和非对象池版（低频：Player/Boss）
 
+## VisualRoot / Collision 约定（2026-03）
+- `EntityManager.Spawn` 会在组件注册前按 `VisualScenePath` 注入 `VisualRoot`
+- `SpriteFramesGenerator` 会把 `Src/ECS/Component/Presets/Collision/` 下的碰撞模板注入到 `VisualRoot/CollisionShape2D`
+- 实体根节点下允许放置 `Collision` 容器，用于挂受击区、拾取区等传感器模板实例
+- 真实运行时的碰撞事件桥接统一由 `CollisionComponent` 负责，不由 `EntityManager` 直接参与绑定
+- Entity 根场景保留根物理体 `CollisionShape2D`，视觉模板形状优先在生成后的视觉场景内单独调整
+- 依赖视觉或碰撞配置的组件，可以假设 `OnComponentRegistered` 执行时 `VisualRoot` 已注入完成
+
 ## IEntity 接口实现（必须）
 
 ```csharp

@@ -20,8 +20,8 @@ class ResourceGenerator
         { "Src/UI", ResourceCategory.UI },
         { "Src/ECS/Entity", ResourceCategory.Entity },
         { "Src/ECS/Component", ResourceCategory.Component },
+        // { "Src/ECS/Component/Presets/Collision", ResourceCategory.Component },
         { "Data/Data", ResourceCategory.Data },         // 兜底
-        { "Data/Data/Collision", ResourceCategory.DataCollision },
         { "Data/Data/Ability", ResourceCategory.DataAbility },  // 自动更优先
         { "Data/Data/Unit", ResourceCategory.DataUnit },      // 自动更优先
         { "Src/ECS/System", ResourceCategory.System },
@@ -34,8 +34,8 @@ class ResourceGenerator
         ".godot",
     };
 
-    private const string CollisionDataPath = "Data/Data/Collision";
-    private const string CollisionRegistryOutputFile = "Data/Data/Collision/CollisionTypeRegistry.cs";
+    private const string CollisionDataPath = "Src/ECS/Component/Presets/Collision";
+    private const string CollisionRegistryOutputFile = "Src/ECS/Component/Presets/Collision/CollisionTypeRegistry.cs";
 
     private const string OutputFile = "Data/ResourceManagement/ResourcePaths.cs";
 
@@ -255,12 +255,15 @@ class ResourceGenerator
         public string NodeName;
         public uint Layer;
         public uint Mask;
-        public int EnumValue;
     }
 
     /// <summary>
-    /// 扫描 Data/Data/Collision 目录下所有 .tscn 文件，提取节点名称和 layer/mask，
-    /// 生成 CollisionType 枚举 + CollisionTypeRegistry 查找表到 CollisionTypeRegistry.cs
+    /// 扫描 Src/ECS/Component/Presets/Collision 目录下所有 .tscn 文件，提取节点名称和 layer/mask，
+    /// 生成 CollisionTypeRegistry（CollisionType <-> (layer, mask) 正反映射）到 CollisionTypeRegistry.cs
+    /// <para>
+    /// 前提：CollisionType 枚举（手动维护）中每个 tscn 场景有对应的同名位标志成员。
+    /// 本方法仅生成数据映射，不生成枚举定义。
+    /// </para>
     /// </summary>
     private static void GenerateCollisionTypeRegistry(string projectRoot)
     {
@@ -283,24 +286,18 @@ class ResourceGenerator
 
         if (entries.Count == 0)
         {
-            Console.WriteLine("[警告] Data/Data/Collision 未找到有效 .tscn 文件，跳过 CollisionTypeRegistry 生成。");
+            Console.WriteLine("[警告] Src/ECS/Component/Presets/Collision 未找到有效 .tscn 文件，跳过 CollisionTypeRegistry 生成。");
             return;
         }
 
-        // 按节点名字母序排列（保证枚举值稳定）
+        // 按节点名字母序排列（保证生成代码稳定）
         entries.Sort((a, b) => string.Compare(a.NodeName, b.NodeName, StringComparison.OrdinalIgnoreCase));
-        for (int i = 0; i < entries.Count; i++)
-        {
-            var e = entries[i];
-            e.EnumValue = i + 1; // 0 保留给 Custom
-            entries[i] = e;
-        }
 
         var sb = new StringBuilder();
         sb.AppendLine("//------------------------------------------------------------------------------");
         sb.AppendLine("//* <ResourceGenerator>");
         sb.AppendLine("//*     此文件由 ResourceGenerator 自动生成，请勿手动修改。");
-        sb.AppendLine("//*     来源：Data/Data/Collision/ 目录下所有 .tscn 文件（按节点名称字母序排列）。");
+        sb.AppendLine("//*     来源：Src/ECS/Component/Presets/Collision/ 目录下所有 .tscn 文件。");
         sb.AppendLine("//*     重新运行 ResourceGenerator 会覆盖本文件。");
         sb.AppendLine("//* </ResourceGenerator>");
         sb.AppendLine("//------------------------------------------------------------------------------");
@@ -308,32 +305,25 @@ class ResourceGenerator
         sb.AppendLine("using System.Collections.Generic;");
         sb.AppendLine();
         sb.AppendLine("/// <summary>");
-        sb.AppendLine("/// 碰撞类型枚举");
-        sb.AppendLine("/// 值来源：Data/Data/Collision/ 目录下 .tscn 场景的根节点名称（字母序）");
-        sb.AppendLine("/// Custom = 0 永远保留；添加新场景请勿改变已有场景文件名，否则枚举值会错位");
-        sb.AppendLine("/// </summary>");
-        sb.AppendLine("public enum CollisionType");
-        sb.AppendLine("{");
-        sb.AppendLine("    Custom = 0,");
-        foreach (var e in entries)
-            sb.AppendLine($"    {e.NodeName} = {e.EnumValue},      // layer={e.Layer}, mask={e.Mask}");
-        sb.AppendLine("}");
-        sb.AppendLine();
-        sb.AppendLine("/// <summary>");
-        sb.AppendLine("/// 碰撞类型注册表 - 纯数据，仅存储各类型的 Layer/Mask 映射");
-        sb.AppendLine("/// 查询方法请使用 CollisionTypeQuery（Data/Data/Collision/CollisionTypeQuery.cs）");
+        sb.AppendLine("/// 碰撞类型注册表（自动生成） - 存储 CollisionType <-> (Layer, Mask) 的双向映射");
+        sb.AppendLine("/// <para>");
+        sb.AppendLine("/// CollisionType 枚举定义在 CollisionType.cs（手动维护），本文件仅提供数据映射。");
+        sb.AppendLine("/// 查询方法请使用 CollisionTypeQuery（Src/ECS/Component/Presets/Collision/CollisionTypeQuery.cs）");
+        sb.AppendLine("/// </para>");
         sb.AppendLine("/// </summary>");
         sb.AppendLine("public static class CollisionTypeRegistry");
         sb.AppendLine("{");
-        sb.AppendLine("    /// <summary>CollisionType → (Layer, Mask) 正向字典</summary>");
-        sb.AppendLine("    public static readonly IReadOnlyDictionary<CollisionType, (uint Layer, uint Mask)> LayerMaskByType =\n        new Dictionary<CollisionType, (uint Layer, uint Mask)>");
+        sb.AppendLine("    /// <summary>CollisionType → (Layer, Mask) 正向字典（仅包含单场景位标志，不含组合类型）</summary>");
+        sb.AppendLine("    public static readonly IReadOnlyDictionary<CollisionType, (uint Layer, uint Mask)> LayerMaskByType =");
+        sb.AppendLine("        new Dictionary<CollisionType, (uint Layer, uint Mask)>");
         sb.AppendLine("    {");
         foreach (var e in entries)
             sb.AppendLine($"        {{ CollisionType.{e.NodeName}, ({e.Layer}u, {e.Mask}u) }},");
         sb.AppendLine("    };");
         sb.AppendLine();
-        sb.AppendLine("    /// <summary>(Layer, Mask) 元组 → CollisionType 反向字典（包含 layer=0 的类型）</summary>");
-        sb.AppendLine("    public static readonly IReadOnlyDictionary<(uint Layer, uint Mask), CollisionType> TypeByLayerMask =\n        new Dictionary<(uint Layer, uint Mask), CollisionType>");
+        sb.AppendLine("    /// <summary>(Layer, Mask) → CollisionType 反向字典</summary>");
+        sb.AppendLine("    public static readonly IReadOnlyDictionary<(uint Layer, uint Mask), CollisionType> TypeByLayerMask =");
+        sb.AppendLine("        new Dictionary<(uint Layer, uint Mask), CollisionType>");
         sb.AppendLine("    {");
         foreach (var e in entries)
             sb.AppendLine($"        {{ ({e.Layer}u, {e.Mask}u), CollisionType.{e.NodeName} }},");
@@ -341,8 +331,11 @@ class ResourceGenerator
         sb.AppendLine("}");
 
         var outputPath = Path.Combine(projectRoot, CollisionRegistryOutputFile);
+        var outputDir = Path.GetDirectoryName(outputPath);
+        if (!Directory.Exists(outputDir))
+            Directory.CreateDirectory(outputDir!);
         File.WriteAllText(outputPath, sb.ToString());
-        Console.WriteLine($"[碰撞注册表] 已生成 {entries.Count} 个 CollisionType 枚举值 → {CollisionRegistryOutputFile}");
+        Console.WriteLine($"[碰撞注册表] 已生成 {entries.Count} 个 CollisionType 映射 → {CollisionRegistryOutputFile}");
     }
 
     private static CollisionEntry ParseCollisionTscn(string filePath)

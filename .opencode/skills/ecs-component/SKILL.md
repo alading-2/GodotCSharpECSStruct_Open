@@ -100,6 +100,12 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - ❌ 使用 Godot Signal 处理核心逻辑 → 用 `EventBus`
 - ❌ `_Process` 中 `new` 对象或 LINQ
 
+## 碰撞组件约定（2026-03）
+- `CollisionComponent` 是统一碰撞桥接入口，负责扫描 `VisualRoot/CollisionShape2D` 与实体根节点下的 `Collision` 容器，并转发 `CollisionEntered / CollisionExited`
+- 接触伤害、拾取等业务组件应优先消费事件中的 `CollisionType` 与 `Target`，不要在业务层重复直接绑定原生 `BodyEntered / AreaEntered`
+- 如果必须从任意碰撞子节点回溯宿主实体，使用 `EntityManager.ResolveOwningIEntity(node)`
+- 组件需要修改碰撞形状时，应优先改 `Src/ECS/Component/Presets/Collision/` 模板、`sprite_frames_config.gd` 规则或生成后的视觉场景，不要把 shape 重新硬编码回多个 Entity 根场景
+
 ## EntityMovementComponent（策略调度器）
 
 `EntityMovementComponent` 已重构为**策略模式调度器**，不再包含内联运动逻辑。
@@ -108,22 +114,24 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - **调度器**：`EntityMovementComponent` 检测 `DataKey.MoveMode` 变化，自动切换 `IMovementStrategy`
 - **策略接口**：`IMovementStrategy`（Update 纯计算只写 `DataKey.Velocity` / OnEnter / OnExit）；如视觉朝向不应直接取 `Velocity`，通过 `MovementUpdateResult.Continue(distance, facingDirection)` 显式返回朝向
 - **注册表**：`MovementStrategyRegistry`（MoveMode → Strategy 的静态映射）
-- **辅助方法**：`MovementHelper`（朝向旋转、到达距离）
+- **辅助方法**：`MovementHelper`（朝向旋转、到达距离） + `ScalarDriver`（策略内标量参数演化）
 - **统一执行路径**：所有实体经 `VelocityResolver.Resolve()` 合成速度后应用位移，`CharacterBody2D` 额外调用 `MoveAndSlide()` 处理碰撞，其他用 `GlobalPosition +=`
 - **帧率选择**：由策略 `UsePhysicsProcess` 声明走 `_Process` 或 `_PhysicsProcess`，与节点类型无关，两条路径逻辑完全相同
 - **策略约束**：禁止直接操作 `GlobalPosition`，所有位移由调度器统一执行
+- **曲线采样原则**：所有曲线策略每帧直接调用 `Evaluate(t)` / `EvaluateTangent(t)` 采样，进度由 `speed * delta / ApproximateLength()` 驱动；无需弧长查找表
 
 ### 朝向语义
 - `Velocity` = “本帧怎么移动”，服务于位移执行与速度分层合成
 - `FacingDirection` = “本帧朝哪看”，服务于 `VisualRoot.FlipH` 或 `Node2D.RotationDegrees`
-- 已接入显式朝向的曲线路径：`SineWaveStrategy`（正弦切线）、`BezierCurveStrategy`（贝塞尔切线）、`OrbitStrategy`（切向+径向合成切线）
+- 已接入显式朝向的曲线路径：`SineWaveStrategy`（正弦切线）、`BezierCurveStrategy`（贝塞尔切线）、`OrbitStrategy`（切向+径向合成切线）、`ParabolaStrategy`/`CircularArcStrategy`/`BoomerangStrategy`（曲线切线）
 - 直线/追踪/输入类策略若 `Velocity` 本身就是想看的方向，可继续只返回 `Continue(distance)`
 
-### 12 种运动模式
-FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral / SineWave / BezierCurve / Boomerang / AttachToHost / PlayerInput / AIControlled
+### 14 种运动模式
+FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral / SineWave / BezierCurve / Boomerang / AttachToHost / PlayerInput / AIControlled / Parabola / CircularArc
 
-- 所有 12 种模式对 Node2D/Area2D 和 CharacterBody2D 通用
+- 所有 14 种模式对 Node2D/Area2D 和 CharacterBody2D 通用
 - `AIControlled` 读取 `AIMoveDirection/AIMoveSpeedMultiplier`，AI 行为树在非 `AIControlled` 模式下暂停写入移动意图
+- `Boomerang` 支持两种速度来源：`ActionSpeed` 优先；未设置时可由 `MaxDuration` 扣除 `BoomerangPauseTime` 后均分去/返程飞行时间
 
 ### 附着跟随模式（AttachToHost）
 - `EffectComponent` 仅负责查找宿主与生命周期监听
@@ -134,11 +142,15 @@ FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral 
 1. `MovementEnums.cs` 添加 MoveMode 枚举值
 2. 创建策略类实现 `IMovementStrategy`
 3. 用 `[ModuleInitializer]` 自注册到 `MovementStrategyRegistry`
-4. 如需新参数在 `DataKey_Movement.cs` 添加 DataKey
+4. 如果新参数只是当前策略私有配置，优先加到 `MovementParams`；若属于“同策略内部连续变化的标量”，优先复用 `ScalarDriverParams`
 5. 如果策略轨迹是曲线/环绕/波形，先判断视觉朝向是否应直接取 `Velocity`；若否，显式返回 `facingDirection`
 
-### ⚠️ 策略类是单例
-策略实例在注册表中全局共享，**禁止持有实例级业务状态**。所有状态必须存 `Data`。
+### ⚠️ 策略实例语义
+注册表保存的是工厂函数，不是单例对象。每次切换运动模式都会新建策略实例：
+
+- **允许** 持有策略私有运行态（如 `_currentAngle`、`ScalarDriverState`、缓存曲线对象）
+- **禁止** 把可跨系统观察的业务状态偷偷藏在策略里；这类状态仍应进入 `Data`
+- `ScalarDriverState` 这类“仅服务当前策略公式”的局部运行态，应该由策略实例私有持有
 
 ### Velocity 分层合成
 `VelocityResolver.Resolve(data)` 解决多组件写入冲突：

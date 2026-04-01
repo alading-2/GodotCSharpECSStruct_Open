@@ -101,10 +101,10 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - ❌ `_Process` 中 `new` 对象或 LINQ
 
 ## 碰撞组件约定（2026-03）
-- `CollisionSensorComponent` 只负责碰撞采样与事件分发，不直接承载接触伤害业务
-- 接触伤害、拾取等业务组件应优先消费事件中的 `TargetEntity`，不要假设 `Target` 一定就是根 `Entity`
+- `CollisionComponent` 是统一碰撞桥接入口，负责扫描 `VisualRoot/CollisionShape2D` 与实体根节点下的 `Collision` 容器，并转发 `CollisionEntered / CollisionExited`
+- 接触伤害、拾取等业务组件应优先消费事件中的 `CollisionType` 与 `Target`，不要在业务层重复直接绑定原生 `BodyEntered / AreaEntered`
 - 如果必须从任意碰撞子节点回溯宿主实体，使用 `EntityManager.ResolveOwningIEntity(node)`
-- 组件需要修改碰撞形状时，应改 `VisualRoot/Collision` 模板或生成器规则，不要把 shape 重新硬编码回 Entity 根场景
+- 组件需要修改碰撞形状时，应优先改 `Src/ECS/Component/Presets/Collision/` 模板、`sprite_frames_config.gd` 规则或生成后的视觉场景，不要把 shape 重新硬编码回多个 Entity 根场景
 
 ## EntityMovementComponent（策略调度器）
 

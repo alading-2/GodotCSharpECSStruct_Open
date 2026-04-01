@@ -149,6 +149,12 @@ HandleMovementCollision(target, collisionType)
        -> EntityManager.Destroy
 ```
 
+其中：
+
+- `Target` 是命中的 `Node2D?`
+- `CollisionType` 是本次碰撞来源语义
+- 如果业务需要目标实体，应从 `evt.Target` 回溯宿主 `IEntity`
+
 ### 典型用法：发射子弹
 
 ```csharp
@@ -167,7 +173,8 @@ bullet.Events.Emit(GameEventType.Unit.MovementStarted,
 // 3. 命中处理
 private void OnBulletHit(GameEventType.Unit.MovementCollisionEventData evt)
 {
-    if (evt.Target is not IEntity target) return;
+    var target = EntityManager.ResolveOwningIEntity(evt.Target);
+    if (target == null) return;
     DamageService.Instance.Process(new DamageInfo { ... });
 }
 ```

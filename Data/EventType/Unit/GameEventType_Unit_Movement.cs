@@ -30,7 +30,7 @@ public static partial class GameEventType
         /// <para>
         /// 订阅示例（技能组件发射炮弹后监听命中）：
         /// <code>
-        /// bullet.Events.On&lt;GameEventType.Unit.MovementCollisionEventData&gt;(
+        /// bullet.Events.On<GameEventType.Unit.MovementCollisionEventData>(
         ///     GameEventType.Unit.MovementCollision, OnBulletHit);
         /// </code>
         /// </para>

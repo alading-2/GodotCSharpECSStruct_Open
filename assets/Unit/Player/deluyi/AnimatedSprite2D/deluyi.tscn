@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dmwhanur44pn6"]
 
 [ext_resource type="SpriteFrames" uid="uid://wemkt7bdq7pn" path="res://assets/Unit/Player/deluyi/AnimatedSprite2D/deluyi.tres" id="1_g1cc7"]
-[ext_resource type="PackedScene" path="res://Data/Data/Collision/Unit/PlayerCollision.tscn" id="2_op16w"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Presets/Collision/Unit/PlayerCollision.tscn" id="2_op16w"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_g1cc7"]
 radius = 30.0
@@ -12,9 +12,9 @@ position = Vector2(7, -69)
 sprite_frames = ExtResource("1_g1cc7")
 animation = &"attack1"
 
-[node name="CollisionShape2D" type="CharacterBody2D" parent="." unique_id=1079010352 instance=ExtResource("2_op16w")]
+[node name="CollisionShape2D" type="CharacterBody2D" parent="." unique_id=1434574274 instance=ExtResource("2_op16w")]
 collision_layer = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1214721309]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1286241295]
 position = Vector2(-7, 29)
 shape = SubResource("CapsuleShape2D_g1cc7")

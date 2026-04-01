@@ -299,8 +299,8 @@ public partial class EntityMovementComponent : Node, IComponent
                     _hasCollided = true; // 立即标记，确保后续帧不再重入
                     // 取第一个碰撞结果；Collider 可能已释放（地形 StaticBody2D 等），as Node2D 自动返回 null
                     var slideCollision = _body.GetSlideCollision(0);
-                    // CharacterBody2D 无 layer 语义，传 Custom 作为占位类型；业务方可在事件数据中区分
-                    HandleMovementCollision(slideCollision.GetCollider() as Node2D, CollisionType.Custom);
+                    // CharacterBody2D 路径无 layer/mask 反查，直接传 VisualBody（实体物理形体碰撞语义）
+                    HandleMovementCollision(slideCollision.GetCollider() as Node2D, CollisionType.VisualBody);
                 }
             }
         }
@@ -423,20 +423,34 @@ public partial class EntityMovementComponent : Node, IComponent
     // ================= 碰撞处理 =================
 
     /// <summary>
-    /// Area2D 碰撞进入回调（由 CollisionComponent 通过 Entity.Events 转发）
+    /// 碰撞进入回调（由 CollisionComponent 通过 Entity.Events 转发）
     /// <para>仅在非默认运动模式下响应，避免常驻 AI/Player 模式产生噪声事件。</para>
+    /// <para>只处理视觉体碰撞（EffectCollision / PlayerCollision / EnemyCollision），
+    /// 感应器类型（EnemyHurtboxSensor / PlayerHurtboxSensor / PlayerPickupSensor）由各自业务组件处理。</para>
     /// </summary>
     private void OnCollisionDetected(GameEventType.Collision.CollisionEnteredEventData evt)
     {
         if (_entity == null || _data == null) return;
         if (_moveCompleted) return;
 
+        // 只处理视觉体碰撞，感应器碰撞不参与运动碰撞判断
+        if (!IsVisualBodyCollision(evt.CollisionType)) return;
+
         var mode = _data.Get<MoveMode>(DataKey.MoveMode);
         var defaultMode = _data.Get<MoveMode>(DataKey.DefaultMoveMode);
+        // 移动模式为defaultMode或None不运行
         if (mode == defaultMode || mode == MoveMode.None) return;
 
         HandleMovementCollision(evt.Target, evt.CollisionType);
     }
+
+    /// <summary>
+    /// 判断碰撞类型是否为视觉体碰撞（VisualRoot 下 Area2D 类型的碰撞节点）
+    /// <para>CharacterBody2D 类型的视觉体（PlayerCollision / EnemyCollision）不会触发 CollisionEntered 事件，
+    /// 其碰撞由 ApplyMovement 中的 MoveAndSlide 直接检测，不经过此方法。</para>
+    /// </summary>
+    private static bool IsVisualBodyCollision(CollisionType type) =>
+        (type & CollisionType.VisualBody) != 0;
 
     /// <summary>
     /// 运动碰撞统一处理：发布 MovementCollision 事件，若配置了 DestroyOnCollision 则触发完成流程。
@@ -447,7 +461,7 @@ public partial class EntityMovementComponent : Node, IComponent
     /// </para>
     /// </summary>
     /// <param name="target">碰撞目标节点（可能为 null，例如 CharacterBody2D 碰到地形时 Collider 已释放）</param>
-    /// <param name="collisionType">碰撞类型（Area2D 路径由 CollisionComponent 识别；CharacterBody2D 路径传 Custom）</param>
+    /// <param name="collisionType">碰撞类型（Area2D 路径由 CollisionComponent 识别；CharacterBody2D 路径传 VisualBody）</param>
     private void HandleMovementCollision(Node2D? target, CollisionType collisionType)
     {
         if (_moveCompleted) return;
@@ -463,7 +477,7 @@ public partial class EntityMovementComponent : Node, IComponent
 
         if (_params.DestroyOnCollision)
         {
-            OnMoveComplete(byCollision: true);
         }
+        OnMoveComplete(byCollision: true);
     }
 }

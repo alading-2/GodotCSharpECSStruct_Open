@@ -219,7 +219,8 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 			idx += 1
 		anim_groups = new_groups
 
-	var is_animated_scene := anim_groups.size() > 0
+	# 优先判断单张图片：如果只有一张图片且不是序列帧，生成 Sprite2D
+	var is_animated_scene := anim_groups.size() > 0 and standalone_sprite_path.is_empty()
 	if not is_animated_scene and standalone_sprite_path.is_empty():
 		if trigger_scan:
 			push_warning("[%s] 未识别到有效的序列帧命名格式 (示例: attack_0.png)" % folder_path)
@@ -448,12 +449,13 @@ func _sync_collision_scene(visual_node: Node, rule: Dictionary) -> void:
 		shape_node.transform = saved_transform
 		shape_node.disabled = saved_disabled
 	else:
-		# 首次生成：从规则配置读取默认胶囊体参数，未配置则使用 Godot 默认值
+		# 首次生成：合并全局默认形状与规则内 collision_shape 覆盖值
+		var shape_cfg: Dictionary = rule.get("collision_shape", {})
 		var capsule := CapsuleShape2D.new()
-		capsule.radius = rule.get("default_shape_radius", 10.0)
-		capsule.height = rule.get("default_shape_height", 20.0)
+		capsule.radius = shape_cfg.get("radius", Config.DEFAULT_COLLISION_SHAPE.get("radius", 20.0))
+		capsule.height = shape_cfg.get("height", Config.DEFAULT_COLLISION_SHAPE.get("height", 40.0))
 		shape_node.shape = capsule
-		var default_pos: Vector2 = rule.get("default_shape_position", Vector2.ZERO)
+		var default_pos: Vector2 = shape_cfg.get("position", Config.DEFAULT_COLLISION_SHAPE.get("position", Vector2.ZERO))
 		if default_pos != Vector2.ZERO:
 			shape_node.position = default_pos
 	collision_node.add_child(shape_node)

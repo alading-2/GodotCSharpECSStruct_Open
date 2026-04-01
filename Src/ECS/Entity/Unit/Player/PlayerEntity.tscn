@@ -3,7 +3,8 @@
 [ext_resource type="Script" uid="uid://d3cifehq7mpiv" path="res://Src/ECS/Entity/Unit/Player/PlayerEntity.cs" id="1_a3twn"]
 [ext_resource type="PackedScene" uid="uid://d0e7kth57lvet" path="res://Src/ECS/Component/Presets/Unit/UnitCorePreset.tscn" id="2_hhu18"]
 [ext_resource type="PackedScene" uid="uid://jx6dhoafnfft" path="res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn" id="3_in0jy"]
-[ext_resource type="PackedScene" path="res://Src/ECS/Component/Collision/CollisionSensorComponent/CollisionSensorComponent.tscn" id="4_in0jy"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.tscn" id="4_05apk"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Presets/Collision/Sensor/PlayerHurtboxSensor.tscn" id="4_in0jy"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_in0jy"]
 radius = 16.0
@@ -24,16 +25,17 @@ script = ExtResource("1_a3twn")
 
 [node name="PlayerPreset" parent="Component" unique_id=1428082245 instance=ExtResource("3_in0jy")]
 
-[node name="CollisionSensorComponent" parent="Component" unique_id=2115972599 instance=ExtResource("4_in0jy")]
-collision_layer = 8
-collision_mask = 4
-SensorType = 5
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Component/CollisionSensorComponent" unique_id=66762458]
-position = Vector2(0, -41)
-shape = SubResource("CapsuleShape2D_in0jy")
+[node name="ContactDamageComponent" parent="Component" unique_id=949598689 instance=ExtResource("4_05apk")]
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=508281073]
+
+[node name="Collision" type="Node2D" parent="." unique_id=2115972599]
+
+[node name="PlayerHurtboxSensor" parent="Collision" unique_id=66762458 instance=ExtResource("4_in0jy")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Collision/PlayerHurtboxSensor" unique_id=987654321]
+position = Vector2(0, -41)
+shape = SubResource("CapsuleShape2D_in0jy")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=243001881]
 position = Vector2(0, -41)

@@ -11,9 +11,9 @@
 [ext_resource type="Texture2D" uid="uid://d3ddebnsqroq5" path="res://assets/Effect/003/003_08.png" id="9_hvkp0"]
 [ext_resource type="Texture2D" uid="uid://cajuq148gvm4" path="res://assets/Effect/003/003_09.png" id="10_3j2a5"]
 [ext_resource type="Texture2D" uid="uid://cgpd1spk5ws7e" path="res://assets/Effect/003/003_10.png" id="11_u7123"]
-[ext_resource type="PackedScene" path="res://Data/Data/Collision/Effect/EffectCollision.tscn" id="12_6rprx"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Presets/Collision/Effect/EffectCollision.tscn" id="12_6rprx"]
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_hk6ps"]
+[sub_resource type="SpriteFrames" id="SpriteFrames_6rprx"]
 animations = [{
 "frames": [{
 "duration": 1.0,
@@ -54,16 +54,17 @@ animations = [{
 "speed": 10.0
 }]
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_xhvs2"]
-height = 20.0
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_l480g"]
+radius = 30.0
+height = 70.0
 
 [node name="003" type="AnimatedSprite2D" unique_id=915030338]
-sprite_frames = SubResource("SpriteFrames_hk6ps")
+sprite_frames = SubResource("SpriteFrames_6rprx")
 animation = &"Effect"
 
-[node name="CollisionShape2D" type="Area2D" parent="." unique_id=2027651058 instance=ExtResource("12_6rprx")]
+[node name="CollisionShape2D" type="Area2D" parent="." unique_id=540735755 instance=ExtResource("12_6rprx")]
 collision_layer = 0
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=308914423]
-shape = SubResource("CapsuleShape2D_xhvs2")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1083010048]
+shape = SubResource("CapsuleShape2D_l480g")

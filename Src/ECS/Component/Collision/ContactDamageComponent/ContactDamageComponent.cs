@@ -197,7 +197,7 @@ public partial class ContactDamageComponent : Node, IComponent
     /// 判断碰撞类型是否为 HurtboxSensor（受击感应器），ContactDamage 只响应此类碰撞
     /// </summary>
     private static bool IsHurtboxSensor(CollisionType type) =>
-        type == CollisionType.PlayerHurtboxSensor || type == CollisionType.EnemyHurtboxSensor;
+        (type & CollisionType.Hurtbox) != 0;
 
     /// <summary>
     /// 判断目标是否为敌对

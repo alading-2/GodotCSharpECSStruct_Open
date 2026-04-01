@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://b5e73s3qpm4pr"]
 
 [ext_resource type="SpriteFrames" uid="uid://dwn5fdqvvhsgs" path="res://assets/Unit/Player/guangfa/AnimatedSprite2D/guangfa.tres" id="1_tqmyq"]
-[ext_resource type="PackedScene" path="res://Data/Data/Collision/Unit/PlayerCollision.tscn" id="2_yw1n8"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Component/Presets/Collision/Unit/PlayerCollision.tscn" id="2_yw1n8"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_vssi6"]
 radius = 34.0
@@ -12,9 +12,9 @@ position = Vector2(-45, -154)
 sprite_frames = ExtResource("1_tqmyq")
 animation = &"attack1"
 
-[node name="CollisionShape2D" type="CharacterBody2D" parent="." unique_id=1392377737 instance=ExtResource("2_yw1n8")]
+[node name="CollisionShape2D" type="CharacterBody2D" parent="." unique_id=1336177273 instance=ExtResource("2_yw1n8")]
 collision_layer = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1968173133]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1679742902]
 position = Vector2(44, 80)
 shape = SubResource("CapsuleShape2D_vssi6")

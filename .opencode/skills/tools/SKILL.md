@@ -1,4 +1,4 @@
----
+﻿---
 name: tools
 description: 使用 TimerManager 计时器、ObjectPool 对象池、TargetSelector 目标查询、ResourceManagement 资源加载时使用。适用于：需要延迟/循环定时器，高频生成销毁对象，范围内查找敌人，加载场景或配置资源。触发关键词：TimerManager、定时器、延迟执行、对象池、ObjectPool、TargetSelector、范围查找、ResourceManagement、加载资源。
 ---
