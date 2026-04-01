@@ -49,6 +49,6 @@ animations = [{
 "texture": ExtResource("11_7flof")
 }],
 "loop": false,
-"name": &"effect",
+"name": &"Effect",
 "speed": 10.0
 }]

@@ -136,7 +136,7 @@ public partial class ObjectPoolInit
 
         // 初始化 LightningLinePool (连线闪电特效对象池)
         new ObjectPool<LightningLineEffect>(
-            () => (LightningLineEffect)ResourceManagement.Load<PackedScene>(ResourcePaths.Entity_Effect_LightningLineEffect_LightningLineEffect, ResourceCategory.Entity).Instantiate(),
+            () => (LightningLineEffect)ResourceManagement.Load<PackedScene>(ResourcePaths.Entity_LightningLineEffect, ResourceCategory.Entity).Instantiate(),
             new ObjectPoolConfig
             {
                 Name = ObjectPoolNames.LightningLinePool,

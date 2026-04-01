@@ -1,8 +1,21 @@
 [gd_scene format=3 uid="uid://xulpywb2d61u"]
 
-[ext_resource type="SpriteFrames" uid="uid://cfen8i35mmtgd" path="res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tres" id="1_a7vrm"]
+[ext_resource type="SpriteFrames" uid="uid://cfen8i35mmtgd" path="res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tres" id="1_k31a1"]
+[ext_resource type="PackedScene" uid="uid://uo3nn6dbfowc" path="res://Data/Data/Collision/Unit/EnemyCollision.tscn" id="2_k31a1"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_3hvx0"]
+radius = 17.0
+height = 44.0
 
 [node name="yuren" type="AnimatedSprite2D" unique_id=2024640787]
 position = Vector2(15, -51)
-sprite_frames = ExtResource("1_a7vrm")
+sprite_frames = ExtResource("1_k31a1")
 animation = &"attack1"
+
+[node name="CollisionShape2D" type="CharacterBody2D" parent="." unique_id=1435647743 instance=ExtResource("2_k31a1")]
+collision_layer = 4
+collision_mask = 5
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1104590132]
+position = Vector2(-17, 19)
+shape = SubResource("CapsuleShape2D_3hvx0")

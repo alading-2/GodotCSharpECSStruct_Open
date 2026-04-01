@@ -27,8 +27,6 @@ using Godot;
 /// 新增运动模式只需：1) 在 MoveMode 枚举添加值 2) 实现 IMovementStrategy 并用 [ModuleInitializer] 自注册
 /// </para>
 /// </summary>
-// TODO: MoveDestroyOnCollision 碰撞销毁逻辑待实现（需要同时支持 Area2D 信号和 CharacterBody2D MoveAndSlide 检测）
-
 public partial class EntityMovementComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(EntityMovementComponent));
@@ -52,6 +50,9 @@ public partial class EntityMovementComponent : Node, IComponent
 
     /// <summary>当前帧显式朝向意图（由策略通过 MovementUpdateResult 返回；Zero = 回退到 Velocity 方向）</summary>
     private Vector2 _facingDirection;
+
+    /// <summary>本次运动是否已触发过碰撞事件（CharacterBody2D 防止连续帧重复触发 MovementCollision）</summary>
+    private bool _hasCollided;
 
     // ================= 节点类型缓存 =================
 
@@ -86,6 +87,10 @@ public partial class EntityMovementComponent : Node, IComponent
         _entity.Events.On<GameEventType.Unit.MovementStartedEventData>(
             GameEventType.Unit.MovementStarted, OnMovementStarted);
 
+        // 订阅碰撞事件（Area2D 路径；CharacterBody2D 路径在 ApplyMovement 中通过 MoveAndSlide 检测）
+        _entity.Events.On<GameEventType.Collision.CollisionEnteredEventData>(
+            GameEventType.Collision.CollisionEntered, OnCollisionDetected);
+
         // 根据 DefaultMoveMode 初始化默认策略（无 MovementParams，使用空参数）
         var defaultMode = _data.Get<MoveMode>(DataKey.DefaultMoveMode);
         if (defaultMode != MoveMode.None)
@@ -112,6 +117,7 @@ public partial class EntityMovementComponent : Node, IComponent
         _body = null;
         _visualRoot = null;
         _facingDirection = Vector2.Zero;
+        _hasCollided = false;
     }
 
     // ================= Godot 生命周期 =================
@@ -277,6 +283,26 @@ public partial class EntityMovementComponent : Node, IComponent
             _body.MoveAndSlide();
             // 同步碰撞修正后的实际速度回 Data
             _data.Set(DataKey.Velocity, _body.Velocity);
+
+            // CharacterBody2D 碰撞检测：手动模拟 Area2D body_entered 的"首次进入"语义
+            // （Area2D 路径由 OnCollisionDetected 订阅 CollisionEntered 事件处理，此处仅处理 CharacterBody2D）
+            if (_body.GetSlideCollisionCount() > 0  // MoveAndSlide 本帧检测到物理碰撞
+                && !_moveCompleted                   // 运动尚未因策略/时间/距离提前完成，避免重复触发
+                && !_hasCollided)                    // 同一次运动内只响应第一次碰撞，防止持续推墙时每帧刷事件
+            {
+                var curMode = _data.Get<MoveMode>(DataKey.MoveMode);
+                var defMode = _data.Get<MoveMode>(DataKey.DefaultMoveMode);
+                // 仅在非默认运动模式（如 FixedDirection 冲锋/发射）下响应；
+                // 默认移动模式 AI/Player 移动撞墙属正常现象，不应触发 MovementCollision 事件
+                if (curMode != defMode && curMode != MoveMode.None)
+                {
+                    _hasCollided = true; // 立即标记，确保后续帧不再重入
+                    // 取第一个碰撞结果；Collider 可能已释放（地形 StaticBody2D 等），as Node2D 自动返回 null
+                    var slideCollision = _body.GetSlideCollision(0);
+                    // CharacterBody2D 无 layer 语义，传 Custom 作为占位类型；业务方可在事件数据中区分
+                    HandleMovementCollision(slideCollision.GetCollider() as Node2D, CollisionType.Custom);
+                }
+            }
         }
         else
         {
@@ -309,6 +335,7 @@ public partial class EntityMovementComponent : Node, IComponent
 
         // 重置组件内部完成标志
         _moveCompleted = false;
+        _hasCollided = false;
         // _params 由 SwitchStrategy 在调用此方法后立即替换，无需在此清零
     }
 
@@ -354,7 +381,11 @@ public partial class EntityMovementComponent : Node, IComponent
     /// <para>执行序列：记录完成模式 -> 标记完成 -> 发送事件 -> (可选)自动销毁 -> 回退默认模式。</para>
     /// <para>数据清理由后续调用的 SwitchStrategy 统一负责，此处只处理完成语义。</para>
     /// </summary>
-    private void OnMoveComplete()
+    /// <param name="byCollision">
+    /// true = 由碰撞触发的完成，额外检查 <c>DestroyOnCollision</c>；
+    /// false（默认）= 时间/距离/策略主动触发，只检查 <c>DestroyOnComplete</c>。
+    /// </param>
+    private void OnMoveComplete(bool byCollision = false)
     {
         if (_data == null || _entity == null) return;
 
@@ -371,10 +402,10 @@ public partial class EntityMovementComponent : Node, IComponent
             GameEventType.Unit.MovementCompleted,
             new GameEventType.Unit.MovementCompletedEventData(mode, _params.ElapsedTime, _params.TraveledDistance));
 
-        _log.Debug($"[{(_entity as Node)?.Name}] 运动完成 Mode={mode}");
+        _log.Debug($"[{(_entity as Node)?.Name}] 运动完成 Mode={mode} byCollision={byCollision}");
 
-        // 如果配置了自动销毁，则通知 EntityManager 回收本实体
-        if (_params.DestroyOnComplete)
+        // 如果配置了自动销毁（按完成 or 按碰撞），则通知 EntityManager 回收本实体
+        if (_params.DestroyOnComplete || (byCollision && _params.DestroyOnCollision))
         {
             if (_entity is Node entityNode)
                 EntityManager.Destroy(entityNode);
@@ -386,6 +417,53 @@ public partial class EntityMovementComponent : Node, IComponent
         if (defaultMode != MoveMode.None && defaultMode != mode)
         {
             SwitchStrategy(new MovementParams { Mode = defaultMode });
+        }
+    }
+
+    // ================= 碰撞处理 =================
+
+    /// <summary>
+    /// Area2D 碰撞进入回调（由 CollisionComponent 通过 Entity.Events 转发）
+    /// <para>仅在非默认运动模式下响应，避免常驻 AI/Player 模式产生噪声事件。</para>
+    /// </summary>
+    private void OnCollisionDetected(GameEventType.Collision.CollisionEnteredEventData evt)
+    {
+        if (_entity == null || _data == null) return;
+        if (_moveCompleted) return;
+
+        var mode = _data.Get<MoveMode>(DataKey.MoveMode);
+        var defaultMode = _data.Get<MoveMode>(DataKey.DefaultMoveMode);
+        if (mode == defaultMode || mode == MoveMode.None) return;
+
+        HandleMovementCollision(evt.Target, evt.CollisionType);
+    }
+
+    /// <summary>
+    /// 运动碰撞统一处理：发布 MovementCollision 事件，若配置了 DestroyOnCollision 则触发完成流程。
+    /// <para>
+    /// 设计意图：碰撞事件与销毁逻辑解耦。
+    /// 业务方（技能/子弹组件）订阅 <c>MovementCollision</c> 事件执行伤害/特效，
+    /// <c>DestroyOnCollision=true</c> 仅控制实体回收，无需业务方关心生命周期。
+    /// </para>
+    /// </summary>
+    /// <param name="target">碰撞目标节点（可能为 null，例如 CharacterBody2D 碰到地形时 Collider 已释放）</param>
+    /// <param name="collisionType">碰撞类型（Area2D 路径由 CollisionComponent 识别；CharacterBody2D 路径传 Custom）</param>
+    private void HandleMovementCollision(Node2D? target, CollisionType collisionType)
+    {
+        if (_moveCompleted) return;
+        if (_entity == null || _data == null) return;
+
+        var moveMode = _data.Get<MoveMode>(DataKey.MoveMode);
+
+        _entity.Events.Emit(
+            GameEventType.Unit.MovementCollision,
+            new GameEventType.Unit.MovementCollisionEventData(moveMode, target, collisionType));
+
+        _log.Debug($"[{(_entity as Node)?.Name}] 运动碰撞 Mode={moveMode}, Target={target?.Name}, CollisionType={collisionType}");
+
+        if (_params.DestroyOnCollision)
+        {
+            OnMoveComplete(byCollision: true);
         }
     }
 }

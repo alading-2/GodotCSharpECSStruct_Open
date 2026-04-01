@@ -1,5 +1,5 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://uo3nn6dbfowc"]
 
-[node name="EnemyCollision" type="CharacterBody2D"]
+[node name="EnemyCollision" type="CharacterBody2D" unique_id=1435647743]
 collision_layer = 4
 collision_mask = 5

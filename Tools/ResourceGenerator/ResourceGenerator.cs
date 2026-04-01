@@ -7,22 +7,31 @@ using System;
 
 class ResourceGenerator
 {
-    // 配置部分
-    private static readonly string[] ScanPaths = {
-        "assets",
-        "Src/UI",
-        "Src/ECS/Entity",
-        "Src/ECS/Component",
-        "Data/Data",  // 新增：扫描 Resource 配置目录
-        "Src/ECS/System",
-        "Src/Tools",
-        "Src/Test" // 新增：扫描测试资源
+    // ============================================================
+    // 配置部分：key=扫描路径（相对项目根，正斜杠），value=资源分类
+    // 分类按最长前缀匹配，因此子路径可覆盖父路径
+    // ============================================================
+    private static readonly Dictionary<string, ResourceCategory> ScanConfig = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "assets/Effect", ResourceCategory.AssetEffect },
+        { "assets/Unit", ResourceCategory.AssetUnit },       // 长度 10 — 兜底
+        { "assets/Unit/Player", ResourceCategory.AssetUnitPlayer }, // 长度 18 — 自动更优先
+        { "assets/Unit/Enemy", ResourceCategory.AssetUnitEnemy },  // 长度 16 — 自动更优先
+        { "Src/UI", ResourceCategory.UI },
+        { "Src/ECS/Entity", ResourceCategory.Entity },
+        { "Src/ECS/Component", ResourceCategory.Component },
+        { "Data/Data", ResourceCategory.Data },         // 兜底
+        { "Data/Data/Collision", ResourceCategory.DataCollision },
+        { "Data/Data/Ability", ResourceCategory.DataAbility },  // 自动更优先
+        { "Data/Data/Unit", ResourceCategory.DataUnit },      // 自动更优先
+        { "Src/ECS/System", ResourceCategory.System },
+        { "Src/Tools", ResourceCategory.Tools },
+        { "Src/Test", ResourceCategory.Test },
     };
 
     private static readonly string[] ExcludePaths = {
         "addons",
         ".godot",
-        "Data/Data/Collision", // 碰撞类型由 GenerateCollisionTypeRegistry 单独处理
     };
 
     private const string CollisionDataPath = "Data/Data/Collision";
@@ -30,44 +39,26 @@ class ResourceGenerator
 
     private const string OutputFile = "Data/ResourceManagement/ResourcePaths.cs";
 
-    private static ResourceCategory GetCategoryFromPath(string path)
+    // 通过最长前缀匹配 ScanConfig 确定资源分类
+    private static ResourceCategory GetCategoryFromPath(string resPath)
     {
-        if (string.IsNullOrEmpty(path)) return ResourceCategory.Other;
+        if (string.IsNullOrEmpty(resPath)) return ResourceCategory.Other;
+        var relPath = resPath.StartsWith("res://") ? resPath.Substring(6) : resPath;
 
-        // 1. Resource 配置优先匹配（.tres 文件，必须在 Data/Data/ 路径下）
-        if (path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
+        ResourceCategory best = ResourceCategory.Other;
+        int bestLen = -1;
+        foreach (var kv in ScanConfig)
         {
-            // 只有 Data/Data/ 路径下的 .tres 才是真正的配置文件
-            if (path.Contains("Data/Data/", StringComparison.OrdinalIgnoreCase))
+            string prefix = kv.Key;
+            if ((relPath.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase) ||
+                 relPath.Equals(prefix, StringComparison.OrdinalIgnoreCase))
+                && prefix.Length > bestLen)
             {
-                return ResourceCategory.Data;
-            }
-            // assets 下的 .tres 文件（如 SpriteFrames）归类为 Asset
-            else if (path.StartsWith("res://assets/", StringComparison.OrdinalIgnoreCase))
-            {
-                return ResourceCategory.Asset;
+                bestLen = prefix.Length;
+                best = kv.Value;
             }
         }
-
-        // 2. 场景文件匹配（.tscn 文件）
-        if (path.StartsWith("res://Src/UI/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.UI;
-        if (path.StartsWith("res://Src/ECS/Component/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Component;
-        if (path.StartsWith("res://Src/ECS/Entity/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Entity;
-        if (path.StartsWith("res://assets/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Asset;
-        if (path.StartsWith("res://Src/ECS/System/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.System;
-        if (path.StartsWith("res://Src/Tools/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Tools;
-        if (path.StartsWith("res://Src/Test/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Test;
-
-        // 3. 启发式包含匹配 (后备方案)
-        if (path.Contains("/UI/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.UI;
-        if (path.Contains("/Component/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Component;
-        if (path.Contains("/Entity/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Entity;
-        if (path.Contains("/assets/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Asset;
-        if (path.Contains("/System/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.System;
-        if (path.Contains("/Tools/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Tools;
-        if (path.Contains("/Test/", StringComparison.OrdinalIgnoreCase)) return ResourceCategory.Test;
-
-        return ResourceCategory.Other;
+        return best;
     }
 
     static void Main(string[] args)
@@ -89,8 +80,8 @@ class ResourceGenerator
         var resourcesByCategory = new Dictionary<ResourceCategory, Dictionary<string, string>>();
         var duplicates = new List<string>();
 
-        // 2. 扫描目录
-        foreach (var relativePath in ScanPaths)
+        // 2. 扫描目录（路径来源于 ScanConfig 配置字典）
+        foreach (var relativePath in ScanConfig.Keys)
         {
             var fullPath = Path.Combine(projectRoot, relativePath);
             if (!Directory.Exists(fullPath))
@@ -224,6 +215,9 @@ class ResourceGenerator
             }
             if (isExcluded) continue;
 
+            // 若该子目录已在 ScanConfig 中单独配置，跳过（由独立扫描处理，避免重复）
+            if (ScanConfig.ContainsKey(relativePath)) continue;
+
             ScanDirectory(subDir, projectRoot, resourcesByCategory, duplicates);
         }
     }
@@ -232,26 +226,15 @@ class ResourceGenerator
     {
         string relPath = resPath.StartsWith("res://") ? resPath.Substring(6) : resPath;
 
-        string[] prefixes = {
-            "Data/Data/",
-            "assets/",
-            "Src/UI/",
-            "Src/ECS/Component/",
-            "Src/ECS/Entity/",
-            "Src/ECS/System/",
-            "Src/Tools/",
-            "Src/Test/",
-            "Src/"
-        };
-
-        foreach (var prefix in prefixes)
+        // 通过 ScanConfig 找最长匹配前缀并剥离，与分类逻辑保持一致
+        int bestLen = -1;
+        foreach (var key in ScanConfig.Keys)
         {
-            if (relPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                relPath = relPath.Substring(prefix.Length);
-                break;
-            }
+            if (relPath.StartsWith(key + "/", StringComparison.OrdinalIgnoreCase) && key.Length > bestLen)
+                bestLen = key.Length;
         }
+        if (bestLen > 0)
+            relPath = relPath.Substring(bestLen + 1); // +1 跳过分隔符 '/'
 
         if (relPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)) relPath = relPath.Substring(0, relPath.Length - 5);
         if (relPath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)) relPath = relPath.Substring(0, relPath.Length - 5);
@@ -337,31 +320,24 @@ class ResourceGenerator
         sb.AppendLine("}");
         sb.AppendLine();
         sb.AppendLine("/// <summary>");
-        sb.AppendLine("/// 碰撞类型注册表 - 提供 CollisionType ↔ (Layer, Mask) 双向 O(1) 查找");
+        sb.AppendLine("/// 碰撞类型注册表 - 纯数据，仅存储各类型的 Layer/Mask 映射");
+        sb.AppendLine("/// 查询方法请使用 CollisionTypeQuery（Data/Data/Collision/CollisionTypeQuery.cs）");
         sb.AppendLine("/// </summary>");
         sb.AppendLine("public static class CollisionTypeRegistry");
         sb.AppendLine("{");
-        sb.AppendLine("    /// <summary>CollisionType → (Layer, Mask) 正向查找</summary>");
+        sb.AppendLine("    /// <summary>CollisionType → (Layer, Mask) 正向字典</summary>");
         sb.AppendLine("    public static readonly IReadOnlyDictionary<CollisionType, (uint Layer, uint Mask)> LayerMaskByType =\n        new Dictionary<CollisionType, (uint Layer, uint Mask)>");
         sb.AppendLine("    {");
         foreach (var e in entries)
             sb.AppendLine($"        {{ CollisionType.{e.NodeName}, ({e.Layer}u, {e.Mask}u) }},");
         sb.AppendLine("    };");
         sb.AppendLine();
-        sb.AppendLine("    /// <summary>Layer → CollisionType 反向查找（仅 layer != 0 的唯一层）</summary>");
-        sb.AppendLine("    public static readonly IReadOnlyDictionary<uint, CollisionType> TypeByLayer =\n        new Dictionary<uint, CollisionType>");
+        sb.AppendLine("    /// <summary>(Layer, Mask) 元组 → CollisionType 反向字典（包含 layer=0 的类型）</summary>");
+        sb.AppendLine("    public static readonly IReadOnlyDictionary<(uint Layer, uint Mask), CollisionType> TypeByLayerMask =\n        new Dictionary<(uint Layer, uint Mask), CollisionType>");
         sb.AppendLine("    {");
-        foreach (var e in entries.Where(e => e.Layer != 0))
-            sb.AppendLine($"        {{ {e.Layer}u, CollisionType.{e.NodeName} }},");
+        foreach (var e in entries)
+            sb.AppendLine($"        {{ ({e.Layer}u, {e.Mask}u), CollisionType.{e.NodeName} }},");
         sb.AppendLine("    };");
-        sb.AppendLine();
-        sb.AppendLine("    /// <summary>通过 collision_layer 反向查找 CollisionType（O(1)）</summary>");
-        sb.AppendLine("    public static CollisionType FromLayer(uint layer) =>");
-        sb.AppendLine("        TypeByLayer.TryGetValue(layer, out var t) ? t : CollisionType.Custom;");
-        sb.AppendLine();
-        sb.AppendLine("    /// <summary>通过 CollisionType 获取对应 (Layer, Mask)（O(1)），未找到返回 (0, 0)</summary>");
-        sb.AppendLine("    public static (uint Layer, uint Mask) GetLayerMask(CollisionType type) =>");
-        sb.AppendLine("        LayerMaskByType.TryGetValue(type, out var lm) ? lm : (0u, 0u);");
         sb.AppendLine("}");
 
         var outputPath = Path.Combine(projectRoot, CollisionRegistryOutputFile);

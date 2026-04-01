@@ -333,7 +333,8 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 	elif not is_animated_scene and visual_node is Sprite2D:
 		visual_node.texture = load(standalone_sprite_path)
 
-	_sync_collision_scene(visual_node, rule.get("collision_scene_path", "") if not rule.is_empty() else "")
+	if Config.ENABLE_COLLISION_SCENE:
+		_sync_collision_scene(visual_node, rule)
 
 	# -------------------------------------------------------------------------
 	# 保存场景 (Save Scene)
@@ -401,7 +402,22 @@ func _find_standalone_sprite(folder_path: String) -> String:
 	return folder_path.path_join(png_files[0])
 
 
-func _sync_collision_scene(visual_node: Node, collision_scene_path: String) -> void:
+func _sync_collision_scene(visual_node: Node, rule: Dictionary) -> void:
+	var collision_scene_path: String = rule.get("collision_scene_path", "")
+
+	# 智能更新：先保存旧碰撞模板实例下的 CollisionShape2D 数据，重建后恢复（保留用户手动调整的形状）
+	var saved_shape: Shape2D = null
+	var saved_transform := Transform2D.IDENTITY
+	var saved_disabled := false
+
+	var old_collision := visual_node.get_node_or_null("CollisionShape2D")
+	if old_collision != null:
+		var old_shape_node := old_collision.get_node_or_null("CollisionShape2D")
+		if old_shape_node is CollisionShape2D:
+			saved_shape = old_shape_node.shape
+			saved_transform = old_shape_node.transform
+			saved_disabled = old_shape_node.disabled
+
 	# 清理旧版本遗留的 "Collision" 命名节点（迁移兼容）
 	for old_name in ["Collision", "CollisionShape2D"]:
 		var existing := visual_node.get_node_or_null(old_name)
@@ -417,10 +433,31 @@ func _sync_collision_scene(visual_node: Node, collision_scene_path: String) -> v
 		printerr("[Generator] 碰撞场景加载失败: %s" % collision_scene_path)
 		return
 
+	# 实例化碰撞模板（CharacterBody2D / Area2D），作为碰撞类型标记节点
 	var collision_node := collision_scene.instantiate()
 	collision_node.name = "CollisionShape2D"
 	visual_node.add_child(collision_node)
 	collision_node.owner = visual_node
+
+	# 在碰撞模板实例下添加真实碰撞形状节点，供动画场景独立设置碰撞区域
+	var shape_node := CollisionShape2D.new()
+	shape_node.name = "CollisionShape2D"
+	if saved_shape != null:
+		# 智能更新：恢复用户手动调整的形状数据，不覆盖
+		shape_node.shape = saved_shape
+		shape_node.transform = saved_transform
+		shape_node.disabled = saved_disabled
+	else:
+		# 首次生成：从规则配置读取默认胶囊体参数，未配置则使用 Godot 默认值
+		var capsule := CapsuleShape2D.new()
+		capsule.radius = rule.get("default_shape_radius", 10.0)
+		capsule.height = rule.get("default_shape_height", 20.0)
+		shape_node.shape = capsule
+		var default_pos: Vector2 = rule.get("default_shape_position", Vector2.ZERO)
+		if default_pos != Vector2.ZERO:
+			shape_node.position = default_pos
+	collision_node.add_child(shape_node)
+	shape_node.owner = visual_node
 
 
 # =============================================================================

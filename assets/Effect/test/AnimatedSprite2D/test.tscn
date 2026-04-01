@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://dd0a2xb3j8qnh"]
+
+[ext_resource type="SpriteFrames" uid="uid://72hh5cybngsq" path="res://assets/Effect/test/AnimatedSprite2D/test.tres" id="1_caa1i"]
+[ext_resource type="PackedScene" path="res://Data/Data/Collision/Effect/EffectCollision.tscn" id="2_5fxhc"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_y8try"]
+height = 20.0
+
+[node name="test" type="AnimatedSprite2D" unique_id=201006801]
+sprite_frames = ExtResource("1_caa1i")
+animation = &"Effect"
+
+[node name="CollisionShape2D" type="Area2D" parent="." unique_id=1004261550 instance=ExtResource("2_5fxhc")]
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1555575590]
+shape = SubResource("CapsuleShape2D_y8try")

@@ -36,10 +36,16 @@ public partial class CollisionSensorComponent : Area2D, IComponent
     {
         if (SensorType != CollisionType.Custom)
         {
-            var (layer, mask) = CollisionTypeRegistry.GetLayerMask(SensorType);
-            CollisionLayer = layer;
-            CollisionMask = mask;
-            _log.Debug($"SensorType={SensorType} 已应用 layer={layer}, mask={mask}");
+            if (CollisionTypeQuery.TryGetLayerMask(SensorType, out var layer, out var mask))
+            {
+                CollisionLayer = layer;
+                CollisionMask = mask;
+                _log.Debug($"SensorType={SensorType} 已应用 layer={layer}, mask={mask}");
+            }
+            else
+            {
+                _log.Warn($"SensorType={SensorType} 在注册表中未找到对应 layer/mask，layer/mask 保持场景配置值。");
+            }
         }
     }
 

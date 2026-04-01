@@ -24,7 +24,7 @@ public partial class MainTest : Node
 
         // 1. 生成玩家
         _log.Info("步骤 1: 生成玩家");
-        var playerConfig = ResourceManagement.Load<Slime.Config.Units.PlayerConfig>(ResourcePaths.Data_Unit_Player_Resource_deluyi, ResourceCategory.Data);
+        var playerConfig = ResourceManagement.Load<Slime.Config.Units.PlayerConfig>(ResourcePaths.DataUnit_deluyi, ResourceCategory.DataUnit);
         _player = EntityManager.Spawn<PlayerEntity>(new EntitySpawnConfig
         {
             Config = playerConfig,
@@ -36,7 +36,7 @@ public partial class MainTest : Node
 
         // 1.5. 生成一个敌人用于测试单位目标选择
         _log.Info("步骤 1.5: 生成测试敌人");
-        var enemyConfig = ResourceManagement.Load<Resource>(ResourcePaths.Data_Unit_Enemy_Resource_chailangren, ResourceCategory.Data);
+        var enemyConfig = ResourceManagement.Load<Resource>(ResourcePaths.DataUnit_chailangren, ResourceCategory.DataUnit);
         var enemy = EntityManager.Spawn<EnemyEntity>(new EntitySpawnConfig
         {
             Config = enemyConfig,
@@ -92,22 +92,22 @@ public partial class MainTest : Node
 
         // 技能1: 裂地猛击 (Slam) - 范围近战AOE
         var slamConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-            ResourcePaths.Data_Ability_Resource_SlamConfig, ResourceCategory.Data);
+            ResourcePaths.DataAbility_SlamConfig, ResourceCategory.DataAbility);
         if (slamConfig != null) EntityManager.AddAbility(_player, slamConfig);
 
         // 技能2: 链式闪电 (ChainLightning) - 链式弹跳魔法
         var chainConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-            ResourcePaths.Data_Ability_Ability_ChainLightning_Data_ChainLightningConfig, ResourceCategory.Data);
+            ResourcePaths.DataAbility_ChainLightningConfig, ResourceCategory.DataAbility);
         if (chainConfig != null) EntityManager.AddAbility(_player, chainConfig);
 
         // 技能3: 烈焰光环 (CircleDamage) - 周期范围伤害
         var auraConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-            ResourcePaths.Data_Ability_Resource_CircleDamageConfig, ResourceCategory.Data);
+            ResourcePaths.DataAbility_CircleDamageConfig, ResourceCategory.DataAbility);
         if (auraConfig != null) EntityManager.AddAbility(_player, auraConfig);
 
         // 技能4: 冲刺 (Dash) - 位移技能
         var dashConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-            ResourcePaths.Data_Ability_Resource_DashConfig, ResourceCategory.Data);
+            ResourcePaths.DataAbility_DashConfig, ResourceCategory.DataAbility);
         if (dashConfig != null) EntityManager.AddAbility(_player, dashConfig);
 
         _log.Info("已添加正式技能，等待UI自动更新");

@@ -51,8 +51,61 @@ entity.Events.Emit(
 - `MaxDistance >= 0`：距离限制（-1=不限制）
 - 策略返回 `MovementUpdateResult.Complete()`：主动完成
 - `DestroyOnComplete = true`：完成后销毁；否则回退 `DefaultMoveMode`
+- `DestroyOnCollision = true`：碰撞后销毁（同时先触发 `MovementCollision` 事件）
 
 `MovementCompletedEventData` 直接携带 `ElapsedTime` / `TraveledDistance`，无需读 DataKey。
+
+## 碰撞处理（OnCollision）
+
+### 触发条件
+- **仅在非默认运动模式下生效**（非 `AIControlled` / `PlayerInput`），避免常驻移动频繁触发。
+- `Area2D` 实体：`CollisionComponent` 将 `BodyEntered/AreaEntered` 信号转发为 `CollisionEntered` 事件，`EntityMovementComponent` 订阅后触发。
+- `CharacterBody2D` 实体：`ApplyMovement` 在 `MoveAndSlide()` 后检测 `GetSlideCollisionCount() > 0`，**同一次运动内只触发一次**（由 `_hasCollided` 防止连续帧重复）。
+
+### 事件流程
+
+```
+碰撞发生
+  ↓
+EntityMovementComponent.HandleMovementCollision()
+  ↓
+1. 发布 GameEventType.Unit.MovementCollision（含 Mode / Target / CollisionType）
+  ↓
+2. 若 DestroyOnCollision=true → OnMoveComplete(byCollision=true)
+     → 发布 MovementCompleted
+     → EntityManager.Destroy
+```
+
+### 典型用法：发射炮弹打敌人
+
+```csharp
+// 1. 发射前订阅碰撞事件
+bullet.Events.On<GameEventType.Unit.MovementCollisionEventData>(
+    GameEventType.Unit.MovementCollision, OnBulletHit);
+
+// 2. 启动运动
+bullet.Events.Emit(GameEventType.Unit.MovementStarted,
+    new GameEventType.Unit.MovementStartedEventData(MoveMode.FixedDirection, new MovementParams
+    {
+        MaxDistance       = 600f,
+        DestroyOnCollision = true,   // 命中即销毁
+    }));
+
+// 3. 命中回调（在炮弹所属的技能组件中）
+private void OnBulletHit(GameEventType.Unit.MovementCollisionEventData evt)
+{
+    if (evt.Target is not IEntity targetEntity) return;
+    DamageService.Instance.Process(new DamageInfo { ... });
+}
+```
+
+### `DestroyOnCollision` vs `DestroyOnComplete`
+
+| 参数 | 触发时机 |
+|------|---------|
+| `DestroyOnComplete` | 时间/距离/策略主动完成时销毁 |
+| `DestroyOnCollision` | 碰撞时销毁（MovementCollision 事件已先发布） |
+| 两者同时为 true | 先到者触发销毁 |
 
 ## Velocity 分层合成
 

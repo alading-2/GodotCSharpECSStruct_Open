@@ -58,7 +58,16 @@ public record struct MovementParams
     public bool RotateToVelocity { get; init; } = true;
     /// <summary>移动完成后是否自动销毁实体</summary>
     public bool DestroyOnComplete { get; init; } = false;
-    /// <summary>与单位碰撞时是否自动销毁实体</summary>
+    /// <summary>
+    /// 碰撞时是否自动销毁实体。
+    /// <para>
+    /// - Area2D 实体：由 CollisionComponent 发出 CollisionEntered 信号，EntityMovementComponent 监听后触发。
+    /// - CharacterBody2D 实体：MoveAndSlide 检测到碰撞后首次触发（同一次运动内只触发一次）。
+    /// - 碰撞发生时会先发布 <c>GameEventType.Unit.MovementCollision</c> 事件（无论本字段值），
+    ///   业务方可在该事件中执行伤害/特效逻辑，再由本字段决定是否回收实体。
+    /// - 仅在非默认运动模式（非 AIControlled/PlayerInput）下生效，避免常驻移动被误触发。
+    /// </para>
+    /// </summary>
     public bool DestroyOnCollision { get; init; } = false;
 
     // ======== 目标 / 方向 ========

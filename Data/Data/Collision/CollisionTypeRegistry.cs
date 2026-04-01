@@ -11,56 +11,46 @@ using System.Collections.Generic;
 /// <summary>
 /// 碰撞类型枚举
 /// 值来源：Data/Data/Collision/ 目录下 .tscn 场景的根节点名称（字母序）
-/// Custom = 0 永远保留，其余值按字母序从 1 开始，添加新场景请始终追加在末尾以防止枚举值错位
+/// Custom = 0 永远保留；添加新场景请勿改变已有场景文件名，否则枚举值会错位
 /// </summary>
 public enum CollisionType
 {
     Custom = 0,
-    EffectCollision = 1,      // Area2D, layer=0, mask=0
-    EnemyCollision = 2,       // CharacterBody2D, layer=4, mask=5
-    EnemyHurtboxSensor = 3,   // Area2D, layer=64, mask=128
-    PlayerCollision = 4,      // CharacterBody2D, layer=2, mask=1
-    PlayerHurtboxSensor = 5,  // Area2D, layer=8, mask=4
-    PlayerPickupSensor = 6,   // Area2D, layer=16, mask=0
+    EffectCollision = 1,      // layer=0, mask=0
+    EnemyCollision = 2,      // layer=4, mask=5
+    EnemyHurtboxSensor = 3,      // layer=64, mask=128
+    PlayerCollision = 4,      // layer=2, mask=1
+    PlayerHurtboxSensor = 5,      // layer=8, mask=4
+    PlayerPickupSensor = 6,      // layer=16, mask=0
 }
 
 /// <summary>
-/// 碰撞类型注册表
-/// 提供 CollisionType ↔ (Layer, Mask) 双向 O(1) 查找
+/// 碰撞类型注册表 - 纯数据，仅存储各类型的 Layer/Mask 映射
+/// 查询方法请使用 CollisionTypeQuery（Data/Data/Collision/CollisionTypeQuery.cs）
 /// </summary>
 public static class CollisionTypeRegistry
 {
-    /// <summary>CollisionType → (Layer, Mask) 正向查找</summary>
+    /// <summary>CollisionType → (Layer, Mask) 正向字典</summary>
     public static readonly IReadOnlyDictionary<CollisionType, (uint Layer, uint Mask)> LayerMaskByType =
         new Dictionary<CollisionType, (uint Layer, uint Mask)>
-        {
-            { CollisionType.EffectCollision,     (0,  0)   },
-            { CollisionType.EnemyCollision,      (4,  5)   },
-            { CollisionType.EnemyHurtboxSensor,  (64, 128) },
-            { CollisionType.PlayerCollision,     (2,  1)   },
-            { CollisionType.PlayerHurtboxSensor, (8,  4)   },
-            { CollisionType.PlayerPickupSensor,  (16, 0)   },
-        };
+    {
+        { CollisionType.EffectCollision, (0u, 0u) },
+        { CollisionType.EnemyCollision, (4u, 5u) },
+        { CollisionType.EnemyHurtboxSensor, (64u, 128u) },
+        { CollisionType.PlayerCollision, (2u, 1u) },
+        { CollisionType.PlayerHurtboxSensor, (8u, 4u) },
+        { CollisionType.PlayerPickupSensor, (16u, 0u) },
+    };
 
-    /// <summary>
-    /// Layer → CollisionType 反向查找（仅包含 layer != 0 的唯一层）
-    /// layer=0 的类型（如 EffectCollision）无法反向识别，FromLayer 返回 Custom
-    /// </summary>
-    public static readonly IReadOnlyDictionary<uint, CollisionType> TypeByLayer =
-        new Dictionary<uint, CollisionType>
-        {
-            { 2,  CollisionType.PlayerCollision     },
-            { 4,  CollisionType.EnemyCollision      },
-            { 8,  CollisionType.PlayerHurtboxSensor },
-            { 16, CollisionType.PlayerPickupSensor  },
-            { 64, CollisionType.EnemyHurtboxSensor  },
-        };
-
-    /// <summary>通过 collision_layer 反向查找 CollisionType（O(1)）</summary>
-    public static CollisionType FromLayer(uint layer) =>
-        TypeByLayer.TryGetValue(layer, out var t) ? t : CollisionType.Custom;
-
-    /// <summary>通过 CollisionType 获取对应 (Layer, Mask)（O(1)），未找到返回 (0, 0)</summary>
-    public static (uint Layer, uint Mask) GetLayerMask(CollisionType type) =>
-        LayerMaskByType.TryGetValue(type, out var lm) ? lm : (0u, 0u);
+    /// <summary>(Layer, Mask) 元组 → CollisionType 反向字典（包含 layer=0 的类型）</summary>
+    public static readonly IReadOnlyDictionary<(uint Layer, uint Mask), CollisionType> TypeByLayerMask =
+        new Dictionary<(uint Layer, uint Mask), CollisionType>
+    {
+        { (0u, 0u), CollisionType.EffectCollision },
+        { (4u, 5u), CollisionType.EnemyCollision },
+        { (64u, 128u), CollisionType.EnemyHurtboxSensor },
+        { (2u, 1u), CollisionType.PlayerCollision },
+        { (8u, 4u), CollisionType.PlayerHurtboxSensor },
+        { (16u, 0u), CollisionType.PlayerPickupSensor },
+    };
 }

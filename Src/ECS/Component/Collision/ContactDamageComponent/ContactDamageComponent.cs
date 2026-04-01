@@ -67,6 +67,8 @@ public partial class ContactDamageComponent : Node, IComponent
     /// <param name="evt">碰撞进入事件数据负载</param>
     private void OnCollisionEntered(GameEventType.Collision.CollisionEnteredEventData evt)
     {
+        if (!IsHurtboxSensor(evt.CollisionType)) return; // 只处理 HurtboxSensor 类型
+
         var body = evt.Target;
 
         if (!IsInstanceValid(body)) return; // 目标节点无效
@@ -91,6 +93,7 @@ public partial class ContactDamageComponent : Node, IComponent
     /// <param name="evt">碰撞离开事件数据负载</param>
     private void OnCollisionExited(GameEventType.Collision.CollisionExitedEventData evt)
     {
+        if (!IsHurtboxSensor(evt.CollisionType)) return; // 只处理 HurtboxSensor 类型
         CancelBodyTimer(evt.Target);
     }
 
@@ -191,10 +194,14 @@ public partial class ContactDamageComponent : Node, IComponent
     // ================= 阵营与数值查询 =================
 
     /// <summary>
+    /// 判断碰撞类型是否为 HurtboxSensor（受击感应器），ContactDamage 只响应此类碰撞
+    /// </summary>
+    private static bool IsHurtboxSensor(CollisionType type) =>
+        type == CollisionType.PlayerHurtboxSensor || type == CollisionType.EnemyHurtboxSensor;
+
+    /// <summary>
     /// 判断目标是否为敌对
     /// </summary>
-    /// <param name="body"></param>
-    /// <returns></returns>
     private bool IsHostile(Node2D body)
     {
         if (body is not IEntity entity) return false;

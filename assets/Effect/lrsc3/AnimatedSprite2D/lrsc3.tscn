@@ -1,7 +1,69 @@
-[gd_scene format=3 uid="uid://cfjp1v7dcv76c"]
+[gd_scene format=3 uid="uid://dn854ud7p5dhn"]
 
-[ext_resource type="SpriteFrames" uid="uid://d0jr0yc2fwjke" path="res://assets/Effect/lrsc3/AnimatedSprite2D/lrsc3.tres" id="1_xfdhg"]
+[ext_resource type="Texture2D" uid="uid://du2rbcehpsnb4" path="res://assets/Effect/lrsc3/lrsc3-action_00.png" id="1_vtuv2"]
+[ext_resource type="Texture2D" uid="uid://i0rbuc8f1c83" path="res://assets/Effect/lrsc3/lrsc3-action_01.png" id="2_6e12a"]
+[ext_resource type="Texture2D" uid="uid://6vwfn623noh0" path="res://assets/Effect/lrsc3/lrsc3-action_02.png" id="3_qun2x"]
+[ext_resource type="Texture2D" uid="uid://we8bqtfndm3e" path="res://assets/Effect/lrsc3/lrsc3-action_03.png" id="4_tp6qo"]
+[ext_resource type="Texture2D" uid="uid://cf48ogons1hch" path="res://assets/Effect/lrsc3/lrsc3-action_04.png" id="5_e474p"]
+[ext_resource type="Texture2D" uid="uid://bs5a1by3g0uh2" path="res://assets/Effect/lrsc3/lrsc3-action_05.png" id="6_7ow1k"]
+[ext_resource type="Texture2D" uid="uid://dch45u073o3ro" path="res://assets/Effect/lrsc3/lrsc3-action_06.png" id="7_jng6c"]
+[ext_resource type="Texture2D" uid="uid://882dqnk7s0xi" path="res://assets/Effect/lrsc3/lrsc3-action_07.png" id="8_2mtqa"]
+[ext_resource type="Texture2D" uid="uid://dxcq0e1snjd3p" path="res://assets/Effect/lrsc3/lrsc3-action_08.png" id="9_4aqbv"]
+[ext_resource type="Texture2D" uid="uid://bw6whbl33qmmn" path="res://assets/Effect/lrsc3/lrsc3-action_09.png" id="10_jed81"]
+[ext_resource type="Texture2D" uid="uid://dtgchx0qub8n7" path="res://assets/Effect/lrsc3/lrsc3-action_10.png" id="11_bkl5s"]
+[ext_resource type="PackedScene" path="res://Data/Data/Collision/Effect/EffectCollision.tscn" id="12_lts6n"]
 
-[node name="lrsc3" type="AnimatedSprite2D" unique_id=1448507566]
-sprite_frames = ExtResource("1_xfdhg")
-animation = &"effect"
+[sub_resource type="SpriteFrames" id="SpriteFrames_vtuv2"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_vtuv2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_6e12a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_qun2x")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_tp6qo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_e474p")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_7ow1k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_jng6c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_2mtqa")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_4aqbv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_jed81")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_bkl5s")
+}],
+"loop": false,
+"name": &"Effect",
+"speed": 10.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_jomig"]
+height = 20.0
+
+[node name="lrsc3" type="AnimatedSprite2D" unique_id=263019951]
+sprite_frames = SubResource("SpriteFrames_vtuv2")
+animation = &"Effect"
+
+[node name="CollisionShape2D" type="Area2D" parent="." unique_id=55575141 instance=ExtResource("12_lts6n")]
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1230424494]
+shape = SubResource("CapsuleShape2D_jomig")

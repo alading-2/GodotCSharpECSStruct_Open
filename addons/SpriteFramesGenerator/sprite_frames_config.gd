@@ -9,6 +9,11 @@ const BATCH_PATHS: PackedStringArray = [
 	"res://assets",
 ]
 
+# --- 碰撞场景注入开关 ---
+# 是否将模板碰撞场景注入到生成的 AnimatedSprite2D/Sprite2D 场景中。
+# 设为 true 后，RULES 中配置了 collision_scene_path 的规则才会生效。
+const ENABLE_COLLISION_SCENE: bool = true
+
 # --- 默认帧率 (FPS) ---
 const DEFAULT_FPS: float = 10.0
 
@@ -39,17 +44,29 @@ const RULES: Array = [
 		"paths": ["res://assets/Unit/Player"],
 		"unified_animation_name": "",
 		"collision_scene_path": "res://Data/Data/Collision/Unit/PlayerCollision.tscn",
+		# CollisionShape2D 首次生成时使用的默认胶囊体参数（智能更新时自动保留手动调整结果）
+		"default_shape_radius": 30.0,
+		"default_shape_height": 70.0,
+		"default_shape_position": Vector2(-7.0, 29.0),
 	},
 	{
 		"key": "Enemy",
 		"paths": ["res://assets/Unit/Enemy"],
 		"unified_animation_name": "",
 		"collision_scene_path": "res://Data/Data/Collision/Unit/EnemyCollision.tscn",
+		# CollisionShape2D 首次生成时使用的默认胶囊体参数
+		"default_shape_radius": 20.0,
+		"default_shape_height": 40.0,
+		"default_shape_position": Vector2(0.0, 0.0),
 	},
 	{
 		"key": "Effect",
 		"paths": ["res://assets/Effect"],
 		"unified_animation_name": "Effect",
 		"collision_scene_path": "res://Data/Data/Collision/Effect/EffectCollision.tscn",
+		# CollisionShape2D 首次生成时使用的默认胶囊体参数
+		"default_shape_radius": 10.0,
+		"default_shape_height": 20.0,
+		"default_shape_position": Vector2(0.0, 0.0),
 	},
 ]
