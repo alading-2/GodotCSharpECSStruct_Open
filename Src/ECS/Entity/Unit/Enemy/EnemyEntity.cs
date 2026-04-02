@@ -21,6 +21,7 @@ public partial class EnemyEntity : CharacterBody2D, IPoolable, IUnit
     public EnemyEntity()
     {
         Data = new Data(this);
+        Data.Set(DataKey.DefaultMoveMode, MoveMode.AIControlled);
     }
 
     /// <summary>

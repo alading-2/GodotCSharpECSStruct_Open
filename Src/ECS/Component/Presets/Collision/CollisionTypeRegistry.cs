@@ -21,7 +21,7 @@ public static class CollisionTypeRegistry
     public static readonly IReadOnlyDictionary<CollisionType, (uint Layer, uint Mask)> LayerMaskByType =
         new Dictionary<CollisionType, (uint Layer, uint Mask)>
     {
-        { CollisionType.EffectCollision, (0u, 0u) },
+        { CollisionType.EffectCollision, (0u, 4u) },
         { CollisionType.EnemyCollision, (4u, 5u) },
         { CollisionType.EnemyHurtboxSensor, (64u, 128u) },
         { CollisionType.PlayerCollision, (2u, 1u) },
@@ -33,7 +33,7 @@ public static class CollisionTypeRegistry
     public static readonly IReadOnlyDictionary<(uint Layer, uint Mask), CollisionType> TypeByLayerMask =
         new Dictionary<(uint Layer, uint Mask), CollisionType>
     {
-        { (0u, 0u), CollisionType.EffectCollision },
+        { (0u, 4u), CollisionType.EffectCollision },
         { (4u, 5u), CollisionType.EnemyCollision },
         { (64u, 128u), CollisionType.EnemyHurtboxSensor },
         { (2u, 1u), CollisionType.PlayerCollision },

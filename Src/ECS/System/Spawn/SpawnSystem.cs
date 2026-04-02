@@ -147,7 +147,8 @@ public partial class SpawnSystem : Node
         _activeStates.Clear();
 
         // 从 ResourceManagement 加载所有敌人配置，过滤路径以确保只加载敌人相关的配置
-        var allEnemyConfigs = ResourceManagement.LoadAll<EnemyConfig>(ResourceCategory.Data, "Unit/Enemy");
+        // 敌人配置位于 DataUnit 分类，不能使用 Data 分类（Data 分类下没有 Unit 配置映射）
+        var allEnemyConfigs = ResourceManagement.LoadAll<EnemyConfig>(ResourceCategory.DataUnit, "Unit/Enemy");
 
         foreach (var config in allEnemyConfigs)
         {

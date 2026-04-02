@@ -3,38 +3,36 @@ using System.Collections.Generic;
 using Godot;
 
 /// <summary>
-/// 碰撞组件 - 统一桥接所有碰撞节点的信号到 Entity.Events
+/// 碰撞组件 - 统一桥接所有 Area2D 碰撞信号到 Entity.Events
 /// <para>
 /// 核心职责：
-/// 1. 在 VisualRoot 下查找名为 "CollisionShape2D" 的视觉体碰撞节点（SpriteFramesGenerator 注入）
-/// 2. 在 Entity 下查找名为 "CollisionShape2D" 的感应器容器节点（Node2D），扫描其下 Area2D 子节点
-/// 3. 对所有找到的 Area2D 节点绑定进入/离开信号，CollisionType 由**该节点自身**的 layer/mask 反查决定
-/// 4. 向实体局部的 EventBus 抛出 CollisionEntered / CollisionExited 事件
+/// 1. 若 Entity 本身是 Area2D（如 Effect Entity），绑定其碰撞信号
+/// 2. 在 Entity 下查找名为 "Collision" 的感应器容器节点（Node2D），扫描其下 Area2D 子节点并绑定信号
+/// 3. 向实体局部的 EventBus 抛出 CollisionEntered / CollisionExited 事件
+/// </para>
+/// <para>
+/// 注意：碰撞形状与 layer/mask 由 EntityManager.InjectVisualScene 在注入视觉场景时统一处理，
+/// VisualRoot 下的 "CollisionShape2D" 碰撞模板数据会自动同步到 Entity 根节点并删除模板。
 /// </para>
 /// <para>
 /// 节点结构约定：
 /// Entity
-/// ├── VisualRoot (AnimatedSprite2D)
-/// │   └── CollisionShape2D (Area2D 或 CharacterBody2D，SpriteFramesGenerator 注入)
-/// │       └── CollisionShape2D (CollisionShape2D，碰撞形状)
-/// └── CollisionShape2D (Node2D，感应器容器，手动放置)
-///     ├── EnemyHurtboxSensor (Area2D，预设场景实例)
-///     │   └── CollisionShape2D (CollisionShape2D，手动配置形状)
+/// ├── CollisionShape2D（layer/mask/shape 由 EntityManager.InjectVisualScene 同步）
+/// └── Collision (Node2D，感应器容器，手动放置)
+///     ├── PlayerHurtboxSensor (Area2D，预设场景实例)
+///     │   └── CollisionShape2D (手动配置形状)
 ///     └── (其他感应器...)
 /// </para>
 /// <para>
 /// CollisionType 语义：表达"哪个碰撞节点被触发了"
-/// - VisualRoot 下的 Area2D → 视觉体类型（EffectCollision 等）
 /// - 感应器容器下的 Area2D → 感应器类型（EnemyHurtboxSensor / PlayerHurtboxSensor 等）
+/// - Area2D Entity 根节点 → 视觉体类型（EffectCollision 等）
 /// 消费者在 On 订阅时通过 CollisionType 过滤，Emit 仅负责忠实传递。
 /// </para>
 /// </summary>
 public partial class CollisionComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(CollisionComponent));
-
-    /// <summary>VisualRoot 内视觉体碰撞节点的固定名称（SpriteFramesGenerator 注入时统一命名）</summary>
-    private const string CollisionNodeName = "CollisionShape2D";
 
     /// <summary>Entity 下感应器容器节点的固定名称（Node2D，手动放置预设感应器场景）</summary>
     private const string SensorContainerName = "Collision";
@@ -49,11 +47,11 @@ public partial class CollisionComponent : Node, IComponent
     // ================= IComponent 实现 =================
 
     /// <summary>
-    /// 组件注册：查找所有碰撞节点并绑定信号
+    /// 组件注册：绑定 Area2D 碰撞信号
     /// <para>
     /// 注册流程：
-    /// 1. 在 VisualRoot 下查找视觉体碰撞节点（Area2D 则绑信号，CharacterBody2D 则由 EntityMovementComponent 处理）
-    /// 2. 在 Entity 下查找感应器容器（CollisionShape2D，Node2D 类型），扫描其 Area2D 子节点并绑信号
+    /// 1. 若 Entity 本身是 Area2D，绑定其碰撞信号（Effect Entity）
+    /// 2. 扫描 Entity/Collision 感应器容器，绑定其下 Area2D 子节点信号
     /// </para>
     /// </summary>
     public void OnComponentRegistered(Node entity)
@@ -61,40 +59,25 @@ public partial class CollisionComponent : Node, IComponent
         if (entity is not IEntity iEntity) return;
         _entity = iEntity;
 
-        // 1. VisualRoot 下的视觉体碰撞节点
-        var visualCollision = FindVisualCollisionNode(entity);
-        if (visualCollision is Area2D visualArea)
+        // 1. 若 Entity 本身是 Area2D，绑定其碰撞信号（Effect Entity 路径）
+        if (entity is Area2D entityArea)
         {
-            BindArea(visualArea);
-            _log.Debug($"[{entity.Name}] 已绑定 VisualRoot/{CollisionNodeName}（Area2D，CollisionType={GetCollisionTypeFromTarget(visualArea)}）");
-        }
-        else if (visualCollision is CharacterBody2D)
-        {
-            // CharacterBody2D 的碰撞检测由 EntityMovementComponent 通过 MoveAndSlide 处理
-            // 这里只记录日志，不绑定信号，避免重复处理
-            _log.Debug($"[{entity.Name}] VisualRoot/{CollisionNodeName} 为 CharacterBody2D，碰撞检测由 EntityMovementComponent 处理。");
-        }
-        else if (visualCollision != null)
-        {
-            _log.Warn($"[{entity.Name}] VisualRoot/{CollisionNodeName} 类型 {visualCollision.GetType().Name} 不支持，已跳过。");
+            BindArea(entityArea);
+            _log.Debug($"[{entity.Name}] 已绑定 Entity 根节点（Area2D，CollisionType={GetCollisionTypeFromTarget(entityArea)}）");
         }
 
-        // 2. Entity/Collision 容器下的碰撞模板实例节点（Area2D 绑信号；CharacterBody2D 记日志）
+        // 2. Entity/Collision 感应器容器下的 Area2D 节点绑定信号
+        // 感应器位置已在 Entity 坐标系中设计（如受伤范围、技能范围等），无需额外偏移
         var sensorContainer = FindSensorContainer(entity);
         if (sensorContainer != null)
         {
             foreach (var child in sensorContainer.GetChildren())
             {
-                if (!HasCollisionShapeChild(child)) continue; // 无碰撞形状子节点则跳过
-
+                if (!HasCollisionShapeChild(child)) continue;
                 if (child is Area2D sensorArea)
                 {
                     BindArea(sensorArea);
                     _log.Debug($"[{entity.Name}] 已绑定 Collision/{sensorArea.Name}（Area2D，CollisionType={GetCollisionTypeFromTarget(sensorArea)}）");
-                }
-                else if (child is CharacterBody2D)
-                {
-                    _log.Debug($"[{entity.Name}] Collision/{child.Name} 为 CharacterBody2D，碰撞检测由 EntityMovementComponent 处理。");
                 }
             }
         }
@@ -225,14 +208,6 @@ public partial class CollisionComponent : Node, IComponent
         return null;
     }
 
-    /// <summary>在 Entity 的 VisualRoot 下查找视觉体碰撞节点</summary>
-    private static Node2D? FindVisualCollisionNode(Node entity)
-    {
-        var visualRoot = entity.GetNodeOrNull("VisualRoot");
-        if (visualRoot == null) return null;
-        return visualRoot.GetNodeOrNull(CollisionNodeName) as Node2D;
-    }
-
     /// <summary>
     /// 检查节点是否有 CollisionShape2D 或 CollisionPolygon2D 子节点
     /// <para>用于确认感应器预设场景已配置实际碰撞形状，未配置形状的节点不绑定信号。</para>
@@ -246,4 +221,5 @@ public partial class CollisionComponent : Node, IComponent
         }
         return false;
     }
+
 }
