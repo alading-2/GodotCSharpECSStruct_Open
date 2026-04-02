@@ -1,7 +1,453 @@
 [gd_scene format=3 uid="uid://b4aioasnwsfb0"]
 
-[ext_resource type="SpriteFrames" uid="uid://cg7vmf3gqtelw" path="res://assets/Unit/Enemy/chailangren/AnimatedSprite2D/chailangren.tres" id="1_qgndq"]
+[ext_resource type="Texture2D" uid="uid://cpdjmkm74p82b" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_00.png" id="1_mcron"]
 [ext_resource type="PackedScene" uid="uid://uo3nn6dbfowc" path="res://Src/ECS/Component/Presets/Collision/Unit/EnemyCollision.tscn" id="2_qgndq"]
+[ext_resource type="Texture2D" uid="uid://c15k4snnhrrjv" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_01.png" id="2_vt8jt"]
+[ext_resource type="Texture2D" uid="uid://c0lntrsbaw6he" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_02.png" id="3_3m4vm"]
+[ext_resource type="Texture2D" uid="uid://dq57sunxyqn6w" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_03.png" id="4_77wm5"]
+[ext_resource type="Texture2D" uid="uid://3mpk5w7horb5" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_04.png" id="5_orp4g"]
+[ext_resource type="Texture2D" uid="uid://dxr1dkka840kg" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_05.png" id="6_78mge"]
+[ext_resource type="Texture2D" uid="uid://denpgvw4mjpem" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_06.png" id="7_ka210"]
+[ext_resource type="Texture2D" uid="uid://jbta3ao5kg2u" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_07.png" id="8_0ocuu"]
+[ext_resource type="Texture2D" uid="uid://bya5ss5828f11" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_08.png" id="9_e7eik"]
+[ext_resource type="Texture2D" uid="uid://dp0fbs40qtyb0" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_09.png" id="10_t7x8y"]
+[ext_resource type="Texture2D" uid="uid://hw022jqu5vtq" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_10.png" id="11_qarut"]
+[ext_resource type="Texture2D" uid="uid://ctetw62bqjmhm" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_11.png" id="12_ieijo"]
+[ext_resource type="Texture2D" uid="uid://r1j2nwhj07pr" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_12.png" id="13_o8lrk"]
+[ext_resource type="Texture2D" uid="uid://bs0lf3jfjiq7y" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_13.png" id="14_bqakl"]
+[ext_resource type="Texture2D" uid="uid://dv0t4ef6jlpwy" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_14.png" id="15_x5cyb"]
+[ext_resource type="Texture2D" uid="uid://cryh0fbbalor8" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_15.png" id="16_mktud"]
+[ext_resource type="Texture2D" uid="uid://b73awwdg2s8dm" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_16.png" id="17_m0b5k"]
+[ext_resource type="Texture2D" uid="uid://dpv415nj8ugby" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Attack1_17.png" id="18_qqymk"]
+[ext_resource type="Texture2D" uid="uid://dksa63b7wnkkq" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-BeAttacked_0.png" id="19_rl731"]
+[ext_resource type="Texture2D" uid="uid://c00av3wykp6t1" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-BeAttacked_1.png" id="20_qnses"]
+[ext_resource type="Texture2D" uid="uid://b0c8b6gohncyb" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-BeAttacked_2.png" id="21_yocvx"]
+[ext_resource type="Texture2D" uid="uid://meu1jj851axj" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-BeAttacked_3.png" id="22_4ddhj"]
+[ext_resource type="Texture2D" uid="uid://c6k0kaem6wgq6" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-BeAttacked_4.png" id="23_lpaxk"]
+[ext_resource type="Texture2D" uid="uid://oshf7qbii0j7" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-BeAttacked_5.png" id="24_88ls3"]
+[ext_resource type="Texture2D" uid="uid://emf44rfpigmx" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-BeAttacked_6.png" id="25_oudjg"]
+[ext_resource type="Texture2D" uid="uid://dvv18788la6oy" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-CastingIdle_0.png" id="26_i1p0f"]
+[ext_resource type="Texture2D" uid="uid://dyoqf8fwc0aox" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-CastingIdle_1.png" id="27_7buq2"]
+[ext_resource type="Texture2D" uid="uid://ddx40do2k7tst" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-CastingIdle_2.png" id="28_22hqi"]
+[ext_resource type="Texture2D" uid="uid://biax16xjgkj7x" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-CastingIdle_3.png" id="29_tmc5o"]
+[ext_resource type="Texture2D" uid="uid://452sw72rmoue" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_00.png" id="30_2doi5"]
+[ext_resource type="Texture2D" uid="uid://bd47bohg6bnee" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_01.png" id="31_ltsuv"]
+[ext_resource type="Texture2D" uid="uid://uomf3bm2ygbe" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_02.png" id="32_m1ag4"]
+[ext_resource type="Texture2D" uid="uid://cf73wvbbl776f" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_03.png" id="33_yyph8"]
+[ext_resource type="Texture2D" uid="uid://dblrruh0syyui" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_04.png" id="34_a5m4n"]
+[ext_resource type="Texture2D" uid="uid://jjd5w08x0sy6" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_05.png" id="35_iukse"]
+[ext_resource type="Texture2D" uid="uid://b3x2eavm53a0x" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_06.png" id="36_ojyma"]
+[ext_resource type="Texture2D" uid="uid://daq1422q1lpr" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_07.png" id="37_f4vdp"]
+[ext_resource type="Texture2D" uid="uid://bmdwak648uuol" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_08.png" id="38_7dool"]
+[ext_resource type="Texture2D" uid="uid://1dlku8k765a7" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_09.png" id="39_ikr20"]
+[ext_resource type="Texture2D" uid="uid://juqsv4h7llat" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_10.png" id="40_smcy7"]
+[ext_resource type="Texture2D" uid="uid://bhm7dcgyvjck2" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_11.png" id="41_26u1u"]
+[ext_resource type="Texture2D" uid="uid://dgdgi51sugst7" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_12.png" id="42_k8wkl"]
+[ext_resource type="Texture2D" uid="uid://dgnyms63ii2qj" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_13.png" id="43_0jkjn"]
+[ext_resource type="Texture2D" uid="uid://bunnwifjrd7r" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_14.png" id="44_jmpks"]
+[ext_resource type="Texture2D" uid="uid://bptyhp6m7d40m" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_15.png" id="45_tcjv7"]
+[ext_resource type="Texture2D" uid="uid://dcj6gb854d30d" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_16.png" id="46_p2uii"]
+[ext_resource type="Texture2D" uid="uid://45l2pmbnbsyh" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_17.png" id="47_golp5"]
+[ext_resource type="Texture2D" uid="uid://djgu8cx84yv3g" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_18.png" id="48_5nj7k"]
+[ext_resource type="Texture2D" uid="uid://qqmq6gahyyxm" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_19.png" id="49_0mdyd"]
+[ext_resource type="Texture2D" uid="uid://tt1v433t6ltd" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_20.png" id="50_076ml"]
+[ext_resource type="Texture2D" uid="uid://bl5j7bsyqkdpe" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_21.png" id="51_1fdv8"]
+[ext_resource type="Texture2D" uid="uid://bepp32munmwa2" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Celebrate_22.png" id="52_uepw5"]
+[ext_resource type="Texture2D" uid="uid://ci2c7bd2aupo5" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_00.png" id="53_cy2fl"]
+[ext_resource type="Texture2D" uid="uid://dxxfoxi7kvuu7" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_01.png" id="54_rfqrc"]
+[ext_resource type="Texture2D" uid="uid://6q8ue2gff0m3" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_02.png" id="55_ei0ei"]
+[ext_resource type="Texture2D" uid="uid://c7ojuxd2hhft0" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_03.png" id="56_ad6yk"]
+[ext_resource type="Texture2D" uid="uid://ciu8phiqm17f0" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_04.png" id="57_7vglc"]
+[ext_resource type="Texture2D" uid="uid://d3qhar8ip2w2b" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_05.png" id="58_8g8wo"]
+[ext_resource type="Texture2D" uid="uid://bxb11er7yjvc0" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_06.png" id="59_w3q6a"]
+[ext_resource type="Texture2D" uid="uid://cao45r1kimydr" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_07.png" id="60_lwh0e"]
+[ext_resource type="Texture2D" uid="uid://c02ksds1fx1kc" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_08.png" id="61_ft2fy"]
+[ext_resource type="Texture2D" uid="uid://dpmtvhelo5lpu" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_09.png" id="62_0u353"]
+[ext_resource type="Texture2D" uid="uid://b21hluppvso5d" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_10.png" id="63_l58dl"]
+[ext_resource type="Texture2D" uid="uid://d2aft2msg7ome" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_11.png" id="64_21t01"]
+[ext_resource type="Texture2D" uid="uid://bvqjp5y1fwdk6" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_12.png" id="65_vcgdc"]
+[ext_resource type="Texture2D" uid="uid://cd327wsaprv0u" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_13.png" id="66_yk58b"]
+[ext_resource type="Texture2D" uid="uid://3llikbbdpuir" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_14.png" id="67_x3ujm"]
+[ext_resource type="Texture2D" uid="uid://bp7m8cctqu55r" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_15.png" id="68_m0kdx"]
+[ext_resource type="Texture2D" uid="uid://2u1tjosuttuf" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Dead_16.png" id="69_ipw87"]
+[ext_resource type="Texture2D" uid="uid://dbc4he4nyl1ff" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_0.png" id="70_dnivw"]
+[ext_resource type="Texture2D" uid="uid://b0x6c6rvi2j57" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_1.png" id="71_exw0r"]
+[ext_resource type="Texture2D" uid="uid://c7uvvfw5ve67n" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_2.png" id="72_4nah3"]
+[ext_resource type="Texture2D" uid="uid://nuoemxc5vxub" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_3.png" id="73_eodr8"]
+[ext_resource type="Texture2D" uid="uid://cq8mas54pkd4b" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_4.png" id="74_smwrv"]
+[ext_resource type="Texture2D" uid="uid://dhqflgxianoe5" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_5.png" id="75_7lca0"]
+[ext_resource type="Texture2D" uid="uid://bmiys0ple0x22" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_6.png" id="76_d1qis"]
+[ext_resource type="Texture2D" uid="uid://41slno0078ob" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Idle_7.png" id="77_ght4u"]
+[ext_resource type="Texture2D" uid="uid://diqyxp6sc5vrt" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-run_0.png" id="78_bs6yp"]
+[ext_resource type="Texture2D" uid="uid://cvis2227r3byj" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-run_1.png" id="79_3g784"]
+[ext_resource type="Texture2D" uid="uid://bt08abstbs54b" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-run_2.png" id="80_65fwe"]
+[ext_resource type="Texture2D" uid="uid://dkeb7lma7xm5q" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-run_3.png" id="81_1est4"]
+[ext_resource type="Texture2D" uid="uid://8yjpltg5ryqc" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-run_4.png" id="82_8bprn"]
+[ext_resource type="Texture2D" uid="uid://b2e3vfv7ptdde" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-run_5.png" id="83_2sngc"]
+[ext_resource type="Texture2D" uid="uid://bn44eh5x7swgv" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_00.png" id="84_q08yh"]
+[ext_resource type="Texture2D" uid="uid://dmscf3j02b3el" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_01.png" id="85_6kias"]
+[ext_resource type="Texture2D" uid="uid://boifap2ggnoy3" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_02.png" id="86_wxnw3"]
+[ext_resource type="Texture2D" uid="uid://tyg6h1ujftgy" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_03.png" id="87_ajkvg"]
+[ext_resource type="Texture2D" uid="uid://minukk5ghoac" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_04.png" id="88_b0okd"]
+[ext_resource type="Texture2D" uid="uid://bl6dqgrtumm38" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_05.png" id="89_rh78v"]
+[ext_resource type="Texture2D" uid="uid://dk85thn2olgke" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_06.png" id="90_v6tb4"]
+[ext_resource type="Texture2D" uid="uid://f2r54iaxqn1r" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_07.png" id="91_twulr"]
+[ext_resource type="Texture2D" uid="uid://q8xv18m1kbtp" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_08.png" id="92_o0biq"]
+[ext_resource type="Texture2D" uid="uid://dgmw3316vvk4o" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_09.png" id="93_nd4ob"]
+[ext_resource type="Texture2D" uid="uid://cvl8u10ad12di" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_10.png" id="94_r5iet"]
+[ext_resource type="Texture2D" uid="uid://7xjjwp1aht5y" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_11.png" id="95_6aufk"]
+[ext_resource type="Texture2D" uid="uid://bok4ge5rwjr8x" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_12.png" id="96_a3q1a"]
+[ext_resource type="Texture2D" uid="uid://lq3634d7v4uj" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_13.png" id="97_dlvh3"]
+[ext_resource type="Texture2D" uid="uid://cvcrpyyh70hvl" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_14.png" id="98_hi408"]
+[ext_resource type="Texture2D" uid="uid://k3vg30jsw8x8" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_15.png" id="99_yvmpx"]
+[ext_resource type="Texture2D" uid="uid://c8dvsnyvjhphp" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_16.png" id="100_w5j05"]
+[ext_resource type="Texture2D" uid="uid://dhn36ldkgddrb" path="res://assets/Unit/Enemy/chailangren/hero_chailangren-Skill_17.png" id="101_2cheu"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_j4hwm"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_mcron")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_vt8jt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_3m4vm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_77wm5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_orp4g")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_78mge")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_ka210")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_0ocuu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_e7eik")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_t7x8y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_qarut")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_ieijo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_o8lrk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_bqakl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_x5cyb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_mktud")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_m0b5k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_qqymk")
+}],
+"loop": false,
+"name": &"attack1",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("19_rl731")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_qnses")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_yocvx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_4ddhj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_lpaxk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_88ls3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_oudjg")
+}],
+"loop": false,
+"name": &"beattacked",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("26_i1p0f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_7buq2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_22hqi")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_tmc5o")
+}],
+"loop": false,
+"name": &"castingidle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("30_2doi5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_ltsuv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_m1ag4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_yyph8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_a5m4n")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_iukse")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_ojyma")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_f4vdp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_7dool")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_ikr20")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_smcy7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("41_26u1u")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42_k8wkl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43_0jkjn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44_jmpks")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45_tcjv7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46_p2uii")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47_golp5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48_5nj7k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("49_0mdyd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("50_076ml")
+}, {
+"duration": 1.0,
+"texture": ExtResource("51_1fdv8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("52_uepw5")
+}],
+"loop": false,
+"name": &"celebrate",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("53_cy2fl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("54_rfqrc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("55_ei0ei")
+}, {
+"duration": 1.0,
+"texture": ExtResource("56_ad6yk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("57_7vglc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("58_8g8wo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("59_w3q6a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("60_lwh0e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("61_ft2fy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("62_0u353")
+}, {
+"duration": 1.0,
+"texture": ExtResource("63_l58dl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("64_21t01")
+}, {
+"duration": 1.0,
+"texture": ExtResource("65_vcgdc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("66_yk58b")
+}, {
+"duration": 1.0,
+"texture": ExtResource("67_x3ujm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("68_m0kdx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("69_ipw87")
+}],
+"loop": false,
+"name": &"dead",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("70_dnivw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("71_exw0r")
+}, {
+"duration": 1.0,
+"texture": ExtResource("72_4nah3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("73_eodr8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("74_smwrv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("75_7lca0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("76_d1qis")
+}, {
+"duration": 1.0,
+"texture": ExtResource("77_ght4u")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("78_bs6yp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("79_3g784")
+}, {
+"duration": 1.0,
+"texture": ExtResource("80_65fwe")
+}, {
+"duration": 1.0,
+"texture": ExtResource("81_1est4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("82_8bprn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("83_2sngc")
+}],
+"loop": true,
+"name": &"run",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("84_q08yh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("85_6kias")
+}, {
+"duration": 1.0,
+"texture": ExtResource("86_wxnw3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("87_ajkvg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("88_b0okd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("89_rh78v")
+}, {
+"duration": 1.0,
+"texture": ExtResource("90_v6tb4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("91_twulr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("92_o0biq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("93_nd4ob")
+}, {
+"duration": 1.0,
+"texture": ExtResource("94_r5iet")
+}, {
+"duration": 1.0,
+"texture": ExtResource("95_6aufk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("96_a3q1a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("97_dlvh3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("98_hi408")
+}, {
+"duration": 1.0,
+"texture": ExtResource("99_yvmpx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("100_w5j05")
+}, {
+"duration": 1.0,
+"texture": ExtResource("101_2cheu")
+}],
+"loop": false,
+"name": &"skill",
+"speed": 10.0
+}]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ww340"]
 radius = 25.0
@@ -9,13 +455,13 @@ height = 70.0
 
 [node name="chailangren" type="AnimatedSprite2D" unique_id=181554631]
 position = Vector2(1, -71)
-sprite_frames = ExtResource("1_qgndq")
+sprite_frames = SubResource("SpriteFrames_j4hwm")
 animation = &"attack1"
 
 [node name="CollisionShape2D" type="CharacterBody2D" parent="." unique_id=1435647743 instance=ExtResource("2_qgndq")]
 collision_layer = 4
 collision_mask = 5
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=425216076]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1309285527]
 position = Vector2(-5, 23)
 shape = SubResource("CapsuleShape2D_ww340")

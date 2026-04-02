@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" format=3 uid="uid://bgm3ekpnwrgfc"]
+[gd_resource type="SpriteFrames" format=3 uid="uid://d0jr0yc2fwjke"]
 
 [ext_resource type="Texture2D" uid="uid://du2rbcehpsnb4" path="res://assets/Effect/lrsc3/lrsc3-action_00.png" id="1_7w433"]
 [ext_resource type="Texture2D" uid="uid://i0rbuc8f1c83" path="res://assets/Effect/lrsc3/lrsc3-action_01.png" id="2_6ooyj"]
@@ -31,10 +31,10 @@ animations = [{
 "texture": ExtResource("5_jso0h")
 }, {
 "duration": 1.0,
-"texture": ExtResource("6_kbvwn")
+"texture": ExtResource("7_u43g8")
 }, {
 "duration": 1.0,
-"texture": ExtResource("7_u43g8")
+"texture": ExtResource("6_kbvwn")
 }, {
 "duration": 1.0,
 "texture": ExtResource("8_f73qh")

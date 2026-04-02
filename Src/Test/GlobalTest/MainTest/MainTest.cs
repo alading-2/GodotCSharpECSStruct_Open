@@ -100,10 +100,10 @@ public partial class MainTest : Node
             ResourcePaths.DataAbility_ChainLightningConfig, ResourceCategory.DataAbility);
         if (chainConfig != null) EntityManager.AddAbility(_player, chainConfig);
 
-        // 技能3: 烈焰光环 (CircleDamage) - 周期范围伤害
-        var auraConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
-            ResourcePaths.DataAbility_CircleDamageConfig, ResourceCategory.DataAbility);
-        if (auraConfig != null) EntityManager.AddAbility(_player, auraConfig);
+        // // 技能3: 烈焰光环 (CircleDamage) - 周期范围伤害
+        // var auraConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
+        //     ResourcePaths.DataAbility_CircleDamageConfig, ResourceCategory.DataAbility);
+        // if (auraConfig != null) EntityManager.AddAbility(_player, auraConfig);
 
         // 技能4: 冲刺 (Dash) - 位移技能
         var dashConfig = ResourceManagement.Load<Slime.Config.Abilities.AbilityConfig>(
