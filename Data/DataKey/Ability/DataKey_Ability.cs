@@ -99,7 +99,7 @@ public static partial class DataKey
 
     // 最大目标
     public static readonly DataMeta AbilityMaxTargets = DataRegistry.Register(
-        new DataMeta { Key = nameof(AbilityMaxTargets), DisplayName = "最大目标", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = -1, MinValue = 1 });
+        new DataMeta { Key = nameof(AbilityMaxTargets), DisplayName = "最大目标", Category = DataCategory_Ability.Target, Type = typeof(int), DefaultValue = -1, MinValue = -1 });
 
     // ============ 目标几何参数 ============
     // 施法距离
