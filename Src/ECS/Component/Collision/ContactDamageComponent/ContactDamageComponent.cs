@@ -24,6 +24,9 @@ public partial class ContactDamageComponent : Node, IComponent
     /// <summary>本实体阵营</summary>
     private Team _team;
 
+    /// <summary>当前仍与本实体 Hurtbox 接触中的目标</summary>
+    private readonly Dictionary<Node2D, IEntity?> _contactBodies = new();
+
     /// <summary>接触目标 -> 伤害计时器的映射表</summary>
     private readonly Dictionary<Node2D, GameTimer> _bodyTimers = new();
 
@@ -41,6 +44,8 @@ public partial class ContactDamageComponent : Node, IComponent
 
         _entity.Events.On<GameEventType.Collision.HurtboxEnteredEventData>(GameEventType.Collision.HurtboxEntered, OnHurtboxEntered);
         _entity.Events.On<GameEventType.Collision.HurtboxExitedEventData>(GameEventType.Collision.HurtboxExited, OnHurtboxExited);
+        _entity.Events.On<GameEventType.Unit.KilledEventData>(GameEventType.Unit.Killed, OnKilled);
+        _entity.Events.On<GameEventType.Unit.RevivedEventData>(GameEventType.Unit.Revived, OnRevived);
 
         _log.Debug($"[{entity.Name}] 接触伤害处理组件注册完成，阵营={_team}，开始监听局部碰撞事件。");
     }
@@ -51,6 +56,7 @@ public partial class ContactDamageComponent : Node, IComponent
     public void OnComponentUnregistered()
     {
         CancelAllBodyTimers();
+        _contactBodies.Clear();
         _entity = null;
         _data = null;
     }
@@ -67,19 +73,15 @@ public partial class ContactDamageComponent : Node, IComponent
         var attacker = evt.Target;
         if (!IsInstanceValid(attacker)) return;
 
+        _contactBodies[attacker] = evt.TargetEntity;
+
         if (!IsHostile(attacker, evt.TargetEntity))
             return;
 
-        if (_bodyTimers.ContainsKey(attacker))
+        if (!CanDealContactDamage())
             return;
 
-        ApplyDamageFrom(attacker, evt.TargetEntity, "EnterImmediate");
-
-        var interval = GetAttackInterval(attacker, evt.TargetEntity);
-        var timer = TimerManager.Instance.Loop(interval)
-            .OnLoop(() => OnBodyDamageTick(attacker, evt.TargetEntity));
-
-        _bodyTimers[attacker] = timer;
+        StartBodyTimer(attacker, evt.TargetEntity, true);
     }
 
     /// <summary>
@@ -88,7 +90,26 @@ public partial class ContactDamageComponent : Node, IComponent
     /// <param name="evt">受击区退出事件数据</param>
     private void OnHurtboxExited(GameEventType.Collision.HurtboxExitedEventData evt)
     {
+        _contactBodies.Remove(evt.Target);
         CancelBodyTimer(evt.Target);
+    }
+
+    /// <summary>
+    /// 死亡事件处理：立即暂停所有持续接触伤害，但保留当前接触集合，供复活后恢复
+    /// </summary>
+    /// <param name="evt">死亡事件数据</param>
+    private void OnKilled(GameEventType.Unit.KilledEventData evt)
+    {
+        CancelAllBodyTimers();
+    }
+
+    /// <summary>
+    /// 复活事件处理：若复活完成时仍与敌人重叠，重新建立持续接触伤害
+    /// </summary>
+    /// <param name="evt">复活完成事件数据</param>
+    private void OnRevived(GameEventType.Unit.RevivedEventData evt)
+    {
+        ResumeContactDamage();
     }
 
     /// <summary>
@@ -103,7 +124,7 @@ public partial class ContactDamageComponent : Node, IComponent
     {
         if (_entity == null || _data == null) return;
 
-        if (_data.Get<bool>(DataKey.IsDead))
+        if (!CanDealContactDamage())
         {
             CancelAllBodyTimers();
             return;
@@ -111,11 +132,89 @@ public partial class ContactDamageComponent : Node, IComponent
 
         if (!IsInstanceValid(attacker))
         {
+            _contactBodies.Remove(attacker);
+            CancelBodyTimer(attacker);
+            return;
+        }
+
+        if (!IsHostile(attacker, attackerEntity))
+        {
             CancelBodyTimer(attacker);
             return;
         }
 
         ApplyDamageFrom(attacker, attackerEntity, "TimerTick");
+    }
+
+    /// <summary>
+    /// 为指定接触目标启动持续伤害计时器
+    /// </summary>
+    /// <param name="attacker">攻击者节点</param>
+    /// <param name="attackerEntity">攻击者实体</param>
+    /// <param name="applyImmediateDamage">是否立即结算一次进入伤害</param>
+    private void StartBodyTimer(Node2D attacker, IEntity? attackerEntity, bool applyImmediateDamage)
+    {
+        if (!IsInstanceValid(attacker)) return;
+        if (_bodyTimers.ContainsKey(attacker)) return;
+
+        if (applyImmediateDamage)
+        {
+            ApplyDamageFrom(attacker, attackerEntity, "EnterImmediate");
+        }
+
+        var interval = GetAttackInterval(attacker, attackerEntity);
+        var timer = TimerManager.Instance.Loop(interval)
+            .OnLoop(() => OnBodyDamageTick(attacker, attackerEntity));
+
+        _bodyTimers[attacker] = timer;
+    }
+
+    /// <summary>
+    /// 复活后为仍在接触中的敌对目标恢复持续接触伤害
+    /// </summary>
+    private void ResumeContactDamage()
+    {
+        // 前置条件检查：必须能造成接触伤害且存在接触目标
+        if (!CanDealContactDamage()) return;
+        if (_contactBodies.Count == 0) return;
+
+        // 延迟初始化无效目标列表，避免不必要的内存分配
+        List<Node2D>? invalidAttackers = null;
+
+        // 遍历所有记录的接触目标
+        foreach (var kv in _contactBodies)
+        {
+            var attacker = kv.Key;           // 攻击者物理节点
+            var attackerEntity = kv.Value;   // 攻击者实体
+
+            // 检查攻击者是否仍然有效（未被销毁）
+            if (!IsInstanceValid(attacker))
+            {
+                // 记录无效目标，稍后统一清理
+                invalidAttackers ??= new List<Node2D>();
+                invalidAttackers.Add(attacker);
+                continue;
+            }
+
+            // 检查敌对关系：只有敌对目标才会触发接触伤害
+            if (!IsHostile(attacker, attackerEntity))
+                continue;
+
+            // 立即启动接触伤害计时器
+            // applyImmediateDamage=true：复活瞬间立即造成伤害，补偿死亡期间暂停的伤害
+            StartBodyTimer(attacker, attackerEntity, true);
+        }
+
+        // 清理无效目标（已被销毁的攻击者）
+        if (invalidAttackers == null) return;
+
+        foreach (var attacker in invalidAttackers)
+        {
+            // 从接触记录中移除
+            _contactBodies.Remove(attacker);
+            // 取消对应的计时器（如果还存在的话）
+            CancelBodyTimer(attacker);
+        }
     }
 
     /// <summary>
@@ -144,6 +243,17 @@ public partial class ContactDamageComponent : Node, IComponent
         };
 
         DamageService.Instance?.Process(damageInfo);
+    }
+
+    /// <summary>
+    /// 当前是否允许接触伤害运行
+    /// </summary>
+    /// <returns>存活时返回 true，否则返回 false</returns>
+    private bool CanDealContactDamage()
+    {
+        return _entity != null
+            && _data != null
+            && !_data.Get<bool>(DataKey.IsDead);
     }
 
     /// <summary>
