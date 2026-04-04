@@ -100,11 +100,13 @@ _entity.Events.On<GameEventType.Data.PropertyChangedEventData>(
 - ❌ 使用 Godot Signal 处理核心逻辑 → 用 `EventBus`
 - ❌ `_Process` 中 `new` 对象或 LINQ
 
-## 碰撞组件约定（2026-03）
-- `CollisionComponent` 是统一碰撞桥接入口，负责扫描 `VisualRoot/CollisionShape2D` 与实体根节点下的 `Collision` 容器，并转发 `CollisionEntered / CollisionExited`
-- 接触伤害、拾取等业务组件应优先消费事件中的 `CollisionType` 与 `Target`，不要在业务层重复直接绑定原生 `BodyEntered / AreaEntered`
-- 如果必须从任意碰撞子节点回溯宿主实体，使用 `EntityManager.ResolveOwningIEntity(node)`
-- 组件需要修改碰撞形状时，应优先改 `Src/ECS/Component/Presets/Collision/` 模板、`sprite_frames_config.gd` 规则或生成后的视觉场景，不要把 shape 重新硬编码回多个 Entity 根场景
+## 碰撞组件约定（2026-04）
+- `CollisionComponent` 现在只桥接 **Entity 根节点为 `Area2D` 的视觉体碰撞**，负责把 `CollisionEntered / CollisionExited(Source, Target)` 转发到 `Entity.Events`
+- `HurtboxComponent` 现在本身就是 `Area2D` 受击区组件，直接在 Entity 场景里配置 `collision_layer / collision_mask` 和 `CollisionShape2D`
+- 接触伤害组件应直接消费 `HurtboxEntered / HurtboxExited`，不要再通过统一碰撞事件里的 `CollisionType.Hurtbox` 做业务过滤
+- `EntityMovementComponent` 仅在非默认运动模式下消费视觉体碰撞；`CharacterBody2D` 路径仍由 `MoveAndSlide()` 触发 slide collision
+- 若需要从任意碰撞节点回溯宿主实体，优先在组件内沿父链回溯 `IEntity`，不要把宿主解析逻辑散落到业务层
+- 需要调整碰撞形状时，应优先修改 Entity 场景里的 `HurtboxComponent` / 根物理体配置，而不是把 shape 硬编码回多个模板场景
 
 ## EntityMovementComponent（策略调度器）
 

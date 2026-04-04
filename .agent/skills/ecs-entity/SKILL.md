@@ -52,6 +52,21 @@ EntityManager.Destroy(enemy);
 var health = EntityManager.GetComponent<HealthComponent>(entity);
 ```
 
+## 对象池脱树隔离（2026-04 实现）
+
+碰撞类型（根节点为 `CollisionObject2D`，如 `EnemyEntity : CharacterBody2D`）回池时自动脱树：
+
+```text
+回池：停放到 PoolParkingPosition → SetCollisionTreeActive(false) → parent.RemoveChild(node)
+出池：parent.AddChild(node) → ForceDisableCollisionsDirect() → 设置位置 → pool.Activate()
+```
+
+- 判定规则：`node is CollisionObject2D` → 脱树；其余（`AbilityEntity : Node`、`EffectEntity : Node2D`、UI）不脱树
+- `Get(false)` 只取对象，不提前触发 `OnPoolAcquire`
+- `Activate()` 会防御性检查挂树状态，再统一恢复碰撞并触发 `OnPoolAcquire / OnInstanceAcquire`
+- `CharacterBody2D` 必须在 `Activate()` 后再 `CallDeferred(MoveAndSlide)`
+- 详细说明：`Docs/框架/ECS/Collision/对象池碰撞兼容说明.md`
+
 ## IPoolable 接口（对象池版必须实现）
 
 ```csharp

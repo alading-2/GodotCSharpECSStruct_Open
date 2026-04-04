@@ -12,7 +12,7 @@ public static partial class GameEventType
         public const string CollisionEntered = "collision:collision_entered";
         /// <summary>
         /// 碰撞进入事件数据
-        /// 由 CollisionComponent 在 Entity 根节点为 Area2D 时发出，供 EntityMovementComponent 处理运动碰撞
+        /// 由 CollisionComponent 在 Entity 根节点为 Area2D 时发出，供 EntityMovementComponent 等视觉体碰撞消费者使用
         /// </summary>
         public readonly record struct CollisionEnteredEventData(
             IEntity Source,
@@ -32,6 +32,7 @@ public static partial class GameEventType
         /// <summary>
         /// 受击区进入事件数据
         /// Hurtbox 表示本方被触发的受击区节点；Target / TargetEntity 表示进入受击区的目标
+        /// 该事件通常由 ContactDamageComponent 等业务组件消费。
         /// </summary>
         public readonly record struct HurtboxEnteredEventData(
             IEntity Source,
@@ -45,6 +46,7 @@ public static partial class GameEventType
         /// <summary>
         /// 受击区离开事件数据
         /// Hurtbox 表示本方被触发的受击区节点；Target / TargetEntity 表示离开受击区的目标
+        /// 对象池碰撞实体复用时，应通过统一的激活时序避免伪 entered / exited 事件。
         /// </summary>
         public readonly record struct HurtboxExitedEventData(
             IEntity Source,

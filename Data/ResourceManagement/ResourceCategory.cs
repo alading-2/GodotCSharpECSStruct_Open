@@ -33,7 +33,7 @@ public enum ResourceCategory
     DataAbility,
     /// <summary>单位数据配置（Data/Data/Unit/）</summary>
     DataUnit,
-    /// <summary>碰撞预设配置（Src/ECS/Component/Presets/Collision/）</summary>
+    /// <summary>碰撞预设配置</summary>
     DataCollision,
     /// <summary>Test 测试资源</summary>
     Test,

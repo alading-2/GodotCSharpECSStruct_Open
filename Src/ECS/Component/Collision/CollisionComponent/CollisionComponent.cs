@@ -96,9 +96,6 @@ public partial class CollisionComponent : Node, IComponent
         // 安全性检查：确保实体存在且目标节点有效
         if (_entity == null || !IsInstanceValid(target)) return;
 
-        // 记录调试信息，包含源实体、目标节点和距离
-        _log.Debug($"[CollisionEntered] source={FormatNodeDebug(_entity as Node)} target={FormatNodeDebug(target)} distance={FormatDistance(_entity as Node, target)}");
-
         // 向实体局部事件总线发射碰撞进入事件
         _entity.Events.Emit(GameEventType.Collision.CollisionEntered,
             new GameEventType.Collision.CollisionEnteredEventData(_entity, target));
@@ -112,48 +109,8 @@ public partial class CollisionComponent : Node, IComponent
         // 安全性检查：确保实体存在且目标节点有效
         if (_entity == null || !IsInstanceValid(target)) return;
 
-        // 记录调试信息，包含源实体、目标节点和距离
-        _log.Debug($"[CollisionExited] source={FormatNodeDebug(_entity as Node)} target={FormatNodeDebug(target)} distance={FormatDistance(_entity as Node, target)}");
-
         // 向实体局部事件总线发射碰撞退出事件
         _entity.Events.Emit(GameEventType.Collision.CollisionExited,
             new GameEventType.Collision.CollisionExitedEventData(_entity, target));
-    }
-
-    // ================= 调试工具 =================
-
-    /// <summary>
-    /// 格式化节点调试信息，包含名称、类型、实例ID和位置（如果是Node2D）
-    /// </summary>
-    private static string FormatNodeDebug(Node? node)
-    {
-        // 无效节点检查
-        if (node == null || !IsInstanceValid(node)) return "<invalid>";
-
-        // 提取节点基本信息
-        var name = node.Name.ToString();
-        var type = node.GetType().Name;
-        var instanceId = node.GetInstanceId();
-
-        // 如果是Node2D，额外显示全局位置
-        if (node is Node2D node2D)
-            return $"{name}[{type}#{instanceId}] pos={node2D.GlobalPosition}";
-
-        return $"{name}[{type}#{instanceId}]";
-    }
-
-    /// <summary>
-    /// 计算两个节点之间的距离，返回格式化字符串
-    /// </summary>
-    private static string FormatDistance(Node? source, Node? target)
-    {
-        // 类型检查：必须都是Node2D才能计算距离
-        if (source is not Node2D sourceNode2D || target is not Node2D targetNode2D) return "n/a";
-
-        // 有效性检查
-        if (!IsInstanceValid(sourceNode2D) || !IsInstanceValid(targetNode2D)) return "n/a";
-
-        // 计算并格式化距离（保留2位小数）
-        return sourceNode2D.GlobalPosition.DistanceTo(targetNode2D.GlobalPosition).ToString("F2");
     }
 }

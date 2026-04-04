@@ -10,11 +10,11 @@ description: 创建新 Entity、管理 Entity 生命周期（Spawn/Register/Dest
 - **统一生命周期**：必须通过 `EntityManager.Spawn/Register/Destroy`，禁止直接 `new` 或 `QueueFree()`
 - **两种类型**：对象池版（高频：Enemy/Bullet/Item）和非对象池版（低频：Player/Boss）
 
-## VisualRoot / Collision 约定（2026-03）
+## VisualRoot / 碰撞约定（2026-04）
 - `EntityManager.Spawn` 会在组件注册前按 `VisualScenePath` 注入 `VisualRoot`
-- `SpriteFramesGenerator` 会把 `Src/ECS/Component/Presets/Collision/` 下的碰撞模板注入到 `VisualRoot/CollisionShape2D`
-- 实体根节点下允许放置 `Collision` 容器，用于挂受击区、拾取区等传感器模板实例
-- 真实运行时的碰撞事件桥接统一由 `CollisionComponent` 负责，不由 `EntityManager` 直接参与绑定
+- `SpriteFramesGenerator` 会把碰撞模板注入到 `VisualRoot/CollisionShape2D`
+- 受击区、拾取区等业务碰撞节点直接作为 `Area2D` 挂在 Entity 场景里
+- 视觉体碰撞由 `CollisionComponent` 桥接，受击区碰撞由 `HurtboxComponent` 自身处理
 - Entity 根场景保留根物理体 `CollisionShape2D`，视觉模板形状优先在生成后的视觉场景内单独调整
 - 依赖视觉或碰撞配置的组件，可以假设 `OnComponentRegistered` 执行时 `VisualRoot` 已注入完成
 
@@ -59,6 +59,28 @@ EntityManager.Destroy(enemy);
 // ✅ 查询组件
 var health = EntityManager.GetComponent<HealthComponent>(entity);
 ```
+
+## 对象池生成时序（重要）
+
+- 对象池 Entity 出池时，不要立即恢复碰撞与处理。
+- 必须先完成 Data 注入、VisualRoot 注入、位置/旋转设置与 `ForceUpdateTransform()`。
+- 组件注册完成后，再统一恢复节点激活状态。
+- 这样可以避免复用对象在旧位置短暂参与物理，触发伪 `body_entered`。
+
+### 脱树隔离机制（2026-04 实现）
+
+碰撞类型（根节点为 `CollisionObject2D`，如 `EnemyEntity : CharacterBody2D`）回池时自动脱树：
+
+```text
+回池：停放到 PoolParkingPosition → SetCollisionTreeActive(false) → parent.RemoveChild(node)
+出池：parent.AddChild(node) → ForceDisableCollisionsDirect() → 设置位置 → pool.Activate()
+```
+
+- 判定规则：`node is CollisionObject2D` → 脱树；其余（`AbilityEntity : Node`、`EffectEntity : Node2D`、UI）不脱树
+- `Get(false)` 只取对象，不提前触发 `OnPoolAcquire`
+- `Activate()` 会防御性检查挂树状态，再统一恢复碰撞并触发 `OnPoolAcquire / OnInstanceAcquire`
+- `CharacterBody2D` 必须在 `Activate()` 后再 `CallDeferred(MoveAndSlide)`
+- 详细说明：`Docs/框架/ECS/Collision/对象池碰撞兼容说明.md`
 
 ## IPoolable 接口（对象池版必须实现）
 

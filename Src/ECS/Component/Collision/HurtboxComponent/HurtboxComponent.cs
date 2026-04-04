@@ -73,7 +73,6 @@ public partial class HurtboxComponent : Area2D, IComponent
     {
         if (_entity == null || !IsInstanceValid(target)) return;
         var targetEntity = ResolveOwningEntity(target);
-        _log.Debug($"[HurtboxEntered] source={FormatNodeDebug(_entity as Node)} target={FormatNodeDebug(target)} targetEntity={FormatEntityDebug(targetEntity)} distance={FormatDistance(_entity as Node, target)}");
         _entity.Events.Emit(GameEventType.Collision.HurtboxEntered,
             new GameEventType.Collision.HurtboxEnteredEventData(_entity, this, target, targetEntity));
     }
@@ -82,7 +81,6 @@ public partial class HurtboxComponent : Area2D, IComponent
     {
         if (_entity == null || !IsInstanceValid(target)) return;
         var targetEntity = ResolveOwningEntity(target);
-        _log.Debug($"[HurtboxExited] source={FormatNodeDebug(_entity as Node)} target={FormatNodeDebug(target)} targetEntity={FormatEntityDebug(targetEntity)} distance={FormatDistance(_entity as Node, target)}");
         _entity.Events.Emit(GameEventType.Collision.HurtboxExited,
             new GameEventType.Collision.HurtboxExitedEventData(_entity, this, target, targetEntity));
     }
@@ -102,31 +100,5 @@ public partial class HurtboxComponent : Area2D, IComponent
             current = current.GetParent();
         }
         return null;
-    }
-
-    /// <summary>
-    /// 格式化节点调试信息，包含名称、类型、实例ID和位置（如果是Node2D）
-    /// </summary>
-    private static string FormatNodeDebug(Node? node)
-    {
-        if (node == null || !IsInstanceValid(node)) return "<invalid>";
-        var name = node.Name.ToString();
-        var type = node.GetType().Name;
-        var instanceId = node.GetInstanceId();
-        if (node is Node2D node2D)
-            return $"{name}[{type}#{instanceId}] pos={node2D.GlobalPosition}";
-        return $"{name}[{type}#{instanceId}]";
-    }
-
-    private static string FormatEntityDebug(IEntity? entity)
-    {
-        return entity is Node node ? FormatNodeDebug(node) : "<none>";
-    }
-
-    private static string FormatDistance(Node? source, Node? target)
-    {
-        if (source is not Node2D sourceNode2D || target is not Node2D targetNode2D) return "n/a";
-        if (!IsInstanceValid(sourceNode2D) || !IsInstanceValid(targetNode2D)) return "n/a";
-        return sourceNode2D.GlobalPosition.DistanceTo(targetNode2D.GlobalPosition).ToString("F2");
     }
 }

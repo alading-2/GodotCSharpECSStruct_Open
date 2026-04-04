@@ -16,7 +16,7 @@
 
 | 序 | 处理器 (Processor) | 优先级 | 阶段 | 核心职责 (Core Responsibility) |
 |:--:|:---|:--:|:---|:---|
-| 1 | [BaseDamageProcessor](./Processors/BaseDamageProcessor.cs) | 100 | **初始化与前置检查** | 初始化 `FinalDamage = BaseDamage`<br>检查死亡/无敌状态，可提前终止流程 |
+| 1 | [BaseDamageProcessor](./Processors/BaseDamageProcessor.cs) | 100 | **初始化与前置检查** | 初始化 `FinalDamage = BaseDamage`<br>检查目标死亡/无敌，以及**`Attacker` 自身已死亡时的 `Attack` 标签伤害**，可提前终止流程 |
 | 2 | [DodgeProcessor](./Processors/DodgeProcessor.cs) | 200 | **生存判定** | 判定闪避。若闪避成功：<br>`IsDodged = true`, `IsEnd = true`, `FinalDamage = 0`<br>**注意**：真实伤害不可闪避 |
 | 3 | [CritProcessor](./Processors/CritProcessor.cs) | 300 | **输出修正** | 判定暴击。若暴击：<br>`IsCritical = true`, `FinalDamage *= CritDamageMultiplier` |
 | 4 | [ShieldProcessor](./Processors/ShieldProcessor.cs) | 400 | **护盾抵扣** | 优先扣除护盾（**TODO**）<br>护盾承受**原始伤害**（护甲减免前） |
@@ -33,12 +33,18 @@
 
 ### 3.1 [DamageInfo](./DamageInfo.cs)
 承载单次伤害生命周期的所有信息。
-- `Attacker`: 伤害来源实体（可能是子弹、陷阱）。
-- `Instigator`: **真正施法者**（IUnit），用于伤害归属统计。
+- `Attacker`: 伤害来源节点（如子弹、陷阱 Area2D）。
 - `Victim`:受害者实体。
+- `Type`: 伤害性质分类，当前使用 `Physical / Magical / True`。
+- `Tags`: 伤害来源/表现标签，当前使用 `Attack / Ability / Melee / Ranged / Area / Persistent / Explosion / Engineering`。
 - `FinalDamage`: 流转过程中的最终结算伤害值。
 
-### 3.2 [IUnit](./IUnit.cs)
+### 3.2 DamageType 与 DamageTags 分工
+- `DamageType` 负责数值语义：物理、魔法、真实等，用于护甲、闪避、抗性等数值分支。
+- `DamageTags` 负责来源/表现语义：普通攻击、技能、近战、范围、持续等，用于流程规则分支。
+- 当前系统约定：`BaseDamageProcessor` 仅在 **`Attacker` 自身已死亡** 且标签包含 `Attack` 时阻断伤害；不会因为拥有者、父节点或归属单位死亡而额外阻断，也不会统一阻断 `Ability` 标签伤害。
+
+### 3.3 [IUnit](./IUnit.cs)
 所有具备战斗属性的主体（玩家、敌人）必须实现的接口。
 - `FactionId`: 用于区分阵营（友伤判定）。
 
@@ -107,7 +113,7 @@ int kills = player.Data.Get<int>(DataKey.TotalKills);
 foreach (var processor in _processors)
 {
     processor.Process(info);
-    if (info.IsEnd) break;  // ✅ 统一在此检查
+    if (info.IsEnd) break;  // 统一在此检查
 }
 ```
 
@@ -161,7 +167,7 @@ public void Process(DamageInfo info)
 ### Stage 1: 输出修正 (Outgoing) - 决定理论伤害
 
 #### [BaseDamageProcessor](./Processors/BaseDamageProcessor.cs) (P:100)
-*   **逻辑**: 初始化 `FinalDamage = BaseDamage`。执行前置检查（死亡、无敌、基础伤害 <= 0）。
+*   **逻辑**: 初始化 `FinalDamage = BaseDamage`。执行前置检查（目标死亡、无敌、基础伤害 <= 0、`Attacker` 自身已死亡的 `Attack` 标签伤害）。
 *   **提前终止**: 若检查失败，设置 `IsEnd = true`, `FinalDamage = 0`。
 *   **职责整合**: 合并了原 `PreDamageCheckProcessor` 的功能。
 

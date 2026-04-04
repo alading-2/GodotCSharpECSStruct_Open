@@ -7,6 +7,10 @@
 - **泛型支持** - `ObjectPool<T>` 支持任意引用类型。
 - **混合命名空间** - 核心工具类位于全局命名空间，无需 `using` 即可随时随地调用。
 - **自动管理 Node** - 出池自动激活（`Inherit` + `Visible`），入池自动挂起（`Disabled` + `Invisible`）。
+- **碰撞类型脱树隔离** - `CollisionObject2D` 节点回池时自动 `RemoveChild` 脱树（`set_space(null)` 彻底清理物理状态），出池时 `AddChild` 挂回；非碰撞类型保持属性开关行为。
+- **泊车位防幽灵碰撞** - 回池时会先把碰撞节点停放到远离战场的位置，避免重新挂树瞬间被物理世界看到旧死亡坐标。
+- **挂树后同步禁用** - 脱树节点重新 `AddChild` 后立即同步关闭碰撞，覆盖 `SetDeferred` 尚未生效的窗口。
+- **两阶段激活时序** - `Get(false)` 不提前触发 `OnPoolAcquire`，而是等 `Activate()` 时才真正完成挂树保障、恢复节点并触发生命周期。
 - **生命周期回调** - 通过 `IPoolable` 接口实现精准的对象重置逻辑。
 - **全局管理器** - `ObjectPoolManager` 自动管理所有创建的池，支持**静态归还**与**按名查找**。
 - **详细统计** - 实时追踪命中率、活跃数、闲置数及创建/销毁总量。
@@ -129,6 +133,21 @@ public partial class Enemy : CharacterBody2D, IPoolable
 
 ## 常见问题与技术细节
 
+### 0. 为什么碰撞节点不能只靠 `disabled` / `monitoring` 开关？
+
+对象池复用 `Area2D` / `CharacterBody2D` 时，如果只是切换 `CollisionShape2D.disabled`、`Area2D.monitoring`、`collision_layer / collision_mask`，Godot 物理宽相仍可能在旧位置重建碰撞对，导致伪 `entered`。
+
+当前项目最终采用下面这套组合方案：
+
+- 回池时若根节点是 `CollisionObject2D`，先停放到泊车位，再脱树
+- `Get(false)` 阶段会先挂回场景树，但保持碰撞关闭
+- 挂树后立即同步关闭碰撞，覆盖 deferred 尚未生效窗口
+- `EntityManager.Spawn` 完成位置/旋转设置、`ForceUpdateTransform()` 与组件注册
+- 最后 `pool.Activate()` 统一执行防御性挂树检查、恢复处理与碰撞，并触发 `OnPoolAcquire / OnInstanceAcquire`
+- `CharacterBody2D` 在 `Activate()` 之后再 `CallDeferred(MoveAndSlide)`
+
+这套流程是当前项目解决“幽灵碰撞”的标准做法。
+
 ### 1. 为什么 ObjectPoolInit 使用 \_EnterTree 而非 \_Ready？
 
 **关键时序问题**：
@@ -161,7 +180,7 @@ AutoLoad 加载顺序（按 Priority）：
 - 推荐在 `_Ready` 中使用 `CallDeferred(nameof(MyInitMethod))`。
 - 确保初始化逻辑在引擎完成首帧设置后执行。
 
-### 2. 节点层级管理 (ParentManager)
+### 3. 节点层级管理 (ParentManager)
 
 为了保持场景树整洁并防止场景切换时对象池被销毁，`ParentManager` 默认将对象池挂载在 `/root` 下：
 
@@ -174,8 +193,9 @@ AutoLoad 加载顺序（按 Priority）：
 
 | 方法                                 | 描述                                                 |
 | :----------------------------------- | :--------------------------------------------------- |
-| `Get()`                              | 获取一个纯对象（不处理 Godot 节点属性）。            |
+| `Get()`                              | 获取对象；若为 Node，会处理挂树保障，按参数决定是否立即激活。 |
 | `Spawn()`                            | 获取对象，自动处理显隐、处理模式并挂载到预设父节点。 |
+| `Activate(T obj)`                    | 完成延迟激活：防御性挂树、恢复显隐/处理/碰撞，并触发生命周期。 |
 | `SpawnBatch(int count)`              | 批量执行 `Spawn`。                                   |
 | `Release(T item)`                    | 归还对象到池中。                                     |
 | `ReleaseBatch(IEnumerable<T> items)` | 批量归还对象。                                       |
@@ -206,3 +226,4 @@ AutoLoad 加载顺序（按 Priority）：
     - **纯 C# 类**：必须持有池引用并调用 `pool.Release(obj)`。
 4.  **性能**：对象池会自动处理节点的挂载逻辑。对于极高频率（如每秒百发）的子弹，建议在配置中指定合理的 `ParentPath`。
 5.  **类型选择**：本项目主要池化 Node 对象（Enemy、Bullet、Item），极少需要池化纯 C# 类。
+6.  **碰撞型根节点**：凡是根节点为 `CollisionObject2D` 的池化实体，都应统一走“泊车位 + 脱树 + 挂树后同步禁用 + Activate 后恢复碰撞”的方案，不要自行手写一套属性开关时序。

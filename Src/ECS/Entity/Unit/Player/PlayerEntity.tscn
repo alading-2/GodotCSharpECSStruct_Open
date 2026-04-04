@@ -10,6 +10,8 @@
 radius = 45.0
 height = 90.0
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_05apk"]
+
 [node name="Player" type="CharacterBody2D" unique_id=1208168319]
 collision_layer = 2
 motion_mode = 1
@@ -27,5 +29,8 @@ script = ExtResource("1_a3twn")
 shape = SubResource("CapsuleShape2D_hurtbox")
 
 [node name="ContactDamageComponent" parent="Component" unique_id=1989727749 instance=ExtResource("4_05apk")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=797179654]
+shape = SubResource("CircleShape2D_05apk")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=508281073]

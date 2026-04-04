@@ -131,6 +131,7 @@ public static partial class EntityManager
     public static T? Spawn<T>(EntitySpawnConfig config) where T : Node, IEntity
     {
         T? entity;
+        ObjectPool<T>? pool = null;
 
         // 1. 根据模式创建 Entity
         if (config.UsingObjectPool)
@@ -142,13 +143,13 @@ public static partial class EntityManager
                 return null;
             }
 
-            var pool = ObjectPoolManager.GetPool<T>(config.PoolName);
+            pool = ObjectPoolManager.GetPool<T>(config.PoolName);
             if (pool == null)
             {
                 _log.Error($"对象池不存在: 期望名称 '{config.PoolName}' (类型: {typeof(T).Name})");
                 return null;
             }
-            entity = pool.Get();
+            entity = pool.Get(false);
             _log.Debug($"从对象池获取 Entity: {typeof(T).Name} (池名: {config.PoolName})");
         }
         else
@@ -184,7 +185,8 @@ public static partial class EntityManager
 
         // 4. 设置位置和旋转（仅对 Node2D 生效）
         // 关键时序：必须先设置变换，再做组件注册。
-        // 否则对象池复用对象可能在“旧位置”参与一帧物理，导致 HurtComponent 收到伪 body_entered。
+        // 对碰撞型对象池实体来说，这一步发生在“挂回场景树但碰撞仍关闭”之后、最终 Activate 之前，
+        // 用来确保复用对象不会以旧死亡坐标参与新一轮物理宽相计算。
         if (entity is Node2D entity2D)
         {
             if (config.Position.HasValue) entity2D.GlobalPosition = config.Position.Value;
@@ -199,6 +201,20 @@ public static partial class EntityManager
         {
             Register(entity);
             RegisterComponents(entity);
+        }
+
+        if (pool != null)
+        {
+            pool.Activate(entity);
+
+            // 对象池 CharacterBody2D 必须在 Activate 后再延迟执行一次零速度 MoveAndSlide。
+            // 原因：最终方案中，碰撞恢复由 Activate 统一提交；若在此前同步物理代理，
+            // 物理服务器仍可能基于未完全恢复的碰撞状态或旧宽相缓存工作。
+            if (entity is CharacterBody2D pooledBody)
+            {
+                pooledBody.Velocity = Vector2.Zero;
+                pooledBody.CallDeferred(CharacterBody2D.MethodName.MoveAndSlide);
+            }
         }
 
         GlobalEventBus.Global.Emit(GameEventType.Global.EntitySpawned, new GameEventType.Global.EntitySpawnedEventData(entity));
@@ -273,12 +289,11 @@ public static partial class EntityManager
     }
 
     /// <summary>
-    /// 同步 VisualRoot 下的碰撞模板数据到 Entity 根节点，然后删除模板
+    /// 同步 VisualRoot 下的碰撞形状模板到 Entity 根节点，然后删除模板
     /// <para>
-    /// 碰撞模板为 VisualRoot 下名为 "CollisionShape2D" 的节点（SpriteFramesGenerator 注入）：
-    /// - CollisionObject2D（Area2D / CharacterBody2D）：同步 layer/mask，并从其子 CollisionShape2D 同步形状
-    /// - 直接 CollisionShape2D：仅同步形状（无 layer/mask 信息）
-    /// 无论模板类型，最终均删除，VisualRoot 只保留视觉内容。
+    /// 碰撞模板为 VisualRoot 下名为 "CollisionShape2D" 的纯 CollisionShape2D 节点（SpriteFramesGenerator 注入）。
+    /// 仅同步形状（Shape / Position），Entity 的 collision_layer / collision_mask 已直接在其 .tscn 根节点设置，无需此处传递。
+    /// 同步完成后删除模板，VisualRoot 只保留视觉内容。
     /// </para>
     /// </summary>
     private static void SyncAndRemoveCollisionTemplate(Node entity, Node visualRoot)
@@ -286,16 +301,8 @@ public static partial class EntityManager
         var template = visualRoot.GetNodeOrNull("CollisionShape2D");
         if (template == null) return;
 
-        // 同步 layer/mask（仅当模板是物理节点时）
-        if (template is CollisionObject2D templateObj && entity is CollisionObject2D entityObj)
-        {
-            entityObj.CollisionLayer = templateObj.CollisionLayer;
-            entityObj.CollisionMask = templateObj.CollisionMask;
-        }
-
-        // 查找碰撞形状：优先从模板子节点查找，否则把模板本身视为形状节点
-        var sourceShape = template.GetNodeOrNull<CollisionShape2D>("CollisionShape2D")
-                         ?? template as CollisionShape2D;
+        // 模板为纯 CollisionShape2D，直接同步形状到 Entity 根节点的物理形状节点
+        var sourceShape = template as CollisionShape2D;
         var entityShape = entity.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
         if (sourceShape != null && entityShape != null)
         {
@@ -305,11 +312,9 @@ public static partial class EntityManager
             // Entity 此时已在场景树中（场景路径由 AddToSceneTree 保证，对象池路径对象保持在树中）
             if (entity is Node2D entity2D)
                 entityShape.Position = entity2D.ToLocal(sourceShape.GlobalPosition);
-
-            entityShape.Disabled = false;
         }
 
-        _log.Debug($"[{entity.Name}] 已同步碰撞模板数据并删除 VisualRoot/CollisionShape2D");
+        _log.Debug($"[{entity.Name}] 已同步碰撞形状模板并删除 VisualRoot/CollisionShape2D");
         template.QueueFree();
     }
 

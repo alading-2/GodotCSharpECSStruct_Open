@@ -34,9 +34,6 @@ class ResourceGenerator
         ".godot",
     };
 
-    private const string CollisionDataPath = "Src/ECS/Component/Presets/Collision";
-    private const string CollisionRegistryOutputFile = "Src/ECS/Component/Presets/Collision/CollisionTypeRegistry.cs";
-
     private const string OutputFile = "Data/ResourceManagement/ResourcePaths.cs";
 
     // 通过最长前缀匹配 ScanConfig 确定资源分类
@@ -95,9 +92,6 @@ class ResourceGenerator
 
         // 3. 生成代码
         GenerateCode(projectRoot, resourcesByCategory);
-
-        // 4. 生成碰撞类型注册表
-        GenerateCollisionTypeRegistry(projectRoot);
 
         // 统计总数
         int totalResources = resourcesByCategory.Sum(x => x.Value.Count);
@@ -246,130 +240,6 @@ class ResourceGenerator
 
         // 只取文件名（最后一段）；若同分类内出现重名，ResourceGenerator 日志会提示
         return filteredParts.Last().Replace("-", "_");
-    }
-
-    // ==================== 碰撞类型注册表生成 ====================
-
-    private struct CollisionEntry
-    {
-        public string NodeName;
-        public uint Layer;
-        public uint Mask;
-    }
-
-    /// <summary>
-    /// 扫描 Src/ECS/Component/Presets/Collision 目录下所有 .tscn 文件，提取节点名称和 layer/mask，
-    /// 生成 CollisionTypeRegistry（CollisionType <-> (layer, mask) 正反映射）到 CollisionTypeRegistry.cs
-    /// <para>
-    /// 前提：CollisionType 枚举（手动维护）中每个 tscn 场景有对应的同名位标志成员。
-    /// 本方法仅生成数据映射，不生成枚举定义。
-    /// </para>
-    /// </summary>
-    private static void GenerateCollisionTypeRegistry(string projectRoot)
-    {
-        var collisionDir = Path.Combine(projectRoot, CollisionDataPath);
-        if (!Directory.Exists(collisionDir))
-        {
-            Console.WriteLine($"[警告] 碰撞目录不存在，跳过 CollisionTypeRegistry 生成: {collisionDir}");
-            return;
-        }
-
-        var tscnFiles = Directory.GetFiles(collisionDir, "*.tscn", SearchOption.AllDirectories);
-        var entries = new List<CollisionEntry>();
-
-        foreach (var file in tscnFiles)
-        {
-            var entry = ParseCollisionTscn(file);
-            if (!string.IsNullOrEmpty(entry.NodeName))
-                entries.Add(entry);
-        }
-
-        if (entries.Count == 0)
-        {
-            Console.WriteLine("[警告] Src/ECS/Component/Presets/Collision 未找到有效 .tscn 文件，跳过 CollisionTypeRegistry 生成。");
-            return;
-        }
-
-        // 按节点名字母序排列（保证生成代码稳定）
-        entries.Sort((a, b) => string.Compare(a.NodeName, b.NodeName, StringComparison.OrdinalIgnoreCase));
-
-        var sb = new StringBuilder();
-        sb.AppendLine("//------------------------------------------------------------------------------");
-        sb.AppendLine("//* <ResourceGenerator>");
-        sb.AppendLine("//*     此文件由 ResourceGenerator 自动生成，请勿手动修改。");
-        sb.AppendLine("//*     来源：Src/ECS/Component/Presets/Collision/ 目录下所有 .tscn 文件。");
-        sb.AppendLine("//*     重新运行 ResourceGenerator 会覆盖本文件。");
-        sb.AppendLine("//* </ResourceGenerator>");
-        sb.AppendLine("//------------------------------------------------------------------------------");
-        sb.AppendLine();
-        sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine();
-        sb.AppendLine("/// <summary>");
-        sb.AppendLine("/// 碰撞类型注册表（自动生成） - 存储 CollisionType <-> (Layer, Mask) 的双向映射");
-        sb.AppendLine("/// <para>");
-        sb.AppendLine("/// CollisionType 枚举定义在 CollisionType.cs（手动维护），本文件仅提供数据映射。");
-        sb.AppendLine("/// 查询方法请使用 CollisionTypeQuery（Src/ECS/Component/Presets/Collision/CollisionTypeQuery.cs）");
-        sb.AppendLine("/// </para>");
-        sb.AppendLine("/// </summary>");
-        sb.AppendLine("public static class CollisionTypeRegistry");
-        sb.AppendLine("{");
-        sb.AppendLine("    /// <summary>CollisionType → (Layer, Mask) 正向字典（仅包含单场景位标志，不含组合类型）</summary>");
-        sb.AppendLine("    public static readonly IReadOnlyDictionary<CollisionType, (uint Layer, uint Mask)> LayerMaskByType =");
-        sb.AppendLine("        new Dictionary<CollisionType, (uint Layer, uint Mask)>");
-        sb.AppendLine("    {");
-        foreach (var e in entries)
-            sb.AppendLine($"        {{ CollisionType.{e.NodeName}, ({e.Layer}u, {e.Mask}u) }},");
-        sb.AppendLine("    };");
-        sb.AppendLine();
-        sb.AppendLine("    /// <summary>(Layer, Mask) → CollisionType 反向字典</summary>");
-        sb.AppendLine("    public static readonly IReadOnlyDictionary<(uint Layer, uint Mask), CollisionType> TypeByLayerMask =");
-        sb.AppendLine("        new Dictionary<(uint Layer, uint Mask), CollisionType>");
-        sb.AppendLine("    {");
-        foreach (var e in entries)
-            sb.AppendLine($"        {{ ({e.Layer}u, {e.Mask}u), CollisionType.{e.NodeName} }},");
-        sb.AppendLine("    };");
-        sb.AppendLine("}");
-
-        var outputPath = Path.Combine(projectRoot, CollisionRegistryOutputFile);
-        var outputDir = Path.GetDirectoryName(outputPath);
-        if (!Directory.Exists(outputDir))
-            Directory.CreateDirectory(outputDir!);
-        File.WriteAllText(outputPath, sb.ToString());
-        Console.WriteLine($"[碰撞注册表] 已生成 {entries.Count} 个 CollisionType 映射 → {CollisionRegistryOutputFile}");
-    }
-
-    private static CollisionEntry ParseCollisionTscn(string filePath)
-    {
-        var entry = new CollisionEntry();
-        try
-        {
-            foreach (var line in File.ReadLines(filePath))
-            {
-                var trimmed = line.Trim();
-                if (trimmed.StartsWith("[node name=", StringComparison.OrdinalIgnoreCase))
-                {
-                    var nameStart = trimmed.IndexOf('"') + 1;
-                    var nameEnd = trimmed.IndexOf('"', nameStart);
-                    if (nameStart > 0 && nameEnd > nameStart)
-                        entry.NodeName = trimmed.Substring(nameStart, nameEnd - nameStart);
-                }
-                else if (trimmed.StartsWith("collision_layer =", StringComparison.OrdinalIgnoreCase))
-                {
-                    var val = trimmed.Split('=')[1].Trim();
-                    if (uint.TryParse(val, out var l)) entry.Layer = l;
-                }
-                else if (trimmed.StartsWith("collision_mask =", StringComparison.OrdinalIgnoreCase))
-                {
-                    var val = trimmed.Split('=')[1].Trim();
-                    if (uint.TryParse(val, out var m)) entry.Mask = m;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[警告] 解析碰撞场景失败: {filePath}: {ex.Message}");
-        }
-        return entry;
     }
 
     private static void GenerateCode(string projectRoot, Dictionary<ResourceCategory, Dictionary<string, string>> resourcesByCategory)

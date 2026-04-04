@@ -138,6 +138,27 @@ private void OnDamaged(GameEventType.Unit.DamagedEventData evt)
 > [!IMPORTANT]
 > **EventBus 自动防止死循环**: 当事件正在执行时,同类型的事件不会再次触发,避免事件死循环
 
+### 6. 碰撞组件挂载约定
+
+如果 Entity 需要参与碰撞系统，请遵循以下分工：
+
+- `CollisionComponent` 只负责 Entity 根节点为 `Area2D` 时的视觉体碰撞桥接
+- `HurtboxComponent` 直接作为 `Area2D` 挂在 Entity 场景里，并在自身下配置 `CollisionShape2D`
+- `ContactDamageComponent` 只消费 `HurtboxEntered / HurtboxExited`
+
+### 7. 碰撞型对象池 Entity 时序约定（2026-04）
+
+当对象池 Entity 的**根节点本身参与物理世界**（`CollisionObject2D`，如 `CharacterBody2D`、`Area2D`）时，必须遵循下面的统一时序：
+
+- `Get(false)`：仅取对象，不提前触发 `OnPoolAcquire`
+- 回池时：先禁用处理与显示；若根节点为碰撞类型，则先停放到远离战场的泊车位，再脱树
+- 出池时：先挂回场景树，但保持碰撞关闭
+- `EntityManager.Spawn`：设置位置/旋转、`ForceUpdateTransform()`、注册组件
+- `pool.Activate()`：统一恢复处理与碰撞，并在此时才触发 `OnPoolAcquire`
+- 若根节点是 `CharacterBody2D`：必须在 `Activate()` 后再 `CallDeferred(MoveAndSlide)`
+
+这样做的目的，是避免复用对象在旧死亡坐标或半初始化状态下重新参与宽相计算，触发伪 `entered` 事件。
+
 ---
 
 ## 标准模板

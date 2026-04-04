@@ -34,8 +34,6 @@ public partial class AbilityEntity : Node, IEntity, IPoolable
 
     public override void _ExitTree()
     {
-        // 统一注销 (内部自动清理 Data 和 Events)
-        EntityManager.UnregisterEntity(this);
     }
 
     // ================= IPoolable 接口实现 =================

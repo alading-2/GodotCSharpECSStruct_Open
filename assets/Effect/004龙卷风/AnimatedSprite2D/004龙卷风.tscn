@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://pf5uitbovhv6"]
 
 [ext_resource type="SpriteFrames" uid="uid://du0xwomadgnpn" path="res://assets/Effect/004龙卷风/AnimatedSprite2D/004龙卷风.tres" id="1_co8mh"]
-[ext_resource type="PackedScene" uid="uid://bh4g0qj6wvj7" path="res://Src/ECS/Component/Presets/Collision/Effect/EffectCollision.tscn" id="2_ng7nn"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_no3t1"]
 radius = 142.0
@@ -13,8 +12,6 @@ animation = &"Effect"
 frame = 7
 frame_progress = 0.600401
 
-[node name="CollisionShape2D" parent="." unique_id=868415568 instance=ExtResource("2_ng7nn")]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=171024957]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2018932967]
 position = Vector2(16, 29)
 shape = SubResource("CapsuleShape2D_no3t1")

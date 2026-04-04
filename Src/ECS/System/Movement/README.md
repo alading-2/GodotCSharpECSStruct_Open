@@ -69,7 +69,7 @@ entity.Events.Emit(
   ↓
 EntityMovementComponent.HandleMovementCollision()
   ↓
-1. 发布 GameEventType.Unit.MovementCollision（含 Mode / Target / CollisionType）
+1. 发布 GameEventType.Unit.MovementCollision（含 Mode / Target）
   ↓
 2. 若 DestroyOnCollision=true → OnMoveComplete(byCollision=true)
      → 发布 MovementCompleted
@@ -79,7 +79,6 @@ EntityMovementComponent.HandleMovementCollision()
 其中：
 
 - `Target` 是碰撞到的 `Node2D?`
-- `CollisionType` 是本次碰撞来源语义
 - 如果业务要拿到目标实体，应自行从 `evt.Target` 回溯宿主 `IEntity`
 
 ### 典型用法：发射炮弹打敌人

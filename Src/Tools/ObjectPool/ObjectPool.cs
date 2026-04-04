@@ -86,6 +86,8 @@ public class ObjectPool<T> where T : class
     // 追踪当前活跃的对象集合，用于支持 ReleaseAll
     private readonly HashSet<T> _activeItems = new();
 
+    private static readonly Vector2 PoolParkingPosition = new(1000000, 1000000);
+
     /// <summary> 当对象被成功获取出池时触发 </summary>
     public event Action<T>? OnInstanceAcquire;
     /// <summary> 当对象被归还入池时触发 </summary>
@@ -208,47 +210,131 @@ public class ObjectPool<T> where T : class
         _stats.Count = _stack.Count;
     }
 
-    /// <summary>
-    /// 应用禁用状态：停止处理、隐藏，如果节点是CollisionObject2D，则禁用其直接子节点的碰撞形状
-    /// </summary>
-    private static void ApplyInactiveState(Node node)
-    {
-        node.ProcessMode = Node.ProcessModeEnum.Disabled;
-        if (node is CanvasItem item) item.Visible = false;
+    /// <summary> 判断节点是否需要脱树隔离（根节点是 CollisionObject2D 才需要） </summary>
+    private static bool NeedsTreeDetach(Node node) => node is CollisionObject2D;
 
-        // 【新增】：统一处理物理实体的碰撞开关
-        // 注意：只遍历直接子节点，防止越权关闭深层组件（如 Sensor）的碰撞体
-        if (node is CollisionObject2D collisionObj)
+    /// <summary>
+    /// 递归启用/禁用节点树中的碰撞相关节点。
+    /// 使用 SetDeferred 保证在物理安全点更新属性，避免在物理回调中直接修改。
+    /// </summary>
+    /// <param name="node">根节点</param>
+    /// <param name="active">true 启用碰撞，false 禁用碰撞</param>
+    private static void SetCollisionTreeActive(Node node, bool active)
+    {
+        // 禁用时将角色速度清零，防止回收后残留速度导致出池瞬间位移异常
+        if (!active && node is CharacterBody2D body)
+            body.Velocity = Vector2.Zero;
+
+        // Area2D：通过 Monitoring / Monitorable 控制检测与被检测
+        if (node is Area2D area)
         {
-            foreach (var child in collisionObj.GetChildren())
-            {
-                if (child is CollisionShape2D shape)
-                    shape.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
-                else if (child is CollisionPolygon2D polygon)
-                    polygon.SetDeferred(CollisionPolygon2D.PropertyName.Disabled, true);
-            }
+            area.SetDeferred(Area2D.PropertyName.Monitoring, active);
+            area.SetDeferred(Area2D.PropertyName.Monitorable, active);
+        }
+
+        // 碰撞形状：统一通过 Disabled 控制启用/禁用
+        if (node is CollisionShape2D shape)
+        {
+            shape.SetDeferred(CollisionShape2D.PropertyName.Disabled, !active);
+        }
+        else if (node is CollisionPolygon2D polygon)
+        {
+            polygon.SetDeferred(CollisionPolygon2D.PropertyName.Disabled, !active);
+        }
+
+        // 递归对子节点应用相同的碰撞状态
+        foreach (Node child in node.GetChildren())
+        {
+            SetCollisionTreeActive(child, active);
         }
     }
 
     /// <summary>
-    /// 应用激活状态：恢复处理、显示，如果节点是CollisionObject2D，则恢复其直接子节点的碰撞形状
+    /// 应用禁用状态：停止处理、隐藏。
+    /// 碰撞类型（CollisionObject2D）额外执行脱树，彻底清理物理状态；
+    /// 非碰撞类型仅禁用碰撞属性。
+    /// </summary>
+    private void ApplyInactiveState(Node node)
+    {
+        node.ProcessMode = Node.ProcessModeEnum.Disabled;
+        if (node is CanvasItem item) item.Visible = false;
+
+        // 先将需要脱树的碰撞节点停放到远离战场的位置。
+        // 即使 AddChild 时物理世界先看到一次节点，也只会看到泊车位而非死亡坐标。
+        if (NeedsTreeDetach(node) && node is Node2D parkedNode2D)
+        {
+            parkedNode2D.GlobalPosition = PoolParkingPosition;
+            parkedNode2D.ForceUpdateTransform();
+        }
+        else if (node is Node2D node2D)
+        {
+            node2D.ForceUpdateTransform();
+        }
+
+        SetCollisionTreeActive(node, false);
+
+        // 碰撞类型脱树：set_space(null) 彻底清空 monitored_bodies，杜绝幽灵碰撞
+        if (NeedsTreeDetach(node))
+        {
+            node.GetParent()?.RemoveChild(node);
+        }
+    }
+
+    /// <summary>
+    /// 应用激活状态：恢复处理、显示、启用碰撞。
+    /// 调用前碰撞类型节点必须已挂回场景树（由 ReattachToTree 保证）。
     /// </summary>
     private static void ApplyActiveState(Node node)
     {
         node.ProcessMode = Node.ProcessModeEnum.Inherit;
         if (node is CanvasItem item) item.Visible = true;
+        if (node is Node2D node2D) node2D.ForceUpdateTransform();
+        SetCollisionTreeActive(node, true);
+    }
 
-        // 【新增】：统一处理物理实体的碰撞开关
-        if (node is CollisionObject2D collisionObj)
+    /// <summary>
+    /// 将脱树节点重新挂回场景树。
+    /// AddChild 后立即同步禁用碰撞形状，防止节点以死亡坐标入树时触发幽灵 BodyEntered：
+    /// ApplyInactiveState 使用 SetDeferred 禁用形状，若同帧回收再出池则延迟未生效，
+    /// 节点会以上次死亡坐标（靠近玩家）重新入树，CollisionShape 仍为启用状态，
+    /// 导致 Player 的 HurtboxComponent(Area2D) 误触 BodyEntered。
+    /// 此处直接赋值安全：ReattachToTree 仅在 EntityManager.Spawn 的游戏逻辑上下文调用，非物理回调。
+    /// </summary>
+    private void ReattachToTree(Node node)
+    {
+        if (!NeedsTreeDetach(node) || node.GetParent() != null) return;
+
+        var parent = ParentManager.GetParent(PoolName);
+        if (parent != null)
         {
-            foreach (var child in collisionObj.GetChildren())
-            {
-                if (child is CollisionShape2D shape)
-                    shape.SetDeferred(CollisionShape2D.PropertyName.Disabled, false);
-                else if (child is CollisionPolygon2D polygon)
-                    polygon.SetDeferred(CollisionPolygon2D.PropertyName.Disabled, false);
-            }
+            parent.AddChild(node);
+            // 同步禁用：覆盖 SetDeferred 尚未生效的状态，确保入树瞬间碰撞已关闭
+            ForceDisableCollisionsDirect(node);
         }
+        else
+        {
+            _log.Error($"{PoolName}: 无法挂回场景树，ParentManager 未找到父节点");
+        }
+    }
+
+    /// <summary>
+    /// 直接（同步）禁用节点树中所有碰撞相关组件，不使用 SetDeferred。
+    /// 仅在非物理回调的游戏逻辑帧中调用（如 ReattachToTree）。
+    /// </summary>
+    private static void ForceDisableCollisionsDirect(Node node)
+    {
+        if (node is Area2D area)
+        {
+            area.Monitoring = false;
+            area.Monitorable = false;
+        }
+        if (node is CollisionShape2D shape)
+            shape.Disabled = true;
+        else if (node is CollisionPolygon2D polygon)
+            polygon.Disabled = true;
+
+        foreach (Node child in node.GetChildren())
+            ForceDisableCollisionsDirect(child);
     }
 
     /// <summary>
@@ -256,7 +342,7 @@ public class ObjectPool<T> where T : class
     /// 如果池为空，则自动创建一个新对象
     /// </summary>
     /// <returns>获取到的对象实例</returns>
-    public T Get()
+    public T Get(bool activateNode = true)
     {
         T obj;
         if (_stack.Count > 0)
@@ -281,14 +367,44 @@ public class ObjectPool<T> where T : class
         if (obj is Node node)
         {
             node.SetMeta("InPool", false);
-            ApplyActiveState(node);
+
+            // 脱树节点先挂回场景树（碰撞仍禁用，不会产生幽灵事件）
+            ReattachToTree(node);
+
+            if (activateNode)
+                ApplyActiveState(node);
         }
 
         // 生命周期回调
-        if (obj is IPoolable poolable) poolable.OnPoolAcquire();
-        OnInstanceAcquire?.Invoke(obj);
+        if (activateNode)
+        {
+            if (obj is IPoolable poolable) poolable.OnPoolAcquire();
+            OnInstanceAcquire?.Invoke(obj);
+        }
 
         return obj;
+    }
+
+    /// <summary>
+    /// [激活] 将已获取的对象标记为活跃状态
+    /// <para>
+    /// 使用场景：延迟激活模式，先 Get(false) 获取对象但不激活，
+    /// 待 EntityManager 完成位置设置等初始化后再调用此方法启用碰撞并触发生命周期
+    /// </para>
+    /// </summary>
+    /// <param name="obj">要激活的对象</param>
+    internal void Activate(T obj)
+    {
+        if (obj is not Node node) return;
+
+        node.SetMeta("InPool", false);
+
+        // 防御性保障：确保延迟激活路径下，脱树节点已经挂回场景树
+        ReattachToTree(node);
+        ApplyActiveState(node);
+
+        if (obj is IPoolable poolable) poolable.OnPoolAcquire();
+        OnInstanceAcquire?.Invoke(obj);
     }
 
     /// <summary>
@@ -383,7 +499,14 @@ public class ObjectPool<T> where T : class
 
     private void Discard(T obj)
     {
-        if (obj is Node node) node.QueueFree();
+        if (obj is Node node)
+        {
+            // 脱树节点不在场景树中，用 Free 直接释放；在树中的用 QueueFree
+            if (node.GetParent() == null)
+                node.Free();
+            else
+                node.QueueFree();
+        }
         else if (obj is IDisposable disposable) disposable.Dispose();
     }
 

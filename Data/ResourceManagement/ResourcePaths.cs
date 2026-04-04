@@ -41,19 +41,14 @@ public static class ResourcePaths
     public const string Component_CooldownComponent = "CooldownComponent";
     public const string Component_CostComponent = "CostComponent";
     public const string Component_DataInitComponent = "DataInitComponent";
-    public const string Component_EffectCollision = "EffectCollision";
     public const string Component_EffectComponent = "EffectComponent";
-    public const string Component_EnemyCollision = "EnemyCollision";
-    public const string Component_EnemyHurtboxSensor = "EnemyHurtboxSensor";
     public const string Component_EnemyMovementComponent = "EnemyMovementComponent";
     public const string Component_EnemyPreset = "EnemyPreset";
     public const string Component_EntityMovementComponent = "EntityMovementComponent";
     public const string Component_HealthComponent = "HealthComponent";
+    public const string Component_HurtboxComponent = "HurtboxComponent";
     public const string Component_LifecycleComponent = "LifecycleComponent";
     public const string Component_PickupComponent = "PickupComponent";
-    public const string Component_PlayerCollision = "PlayerCollision";
-    public const string Component_PlayerHurtboxSensor = "PlayerHurtboxSensor";
-    public const string Component_PlayerPickupSensor = "PlayerPickupSensor";
     public const string Component_PlayerPreset = "PlayerPreset";
     public const string Component_RecoveryComponent = "RecoveryComponent";
     public const string Component_TargetingIndicatorControlComponent = "TargetingIndicatorControlComponent";
@@ -161,19 +156,14 @@ public static class ResourcePaths
                 { Component_CooldownComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CooldownComponent/CooldownComponent.tscn") },
                 { Component_CostComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn") },
                 { Component_DataInitComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/DataInitComponent/DataInitComponent.tscn") },
-                { Component_EffectCollision, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Collision/Effect/EffectCollision.tscn") },
                 { Component_EffectComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Effect/EffectComponent/EffectComponent.tscn") },
-                { Component_EnemyCollision, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Collision/Unit/EnemyCollision.tscn") },
-                { Component_EnemyHurtboxSensor, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Collision/Sensor/EnemyHurtboxSensor.tscn") },
                 { Component_EnemyMovementComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Enemy/EnemyMovementComponent/EnemyMovementComponent.tscn") },
                 { Component_EnemyPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn") },
                 { Component_EntityMovementComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Movement/EntityMovementComponent.tscn") },
                 { Component_HealthComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/HealthComponent/HealthComponent.tscn") },
+                { Component_HurtboxComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Collision/HurtboxComponent/HurtboxComponent.tscn") },
                 { Component_LifecycleComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.tscn") },
-                { Component_PickupComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/PickupComponent/PickupComponent.tscn") },
-                { Component_PlayerCollision, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Collision/Unit/PlayerCollision.tscn") },
-                { Component_PlayerHurtboxSensor, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Collision/Sensor/PlayerHurtboxSensor.tscn") },
-                { Component_PlayerPickupSensor, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Collision/Sensor/PlayerPickupSensor.tscn") },
+                { Component_PickupComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Collision/PickupComponent/PickupComponent.tscn") },
                 { Component_PlayerPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/PlayerPreset.tscn") },
                 { Component_RecoveryComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/RecoveryComponent/RecoveryComponent.tscn") },
                 { Component_TargetingIndicatorControlComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/TargetingIndicatorControlComponent/TargetingIndicatorControlComponent.tscn") },

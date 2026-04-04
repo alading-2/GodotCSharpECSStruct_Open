@@ -15,11 +15,22 @@ public partial class ContactDamageComponent : Node, IComponent
 {
     private static readonly Log _log = new(nameof(ContactDamageComponent));
 
+    /// <summary>所属实体引用</summary>
     private IEntity? _entity;
+
+    /// <summary>实体数据容器</summary>
     private Data? _data;
+
+    /// <summary>本实体阵营</summary>
     private Team _team;
+
+    /// <summary>接触目标 -> 伤害计时器的映射表</summary>
     private readonly Dictionary<Node2D, GameTimer> _bodyTimers = new();
 
+    /// <summary>
+    /// 组件注册时初始化，订阅受击区碰撞事件
+    /// </summary>
+    /// <param name="entity">所属实体节点</param>
     public void OnComponentRegistered(Node entity)
     {
         if (entity is not IEntity iEntity) return;
@@ -34,6 +45,9 @@ public partial class ContactDamageComponent : Node, IComponent
         _log.Debug($"[{entity.Name}] 接触伤害处理组件注册完成，阵营={_team}，开始监听局部碰撞事件。");
     }
 
+    /// <summary>
+    /// 组件注销时清理，取消所有伤害计时器
+    /// </summary>
     public void OnComponentUnregistered()
     {
         CancelAllBodyTimers();
@@ -41,24 +55,23 @@ public partial class ContactDamageComponent : Node, IComponent
         _data = null;
     }
 
+    /// <summary>
+    /// 受击区进入事件处理：
+    /// 1. 检查目标是否为敌对阵营
+    /// 2. 立即造成一次伤害 (EnterImmediate)
+    /// 3. 创建循环计时器，按攻击间隔持续造成伤害
+    /// </summary>
+    /// <param name="evt">受击区进入事件数据</param>
     private void OnHurtboxEntered(GameEventType.Collision.HurtboxEnteredEventData evt)
     {
         var attacker = evt.Target;
         if (!IsInstanceValid(attacker)) return;
 
         if (!IsHostile(attacker, evt.TargetEntity))
-        {
-            _log.Debug($"[ContactCollisionIgnored] victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} attackerEntity={FormatEntityDebug(evt.TargetEntity)} reason=NotHostile distance={FormatDistance(_entity as Node, attacker)}");
             return;
-        }
 
         if (_bodyTimers.ContainsKey(attacker))
-        {
-            _log.Debug($"[ContactCollisionDuplicate] victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} attackerEntity={FormatEntityDebug(evt.TargetEntity)} distance={FormatDistance(_entity as Node, attacker)}");
             return;
-        }
-
-        _log.Debug($"[ContactCollisionEntered] victim={FormatNodeDebug(_entity as Node)} hurtbox={FormatNodeDebug(evt.Hurtbox)} attacker={FormatNodeDebug(attacker)} attackerEntity={FormatEntityDebug(evt.TargetEntity)} distance={FormatDistance(_entity as Node, attacker)}");
 
         ApplyDamageFrom(attacker, evt.TargetEntity, "EnterImmediate");
 
@@ -67,37 +80,50 @@ public partial class ContactDamageComponent : Node, IComponent
             .OnLoop(() => OnBodyDamageTick(attacker, evt.TargetEntity));
 
         _bodyTimers[attacker] = timer;
-        _log.Debug($"[ContactTimerStarted] victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} interval={interval:F2}s activeTimers={_bodyTimers.Count} distance={FormatDistance(_entity as Node, attacker)}");
     }
 
+    /// <summary>
+    /// 受击区退出事件处理：取消对应目标的伤害计时器
+    /// </summary>
+    /// <param name="evt">受击区退出事件数据</param>
     private void OnHurtboxExited(GameEventType.Collision.HurtboxExitedEventData evt)
     {
-        _log.Debug($"[ContactCollisionExited] victim={FormatNodeDebug(_entity as Node)} hurtbox={FormatNodeDebug(evt.Hurtbox)} attacker={FormatNodeDebug(evt.Target)} attackerEntity={FormatEntityDebug(evt.TargetEntity)} distance={FormatDistance(_entity as Node, evt.Target)}");
         CancelBodyTimer(evt.Target);
     }
 
+    /// <summary>
+    /// 伤害计时器 tick 回调：
+    /// 1. 检查本实体是否已死亡
+    /// 2. 检查攻击者是否仍有效
+    /// 3. 触发伤害 (TimerTick)
+    /// </summary>
+    /// <param name="attacker">攻击者节点</param>
+    /// <param name="attackerEntity">攻击者实体 (可能为 null)</param>
     private void OnBodyDamageTick(Node2D attacker, IEntity? attackerEntity)
     {
         if (_entity == null || _data == null) return;
 
         if (_data.Get<bool>(DataKey.IsDead))
         {
-            _log.Debug($"[ContactTimerStopAll] victim={FormatNodeDebug(_entity as Node)} reason=VictimDead activeTimers={_bodyTimers.Count}");
             CancelAllBodyTimers();
             return;
         }
 
         if (!IsInstanceValid(attacker))
         {
-            _log.Debug($"[ContactTimerCancelled] victim={FormatNodeDebug(_entity as Node)} attacker=<invalid> reason=AttackerInvalid");
             CancelBodyTimer(attacker);
             return;
         }
 
-        _log.Debug($"[ContactTimerTick] victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} distance={FormatDistance(_entity as Node, attacker)} activeTimers={_bodyTimers.Count}");
         ApplyDamageFrom(attacker, attackerEntity, "TimerTick");
     }
 
+    /// <summary>
+    /// 向 DamageService 发起伤害请求
+    /// </summary>
+    /// <param name="attacker">攻击者节点</param>
+    /// <param name="attackerEntity">攻击者实体</param>
+    /// <param name="triggerSource">触发来源标识 (EnterImmediate/TimerTick)</param>
     private void ApplyDamageFrom(Node2D attacker, IEntity? attackerEntity, string triggerSource)
     {
         if (_entity == null || _data == null) return;
@@ -106,12 +132,7 @@ public partial class ContactDamageComponent : Node, IComponent
 
         var contactDamage = GetContactDamage(attacker, attackerEntity);
         if (contactDamage <= 0f)
-        {
-            _log.Debug($"[ContactDamageSkipped] trigger={triggerSource} victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} damage={contactDamage:F2} distance={FormatDistance(_entity as Node, attacker)}");
             return;
-        }
-
-        _log.Debug($"[ContactDamageApply] trigger={triggerSource} victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} attackerEntity={FormatEntityDebug(attackerEntity)} damage={contactDamage:F2} interval={GetAttackInterval(attacker, attackerEntity):F2}s distance={FormatDistance(_entity as Node, attacker)}");
 
         var damageInfo = new DamageInfo
         {
@@ -123,19 +144,24 @@ public partial class ContactDamageComponent : Node, IComponent
         };
 
         DamageService.Instance?.Process(damageInfo);
-        _log.Debug($"[ContactDamageSubmitted] trigger={triggerSource} damageId={damageInfo.Id} victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} damage={contactDamage:F2} distance={FormatDistance(_entity as Node, attacker)}");
     }
 
+    /// <summary>
+    /// 取消指定目标的伤害计时器
+    /// </summary>
+    /// <param name="attacker">攻击者节点</param>
     private void CancelBodyTimer(Node2D attacker)
     {
         if (_bodyTimers.TryGetValue(attacker, out var timer))
         {
             timer.Cancel();
             _bodyTimers.Remove(attacker);
-            _log.Debug($"[ContactTimerCancelled] victim={FormatNodeDebug(_entity as Node)} attacker={FormatNodeDebug(attacker)} activeTimers={_bodyTimers.Count} distance={FormatDistance(_entity as Node, attacker)}");
         }
     }
 
+    /// <summary>
+    /// 取消所有伤害计时器 (组件注销或实体死亡时调用)
+    /// </summary>
     private void CancelAllBodyTimers()
     {
         foreach (var kv in _bodyTimers)
@@ -144,9 +170,14 @@ public partial class ContactDamageComponent : Node, IComponent
         }
 
         _bodyTimers.Clear();
-        _log.Debug($"[ContactTimerCleared] victim={FormatNodeDebug(_entity as Node)}");
     }
 
+    /// <summary>
+    /// 检查攻击者是否为敌对阵营
+    /// </summary>
+    /// <param name="attacker">攻击者节点</param>
+    /// <param name="attackerEntity">攻击者实体</param>
+    /// <returns>是否为敌对关系</returns>
     private bool IsHostile(Node2D attacker, IEntity? attackerEntity)
     {
         var entity = attackerEntity ?? attacker as IEntity;
@@ -156,6 +187,12 @@ public partial class ContactDamageComponent : Node, IComponent
         return bodyTeam != Team.Neutral && bodyTeam != _team;
     }
 
+    /// <summary>
+    /// 获取攻击者的接触伤害值 (使用 FinalAttack)
+    /// </summary>
+    /// <param name="attacker">攻击者节点</param>
+    /// <param name="attackerEntity">攻击者实体</param>
+    /// <returns>伤害值，无效目标返回 0</returns>
     private float GetContactDamage(Node2D attacker, IEntity? attackerEntity)
     {
         var entity = attackerEntity ?? attacker as IEntity;
@@ -163,6 +200,12 @@ public partial class ContactDamageComponent : Node, IComponent
         return entity.Data.Get<float>(DataKey.FinalAttack);
     }
 
+    /// <summary>
+    /// 获取攻击者的攻击间隔 (用于设置伤害计时器周期)
+    /// </summary>
+    /// <param name="attacker">攻击者节点</param>
+    /// <param name="attackerEntity">攻击者实体</param>
+    /// <returns>攻击间隔秒数，最小值 0.1f</returns>
     private float GetAttackInterval(Node2D attacker, IEntity? attackerEntity)
     {
         var entity = attackerEntity ?? attacker as IEntity;
@@ -170,31 +213,5 @@ public partial class ContactDamageComponent : Node, IComponent
 
         var interval = entity.Data.Get<float>(DataKey.AttackInterval);
         return Mathf.Max(interval, 0.1f);
-    }
-
-    private static string FormatEntityDebug(IEntity? entity)
-    {
-        return entity is Node node ? FormatNodeDebug(node) : "<none>";
-    }
-
-    private static string FormatNodeDebug(Node? node)
-    {
-        if (node == null || !IsInstanceValid(node)) return "<invalid>";
-
-        var name = node.Name.ToString();
-        var type = node.GetType().Name;
-        var instanceId = node.GetInstanceId();
-
-        if (node is Node2D node2D)
-            return $"{name}[{type}#{instanceId}] pos={node2D.GlobalPosition}";
-
-        return $"{name}[{type}#{instanceId}]";
-    }
-
-    private static string FormatDistance(Node? source, Node? target)
-    {
-        if (source is not Node2D sourceNode2D || target is not Node2D targetNode2D) return "n/a";
-        if (!IsInstanceValid(sourceNode2D) || !IsInstanceValid(targetNode2D)) return "n/a";
-        return sourceNode2D.GlobalPosition.DistanceTo(targetNode2D.GlobalPosition).ToString("F2");
     }
 }

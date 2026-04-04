@@ -163,10 +163,10 @@
     },
     "res://Data/Data/Unit/Enemy/": {
       "DetectionRange": {
-        "visibility": 0.0
+        "visibility": 1.0
       },
       "ExpReward": {
-        "visibility": 0.0
+        "visibility": 1.0
       },
       "metadata/_custom_type_script": {
         "visibility": 0.0

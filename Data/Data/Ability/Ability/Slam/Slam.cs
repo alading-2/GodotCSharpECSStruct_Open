@@ -104,7 +104,7 @@ public class SlamExecutor : IAbilityExecutor
                     Victim = unitVictim,
                     Damage = damage,
                     Type = DamageType.Magical,
-                    Tags = DamageTags.Area | DamageTags.Magical
+                    Tags = DamageTags.Area | DamageTags.Ability
                 });
                 targetsHit++;
             }
