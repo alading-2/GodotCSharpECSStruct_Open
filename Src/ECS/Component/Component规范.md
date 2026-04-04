@@ -270,10 +270,10 @@ public void OnComponentRegistered(Node entity)
 
 ### 正确示例
 
-#### 示例 1：VelocityComponent（需要 CharacterBody2D）
+#### 示例 1：EntityMovementComponent（需要 CharacterBody2D）
 
 ```csharp
-public partial class VelocityComponent : Node, IComponent
+public partial class EntityMovementComponent : Node, IComponent
 {
     private Data? _data;
     private IEntity? _entity;
@@ -382,7 +382,7 @@ EntityManager.RemoveComponent(this, "HealthComponent");
 
 ### 已更新的 Component
 
-1. **VelocityComponent**
+1. **EntityMovementComponent**
 2. **HealthComponent**
 3. **HitboxComponent**
 4. **HurtboxComponent**

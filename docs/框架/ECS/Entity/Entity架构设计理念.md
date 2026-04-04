@@ -295,7 +295,7 @@ public partial class HealthComponent : Node, IComponent
 类名以 `Component` 结尾自动识别：
 
 ```csharp
-public partial class VelocityComponent : Node { }  // 自动识别为 Component
+public partial class ExampleComponent : Node { }  // 自动识别为 Component
 ```
 
 **优势**：兼容旧代码，无需修改
@@ -400,7 +400,7 @@ public partial class HealthComponent : Node, IComponent
 ### 需要特定类型时使用类型判断
 
 ```csharp
-public partial class VelocityComponent : Node, IComponent
+public partial class EntityMovementComponent : Node, IComponent
 {
     private Data? _data;
     private IEntity? _entity;
@@ -461,7 +461,7 @@ public partial class VelocityComponent : Node, IComponent
    └─ 否 → 继续判断
 
 2. 是否依附于其他对象？
-   ├─ 是 → Component（如 HealthComponent、VelocityComponent）
+   ├─ 是 → Component（如 HealthComponent、EntityMovementComponent）
    └─ 否 → 可能是普通 Node
 
 3. 是否需要 Resource 配置？
@@ -472,7 +472,7 @@ public partial class VelocityComponent : Node, IComponent
 **实例**：
 
 - **Entity**：Player、Enemy、Weapon、Item、Bullet、Buff、Skill
-- **Component**：HealthComponent、VelocityComponent、HitboxComponent、PickupComponent
+- **Component**：HealthComponent、EntityMovementComponent、HitboxComponent、PickupComponent
 
 **边界案例**：
 
@@ -603,7 +603,7 @@ class Enemy : Entity { }
 // ✅ 组合：灵活结构
 Enemy.tscn
 ├── HealthComponent
-├── VelocityComponent
+├── EntityMovementComponent
 └── HitboxComponent
 ```
 

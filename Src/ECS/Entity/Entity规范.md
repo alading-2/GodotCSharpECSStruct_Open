@@ -48,7 +48,7 @@ public interface IEntity
 
 **业务逻辑归属**：
 - ❌ 死亡逻辑 → ✅ 放在 `LifecycleComponent`
-- ❌ 移动逻辑 → ✅ 放在 `VelocityComponent`
+- ❌ 移动逻辑 → ✅ 放在 `EntityMovementComponent`（或对应 Movement System）
 - ❌ 攻击逻辑 → ✅ 放在 `AttackComponent` 或对应 System
 
 ### 2. 统一使用 EntityManager

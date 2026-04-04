@@ -42,7 +42,6 @@ public static class ResourcePaths
     public const string Component_CostComponent = "CostComponent";
     public const string Component_DataInitComponent = "DataInitComponent";
     public const string Component_EffectComponent = "EffectComponent";
-    public const string Component_EnemyMovementComponent = "EnemyMovementComponent";
     public const string Component_EnemyPreset = "EnemyPreset";
     public const string Component_EntityMovementComponent = "EntityMovementComponent";
     public const string Component_HealthComponent = "HealthComponent";
@@ -56,7 +55,6 @@ public static class ResourcePaths
     public const string Component_UnitAnimationComponent = "UnitAnimationComponent";
     public const string Component_UnitCorePreset = "UnitCorePreset";
     public const string Component_UnitStateComponent = "UnitStateComponent";
-    public const string Component_VelocityComponent = "VelocityComponent";
 
     // --- UI ---
     public const string UI_ActiveSkillBarUI = "ActiveSkillBarUI";
@@ -157,7 +155,6 @@ public static class ResourcePaths
                 { Component_CostComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/CostComponent/CostComponent.tscn") },
                 { Component_DataInitComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/DataInitComponent/DataInitComponent.tscn") },
                 { Component_EffectComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Effect/EffectComponent/EffectComponent.tscn") },
-                { Component_EnemyMovementComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Enemy/EnemyMovementComponent/EnemyMovementComponent.tscn") },
                 { Component_EnemyPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/EnemyPreset.tscn") },
                 { Component_EntityMovementComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Movement/EntityMovementComponent.tscn") },
                 { Component_HealthComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/HealthComponent/HealthComponent.tscn") },
@@ -171,7 +168,6 @@ public static class ResourcePaths
                 { Component_UnitAnimationComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.tscn") },
                 { Component_UnitCorePreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Unit/UnitCorePreset.tscn") },
                 { Component_UnitStateComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/UnitStateComponent/UnitStateComponent.tscn") },
-                { Component_VelocityComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Player/VelocityComponent/VelocityComponent.tscn") },
             }
         },
         { ResourceCategory.UI, new Dictionary<string, ResourceData>

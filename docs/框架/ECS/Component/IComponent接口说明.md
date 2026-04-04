@@ -23,7 +23,7 @@ EntityManager 通过以下 3 种方式识别 Component（按优先级）：
 | 优先级     | 识别方式            | 示例                                                      | 适用场景             |
 | ---------- | ------------------- | --------------------------------------------------------- | -------------------- |
 | ⭐⭐⭐⭐⭐ | **IComponent 接口** | `public partial class HealthComponent : Node, IComponent` | 新 Component（推荐） |
-| ⭐⭐⭐⭐   | **命名约定**        | `public partial class VelocityComponent : Node`           | 旧 Component（兼容） |
+| ⭐⭐⭐⭐   | **命名约定**        | `public partial class ExampleComponent : Node`            | 旧 Component（兼容） |
 
 ---
 
@@ -110,7 +110,7 @@ public partial class HealthComponent : Node, IComponent
 
 ```csharp
 // ✅ 类名以 "Component" 结尾，自动识别
-public partial class VelocityComponent : Node
+public partial class ExampleComponent : Node
 {
     public override void _Ready()
     {
@@ -131,7 +131,7 @@ public partial class VelocityComponent : Node
 }
 
 // ❌ 不会自动识别
-public partial class Velocity : Node { }
+public partial class Example : Node { }
 ```
 
 **劣势**：

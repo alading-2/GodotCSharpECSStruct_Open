@@ -58,9 +58,8 @@ public enum AnimPlayMode
 ///
 /// 移动判断：
 /// - 在 _Process 中读取 CharacterBody2D.Velocity（兼容 Player/Enemy）
-/// - Player 通过 VelocityComponent 设置 Velocity
-/// - Enemy 通过 FollowComponent + AI 直接设置 CharacterBody2D.Velocity
-/// - 两者都最终体现在 CharacterBody2D.Velocity 上
+/// - Player / Enemy 统一由 EntityMovementComponent 写入物理速度
+/// - AI 仅提供移动意图参数，最终都体现在 CharacterBody2D.Velocity 上
 /// </summary>
 public partial class UnitAnimationComponent : Node, IComponent
 {

@@ -530,7 +530,7 @@ public static Data? GetEntityData(Node component)
 #### 使用示例
 
 ```csharp
-// VelocityComponent.cs
+// EntityMovementComponent.cs
 public override void _Ready()
 {
     // 直接获取 Entity 的 Data 容器

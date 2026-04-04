@@ -419,7 +419,7 @@ Data? GetEntityData(Node component)
 **示例**：
 
 ```csharp
-// 在 VelocityComponent 中访问 Entity 数据
+// 在 EntityMovementComponent 中访问 Entity 数据
 public override void _Ready()
 {
     var data = EntityManager.GetEntityData(this);
@@ -663,7 +663,7 @@ public partial class Enemy : CharacterBody2D, IEntity, IPoolable
 
     // ❌ 严禁在此处编写业务逻辑！
     // ❌ 死亡逻辑请放入 LifecycleComponent
-    // ❌ 移动逻辑请放入 VelocityComponent
+    // ❌ 移动逻辑请放入 EntityMovementComponent
 
     // ================= IPoolable 接口实现 =================
 
