@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://xulpywb2d61u"]
 
 [ext_resource type="SpriteFrames" uid="uid://cfen8i35mmtgd" path="res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tres" id="1_k31a1"]
-[ext_resource type="PackedScene" uid="uid://uo3nn6dbfowc" path="res://Src/ECS/Component/Presets/Collision/Unit/EnemyCollision.tscn" id="2_k31a1"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_3hvx0"]
 radius = 17.0
@@ -11,7 +10,5 @@ height = 58.0
 sprite_frames = ExtResource("1_k31a1")
 animation = &"attack1"
 
-[node name="CollisionShape2D" parent="." unique_id=1435647743 instance=ExtResource("2_k31a1")]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CollisionShape2D" unique_id=1157153482]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=801116413]
 shape = SubResource("CapsuleShape2D_3hvx0")

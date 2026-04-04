@@ -334,8 +334,8 @@ func _generate_sprite_frames(folder_path: String, trigger_scan: bool = true) -> 
 	elif not is_animated_scene and visual_node is Sprite2D:
 		visual_node.texture = load(standalone_sprite_path)
 
-	if Config.ENABLE_COLLISION_SCENE:
-		_sync_collision_scene(visual_node, rule)
+	if Config.ENABLE_COLLISION_SHAPE:
+		_sync_collision_shape(visual_node, rule)
 
 	# -------------------------------------------------------------------------
 	# 保存场景 (Save Scene)
@@ -403,53 +403,46 @@ func _find_standalone_sprite(folder_path: String) -> String:
 	return folder_path.path_join(png_files[0])
 
 
-func _sync_collision_scene(visual_node: Node, rule: Dictionary) -> void:
-	var collision_scene_path: String = rule.get("collision_scene_path", "")
-
-	# 智能更新：先保存旧碰撞模板实例下的 CollisionShape2D 数据，重建后恢复（保留用户手动调整的形状）
+func _sync_collision_shape(visual_node: Node, rule: Dictionary) -> void:
+	# 智能更新：先保存旧的形状数据，重建后恢复（保留用户手动调整的形状）
 	var saved_shape: Shape2D = null
 	var saved_transform := Transform2D.IDENTITY
 	var saved_disabled := false
 
-	var old_collision := visual_node.get_node_or_null("CollisionShape2D")
+	var old_node := visual_node.get_node_or_null("CollisionShape2D")
+	if old_node != null:
+		if old_node is CollisionShape2D:
+			# 新结构：直接是纯 CollisionShape2D
+			saved_shape = old_node.shape
+			saved_transform = old_node.transform
+			saved_disabled = old_node.disabled
+		else:
+			# 兼容旧结构：节点实际是 CharacterBody2D/Area2D（被改名为 CollisionShape2D）
+			var old_shape_node := old_node.get_node_or_null("CollisionShape2D")
+			if old_shape_node is CollisionShape2D:
+				saved_shape = old_shape_node.shape
+				saved_transform = old_shape_node.transform
+				saved_disabled = old_shape_node.disabled
+		visual_node.remove_child(old_node)
+		old_node.queue_free()
+
+	# 兼容旧版本遗留的 "Collision" 命名节点
+	var old_collision := visual_node.get_node_or_null("Collision")
 	if old_collision != null:
-		var old_shape_node := old_collision.get_node_or_null("CollisionShape2D")
-		if old_shape_node is CollisionShape2D:
-			saved_shape = old_shape_node.shape
-			saved_transform = old_shape_node.transform
-			saved_disabled = old_shape_node.disabled
+		visual_node.remove_child(old_collision)
+		old_collision.queue_free()
 
-	# 清理旧版本遗留的 "Collision" 命名节点（迁移兼容）
-	for old_name in ["Collision", "CollisionShape2D"]:
-		var existing := visual_node.get_node_or_null(old_name)
-		if existing != null:
-			visual_node.remove_child(existing)
-			existing.queue_free()
-
-	if collision_scene_path.is_empty():
-		return
-
-	var collision_scene: PackedScene = load(collision_scene_path)
-	if collision_scene == null:
-		printerr("[Generator] 碰撞场景加载失败: %s" % collision_scene_path)
-		return
-
-	# 实例化碰撞模板（CharacterBody2D / Area2D），作为碰撞类型标记节点
-	var collision_node := collision_scene.instantiate()
-	collision_node.name = "CollisionShape2D"
-	visual_node.add_child(collision_node)
-	collision_node.owner = visual_node
-
-	# 在碰撞模板实例下添加真实碰撞形状节点，供动画场景独立设置碰撞区域
+	# 直接创建纯 CollisionShape2D（仅传递形状参数，不含 collision_layer/mask）
 	var shape_node := CollisionShape2D.new()
 	shape_node.name = "CollisionShape2D"
+
 	if saved_shape != null:
-		# 智能更新：恢复用户手动调整的形状数据，不覆盖
+		# 智能更新：恢复用户手动调整的形状数据
 		shape_node.shape = saved_shape
 		shape_node.transform = saved_transform
 		shape_node.disabled = saved_disabled
 	else:
-		# 首次生成：合并全局默认形状与规则内 collision_shape 覆盖值
+		# 首次生成：合并全局默认形状与规则内 collision_shape 覆盖値
 		var shape_cfg: Dictionary = rule.get("collision_shape", {})
 		var capsule := CapsuleShape2D.new()
 		capsule.radius = shape_cfg.get("radius", Config.DEFAULT_COLLISION_SHAPE.get("radius", 20.0))
@@ -458,7 +451,8 @@ func _sync_collision_scene(visual_node: Node, rule: Dictionary) -> void:
 		var default_pos: Vector2 = shape_cfg.get("position", Config.DEFAULT_COLLISION_SHAPE.get("position", Vector2.ZERO))
 		if default_pos != Vector2.ZERO:
 			shape_node.position = default_pos
-	collision_node.add_child(shape_node)
+
+	visual_node.add_child(shape_node)
 	shape_node.owner = visual_node
 
 

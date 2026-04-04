@@ -24,6 +24,7 @@ namespace Slime.Test.DamageSystemTest
         public void RunTests()
         {
             TestBaseDamageAndPreChecks();
+            TestDeadAttackerTagRules();
             TestDodgeLogic();
             TestCritLogic();
             TestArmorReduction();
@@ -86,6 +87,58 @@ namespace Slime.Test.DamageSystemTest
             deadUnit.QueueFree();
             invulnerableUnit.QueueFree();
             attacker.QueueFree();
+        }
+
+        private void TestDeadAttackerTagRules()
+        {
+            _log.Info("Test 1.5: 死亡 Attacker 标签规则测试");
+
+            var victim = CreateDummyUnit("Victim_DeadAttackerRule");
+            var deadAttacker = CreateDummyUnit("DeadAttacker");
+            deadAttacker.Data.Set(DataKey.IsDead, true);
+
+            var attackInfo = new DamageInfo
+            {
+                Attacker = deadAttacker,
+                Victim = victim,
+                Damage = 20,
+                Type = DamageType.Physical,
+                Tags = DamageTags.Attack
+            };
+            DamageService.Instance.Process(attackInfo);
+
+            if (attackInfo.IsEnd && attackInfo.FinalDamage == 0)
+            {
+                _log.Success("  PASS: 已死亡 Attacker 的 Attack 伤害被系统阻断");
+            }
+            else
+            {
+                _log.Error($"  FAIL: 已死亡 Attacker 的 Attack 伤害应被阻断. IsEnd: {attackInfo.IsEnd}, FinalDamage: {attackInfo.FinalDamage}");
+            }
+
+            victim.Data.Set(DataKey.CurrentHp, 100f);
+
+            var abilityInfo = new DamageInfo
+            {
+                Attacker = deadAttacker,
+                Victim = victim,
+                Damage = 20,
+                Type = DamageType.Magical,
+                Tags = DamageTags.Ability
+            };
+            DamageService.Instance.Process(abilityInfo);
+
+            if (abilityInfo.FinalDamage > 0)
+            {
+                _log.Success("  PASS: 已死亡 Attacker 的 Ability 伤害仍可结算");
+            }
+            else
+            {
+                _log.Error($"  FAIL: 已死亡 Attacker 的 Ability 伤害不应被系统统一阻断. FinalDamage: {abilityInfo.FinalDamage}");
+            }
+
+            victim.QueueFree();
+            deadAttacker.QueueFree();
         }
 
         private void TestDodgeLogic()

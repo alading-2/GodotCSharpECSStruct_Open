@@ -39,7 +39,6 @@ public static partial class GameEventType
         /// <summary>运动中碰撞事件数据</summary>
         public readonly record struct MovementCollisionEventData(
             global::MoveMode Mode,
-            Node2D? Target,
-            global::CollisionType CollisionType);
+            Node2D? Target);
     }
 }

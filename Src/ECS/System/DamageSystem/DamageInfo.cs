@@ -20,8 +20,8 @@ public enum DamageType
 public enum DamageTags
 {
     None = 0,
-    Physical = 1 << 0,       // 物理
-    Magical = 1 << 1,       // 魔法
+    Attack = 1 << 0,       // 攻击伤害，用处：角色死亡后还可以造成技能伤害，但是屏蔽攻击伤害
+    Ability = 1 << 1,       // 技能伤害
     Melee = 1 << 2,       // 近战
     Ranged = 1 << 3,      // 远程（投射物）
     Area = 1 << 4,        // 范围伤害 (AOE)

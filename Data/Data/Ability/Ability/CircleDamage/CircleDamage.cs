@@ -93,7 +93,7 @@ public class CircleDamageExecutor : IAbilityExecutor
                     Victim = victim,
                     Damage = damage,
                     Type = DamageType.Magical,
-                    Tags = DamageTags.Area
+                    Tags = DamageTags.Area | DamageTags.Ability
                 });
                 hitCount++;
             }

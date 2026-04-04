@@ -462,7 +462,8 @@ public partial class AttackComponent : Node, IComponent
                 Attacker = _body,
                 Victim = victimUnit,
                 Damage = finalAttack,
-                Type = DamageType.Physical
+                Type = DamageType.Physical,
+                Tags = DamageTags.Attack
             };
 
             DamageService.Instance?.Process(damageInfo);

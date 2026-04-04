@@ -9,10 +9,11 @@ const BATCH_PATHS: PackedStringArray = [
 	"res://assets",
 ]
 
-# --- 碰撞场景注入开关 ---
-# 是否将模板碰撞场景注入到生成的 AnimatedSprite2D/Sprite2D 场景中。
-# 设为 true 后，RULES 中配置了 collision_scene_path 的规则才会生效。
-const ENABLE_COLLISION_SCENE: bool = true
+# --- 碰撞形状注入开关 ---
+# 是否将 CollisionShape2D 注入到生成的 AnimatedSprite2D/Sprite2D 场景中。
+# 注入的节点仅携带形状参数（用于运行时同步到 Entity 根节点），不再注入碰撞模板场景。
+# Entity 的 collision_layer / collision_mask 直接在其 .tscn 根节点设置，不通过此处传递。
+const ENABLE_COLLISION_SHAPE: bool = true
 
 # --- 默认帧率 (FPS) ---
 const DEFAULT_FPS: float = 10.0
@@ -51,26 +52,22 @@ const DEFAULT_COLLISION_SHAPE: Dictionary = {
 # - key: String, 规则标识（仅供辨识）
 # - paths: Array, 该规则适用的资源路径列表
 # - unified_animation_name: String, 统一动画名称（非空则将该目录下所有动画按顺序重命名，如: Effect, Effect1...）
-# - collision_scene_path: String, 碰撞模板场景路径（注入为 CollisionShape2D 子节点）
 # - collision_shape: Dictionary（可选），覆盖默认形状参数，支持字段：radius / height / position
 const RULES: Array = [
 	{
 		"key": "Player",
 		"paths": ["res://assets/Unit/Player"],
 		"unified_animation_name": "",
-		"collision_scene_path": "res://Src/ECS/Component/Presets/Collision/Unit/PlayerCollision.tscn",
 		# "collision_shape": {"radius": 30.0, "height": 70.0, "position": Vector2(-7.0, 29.0)},
 	},
 	{
 		"key": "Enemy",
 		"paths": ["res://assets/Unit/Enemy"],
 		"unified_animation_name": "",
-		"collision_scene_path": "res://Src/ECS/Component/Presets/Collision/Unit/EnemyCollision.tscn",
 	},
 	{
 		"key": "Effect",
 		"paths": ["res://assets/Effect"],
 		"unified_animation_name": "Effect",
-		"collision_scene_path": "res://Src/ECS/Component/Presets/Collision/Effect/EffectCollision.tscn",
 	},
 ]

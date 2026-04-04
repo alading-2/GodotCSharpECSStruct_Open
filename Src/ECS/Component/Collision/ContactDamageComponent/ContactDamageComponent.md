@@ -9,7 +9,7 @@
 - **不直接监听原生 Godot 碰撞信号**
 - **不做空间查询**
 - **不决定碰撞节点从哪里来**
-- **只消费 `CollisionComponent` 转发出来的统一碰撞事件**
+- **只消费 `HurtboxComponent` 转发出来的专用事件**
 
 ## 2. 核心责任边界
 
@@ -19,8 +19,7 @@
 
 它的职责包括：
 
-- **事件消费**：监听 `CollisionEntered / CollisionExited`
-- **类型过滤**：只处理 `CollisionType.Hurtbox`
+- **事件消费**：监听 `HurtboxEntered / HurtboxExited`
 - **敌对判定**：只对非中立且敌对阵营生效
 - **伤害节流**：为每个接触目标维护独立循环计时器
 - **伤害结算**：通过 `DamageService.Instance.Process()` 发起标准伤害请求
@@ -32,26 +31,25 @@
 当前标准链路是：
 
 ```text
-实体上的 Hurtbox Sensor 触发原生碰撞
+HurtboxComponent 自身触发原生碰撞
   ↓
-CollisionComponent 统一桥接为 CollisionEntered / CollisionExited
+HurtboxComponent 统一桥接为 HurtboxEntered / HurtboxExited
   ↓
-ContactDamageComponent 按 CollisionType.Hurtbox 过滤
+ContactDamageComponent 直接消费专用事件
   ↓
 对敌对实体结算接触伤害
 ```
 
 因此，`ContactDamageComponent` 的前置条件是：
 
-- 实体身上有可用的 Hurtbox 碰撞模板
-- 实体挂有 `CollisionComponent`
+- 实体身上挂有 `HurtboxComponent`
+- `HurtboxComponent` 上配置了有效的 `CollisionShape2D`
 
 ## 4. 工作流程与运行机制
 
 ### 4.1 进入接触
 
-- 收到 `CollisionEntered`
-- 先过滤 `CollisionType.Hurtbox`
+- 收到 `HurtboxEntered`
 - 再判断 `Target` 是否为敌对实体
 - 首次进入时立即调用一次 `ApplyDamageFrom()`
 - 为该目标创建独立循环计时器，按 `AttackInterval` 持续扣血
@@ -65,8 +63,7 @@ ContactDamageComponent 按 CollisionType.Hurtbox 过滤
 
 ### 4.3 离开接触
 
-- 收到 `CollisionExited`
-- 先过滤 `CollisionType.Hurtbox`
+- 收到 `HurtboxExited`
 - 取消该目标对应的循环计时器
 
 ## 5. 伤害来源语义
@@ -89,28 +86,25 @@ ContactDamageComponent 按 CollisionType.Hurtbox 过滤
 
 标准组合方式如下：
 
-1. 给实体添加 `CollisionComponent`
-2. 在实体根节点下放置 `Collision` 容器
-3. 在 `Collision` 容器内实例化 Hurtbox 模板（如 `PlayerHurtboxSensor`）
-4. 给实体挂上 `ContactDamageComponent`
+1. 在实体场景里直接添加 `HurtboxComponent`
+2. 在 `HurtboxComponent` 下添加 `CollisionShape2D`，并配置 `collision_layer / collision_mask`
+3. 给实体挂上 `ContactDamageComponent`
 
 示意结构：
 
 ```text
 Entity Root
-  ├─ Component
-  │   ├─ CollisionComponent
-  │   └─ ContactDamageComponent
-  └─ Collision
-      └─ PlayerHurtboxSensor / EnemyHurtboxSensor
-          └─ CollisionShape2D
+  └─ Component
+      ├─ HurtboxComponent
+      │   └─ CollisionShape2D
+      └─ ContactDamageComponent
 ```
 
 ## 7. 兜底与稳定性设计
 
 本组件具备两层稳定性保障：
 
-1. **事件层清理**：收到 `CollisionExited` 时及时取消对应计时器
+1. **事件层清理**：收到 `HurtboxExited` 时及时取消对应计时器
 2. **运行时判活**：每次计时触发前都再次校验自身与目标的有效性
 
 这样即使底层偶发漏掉离开事件，也不会无限制地对无效目标持续结算伤害。
@@ -119,5 +113,5 @@ Entity Root
 
 - 组件实现：`Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.cs`
 - 组件场景：`Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.tscn`
-- 桥接组件：`Src/ECS/Component/Collision/CollisionComponent/CollisionComponent.cs`
+- 受击区桥接：`Src/ECS/Component/Collision/HurtboxComponent/HurtboxComponent.cs`
 - 碰撞总览：`Docs/框架/ECS/Collision/碰撞系统说明.md`

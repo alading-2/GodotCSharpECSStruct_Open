@@ -142,8 +142,8 @@ VelocityOverride ≠ Zero  → VelocityOverride
 ### 事件与销毁
 
 ```text
-HandleMovementCollision(target, collisionType)
-  -> 发布 GameEventType.Unit.MovementCollision（Mode/Target/CollisionType）
+HandleMovementCollision(target)
+  -> 发布 GameEventType.Unit.MovementCollision（Mode/Target）
   -> 若 DestroyOnCollision=true -> OnMoveComplete(byCollision=true)
        -> 发布 MovementCompleted
        -> EntityManager.Destroy
@@ -152,7 +152,6 @@ HandleMovementCollision(target, collisionType)
 其中：
 
 - `Target` 是命中的 `Node2D?`
-- `CollisionType` 是本次碰撞来源语义
 - 如果业务需要目标实体，应从 `evt.Target` 回溯宿主 `IEntity`
 
 ### 典型用法：发射子弹

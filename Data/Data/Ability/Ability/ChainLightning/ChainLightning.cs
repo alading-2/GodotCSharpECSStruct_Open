@@ -114,7 +114,8 @@ public class ChainLightningExecutor : IAbilityExecutor
                 Attacker = context.Caster as Node,
                 Victim = unitVictim,
                 Damage = currentDamage,
-                Type = DamageType.Magical
+                Type = DamageType.Magical,
+                Tags = DamageTags.Ability
             };
 
             float dodgeChance = unitVictim.Data.Get<float>(DataKey.DodgeChance);

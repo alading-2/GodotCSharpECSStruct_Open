@@ -1,5 +1,0 @@
-[gd_scene format=3]
-
-[node name="PlayerCollision" type="Area2D"]
-collision_layer = 2
-collision_mask = 1
