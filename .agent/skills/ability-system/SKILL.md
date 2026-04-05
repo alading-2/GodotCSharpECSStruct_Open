@@ -137,6 +137,39 @@ public AbilityExecutedResult Execute(CastContext context)
 - `ResourcePaths.Asset_Effect_020` - 地面撞击/近战AOE
 - `ResourcePaths.Asset_Effect_lrsc3` - 闪电命中
 
+## 在执行器中使用投射物
+
+投射物技能直接从 `AbilityConfig.ProjectileScene` 读取视觉场景，通过 `ProjectileTool.Spawn` 生成，不再维护独立的 `Data/Data/Projectile/*.tres`：
+
+```csharp
+public AbilityExecutedResult Execute(CastContext context)
+{
+    var casterNode = context.Caster as Node2D;
+    var ability = context.Ability;
+    if (casterNode == null || ability == null)
+    {
+        return new AbilityExecutedResult { TargetsHit = 0 };
+    }
+
+    var projectileScene = ability.Data.Get<PackedScene>(DataKey.ProjectileScene);
+    var projectile = ProjectileTool.Spawn(
+        casterNode.GlobalPosition,
+        new ProjectileSpawnOptions(projectileScene, "AbilityProjectile"));
+    if (projectile == null)
+    {
+        return new AbilityExecutedResult { TargetsHit = 0 };
+    }
+
+    projectile.Events.Emit(
+        GameEventType.Unit.MovementStarted,
+        new GameEventType.Unit.MovementStartedEventData(
+            MoveMode.SineWave,
+            new MovementParams { DestroyOnCollision = true }));
+
+    return new AbilityExecutedResult { TargetsHit = 1 };
+}
+```
+
 ## 技能增删查
 
 ```csharp

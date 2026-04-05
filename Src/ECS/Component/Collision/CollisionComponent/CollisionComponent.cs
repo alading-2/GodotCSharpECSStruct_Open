@@ -12,7 +12,7 @@ using Godot;
 /// <para>
 /// 注意：仅处理 Entity 根节点为 Area2D 的情况。Hurtbox 传感器由 HurtboxComponent 独立处理。
 /// collision_layer / collision_mask 直接在实体 .tscn 根节点设置。
-/// 碰撞形状由 EntityManager.InjectVisualScene 从视觉场景同步（VisualRoot/CollisionShape2D → Entity 根节点 CollisionShape2D）。
+/// 碰撞模板由 EntityManager.InjectVisualScene 从视觉场景同步（VisualRoot/CollisionShape2D 或 CollisionPolygon2D → Entity 根节点对应碰撞节点）。
 /// </para>
 /// </summary>
 public partial class CollisionComponent : Node, IComponent

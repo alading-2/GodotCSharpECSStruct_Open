@@ -10,6 +10,6 @@ height = 74.0
 sprite_frames = ExtResource("1_8tuu2")
 animation = &"attack1"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=778923331]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=991023944]
 position = Vector2(0, 8)
 shape = SubResource("CapsuleShape2D_ww340")

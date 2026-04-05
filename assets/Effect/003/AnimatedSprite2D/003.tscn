@@ -1,65 +1,14 @@
 [gd_scene format=3 uid="uid://dju0murovtl7b"]
 
-[ext_resource type="Texture2D" uid="uid://ymnji43flt3q" path="res://assets/Effect/003/003_00.png" id="1_bdwnf"]
-[ext_resource type="Texture2D" uid="uid://tek4tpoae1nn" path="res://assets/Effect/003/003_01.png" id="2_hk6ps"]
-[ext_resource type="Texture2D" uid="uid://cqm1k5yubgvn7" path="res://assets/Effect/003/003_02.png" id="3_xhvs2"]
-[ext_resource type="Texture2D" uid="uid://dtq2441tqy786" path="res://assets/Effect/003/003_03.png" id="4_krmew"]
-[ext_resource type="Texture2D" uid="uid://c62qrxi8amp8n" path="res://assets/Effect/003/003_04.png" id="5_84tey"]
-[ext_resource type="Texture2D" uid="uid://wali626hx6na" path="res://assets/Effect/003/003_05.png" id="6_3jpp2"]
-[ext_resource type="Texture2D" uid="uid://dqh1elc0g30oa" path="res://assets/Effect/003/003_06.png" id="7_fkwgi"]
-[ext_resource type="Texture2D" uid="uid://hkl00bwt8124" path="res://assets/Effect/003/003_07.png" id="8_oh0ad"]
-[ext_resource type="Texture2D" uid="uid://d3ddebnsqroq5" path="res://assets/Effect/003/003_08.png" id="9_175hb"]
-[ext_resource type="Texture2D" uid="uid://cajuq148gvm4" path="res://assets/Effect/003/003_09.png" id="10_hvkp0"]
-[ext_resource type="Texture2D" uid="uid://cgpd1spk5ws7e" path="res://assets/Effect/003/003_10.png" id="11_3j2a5"]
-
-[sub_resource type="SpriteFrames" id="SpriteFrames_u7123"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("1_bdwnf")
-}, {
-"duration": 1.0,
-"texture": ExtResource("2_hk6ps")
-}, {
-"duration": 1.0,
-"texture": ExtResource("3_xhvs2")
-}, {
-"duration": 1.0,
-"texture": ExtResource("4_krmew")
-}, {
-"duration": 1.0,
-"texture": ExtResource("5_84tey")
-}, {
-"duration": 1.0,
-"texture": ExtResource("6_3jpp2")
-}, {
-"duration": 1.0,
-"texture": ExtResource("7_fkwgi")
-}, {
-"duration": 1.0,
-"texture": ExtResource("8_oh0ad")
-}, {
-"duration": 1.0,
-"texture": ExtResource("9_175hb")
-}, {
-"duration": 1.0,
-"texture": ExtResource("10_hvkp0")
-}, {
-"duration": 1.0,
-"texture": ExtResource("11_3j2a5")
-}],
-"loop": false,
-"name": &"Effect",
-"speed": 10.0
-}]
+[ext_resource type="SpriteFrames" uid="uid://brts8vgi15eni" path="res://assets/Effect/003/AnimatedSprite2D/003.tres" id="1_bpnvc"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ejbpd"]
 radius = 30.0
 height = 70.0
 
 [node name="003" type="AnimatedSprite2D" unique_id=1024584771]
-sprite_frames = SubResource("SpriteFrames_u7123")
+sprite_frames = ExtResource("1_bpnvc")
 animation = &"Effect"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=574387367]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=110565320]
 shape = SubResource("CapsuleShape2D_ejbpd")

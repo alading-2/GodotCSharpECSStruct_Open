@@ -145,6 +145,9 @@ namespace Slime.Config.Abilities
         [DataKey(nameof(DataKey.EffectScene))]
         [Export] public PackedScene? EffectScene { get; set; }
 
+        [DataKey(nameof(DataKey.ProjectileScene))]
+        [Export] public PackedScene? ProjectileScene { get; set; }
+
         /// <summary>
         /// 技能伤害数值
         /// </summary>

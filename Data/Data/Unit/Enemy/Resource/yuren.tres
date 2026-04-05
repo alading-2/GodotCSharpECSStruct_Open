@@ -6,7 +6,6 @@
 [resource]
 script = ExtResource("2_script")
 ExpReward = 2
-IsEnableSpawnRule = true
 SpawnMinWave = 1
 SpawnInterval = 2.0
 SingleSpawnCount = 3
@@ -14,7 +13,7 @@ SingleSpawnVariance = 1
 Name = "鱼人"
 Team = 2
 VisualScenePath = ExtResource("1_visual")
-BaseHp = 40.0
+BaseHp = 150.0
 BaseAttack = 6.0
 AttackRange = 200.0
 BaseDefense = 1.0

@@ -177,11 +177,8 @@ public static partial class EntityManager
         // 2. 数据注入 (从 Resource)
         entity.Data.LoadFromResource(config.Config);
 
-        // 3. IUnitEntity 自动加载 VisualScene (如有)
-        if (entity is IUnit)
-        {
-            InjectVisualScene(entity, config.Config);
-        }
+        // 3. 自动加载 VisualScene (如有)
+        InjectVisualScene(entity, config.Config);
 
         // 4. 设置位置和旋转（仅对 Node2D 生效）
         // 关键时序：必须先设置变换，再做组件注册。
@@ -286,36 +283,6 @@ public static partial class EntityManager
         SyncAndRemoveCollisionTemplate(entity, visual);
 
         _log.Debug($"已加载 VisualScene: {scene.ResourcePath}");
-    }
-
-    /// <summary>
-    /// 同步 VisualRoot 下的碰撞形状模板到 Entity 根节点，然后删除模板
-    /// <para>
-    /// 碰撞模板为 VisualRoot 下名为 "CollisionShape2D" 的纯 CollisionShape2D 节点（SpriteFramesGenerator 注入）。
-    /// 仅同步形状（Shape / Position），Entity 的 collision_layer / collision_mask 已直接在其 .tscn 根节点设置，无需此处传递。
-    /// 同步完成后删除模板，VisualRoot 只保留视觉内容。
-    /// </para>
-    /// </summary>
-    private static void SyncAndRemoveCollisionTemplate(Node entity, Node visualRoot)
-    {
-        var template = visualRoot.GetNodeOrNull("CollisionShape2D");
-        if (template == null) return;
-
-        // 模板为纯 CollisionShape2D，直接同步形状到 Entity 根节点的物理形状节点
-        var sourceShape = template as CollisionShape2D;
-        var entityShape = entity.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
-        if (sourceShape != null && entityShape != null)
-        {
-            entityShape.Shape = sourceShape.Shape;
-
-            // 通过 GlobalPosition → ToLocal 一步完成坐标系转换
-            // Entity 此时已在场景树中（场景路径由 AddToSceneTree 保证，对象池路径对象保持在树中）
-            if (entity is Node2D entity2D)
-                entityShape.Position = entity2D.ToLocal(sourceShape.GlobalPosition);
-        }
-
-        _log.Debug($"[{entity.Name}] 已同步碰撞形状模板并删除 VisualRoot/CollisionShape2D");
-        template.QueueFree();
     }
 
 

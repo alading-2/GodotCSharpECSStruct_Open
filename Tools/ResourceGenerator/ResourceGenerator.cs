@@ -20,7 +20,6 @@ class ResourceGenerator
         { "Src/UI", ResourceCategory.UI },
         { "Src/ECS/Entity", ResourceCategory.Entity },
         { "Src/ECS/Component", ResourceCategory.Component },
-        // { "Src/ECS/Component/Presets/Collision", ResourceCategory.Component },
         { "Data/Data", ResourceCategory.Data },         // 兜底
         { "Data/Data/Ability", ResourceCategory.DataAbility },  // 自动更优先
         { "Data/Data/Unit", ResourceCategory.DataUnit },      // 自动更优先
@@ -32,6 +31,7 @@ class ResourceGenerator
     private static readonly string[] ExcludePaths = {
         "addons",
         ".godot",
+        "Data/Data/Projectile",
     };
 
     private const string OutputFile = "Data/ResourceManagement/ResourcePaths.cs";

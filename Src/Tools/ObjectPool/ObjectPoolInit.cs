@@ -32,6 +32,9 @@ public struct ObjectPoolNames
 
     /// <summary> 连线闪电特效池 </summary>
     public const string LightningLinePool = "LightningLinePool";
+
+    /// <summary> 投射物对象池 </summary>
+    public const string ProjectilePool = "ProjectilePool";
 }
 
 /// <summary>
@@ -134,7 +137,19 @@ public partial class ObjectPoolInit
             }
         );
 
-        // 初始化 LightningLinePool (连线闪电特效对象池)
+        // 初始化 ProjectilePool (投射物对象池)
+        new ObjectPool<ProjectileEntity>(
+            () => (ProjectileEntity)ResourceManagement.Load<PackedScene>(typeof(ProjectileEntity).Name, ResourceCategory.Entity).Instantiate(),
+            new ObjectPoolConfig
+            {
+                Name = ObjectPoolNames.ProjectilePool,
+                InitialSize = 30,
+                MaxSize = 200,
+                ParentPath = "ECS/Entity/ProjectileEntity"
+            }
+        );
+
+        // 初始化 LightningLinePool (连线闪电特效池)
         new ObjectPool<LightningLineEffect>(
             () => (LightningLineEffect)ResourceManagement.Load<PackedScene>(ResourcePaths.Entity_LightningLineEffect, ResourceCategory.Entity).Instantiate(),
             new ObjectPoolConfig

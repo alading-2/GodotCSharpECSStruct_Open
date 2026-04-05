@@ -49,12 +49,15 @@ public class BoomerangStrategy : IMovementStrategy
     private const float DefaultActionSpeed = 300f;
     /// <summary>总时长推导速度时的最小有效时长，避免除零。</summary>
     private const float MinDuration = 0.001f;
-    /// <summary>自动估算弧高时采用的比例（弧高 = 弦长 * 0.35）。</summary>
-    private const float DefaultArcHeightRatio = 0.35f;
+    /// <summary>自动估算弧高时采用的比例（弧高 = 弦长 * 0.12）。</summary>
+    private const float DefaultArcHeightRatio = 0.12f;
     /// <summary>自动弧高的下限，确保短距离也有明显的曲线感。</summary>
-    private const float MinArcHeight = 24f;
+    private const float MinArcHeight = 8f;
     /// <summary>自动弧高的上限，防止长距离下曲线跨度过大。</summary>
-    private const float MaxAutoArcHeight = 220f;
+    private const float MaxAutoArcHeight = 56f;
+    private const float MaxArcHeightByChordRatio = 0.18f;
+    private const float MaxConfiguredArcHeight = 72f;
+    private const float ReturnArcHeightScale = 0.7f;
 
     /// <summary>发射时的初始全球坐标。作为返程找不到宿主时的兜底终点。</summary>
     private Vector2 _launchPoint;
@@ -141,10 +144,12 @@ public class BoomerangStrategy : IMovementStrategy
         // --- 阶段处理 3: 运动轨道参数计算 ---
         // 计算当前阶段的弦长与弧高（可能是动态的，随宿主位置实时变化）。
         float chordLength = _phaseStartPoint.DistanceTo(phaseEndPoint);
-        float arcHeight = ResolveArcHeight(chordLength, @params);
+        float arcHeight = ResolveArcHeight(chordLength, @params, _returning);
 
-        // 决定弯曲方向。返程时取反，使内外弧线形成左右对称的椭圆感路径。
-        bool clockwise = _returning ? !@params.BoomerangIsClockwise : @params.BoomerangIsClockwise;
+        // 决定弯曲方向。这里必须在去程/返程保持同一个 clockwise 配置。
+        // 因为返程的 forward 会天然反向，如果这里再额外取反，世界空间中的鼓包侧反而会落回同一边，
+        // 形成“上面过去、上面回来”的不自然视觉。保持同号后，返程会自然落到另一侧。
+        bool clockwise = @params.BoomerangIsClockwise;
 
         // 缓存策略：去程是静态点，可以使用 OnEnter 时预算的缓存；返程因为目标实时移动，必须实时构建
         bool useCachedCurve = !_returning && _cachedPhaseCurve.IsValid && _cachedPhaseCurveLength > 0.001f;
@@ -329,24 +334,39 @@ public class BoomerangStrategy : IMovementStrategy
     /// <summary>
     /// 根据当前弦长计算弧高。
     /// </summary>
-    private float ResolveArcHeight(float chordLength, MovementParams @params)
+    private float ResolveArcHeight(float chordLength, MovementParams @params, bool returning)
     {
-        // 优先使用显式配置。
-        if (@params.BoomerangArcHeight > 0f)
+        if (chordLength <= 0.001f)
         {
-            return @params.BoomerangArcHeight;
+            return 0f;
         }
 
-        // 默认算法：弧高与当前弦长成正比（在限制范围内）。
-        // 这样即使宿主在移动，回旋路径也会根据剩余距离自动收放。
+        if (@params.BoomerangArcHeight > 0f)
+        {
+            return ClampArcHeight(@params.BoomerangArcHeight, chordLength, returning);
+        }
+
         float autoArcHeight = chordLength * DefaultArcHeightRatio;
-        return Mathf.Clamp(autoArcHeight, MinArcHeight, MaxAutoArcHeight);
+        autoArcHeight = Mathf.Clamp(autoArcHeight, MinArcHeight, MaxAutoArcHeight);
+        return ClampArcHeight(autoArcHeight, chordLength, returning);
+    }
+
+    private static float ClampArcHeight(float arcHeight, float chordLength, bool returning)
+    {
+        float maxByChord = chordLength * MaxArcHeightByChordRatio;
+        float clamped = Mathf.Min(Mathf.Abs(arcHeight), Mathf.Min(maxByChord, MaxConfiguredArcHeight));
+        if (returning)
+        {
+            clamped *= ReturnArcHeightScale;
+        }
+
+        return clamped >= 4f ? clamped : 0f;
     }
 
     private void CacheOutboundCurve(MovementParams @params)
     {
         float chordLength = _phaseStartPoint.DistanceTo(_outboundTargetPoint);
-        float arcHeight = ResolveArcHeight(chordLength, @params);
+        float arcHeight = ResolveArcHeight(chordLength, @params, false);
         if (arcHeight <= 0.001f)
         {
             _cachedPhaseCurve = default;

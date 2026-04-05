@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://uyv0t7r2aml0"]
+
+[node name="LaserBolt" type="Node2D" unique_id=399837031]
+
+[node name="Beam" type="Line2D" parent="." unique_id=922866151]
+points = PackedVector2Array(-18, 0, 12, 0)
+width = 5.0
+default_color = Color(0.764706, 0.470588, 1, 1)
+
+[node name="Core" type="Line2D" parent="." unique_id=838590879]
+points = PackedVector2Array(-14, 0, 12, 0)
+width = 2.0
+default_color = Color(1, 0.905882, 1, 1)
+
+[node name="Tip" type="Polygon2D" parent="." unique_id=241771658]
+position = Vector2(12, 0)
+color = Color(1, 0.905882, 1, 1)
+polygon = PackedVector2Array(6, 0, -2, 2, -2, -2)
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=913885104]
+position = Vector2(2, 0)
+polygon = PackedVector2Array(16, 0, 8, 2, -20, 2, -20, 0, -20, -2, 8, -2)

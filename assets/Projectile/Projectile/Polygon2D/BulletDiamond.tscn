@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://cekjro5qlnlu6"]
+
+[node name="BulletDiamond" type="Node2D" unique_id=1381755510]
+
+[node name="Body" type="Polygon2D" parent="." unique_id=1313758739]
+color = Color(0.360784, 0.823529, 1, 1)
+polygon = PackedVector2Array(14, 0, 0, 7, -10, 0, 0, -7)
+
+[node name="Glow" type="Polygon2D" parent="." unique_id=722431670]
+position = Vector2(-1, 0)
+scale = Vector2(1.45, 1.45)
+color = Color(0.360784, 0.823529, 1, 0.2)
+polygon = PackedVector2Array(14, 0, 0, 7, -10, 0, 0, -7)
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=1454277444]
+polygon = PackedVector2Array(-1, -10, 19, 0, -1, 10, -15, 0)

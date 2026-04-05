@@ -125,6 +125,9 @@ public static partial class DataKey
     // 特效场景路径，不走约束系统
     public const string EffectScene = "EffectScene";
 
+    // 投射物视觉场景路径，不走约束系统
+    public const string ProjectileScene = "ProjectileScene";
+
     // ============ 状态标记 ============
     // 已解锁
     public static readonly DataMeta AbilityUnlocked = DataRegistry.Register(
