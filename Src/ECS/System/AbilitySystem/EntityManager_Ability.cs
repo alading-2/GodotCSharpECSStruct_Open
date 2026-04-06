@@ -92,6 +92,9 @@ public static partial class EntityManager
             new GameEventType.Ability.AddedEventData(ability, owner)
         );
 
+        // Feature 生命周期钩子：Granted
+        FeatureSystem.OnFeatureGranted(ability, owner);
+
         _abilityLog.Info($"添加技能: {abilityName} -> {ownerId}");
         return ability;
     }
@@ -122,6 +125,9 @@ public static partial class EntityManager
             abilityId,
             EntityRelationshipType.ENTITY_TO_ABILITY
         );
+
+        // Feature 生命周期钩子：Removed（在 Destroy 之前，使 handler 还能访问 feature.Data）
+        FeatureSystem.OnFeatureRemoved(ability, owner);
 
         // 销毁技能实体（自动处理对象池归还）
         Destroy(ability);

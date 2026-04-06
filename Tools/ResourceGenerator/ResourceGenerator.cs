@@ -17,6 +17,7 @@ class ResourceGenerator
         { "assets/Unit", ResourceCategory.AssetUnit },       // 长度 10 — 兜底
         { "assets/Unit/Player", ResourceCategory.AssetUnitPlayer }, // 长度 18 — 自动更优先
         { "assets/Unit/Enemy", ResourceCategory.AssetUnitEnemy },  // 长度 16 — 自动更优先
+        { "assets/Projectile", ResourceCategory.AssetProjectile },
         { "Src/UI", ResourceCategory.UI },
         { "Src/ECS/Entity", ResourceCategory.Entity },
         { "Src/ECS/Component", ResourceCategory.Component },

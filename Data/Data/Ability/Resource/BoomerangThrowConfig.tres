@@ -32,7 +32,7 @@ _bundled = {
 [resource]
 script = ExtResource("1_script")
 Name = "BoomerangThrow"
-AbilityExecutorId = "BoomerangThrow"
+FeatureHandlerId = "BoomerangThrow"
 Description = "投掷回旋镖，飞出后自动返回，来回命中敌人（验证 Boomerang 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

@@ -87,7 +87,7 @@ namespace Slime.Test.ActiveSkillInputTest
                 { DataKey.AbilityChargeTime, 5f },
                 { DataKey.AbilityCooldown, 0.5f },
                 { DataKey.AbilityTargetSelection, (int)AbilityTargetSelection.None },
-                { DataKey.AbilityEnabled, true }
+                { DataKey.FeatureEnabled, true }
             });
             AddChild(dashAbility);
 
@@ -110,7 +110,7 @@ namespace Slime.Test.ActiveSkillInputTest
                 { DataKey.AbilityCostAmount, 20f },
                 { DataKey.AbilityCooldown, 3f },
                 { DataKey.AbilityTargetSelection, (int)AbilityTargetSelection.None },
-                { DataKey.AbilityEnabled, true }
+                { DataKey.FeatureEnabled, true }
             });
             AddChild(slamAbility);
 
@@ -133,7 +133,7 @@ namespace Slime.Test.ActiveSkillInputTest
                 { DataKey.AbilityCostAmount, 50f },
                 { DataKey.AbilityCooldown, 6f },
                 { DataKey.AbilityTargetSelection, (int)AbilityTargetSelection.None },
-                { DataKey.AbilityEnabled, true }
+                { DataKey.FeatureEnabled, true }
             });
             AddChild(lightningAbility);
 

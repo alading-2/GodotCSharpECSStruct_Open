@@ -13,6 +13,7 @@ trigger: always_on
 ## 1. 交互规则
 - 必须使用中文回复
 - 避免删除再创建文件，尽量修改文件
+- 禁止使用PowerShell命令
 - 新增功能后必须更新 [Docs/框架/项目索引.md](../../Docs/框架/项目索引.md)
 - 修改框架相关实现/接口/流程后，必须同步更新对应 Skill 文档（`.windsurf/skills/`），禁止 Skill 与代码脱节
 

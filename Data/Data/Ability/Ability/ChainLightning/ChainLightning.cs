@@ -25,14 +25,14 @@ public readonly record struct ChainBounceContext(
 /// 特效：在每个被命中目标位置生成独立特效
 /// 伤害：魔法伤害，每次弹跳衰减
 /// </summary>
-public class ChainLightningExecutor : IAbilityExecutor
+internal class ChainLightningExecutor : AbilityFeatureHandlerBase
 {
     private static readonly Log _log = new(nameof(ChainLightningExecutor));
 
     [ModuleInitializer]
     public static void Initialize()
     {
-        AbilityExecutorRegistry.Register("ChainLightning", new ChainLightningExecutor());
+        FeatureHandlerRegistry.Register(new ChainLightningExecutor());
     }
 
     /// <summary>
@@ -40,7 +40,10 @@ public class ChainLightningExecutor : IAbilityExecutor
     /// </summary>
     /// <param name="context">施法上下文，包含施法者、技能对象、初始目标等</param>
     /// <returns>返回执行结果，主要包含命中目标数</returns>
-    public AbilityExecutedResult Execute(CastContext context)
+    public override string FeatureId => global::FeatureId.Ability.Active.ChainLightning;
+    public override string FeatureGroup => global::FeatureId.Ability.Groups.Active;
+
+    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     {
         var ability = context.Ability;
         if (ability == null) return new AbilityExecutedResult();

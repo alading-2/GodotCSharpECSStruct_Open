@@ -29,7 +29,7 @@ public class IsAbilityReadyCondition : BehaviorNode
         var ability = EntityManager.GetAbilityByName(ctx.Entity, _abilityName);
         if (ability == null) return NodeState.Failure;
 
-        if (!ability.Data.Get<bool>(DataKey.AbilityEnabled)) return NodeState.Failure;
+        if (!ability.Data.Get<bool>(DataKey.FeatureEnabled)) return NodeState.Failure;
 
         // 充能模式：有充能次数即可施放
         bool usesCharges = ability.Data.Get<bool>(DataKey.IsAbilityUsesCharges);
@@ -40,7 +40,7 @@ public class IsAbilityReadyCondition : BehaviorNode
         }
 
         // 冷却模式：IsAbilityActive 为 false 表示冷却完毕
-        bool isActive = ability.Data.Get<bool>(DataKey.AbilityIsActive);
+        bool isActive = ability.Data.Get<bool>(DataKey.FeatureIsActive);
         return !isActive ? NodeState.Success : NodeState.Failure;
     }
 }

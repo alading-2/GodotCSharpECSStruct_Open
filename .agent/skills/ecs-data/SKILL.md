@@ -34,6 +34,23 @@ _data.Add(DataKey.CurrentHp, -damage);  // 负数即为减少
 var maxHp = _data.Get<float>(DataKey.MaxHp);
 ```
 
+## 按 Category 批量重置为默认值
+
+```csharp
+// ✅ 重置单个 Category 下所有已存储的键为 DataMeta.DefaultValue
+_data.ResetByCategory(DataCategory_Movement.Orbit);
+
+// ✅ 一次重置多个 Category
+_data.ResetByCategories(
+    DataCategory_Movement.Target,
+    DataCategory_Movement.Orbit,
+    DataCategory_Movement.Bezier,
+    DataCategory_Movement.Boomerang);
+
+// 典型场景：运动完成 / 对象池复用时清理策略专用参数
+// 底层使用 DataRegistry.GetCachedMetaByCategory 缓存查询，适合高频调用
+```
+
 ## 监听数据变化（必须用 Entity.Events，禁止 Data.On）
 
 ```csharp

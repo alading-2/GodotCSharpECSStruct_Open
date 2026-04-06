@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_script")
 Name = "Slam"
-AbilityExecutorId = "Slam"
+FeatureHandlerId = "Slam"
 Description = "在角色周围随机位置猛击地面，对范围内敌人造成物理伤害"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

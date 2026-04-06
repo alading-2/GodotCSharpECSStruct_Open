@@ -5,17 +5,20 @@ using Godot;
 /// 光环护盾技能执行器 - 验证 AttachToHost 运动模式
 /// 在玩家右侧生成一个附着护盾，跟随玩家移动，接触敌人造成伤害
 /// </summary>
-public class AuraShieldExecutor : IAbilityExecutor
+internal class AuraShieldExecutor : AbilityFeatureHandlerBase
 {
     private static readonly Log _log = new(nameof(AuraShieldExecutor));
 
     [ModuleInitializer]
-    public static void Initialize()
+    internal static void Initialize()
     {
-        AbilityExecutorRegistry.Register("AuraShield", new AuraShieldExecutor());
+        FeatureHandlerRegistry.Register(new AuraShieldExecutor());
     }
 
-    public AbilityExecutedResult Execute(CastContext context)
+    public override string FeatureId => global::FeatureId.Ability.Passive.AuraShield;
+    public override string FeatureGroup => global::FeatureId.Ability.Groups.Passive;
+
+    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     {
         var caster = context.Caster;
         var ability = context.Ability;

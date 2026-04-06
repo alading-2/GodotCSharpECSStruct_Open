@@ -5,17 +5,20 @@ using Godot;
 /// 抛物线弹技能执行器 - 验证 Parabola 运动模式
 /// 向最近敌人发射沿抛物线飞行的投射物（弓形向上）
 /// </summary>
-public class ParabolaShotExecutor : IAbilityExecutor
+internal class ParabolaShotExecutor : AbilityFeatureHandlerBase
 {
     private static readonly Log _log = new(nameof(ParabolaShotExecutor));
 
     [ModuleInitializer]
     public static void Initialize()
     {
-        AbilityExecutorRegistry.Register("ParabolaShot", new ParabolaShotExecutor());
+        FeatureHandlerRegistry.Register(new ParabolaShotExecutor());
     }
 
-    public AbilityExecutedResult Execute(CastContext context)
+    public override string FeatureId => global::FeatureId.Ability.Projectile.ParabolaShot;
+    public override string FeatureGroup => global::FeatureId.Ability.Groups.Projectile;
+
+    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     {
         var caster = context.Caster;
         var ability = context.Ability;

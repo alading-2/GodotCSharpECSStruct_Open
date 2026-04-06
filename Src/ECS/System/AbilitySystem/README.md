@@ -76,7 +76,9 @@ ability.Events.Emit(
 施法通过后：
 
 - 发送 `Ability.Activated`（UI 等监听）
-- 调用 `AbilityExecutorRegistry.Execute(...)`
+- 构建 `FeatureContext`，把 `CastContext` 放入 `ActivationData`
+- 调用 `FeatureSystem.OnFeatureActivated(...)`
+- 由对应 `IFeatureHandler.OnActivated(...)` 执行具体技能逻辑
 - 发送 `Ability.Executed`
 
 ---

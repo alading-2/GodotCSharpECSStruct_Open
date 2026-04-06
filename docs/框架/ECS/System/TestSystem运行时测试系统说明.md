@@ -1,0 +1,571 @@
+# TestSystem 运行时测试系统说明
+
+## 一、系统定位
+
+`TestSystem` 是一个**仅面向开发调试阶段**的运行时测试系统。
+
+它的目标不是替代正式 UI，也不是提供作弊面板，而是为开发者提供一套统一、可扩展、低接入成本的运行时调试入口，用于：
+
+- 选择场景中的 `IEntity`
+- 查看并修改实体的可编辑运行时数据
+- 动态增删和启停实体技能
+- 为后续更多测试模块提供统一宿主
+
+当前系统位于：
+
+- `Src/ECS/System/TestSystem/TestSystem.cs`
+- `Src/ECS/System/TestSystem/TestModuleBase.cs`
+- `Src/ECS/System/TestSystem/AttributeTestModule.cs`
+- `Src/ECS/System/TestSystem/AbilityTestModule.cs`
+
+---
+
+## 二、设计目标
+
+运行时测试系统围绕以下目标设计：
+
+| 目标 | 说明 |
+|------|------|
+| **低侵入** | 不修改正式业务 UI，不要求实体额外挂测试专用组件 |
+| **统一入口** | 由 `TestSystem` 统一承载测试面板、实体选择和模块切换 |
+| **模块可扩展** | 新测试能力通过继承 `TestModuleBase` 接入，而不是改动核心流程 |
+| **数据驱动** | 属性测试优先依赖 `DataMeta` 元数据，而非手写字段面板 |
+| **遵守框架边界** | 技能增删走 `EntityManager_Ability`，属性修改走 `entity.Data`，避免绕开现有系统 |
+| **运行时同步** | 面板在实体数据或技能变化后可自动刷新，避免显示过期状态 |
+
+---
+
+## 三、整体架构
+
+### 3.1 架构分层
+
+| 层次 | 文件 | 职责 |
+|------|------|------|
+| **系统宿主** | `TestSystem.cs` | AutoLoad 注册、UI 根面板、模块注册与切换、实体选择 |
+| **模块基类** | `TestModuleBase.cs` | 统一生命周期与当前选中实体注入 |
+| **属性模块** | `AttributeTestModule.cs` | 按 `DataCategory` 展示并编辑实体的可编辑 `Data` |
+| **技能模块** | `AbilityTestModule.cs` | 展示可用技能配置与当前技能列表，执行技能增删与启停 |
+
+### 3.2 核心关系
+
+```text
+TestSystem
+  ├── 负责 AutoLoad 初始化
+  ├── 负责构建调试 UI
+  ├── 负责鼠标点击选择 IEntity
+  ├── 负责注册/切换 TestModule
+  │
+  ├── AttributeTestModule
+  │     └── 基于 DataRegistry + DataMeta 生成属性编辑器
+  │
+  └── AbilityTestModule
+        └── 基于 ResourceManagement + EntityManager_Ability 管理技能
+```
+
+### 3.3 为什么采用模块化设计
+
+如果把所有测试能力都堆到一个脚本中，后续很快会出现以下问题：
+
+- 面板逻辑与具体业务测试逻辑耦合
+- 新增一个测试页就要修改宿主系统内部大量代码
+- 不同测试能力的刷新逻辑、订阅逻辑相互干扰
+
+因此这里采用：
+
+- `TestSystem` 只负责**宿主职责**
+- 具体测试内容全部下沉到 `TestModuleBase` 子类
+
+这使得系统天然适合继续扩展出：
+
+- Buff 测试模块
+- AI 测试模块
+- Movement 测试模块
+- Damage 测试模块
+- Targeting 测试模块
+
+---
+
+## 四、TestSystem 核心机制
+
+## 4.1 AutoLoad 注册
+
+`TestSystem` 通过 `[ModuleInitializer]` + `AutoLoad.Register(...)` 自动接入启动流程。
+
+核心意义：
+
+- 不依赖主场景手动拖节点
+- 调试系统可随游戏启动自动挂载
+- 可以通过 `AutoLoad.Priority.Debug` 归入调试层级
+
+创建时机上，`Init()` 会：
+
+- 检查 `Instance` 是否已存在
+- 检查 `AutoLoad.Instance` 是否可用
+- 通过 `ParentManager.EnsurePath(AutoLoad.Instance, "Debug")` 确保调试挂点存在
+- 动态创建 `TestSystem` 并挂到 `Debug` 节点下
+
+这意味着 `TestSystem` 是**纯代码创建**的调试面板，而非 `.tscn` 驱动。
+
+## 4.2 单例与生命周期
+
+`TestSystem` 继承 `CanvasLayer`，在 `_EnterTree()` 中完成：
+
+- 单例去重
+- `Instance = this`
+- `Layer = 100`
+- `ProcessMode = Always`
+
+这保证了：
+
+- 调试 UI 永远显示在普通场景 UI 之上
+- 在暂停或特殊流程下仍可工作
+- 重复初始化时不会出现多个面板实例
+
+## 4.3 UI 结构
+
+`_Ready()` 中调用 `BuildUi()` 构建整个界面，并注册两个模块：
+
+- `AttributeTestModule`
+- `AbilityTestModule`
+
+当前 UI 由以下部分组成：
+
+| 区域 | 作用 |
+|------|------|
+| **测试按钮/面板显隐** | 控制整个调试面板开关 |
+| **模块下拉框** | 在属性测试、技能测试等模块之间切换 |
+| **实体显示区** | 展示当前选中的实体名称与标识 |
+| **选择开关** | 控制是否允许鼠标点击拾取实体 |
+| **清除选择按钮** | 清空当前选中实体 |
+| **刷新按钮** | 手动刷新当前模块视图 |
+| **模块宿主容器** | 当前模块 UI 的挂载区域 |
+
+## 4.4 实体选择
+
+当面板可见且“选择实体”开关打开时，`TestSystem._UnhandledInput()` 会处理鼠标左键点击。
+
+流程如下：
+
+```text
+左键点击屏幕
+  → TestSystem._UnhandledInput()
+  → FindEntityAtScreenPosition(mousePosition)
+  → 使用 2D 物理点查询获取命中对象
+  → 尝试向上解析为 IEntity
+  → SetSelectedEntity(entity)
+  → 广播给所有测试模块
+  → 当前模块刷新显示
+```
+
+这里的关键点是：
+
+- 选择目标不是直接遍历场景树，而是走**物理点击拾取**
+- 真正被选中的对象必须能解析为 `IEntity`
+- `TestSystem` 只维护一个当前选中实体：`SelectedEntity`
+
+这种设计适合调试运行中真实参与物理和碰撞的单位。
+
+## 4.5 模块切换
+
+`TestSystem` 内部维护：
+
+- `_modules: List<TestModuleBase>`
+- `_modulesByIndex: Dictionary<int, TestModuleBase>`
+
+模块注册后：
+
+- 加入宿主容器
+- 注入 `TestSystem` 引用
+- 按 `DisplayName` 加入下拉菜单
+
+切换模块时会执行：
+
+- 旧模块 `OnDeactivated()`
+- 新模块 `OnActivated()`
+- 刷新新模块内容
+
+这样每个模块都能安全管理自己的订阅和临时状态。
+
+---
+
+## 五、TestModuleBase 模块基类
+
+`TestModuleBase` 是所有测试模块的统一基类。
+
+它提供两类能力：
+
+### 5.1 公共上下文
+
+- `testSystem`：当前宿主系统引用
+- `selectedEntity`：当前被选中的实体
+
+### 5.2 生命周期钩子
+
+| 方法 | 作用 |
+|------|------|
+| `Initialize(TestSystem system)` | 初始化模块，注入宿主，设置基础布局属性 |
+| `OnSelectedEntityChanged(IEntity? entity)` | 当前选中实体改变时调用 |
+| `OnActivated()` | 模块被切到前台时调用 |
+| `OnDeactivated()` | 模块被切走时调用 |
+| `Refresh()` | 刷新模块界面 |
+
+设计上，`TestModuleBase` 不关心具体业务，只负责提供统一的模块协作协议。
+
+---
+
+## 六、AttributeTestModule 属性测试模块
+
+## 6.1 模块定位
+
+`AttributeTestModule` 用于直接编辑选中实体的运行时 `Data`，但只允许编辑**可编辑项**，不允许直接操作计算属性。
+
+其核心思想是：
+
+- 不是手写“攻击力输入框”“血量输入框”
+- 而是通过 `DataRegistry.GetCachedMetaByCategory(category)` 获取元数据
+- 再根据 `DataMeta` 的类型与约束动态生成编辑控件
+
+这使属性面板具备很强的适应能力：只要 `DataKey` 元数据定义正确，面板就能自动跟进。
+
+## 6.2 分类来源
+
+当前模块按以下分类组织：
+
+- `DataCategory_Attribute.Health`
+- `DataCategory_Attribute.Mana`
+- `DataCategory_Attribute.Attack`
+- `DataCategory_Attribute.Defense`
+- `DataCategory_Attribute.Skill`
+- `DataCategory_Attribute.Movement`
+- `DataCategory_Attribute.Dodge`
+- `DataCategory_Attribute.Crit`
+- `DataCategory_Attribute.Resource`
+- `DataCategory_Unit.State`
+- `DataCategory_Unit.Recovery`
+
+这样做的好处是：
+
+- 面板结构与项目 Data 分类保持一致
+- 方便开发者快速定位对应运行时字段
+- 新增 DataKey 后，只要归类正确，通常无需大改 UI
+
+## 6.3 可编辑项筛选规则
+
+模块会过滤掉不适合直接编辑的字段，重点规则如下：
+
+- `meta.IsComputed == true` 的计算属性不允许编辑
+- 仅保留可布尔、数值、枚举、字符串或具备选项集的字段
+
+这保证：
+
+- 不会直接覆盖框架中的派生值
+- 不会把只读计算链打断
+- 面板聚焦于真实可操作的基础状态
+
+## 6.4 控件生成方式
+
+根据 `DataMeta` 元数据，模块会动态生成不同控件：
+
+| 元数据类型 | 控件方向 |
+|------|------|
+| `bool` | `CheckButton` |
+| 数值型 | `SpinBox` |
+| 枚举 / Options | `OptionButton` |
+| `string` | `LineEdit` |
+
+并结合：
+
+- `MinValue`
+- `MaxValue`
+- `DisplayName`
+- `Options`
+
+来生成更合理的编辑体验。
+
+## 6.5 特殊保护逻辑
+
+属性测试模块额外做了两类安全保护：
+
+### 当前生命值保护
+
+当修改：
+
+- `DataKey.CurrentHp`
+- `DataKey.BaseHp`
+- `DataKey.HpBonus`
+
+时，会确保：
+
+- `CurrentHp` 被限制在 `0 ~ FinalHp`
+
+### 当前魔法值保护
+
+当修改：
+
+- `DataKey.CurrentMana`
+- `DataKey.BaseMana`
+- `DataKey.ManaBonus`
+
+时，会确保：
+
+- `CurrentMana` 被限制在 `0 ~ FinalMana`
+
+这能避免测试面板把实体推入明显非法的资源状态。
+
+## 6.6 实时刷新机制
+
+模块会订阅当前实体的 `GameEventType.Data.PropertyChanged` 事件。
+
+因此：
+
+- 当外部系统修改该实体的 Data 时
+- 当前模块可以自动刷新显示
+- 不需要手动重开面板才能看到最新值
+
+同时，在实体切换或模块切换时会主动取消旧订阅，避免事件泄漏。
+
+---
+
+## 七、AbilityTestModule 技能测试模块
+
+## 7.1 模块定位
+
+`AbilityTestModule` 用于在运行时直接管理实体技能，覆盖三个核心动作：
+
+- 添加技能
+- 移除技能
+- 启用 / 禁用技能
+
+它不是技能执行器，也不负责技能触发流程；它只是一个**运行时管理面板**。
+
+## 7.2 数据来源
+
+左侧“可用技能配置”列表来自：
+
+- `ResourcePaths.Resources[ResourceCategory.DataAbility]`
+- `ResourceManagement.Load<Resource>(...)`
+
+模块会遍历所有 `DataAbility` 配置，并通过反射读取资源上的 `Name` 属性作为显示名。
+
+这样做的意义是：
+
+- 面板自动覆盖当前项目中所有已注册技能配置
+- 不需要手写候选技能表
+- 新增技能资源后，测试模块通常可自动感知
+
+## 7.3 双列表结构
+
+界面分为左右两列：
+
+| 区域 | 作用 |
+|------|------|
+| **左侧可用技能配置** | 显示项目内所有可添加技能 |
+| **右侧当前技能** | 显示当前选中实体已拥有技能 |
+
+按钮区提供：
+
+- `添加 ▶`
+- `移除`
+- `切换启用`
+
+这是最直接、最低理解成本的技能调试界面。
+
+## 7.4 技能操作方式
+
+### 添加技能
+
+点击“添加”时：
+
+- 读取左侧选中的配置资源
+- 调用 `EntityManager.AddAbility(selectedEntity, config)`
+
+该流程遵循项目既有技能生命周期管理，不绕开框架。
+
+### 移除技能
+
+点击“移除”时：
+
+- 找到右侧列表对应的技能实体
+- 读取其 `DataKey.Name`
+- 调用 `EntityManager.RemoveAbility(selectedEntity, abilityName)`
+
+### 切换启用
+
+点击“切换启用”时：
+
+- 读取技能实体的 `DataKey.AbilityEnabled`
+- 再通过 `ability.Data.Set(DataKey.AbilityEnabled, !currentEnabled)` 切换状态
+
+这适合快速验证：
+
+- 被动技能启停
+- 主动技能临时屏蔽
+- 技能栏/触发链是否正确响应启用状态
+
+## 7.5 当前技能展示
+
+右侧列表每一项会展示：
+
+- 启用状态（`✓ / ✗`）
+- 技能名称
+- 技能类型 `AbilityType`
+
+例如：
+
+```text
+[✓] 火球术 (Active)
+[✗] 烈焰光环 (Passive)
+```
+
+这样在调试时可以快速识别：
+
+- 当前实体到底拥有哪些技能
+- 哪些技能只是存在但被禁用
+- 这些技能属于主动还是被动类型
+
+## 7.6 实时刷新机制
+
+模块会监听当前选中实体上的：
+
+- `GameEventType.Ability.Added`
+- `GameEventType.Ability.Removed`
+
+因此在技能被外部逻辑增删后，右侧列表能自动刷新，避免面板与真实状态脱节。
+
+同样地，模块在实体切换或模块失活时会取消订阅，防止重复监听。
+
+---
+
+## 八、典型工作流
+
+## 8.1 调试属性
+
+```text
+打开调试面板
+  → 切到“属性测试”
+  → 开启实体选择
+  → 鼠标点击一个单位
+  → 左侧选择属性分类
+  → 在右侧编辑对应属性
+  → 模块通过 entity.Data.Set(...) 写回运行时数据
+```
+
+适合验证：
+
+- 护甲、攻击、暴击率等是否立即生效
+- `DataMeta` 的上下限约束是否正确
+- 某些状态标记是否能触发对应组件行为
+
+## 8.2 调试技能
+
+```text
+打开调试面板
+  → 切到“技能测试”
+  → 开启实体选择
+  → 选择一个实体
+  → 从左侧列表添加技能
+  → 在右侧列表移除或切换启用状态
+```
+
+适合验证：
+
+- `EntityManager_Ability` 增删逻辑是否正常
+- 主动技能栏是否随技能变更更新
+- `AbilityEnabled` 对触发链的影响是否正确
+
+---
+
+## 九、扩展新测试模块
+
+新增模块的推荐流程如下：
+
+### 第一步：创建模块类
+
+```csharp
+public partial class MyTestModule : TestModuleBase
+{
+    internal override string DisplayName => "我的测试";
+
+    internal override void Initialize(TestSystem system)
+    {
+        base.Initialize(system);
+    }
+
+    internal override void OnSelectedEntityChanged(IEntity? entity)
+    {
+        base.OnSelectedEntityChanged(entity);
+    }
+
+    internal override void Refresh()
+    {
+    }
+}
+```
+
+### 第二步：在 `TestSystem._Ready()` 中注册
+
+```csharp
+RegisterModule(new MyTestModule());
+```
+
+### 第三步：遵循模块边界
+
+建议遵守以下原则：
+
+- **宿主负责切换，模块负责内容**
+- **模块只操作自己负责的系统能力**
+- **如有事件订阅，必须在 `OnDeactivated()` 或实体切换时解除**
+- **优先复用现有系统 API，不要直接破坏框架封装**
+
+---
+
+## 十、边界与约束
+
+当前 `TestSystem` 有以下明确边界：
+
+| 约束 | 说明 |
+|------|------|
+| **仅用于调试** | 不应作为正式玩家 UI 使用 |
+| **属性测试不改计算属性** | 计算属性应继续由 Data 计算链维护 |
+| **技能测试不直接执行技能** | 执行仍应走 `TryTrigger` / `AbilitySystem` |
+| **依赖可点击实体** | 鼠标拾取基于物理查询，无法选中未参与该链路的对象 |
+| **模块自行管理订阅** | 宿主不统一清理模块内部事件 |
+
+---
+
+## 十一、后续可扩展方向
+
+当前系统已经具备稳定的宿主结构，后续推荐优先扩展：
+
+1. **Buff / Debuff 测试模块**
+   - 查看当前修改器
+   - 手动添加/移除 Buff
+   - 验证 DataModifier 叠加结果
+
+2. **Movement 测试模块**
+   - 动态切换 `MoveMode`
+   - 注入 `MovementParams`
+   - 快速验证轨迹、结束条件和碰撞行为
+
+3. **Damage 测试模块**
+   - 指定伤害类型、标签、数值
+   - 对选中实体造成伤害 / 治疗
+   - 观察 DamageProcessor 链路输出
+
+4. **Targeting / AI 测试模块**
+   - 显示 AI 当前目标
+   - 手动触发目标选择或施法请求
+   - 可视化关键状态
+
+---
+
+## 十二、总结
+
+`TestSystem` 的价值不在于“做了一个调试面板”，而在于它为项目建立了一套**可持续演进的运行时测试基础设施**：
+
+- 它统一了运行时调试入口
+- 它把实体选择、模块切换和调试 UI 宿主职责集中管理
+- 它通过 `TestModuleBase` 形成稳定的扩展协议
+- 它通过 `AttributeTestModule` 和 `AbilityTestModule` 验证了“数据驱动 + 模块化”的设计可行性
+
+未来只要继续遵守这套结构，就可以把更多系统级调试能力持续沉淀到同一套测试框架中。

@@ -84,6 +84,12 @@ public static class ResourcePaths
     public const string AssetUnitPlayer_deluyi = "deluyi";
     public const string AssetUnitPlayer_guangfa = "guangfa";
 
+    // --- AssetProjectile ---
+    public const string AssetProjectile_ArrowNeedle = "ArrowNeedle";
+    public const string AssetProjectile_BoomerangChevron = "BoomerangChevron";
+    public const string AssetProjectile_BulletDiamond = "BulletDiamond";
+    public const string AssetProjectile_LaserBolt = "LaserBolt";
+
     // --- System ---
     public const string System_DamageService = "DamageService";
     public const string System_DamageStatisticsSystem = "DamageStatisticsSystem";
@@ -93,6 +99,8 @@ public static class ResourcePaths
     // --- Tools ---
     public const string Tools_ObjectPoolInit = "ObjectPoolInit";
     public const string Tools_TimerManager = "TimerManager";
+
+    // --- Data ---
 
     // --- DataAbility ---
     public const string DataAbility_ArcShotConfig = "ArcShotConfig";
@@ -139,9 +147,7 @@ public static class ResourcePaths
 
     public static readonly Dictionary<ResourceCategory, Dictionary<string, ResourceData>> Resources = new()
     {
-        {
-            ResourceCategory.Entity,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.Entity, new Dictionary<string, ResourceData>
             {
                 { Entity_AbilityEntity, new ResourceData(ResourceCategory.Entity, "res://Src/ECS/Entity/Ability/AbilityEntity.tscn") },
                 { Entity_EffectEntity, new ResourceData(ResourceCategory.Entity, "res://Src/ECS/Entity/Effect/EffectEntity.tscn") },
@@ -153,9 +159,7 @@ public static class ResourcePaths
                 { Entity_TargetingIndicatorEntity, new ResourceData(ResourceCategory.Entity, "res://Src/ECS/Entity/Unit/TargetingIndicator/TargetingIndicatorEntity.tscn") },
             }
         },
-        {
-            ResourceCategory.Component,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.Component, new Dictionary<string, ResourceData>
             {
                 { Component_AbilityPreset, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Presets/Ability/AbilityPreset.tscn") },
                 { Component_AbilityTargetSelectionComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Ability/AbilityTargetSelectionComponent/AbilityTargetSelectionComponent.tscn") },
@@ -184,9 +188,7 @@ public static class ResourcePaths
                 { Component_UnitStateComponent, new ResourceData(ResourceCategory.Component, "res://Src/ECS/Component/Unit/Common/UnitStateComponent/UnitStateComponent.tscn") },
             }
         },
-        {
-            ResourceCategory.UI,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.UI, new Dictionary<string, ResourceData>
             {
                 { UI_ActiveSkillBarUI, new ResourceData(ResourceCategory.UI, "res://Src/UI/UI/SkillUI/ActiveSkillBarUI.tscn") },
                 { UI_ActiveSkillSlotUI, new ResourceData(ResourceCategory.UI, "res://Src/UI/UI/SkillUI/ActiveSkillSlotUI.tscn") },
@@ -195,15 +197,11 @@ public static class ResourcePaths
                 { UI_UIManager, new ResourceData(ResourceCategory.UI, "res://Src/UI/Core/UIManager.tscn") },
             }
         },
-        {
-            ResourceCategory.Asset,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.Asset, new Dictionary<string, ResourceData>
             {
             }
         },
-        {
-            ResourceCategory.AssetEffect,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.AssetEffect, new Dictionary<string, ResourceData>
             {
                 { AssetEffect_003, new ResourceData(ResourceCategory.AssetEffect, "res://assets/Effect/003/AnimatedSprite2D/003.tscn") },
                 { AssetEffect_004龙卷风, new ResourceData(ResourceCategory.AssetEffect, "res://assets/Effect/004龙卷风/AnimatedSprite2D/004龙卷风.tscn") },
@@ -211,32 +209,32 @@ public static class ResourcePaths
                 { AssetEffect_lrsc3, new ResourceData(ResourceCategory.AssetEffect, "res://assets/Effect/lrsc3/AnimatedSprite2D/lrsc3.tscn") },
             }
         },
-        {
-            ResourceCategory.AssetUnit,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.AssetUnit, new Dictionary<string, ResourceData>
             {
             }
         },
-        {
-            ResourceCategory.AssetUnitEnemy,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.AssetUnitEnemy, new Dictionary<string, ResourceData>
             {
                 { AssetUnitEnemy_chailangren, new ResourceData(ResourceCategory.AssetUnitEnemy, "res://assets/Unit/Enemy/chailangren/AnimatedSprite2D/chailangren.tscn") },
                 { AssetUnitEnemy_yuren, new ResourceData(ResourceCategory.AssetUnitEnemy, "res://assets/Unit/Enemy/yuren/AnimatedSprite2D/yuren.tscn") },
             }
         },
-        {
-            ResourceCategory.AssetUnitPlayer,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.AssetUnitPlayer, new Dictionary<string, ResourceData>
             {
                 { AssetUnitPlayer_bubing, new ResourceData(ResourceCategory.AssetUnitPlayer, "res://assets/Unit/Player/bubing/AnimatedSprite2D/bubing.tscn") },
                 { AssetUnitPlayer_deluyi, new ResourceData(ResourceCategory.AssetUnitPlayer, "res://assets/Unit/Player/deluyi/AnimatedSprite2D/deluyi.tscn") },
                 { AssetUnitPlayer_guangfa, new ResourceData(ResourceCategory.AssetUnitPlayer, "res://assets/Unit/Player/guangfa/AnimatedSprite2D/guangfa.tscn") },
             }
         },
-        {
-            ResourceCategory.System,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.AssetProjectile, new Dictionary<string, ResourceData>
+            {
+                { AssetProjectile_ArrowNeedle, new ResourceData(ResourceCategory.AssetProjectile, "res://assets/Projectile/Projectile/Polygon2D/ArrowNeedle.tscn") },
+                { AssetProjectile_BoomerangChevron, new ResourceData(ResourceCategory.AssetProjectile, "res://assets/Projectile/Projectile/Polygon2D/BoomerangChevron.tscn") },
+                { AssetProjectile_BulletDiamond, new ResourceData(ResourceCategory.AssetProjectile, "res://assets/Projectile/Projectile/Polygon2D/BulletDiamond.tscn") },
+                { AssetProjectile_LaserBolt, new ResourceData(ResourceCategory.AssetProjectile, "res://assets/Projectile/Projectile/Line2D/LaserBolt.tscn") },
+            }
+        },
+        { ResourceCategory.System, new Dictionary<string, ResourceData>
             {
                 { System_DamageService, new ResourceData(ResourceCategory.System, "res://Src/ECS/System/DamageSystem/DamageService.tscn") },
                 { System_DamageStatisticsSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/System/DamageSystem/DamageStatisticsSystem.tscn") },
@@ -244,23 +242,17 @@ public static class ResourcePaths
                 { System_SpawnSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/System/Spawn/SpawnSystem.tscn") },
             }
         },
-        {
-            ResourceCategory.Tools,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.Tools, new Dictionary<string, ResourceData>
             {
                 { Tools_ObjectPoolInit, new ResourceData(ResourceCategory.Tools, "res://Src/Tools/ObjectPool/ObjectPoolInit.tscn") },
                 { Tools_TimerManager, new ResourceData(ResourceCategory.Tools, "res://Src/Tools/Timer/TimerManager.tscn") },
             }
         },
-        {
-            ResourceCategory.Data,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.Data, new Dictionary<string, ResourceData>
             {
             }
         },
-        {
-            ResourceCategory.DataAbility,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.DataAbility, new Dictionary<string, ResourceData>
             {
                 { DataAbility_ArcShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/ArcShotConfig.tres") },
                 { DataAbility_AuraShieldConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/AuraShieldConfig.tres") },
@@ -276,9 +268,7 @@ public static class ResourcePaths
                 { DataAbility_TargetPointSkillConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/TargetPointSkillConfig.tres") },
             }
         },
-        {
-            ResourceCategory.DataUnit,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.DataUnit, new Dictionary<string, ResourceData>
             {
                 { DataUnit_chailangren, new ResourceData(ResourceCategory.DataUnit, "res://Data/Data/Unit/Enemy/Resource/chailangren.tres") },
                 { DataUnit_deluyi, new ResourceData(ResourceCategory.DataUnit, "res://Data/Data/Unit/Player/Resource/deluyi.tres") },
@@ -286,15 +276,11 @@ public static class ResourcePaths
                 { DataUnit_yuren, new ResourceData(ResourceCategory.DataUnit, "res://Data/Data/Unit/Enemy/Resource/yuren.tres") },
             }
         },
-        {
-            ResourceCategory.DataCollision,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.DataCollision, new Dictionary<string, ResourceData>
             {
             }
         },
-        {
-            ResourceCategory.Test,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.Test, new Dictionary<string, ResourceData>
             {
                 { Test_ActiveSkillInputTest, new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/System/ActiveSkillInputTest/ActiveSkillInputTest.tscn") },
                 { Test_DamageSystemTest, new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/System/DamageSystemTest/DamageSystemTest.tscn") },
@@ -315,9 +301,7 @@ public static class ResourcePaths
                 { Test_TestEntity, new ResourceData(ResourceCategory.Test, "res://Src/Test/SingleTest/ECS/ECSTest/Entity/TestEntity.tscn") },
             }
         },
-        {
-            ResourceCategory.Other,
-            new Dictionary<string, ResourceData>
+        { ResourceCategory.Other, new Dictionary<string, ResourceData>
             {
             }
         },

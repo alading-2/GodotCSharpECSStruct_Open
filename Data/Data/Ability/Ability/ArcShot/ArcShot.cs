@@ -5,17 +5,20 @@ using Godot;
 /// 圆弧弹技能执行器 - 验证 CircularArc 运动模式
 /// 向最近敌人发射沿圆弧轨迹飞行的投射物
 /// </summary>
-public class ArcShotExecutor : IAbilityExecutor
+internal class ArcShotExecutor : AbilityFeatureHandlerBase
 {
     private static readonly Log _log = new(nameof(ArcShotExecutor));
 
     [ModuleInitializer]
     public static void Initialize()
     {
-        AbilityExecutorRegistry.Register("ArcShot", new ArcShotExecutor());
+        FeatureHandlerRegistry.Register(new ArcShotExecutor());
     }
 
-    public AbilityExecutedResult Execute(CastContext context)
+    public override string FeatureId => global::FeatureId.Ability.Projectile.ArcShot;
+    public override string FeatureGroup => global::FeatureId.Ability.Groups.Projectile;
+
+    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     {
         var caster = context.Caster;
         var ability = context.Ability;

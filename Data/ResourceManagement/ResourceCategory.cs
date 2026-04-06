@@ -20,7 +20,8 @@ public enum ResourceCategory
     AssetUnitEnemy,
     /// <summary>AssetUnitPlayer 玩家动画资源（assets/Unit/Player/）</summary>
     AssetUnitPlayer,
-
+    /// <summary>AssetProjectile 弹道动画资源（assets/Projectile/）</summary>
+    AssetProjectile,
 
     /// <summary>System 系统 (如 SpawnSystem)</summary>
     System,

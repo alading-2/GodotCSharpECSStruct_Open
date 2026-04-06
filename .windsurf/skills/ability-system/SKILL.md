@@ -1,12 +1,12 @@
 ---
 name: ability-system
-description: 实现或修改技能功能时使用。适用于：新建技能、配置冷却/充能/目标选择、触发技能流水线、读取触发结果、实现技能效果执行器。触发关键词：技能、AbilitySystem、TryTrigger、CastContext、CooldownComponent、ChargeComponent、TriggerComponent、AbilityEntity、技能执行器。
+description: 实现或修改技能功能时使用。适用于：新建技能、配置冷却/充能/目标选择、触发技能流水线、读取触发结果、实现技能效果处理器。触发关键词：技能、AbilitySystem、TryTrigger、CastContext、CooldownComponent、ChargeComponent、TriggerComponent、AbilityEntity、IFeatureHandler、FeatureHandlerId。
 ---
 
 # AbilitySystem 技能系统规范
 
 ## 核心架构
-技能流水线：`TryTrigger → CanUse检查 → SelectTargets → ConsumeCharge → StartCooldown → ConsumeCost → Execute`
+技能流水线：`TryTrigger → CanUse检查 → SelectTargets → ConsumeCharge → StartCooldown → ConsumeCost → FeatureSystem.OnFeatureActivated → IFeatureHandler.OnActivated → Ability.Executed`
 
 内置组件（无需手写）：
 - `CooldownComponent` - 冷却管理
@@ -65,13 +65,21 @@ ability.Data.Set(DataKey.AbilityTargetSorting, (int)AbilityTargetSorting.Nearest
 | `Point` | 玩家指定位置 | 进入异步瞄准，返回 WaitingForTarget |
 | `EntityOrPoint` | 先自动索敌，无目标则瞄准 | 同 Point |
 
-## 实现技能效果执行器
+## 实现技能效果处理器
 
 ```csharp
-// 在 AbilityExecutorRegistry 中注册执行器
-public class MyAbilityExecutor : IAbilityExecutor
+// 推荐：继承 AbilityFeatureHandlerBase，把 CastContext → AbilityExecutedResult 的桥接复用掉
+internal class MyAbilityHandler : AbilityFeatureHandlerBase
 {
-    public AbilityExecuteResult Execute(CastContext context)
+    public override string FeatureId => "MyAbility";
+
+    [ModuleInitializer]
+    public static void Initialize()
+    {
+        FeatureHandlerRegistry.Register(new MyAbilityHandler());
+    }
+
+    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     {
         var targets = context.Targets;       // Entity 类型目标列表
         var position = context.TargetPosition; // Point 类型目标位置
@@ -91,17 +99,19 @@ public class MyAbilityExecutor : IAbilityExecutor
             });
             hit++;
         }
-        return new AbilityExecuteResult { TargetsHit = hit };
+        return new AbilityExecutedResult { TargetsHit = hit };
     }
 }
 ```
 
-## 在执行器中使用特效
+`AbilityConfig.FeatureHandlerId` 需要与 `FeatureId` 保持一致。
+
+## 在处理器中使用特效
 
 技能执行时通过 `EffectTool.Spawn` 生成特效（详见 `Docs/框架/ECS/System/特效系统使用指南.md`）：
 
 ```csharp
-public AbilityExecutedResult Execute(CastContext context)
+protected override AbilityExecutedResult ExecuteAbility(CastContext context)
 {
     var casterNode = context.Caster as Node2D;
 
@@ -132,17 +142,17 @@ public AbilityExecutedResult Execute(CastContext context)
 ```
 
 **可用特效常量**（`ResourceCategory.Asset`）：
-- `ResourcePaths.Asset_Effect_003` - 光环/范围爆炸
-- `ResourcePaths.Asset_Effect_004龙卷风` - 冲刺/位移
-- `ResourcePaths.Asset_Effect_020` - 地面撞击/近战AOE
-- `ResourcePaths.Asset_Effect_lrsc3` - 闪电命中
+ - `ResourcePaths.Asset_Effect_003` - 光环/范围爆炸
+ - `ResourcePaths.Asset_Effect_004龙卷风` - 冲刺/位移
+ - `ResourcePaths.Asset_Effect_020` - 地面撞击/近战AOE
+ - `ResourcePaths.Asset_Effect_lrsc3` - 闪电命中
 
-## 在执行器中使用投射物
+## 在处理器中使用投射物
 
-投射物技能直接从 `AbilityConfig.ProjectileScene` 读取视觉场景，通过 `ProjectileTool.Spawn` 生成，不再维护独立的 `Data/Data/Projectile/*.tres`：
+ 投射物技能直接从 `AbilityConfig.ProjectileScene` 读取视觉场景，通过 `ProjectileTool.Spawn` 生成，不再维护独立的 `Data/Data/Projectile/*.tres`：
 
 ```csharp
-public AbilityExecutedResult Execute(CastContext context)
+protected override AbilityExecutedResult ExecuteAbility(CastContext context)
 {
     var casterNode = context.Caster as Node2D;
     var ability = context.Ability;
@@ -188,13 +198,17 @@ EntityManager.RemoveAbility(ownerEntity, ability);
 - ❌ 手写充能计数 → 用 `ChargeComponent`
 - ❌ 手写范围检测 → 用 `AbilityTargetSelectionComponent` + `TargetSelector`
 - ❌ 绕过 `TryTrigger` 直接调用执行逻辑
+- ❌ 新增 `IAbilityExecutor` / `AbilityExecutorRegistry`
+- ❌ 绕过 `FeatureSystem` 直接手工分发技能效果
 - ❌ 在 `_Process` 中直接触发技能（用 `TriggerComponent` 的 Periodic 模式）
 
 ## 关键文件路径
 - **架构设计（唯一概念文档）** → `Docs/框架/ECS/Ability/技能系统架构设计理念.md`
 - **核心系统** → `Src/ECS/System/AbilitySystem/AbilitySystem.cs`
+- **Ability → Feature 桥接基类** → `Src/ECS/System/AbilitySystem/AbilityFeatureHandlerBase.cs`
 - **技能 CRUD** → `Src/ECS/System/AbilitySystem/EntityManager_Ability.cs`
 - **模块说明** → `Src/ECS/System/AbilitySystem/README.md`
+- **Feature 生命周期系统** → `Src/ECS/System/FeatureSystem/FeatureSystem.cs`
 - **技能实体** → `Src/ECS/Entity/Ability/AbilityEntity.cs`
 - **施法上下文** → `Data/EventType/Ability/CastContext.cs`
 - **事件定义** → `Data/EventType/Ability/GameEventType_Ability.cs`

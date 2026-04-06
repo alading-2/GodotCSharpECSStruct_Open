@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Godot;
 
 /// <summary>
@@ -9,7 +7,7 @@ using Godot;
 /// - 接收 TryTrigger 请求（统一施法入口）
 /// - 激活技能（就绪检查 → 消耗 → 冷却 → 执行）
 /// - 目标选择（5 层目标系统）
-/// - 调用 AbilityExecutorRegistry 执行效果
+/// - 通过 FeatureSystem / IFeatureHandler 执行具体技能逻辑并回传 AbilityExecutedResult
 /// 
 /// 注意：技能的增删查由 EntityManager.AddAbility/RemoveAbility/GetAbilities 负责
 /// </summary>
@@ -44,7 +42,7 @@ public static class AbilitySystem
     /// </summary>
     private static TriggerResult TryTriggerAbilityWithContext(CastContext context)
     {
-        if (context.Ability == null) return TriggerResult.Failed;
+        if (context.Ability == null || context.Caster == null) return TriggerResult.Failed;
 
         // 【新增】拦截已死亡角色的技能请求（防止周期性光环等技能死后继续触发新一轮的伤害判定）
         if (context.Caster != null && context.Caster.Data.Get<bool>(DataKey.IsDead))
@@ -143,7 +141,7 @@ public static class AbilitySystem
         }
 
         // 标记为执行中
-        ability.Data.Set(DataKey.AbilityIsActive, true);
+        ability.Data.Set(DataKey.FeatureIsActive, true);
 
         // 发送激活事件，技能UI使用
         ability.Events.Emit(
@@ -151,11 +149,23 @@ public static class AbilitySystem
             new GameEventType.Ability.ActivatedEventData(context)
         );
 
-        // 执行效果（通过 AbilityExecutorRegistry）
-        ExecuteAbilityEffects(context);
+        // Feature 生命周期钩子：Activated（AbilitySystem 负责构建 FeatureContext，将 CastContext 存入 ActivationData）
+        var featureCtx = new FeatureContext
+        {
+            Owner = context.Caster,
+            Feature = ability,
+            ActivationData = context,
+            SourceEventData = context.SourceEventData
+        };
+        FeatureSystem.OnFeatureActivated(featureCtx);
+
+        EmitAbilityExecutedEvent(context, featureCtx);
+
+        // Feature 生命周期钩子：Ended（复用同一 FeatureContext 实例）
+        FeatureSystem.OnFeatureEnded(featureCtx);
 
         // 标记执行完成
-        ability.Data.Set(DataKey.AbilityIsActive, false);
+        ability.Data.Set(DataKey.FeatureIsActive, false);
 
         var name = ability.Data.Get<string>(DataKey.Name);
         _log.Debug($"激活技能: {name}");
@@ -209,8 +219,8 @@ public static class AbilitySystem
         if (ability == null) return false;
 
         var abilityName = ability.Data.Get<string>(DataKey.Name);
-        var isEnabled = ability.Data.Get<bool>(DataKey.AbilityEnabled);
-        var isActive = ability.Data.Get<bool>(DataKey.AbilityIsActive);
+        var isEnabled = ability.Data.Get<bool>(DataKey.FeatureEnabled);
+        var isActive = ability.Data.Get<bool>(DataKey.FeatureIsActive);
 
         // 检查启用状态
         if (!isEnabled)
@@ -242,32 +252,46 @@ public static class AbilitySystem
         return true;
     }
 
-
-
-
     // ==================== 效果执行 ====================
 
     /// <summary>
-    /// 执行技能效果 - 通过 AbilityExecutorRegistry 调用具体执行器
+    /// 发送技能执行完成事件 - 结果由 IFeatureHandler.OnActivated 写入 FeatureContext.ExtraData
     /// </summary>
-    private static void ExecuteAbilityEffects(CastContext context)
+    private static void EmitAbilityExecutedEvent(CastContext context, FeatureContext featureCtx)
     {
         if (context.Ability == null) return;
 
         var ability = context.Ability;
         var abilityName = ability.Data.Get<string>(DataKey.Name) ?? string.Empty;
-        var executorId = ability.Data.Get<string>(DataKey.AbilityExecutorId);
+        var handlerId = ability.Data.Get<string>(DataKey.FeatureHandlerId);
+        AbilityExecutedResult result;
 
-        // 如果模板没有填写指定的逻辑 ID，兼容处理，默认取技能自身名字
-        if (string.IsNullOrEmpty(executorId))
+        if (featureCtx.ExtraData.TryGetValue(nameof(AbilityExecutedResult), out var rawResult)
+            && rawResult is AbilityExecutedResult executedResult)
         {
-            _log.Warn($"技能 {abilityName} 没有填写模板技能 ID");
-            executorId = abilityName;
+            result = executedResult;
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(handlerId))
+            {
+                _log.Error($"技能 {abilityName} 未配置 FeatureHandlerId，执行结果将回退为默认值");
+            }
+            else if (!FeatureHandlerRegistry.HasHandler(handlerId))
+            {
+                _log.Warn($"技能 {abilityName} 未注册 FeatureHandler: {handlerId}，执行结果将回退为默认值");
+            }
+            else
+            {
+                _log.Warn($"技能 {abilityName} 的 FeatureHandler 未写入 AbilityExecutedResult，执行结果将回退为默认值");
+            }
+
+            result = new AbilityExecutedResult
+            {
+                TargetsHit = context.Targets?.Count ?? 0
+            };
         }
 
-        _log.Debug($"[AbilitySystem] 开始执行技能效果: '{abilityName}' (使用逻辑模板执行器: '{executorId}')");
-        // 调用执行器注册表
-        var result = AbilityExecutorRegistry.Execute(executorId, context);
         _log.Debug($"[AbilitySystem] 技能效果执行完成: '{abilityName}', 命中: {result.TargetsHit}");
 
         // 发送执行完成事件
@@ -277,4 +301,3 @@ public static class AbilitySystem
         );
     }
 }
-

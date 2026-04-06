@@ -65,6 +65,13 @@ private void OnCheckCanUse(GameEventType.Ability.CheckCanUseEventData evt)
 }
 ```
 
+碰撞场景建议：
+
+- 视觉体碰撞使用 `CollisionEntered / CollisionExited(Source, Target)`
+- `Hurtbox` 这类稳定业务语义优先拆成专用事件，如 `HurtboxEntered / HurtboxExited(Source, Hurtbox, Target, TargetEntity)`
+- 不要让业务长期依赖 `layer/mask -> CollisionType` 反查再二次过滤所有碰撞
+- 需要区分碰撞来源时，优先拆分为独立事件或独立组件，而不是在通用事件里继续塞语义标志
+
 ## 定义新事件类型
 
 在 `Data/EventType/` 对应目录添加：

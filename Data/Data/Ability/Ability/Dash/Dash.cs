@@ -1,43 +1,33 @@
-
 using System.Runtime.CompilerServices;
 using Godot;
 
 /// <summary>
 /// 冲刺技能执行器（移动系统版）
 /// 
-/// 触发方式：Manual（手动，玩家按键），充能系统（最多 2 层，每层 5 秒回充）
+/// 触发方式：Manual（手动，玩家按键）
 /// 目标选择：None（直接作用于施法者自身）
 /// 运动模式：Charge（向当前移动方向或面朝方向高速冲刺，完成后自动回退默认模式）
 /// 特效：Effect_004龙卷风（附着到施法者，跟随移动，播完自动销毁）
 /// </summary>
-public class DashExecutor : IAbilityExecutor
+internal class DashExecutor : AbilityFeatureHandlerBase
 {
     private static readonly Log _log = new(nameof(DashExecutor));
 
     private const float DashDuration = 0.15f;
 
     [ModuleInitializer]
-    public static void Initialize()
+    internal static void Initialize()
     {
-        AbilityExecutorRegistry.Register("Dash", new DashExecutor());
+        FeatureHandlerRegistry.Register(new DashExecutor());
     }
 
-    public AbilityExecutedResult Execute(CastContext context)
+    public override string FeatureId => global::FeatureId.Ability.Movement.Dash;
+    public override string FeatureGroup => global::FeatureId.Ability.Groups.Movement;
+
+    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     {
         var caster = context.Caster;
         var ability = context.Ability;
-
-        if (caster == null || ability == null)
-        {
-            _log.Error("冲刺失败：施法者或技能为空");
-            return new AbilityExecutedResult { TargetsHit = 0 };
-        }
-
-        if (caster is not Node2D casterNode)
-        {
-            _log.Error("冲刺失败：施法者不是 Node2D");
-            return new AbilityExecutedResult { TargetsHit = 0 };
-        }
 
         // 1. 获取冲刺距离
         var range = ability.Data.Get<float>(DataKey.AbilityEffectRadius);
@@ -52,14 +42,16 @@ public class DashExecutor : IAbilityExecutor
         }
         else
         {
-            var sprite = casterNode.GetNodeOrNull<AnimatedSprite2D>("VisualRoot");
+            var casterNode = caster as Node2D;
+            var sprite = casterNode?.GetNodeOrNull<AnimatedSprite2D>("VisualRoot");
             bool facingLeft = sprite?.FlipH ?? false;
             dashDir = facingLeft ? Vector2.Left : Vector2.Right;
         }
 
         // 3. 通过 MovementStarted 事件触发 Charge 模式冲刺
         // 完成后 EntityMovementComponent 自动回退到 DefaultMoveMode（PlayerInput）
-        var targetPos = casterNode.GlobalPosition + dashDir * range;
+        var casterNode2D = caster as Node2D;
+        var targetPos = (casterNode2D?.GlobalPosition ?? Vector2.Zero) + dashDir * range;
         caster.Events.Emit(
             GameEventType.Unit.MovementStarted,
             new GameEventType.Unit.MovementStartedEventData(
@@ -79,9 +71,9 @@ public class DashExecutor : IAbilityExecutor
         var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);
         if (effectScene != null)
         {
-            EffectTool.Spawn(casterNode.GlobalPosition, new EffectSpawnOptions(
+            EffectTool.Spawn(casterNode2D?.GlobalPosition ?? Vector2.Zero, new EffectSpawnOptions(
                 VisualScene: effectScene,
-                Host: casterNode,
+                Host: caster as Node,
                 Name: "冲刺特效"
             ));
         }

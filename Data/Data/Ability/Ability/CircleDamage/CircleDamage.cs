@@ -9,17 +9,20 @@ using Godot;
 /// 特效：Effect_003（每次触发在施法者位置播放一次独立特效）
 /// 伤害：魔法伤害，带 Area 标签
 /// </summary>
-public class CircleDamageExecutor : IAbilityExecutor
+internal class CircleDamageExecutor : AbilityFeatureHandlerBase
 {
     private static readonly Log _log = new(nameof(CircleDamageExecutor));
 
     [ModuleInitializer]
     public static void Initialize()
     {
-        AbilityExecutorRegistry.Register("CircleDamage", new CircleDamageExecutor());
+        FeatureHandlerRegistry.Register(new CircleDamageExecutor());
     }
 
-    public AbilityExecutedResult Execute(CastContext context)
+    public override string FeatureId => global::FeatureId.Ability.Active.CircleDamage;
+    public override string FeatureGroup => global::FeatureId.Ability.Groups.Active;
+
+    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     {
         var caster = context.Caster;
         var ability = context.Ability;

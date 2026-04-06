@@ -8,9 +8,6 @@ public static partial class DataKey
 {
     // ============ 基础信息 ============
 
-    public static readonly DataMeta AbilityExecutorId = DataRegistry.Register(
-        new DataMeta { Key = nameof(AbilityExecutorId), DisplayName = "技能执行器ID", Category = DataCategory_Ability.Basic, Type = typeof(string), DefaultValue = "" });
-
     // 技能图标
     public static readonly DataMeta AbilityIcon = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityIcon), DisplayName = "技能图标", Category = DataCategory_Ability.Basic, Type = typeof(Texture2D), DefaultValue = null });
@@ -106,7 +103,7 @@ public static partial class DataKey
     public static readonly DataMeta AbilityCastRange = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityCastRange), DisplayName = "施法距离", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
 
-    // 效果半径
+    // 技能效果半径
     public static readonly DataMeta AbilityEffectRadius = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityEffectRadius), DisplayName = "效果半径", Category = DataCategory_Ability.Target, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
 
@@ -132,14 +129,6 @@ public static partial class DataKey
     // 已解锁
     public static readonly DataMeta AbilityUnlocked = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityUnlocked), DisplayName = "已解锁", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = true });
-
-    // 已启用
-    public static readonly DataMeta AbilityEnabled = DataRegistry.Register(
-        new DataMeta { Key = nameof(AbilityEnabled), DisplayName = "已启用", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = true });
-
-    // 执行中
-    public static readonly DataMeta AbilityIsActive = DataRegistry.Register(
-        new DataMeta { Key = nameof(AbilityIsActive), DisplayName = "执行中", Category = DataCategory_Ability.State, Type = typeof(bool), DefaultValue = false });
 
     // ============ 主动技能输入 ============
     // 当前激活技能索引

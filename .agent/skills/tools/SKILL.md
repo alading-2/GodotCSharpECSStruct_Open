@@ -1,4 +1,4 @@
----
+﻿---
 name: tools
 description: 使用 TimerManager 计时器、ObjectPool 对象池、TargetSelector 目标查询、ResourceManagement 资源加载时使用。适用于：需要延迟/循环定时器，高频生成销毁对象，范围内查找敌人，加载场景或配置资源。触发关键词：TimerManager、定时器、延迟执行、对象池、ObjectPool、TargetSelector、范围查找、ResourceManagement、加载资源。
 ---
@@ -65,9 +65,9 @@ API 文档：`Src/Tools/ObjectPool/ObjectPool.md`
 
 对象池中的 **IEntity** 必须使用“两阶段激活”：
 
-1. `ObjectPool.Get()` 出池后先保持禁用（`ProcessMode=Disabled`，碰撞禁用模式为 `Remove`）。
-2. `EntityManager.Spawn()` 完成数据注入、位置/旋转设置、组件注册。
-3. 通过 `GameEventType.Global.EntitySpawned` 事件通知对象池做最终激活（恢复处理与可见）。
+1. `ObjectPool.Get(false)` 出池后先保持禁用，不要立刻恢复处理与碰撞。
+2. `EntityManager.Spawn()` 完成数据注入、位置/旋转设置、`ForceUpdateTransform()` 与组件注册。
+3. 最后由 `EntityManager.Spawn()` 显式调用对象池激活逻辑，统一恢复处理、可见和根碰撞体。
 
 这样可避免复用对象在旧位置短暂参与物理，触发伪 `body_entered`。
 
@@ -161,5 +161,6 @@ API 文档：`Data/ResourceManagement/ResourceManagement.md`
 - **ObjectPoolManager** → `Src/Tools/ObjectPool/ObjectPoolManager.cs`
 - **TargetSelector** → `Src/Tools/TargetSelector/TargetSelector.cs` | 文档 → `Src/Tools/TargetSelector/README.md`
 - **TargetSelectorQuery** → `Src/Tools/TargetSelector/TargetSelectorQuery.cs`
+- **WaveMath** → `Src/Tools/Math/WaveMath.cs` | 场景：标准正弦波采样、偏移差分、频率转角频率
 - **ResourceManagement** → `Data/ResourceManagement/ResourceManagement.cs` | 文档 → `Data/ResourceManagement/ResourceManagement.md`
 - **ResourcePaths（自动生成）** → `Data/ResourceManagement/ResourcePaths.cs`

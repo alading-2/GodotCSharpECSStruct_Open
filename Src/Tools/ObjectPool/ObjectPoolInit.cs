@@ -84,7 +84,7 @@ public partial class ObjectPoolInit
                 Name = ObjectPoolNames.EnemyPool,
                 InitialSize = 100,
                 MaxSize = 500,
-                ParentPath = "ECS/Entity/Enemy"
+                ParentPath = "ECS/Entity/Unit/EnemyPool"
             }
         );
 
@@ -97,7 +97,7 @@ public partial class ObjectPoolInit
                 Name = ObjectPoolNames.AbilityPool,
                 InitialSize = 50,
                 MaxSize = 300,
-                ParentPath = "ECS/Entity/Ability"
+                ParentPath = "ECS/Entity/Ability/AbilityPool"
             }
         );
 
@@ -109,7 +109,7 @@ public partial class ObjectPoolInit
                 Name = ObjectPoolNames.EffectPool,
                 InitialSize = 100,
                 MaxSize = 500,
-                ParentPath = "ECS/Entity/Effect"
+                ParentPath = "ECS/Entity/EffectPool"
             }
         );
 
@@ -121,7 +121,7 @@ public partial class ObjectPoolInit
                 Name = ObjectPoolNames.HealthBarPool,
                 InitialSize = 50,
                 MaxSize = 200,
-                ParentPath = "UI/UI/HealthBarUI"
+                ParentPath = "UI/UI/HealthBarUIPool"
             }
         );
 
@@ -133,7 +133,7 @@ public partial class ObjectPoolInit
                 Name = ObjectPoolNames.DamageNumberUIPool,
                 InitialSize = 100,
                 MaxSize = 500,
-                ParentPath = "UI/UI/DamageNumberUI"
+                ParentPath = "UI/UI/DamageNumberUIPool"
             }
         );
 
@@ -145,7 +145,7 @@ public partial class ObjectPoolInit
                 Name = ObjectPoolNames.ProjectilePool,
                 InitialSize = 30,
                 MaxSize = 200,
-                ParentPath = "ECS/Entity/ProjectileEntity"
+                ParentPath = "ECS/Entity/ProjectileEntityPool"
             }
         );
 
@@ -157,7 +157,7 @@ public partial class ObjectPoolInit
                 Name = ObjectPoolNames.LightningLinePool,
                 InitialSize = 10,
                 MaxSize = 50,
-                ParentPath = "Ability/LightningLineEffect"
+                ParentPath = "ECS/Entity/Ability/LightningLinePool"
             }
         );
 

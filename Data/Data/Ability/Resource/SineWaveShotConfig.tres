@@ -32,7 +32,7 @@ _bundled = {
 [resource]
 script = ExtResource("1_script")
 Name = "SineWaveShot"
-AbilityExecutorId = "SineWaveShot"
+FeatureHandlerId = "SineWaveShot"
 Description = "发射正弦波形弹道向敌人射击（验证 SineWave 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

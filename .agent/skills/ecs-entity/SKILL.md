@@ -61,7 +61,14 @@ EntityManager.Destroy(enemy);
 var health = EntityManager.GetComponent<HealthComponent>(entity);
 ```
 
-## 对象池脱树隔离（2026-04 实现）
+## 对象池生成时序（重要）
+
+- 对象池 Entity 出池时，不要立即恢复碰撞与处理。
+- 必须先完成 Data 注入、VisualRoot 注入、位置/旋转设置与 `ForceUpdateTransform()`。
+- 组件注册完成后，再统一恢复节点激活状态。
+- 这样可以避免复用对象在旧位置短暂参与物理，触发伪 `body_entered`。
+
+### 脱树隔离机制（2026-04 实现）
 
 碰撞类型（根节点为 `CollisionObject2D`，如 `EnemyEntity : CharacterBody2D`）回池时自动脱树：
 

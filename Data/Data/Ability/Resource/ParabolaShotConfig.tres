@@ -32,7 +32,7 @@ _bundled = {
 [resource]
 script = ExtResource("1_script")
 Name = "ParabolaShot"
-AbilityExecutorId = "ParabolaShot"
+FeatureHandlerId = "Ability.Projectile.ParabolaShot"
 Description = "发射沿抛物线飞行的弓形弹道（验证 Parabola 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

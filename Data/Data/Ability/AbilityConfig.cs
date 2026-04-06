@@ -13,10 +13,10 @@ namespace Slime.Config.Abilities
         [DataKey(nameof(DataKey.Name))]
         [Export] public string? Name { get; set; }
         /// <summary>
-        /// 技能执行模板ID（为空时默认调用与 Name 相同的执行器）
+        /// 技能逻辑处理器 ID（对应 IFeatureHandler.FeatureId，为空时默认用 Name）
         /// </summary>
-        [DataKey(nameof(DataKey.AbilityExecutorId))]
-        [Export] public string? AbilityExecutorId { get; set; }
+        [DataKey(nameof(DataKey.FeatureHandlerId))]
+        [Export] public string? FeatureHandlerId { get; set; }
         /// <summary>
         /// 技能描述
         /// </summary>
