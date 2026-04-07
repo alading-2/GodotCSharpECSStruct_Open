@@ -107,7 +107,7 @@ public partial class EntityMovementComponent : Node, IComponent
         // 退出当前策略
         if (_currentStrategy != null && _entity != null && _data != null)
         {
-            _currentStrategy.OnExit(_entity, _data);
+            StopCurrentStrategy(MovementStopReason.ComponentUnregistered);
         }
 
         _entity = null;
@@ -205,7 +205,7 @@ public partial class EntityMovementComponent : Node, IComponent
         MoveMode newMode = newParams.Mode;
 
         // 退出旧策略
-        _currentStrategy?.OnExit(_entity, _data);
+        StopCurrentStrategy(MovementStopReason.Interrupted, newMode);
         _currentStrategy = null;
 
         // 重置运动状态
@@ -384,17 +384,24 @@ public partial class EntityMovementComponent : Node, IComponent
     /// true = 由碰撞触发的完成，额外检查 <c>DestroyOnCollision</c>；
     /// false（默认）= 时间/距离/策略主动触发，只检查 <c>DestroyOnComplete</c>。
     /// </param>
-    private void OnMoveComplete(bool byCollision = false)
+    /// <param name="collisionTarget">若由碰撞触发，则为碰撞目标；否则为 null。</param>
+    private void OnMoveComplete(bool byCollision = false, Node2D? collisionTarget = null)
     {
         if (_data == null || _entity == null) return;
 
         var mode = _data.Get<MoveMode>(DataKey.MoveMode);
+        var defaultMode = _data.Get<MoveMode>(DataKey.DefaultMoveMode);
+        var willDestroy = _params.DestroyOnComplete || (byCollision && _params.DestroyOnCollision);
+        var nextMode = !willDestroy && defaultMode != MoveMode.None && defaultMode != mode
+            ? defaultMode
+            : MoveMode.None;
 
         // 标记完成（防止本帧重复触发）
         _moveCompleted = true;
 
-        // 调用策略自然完成回调（OnEnd 仅自然完成触发；强制打断只走 OnExit）
-        _currentStrategy?.OnEnd(_entity, _data, _params);
+        // 调用策略统一停止回调
+        StopCurrentStrategy(byCollision ? MovementStopReason.Collision : MovementStopReason.Completed, nextMode, collisionTarget);
+        _currentStrategy = null;
 
         // 发送 MovementCompleted 事件，携带本次运动统计数据
         _entity.Events.Emit(
@@ -412,7 +419,6 @@ public partial class EntityMovementComponent : Node, IComponent
         }
 
         // 回退到默认运动模式
-        var defaultMode = _data.Get<MoveMode>(DataKey.DefaultMoveMode);
         if (defaultMode != MoveMode.None && defaultMode != mode)
         {
             SwitchStrategy(new MovementParams { Mode = defaultMode });
@@ -460,6 +466,20 @@ public partial class EntityMovementComponent : Node, IComponent
 
         _log.Debug($"[{(_entity as Node)?.Name}] 运动碰撞 Mode={moveMode}, Target={target?.Name}");
 
-        OnMoveComplete(byCollision: true);
+        OnMoveComplete(byCollision: true, collisionTarget: target);
+    }
+
+    /// <summary>
+    /// 统一触发当前策略的停止回调。
+    /// <para>停止上下文会携带当前模式、最终统计、碰撞目标与下一模式。</para>
+    /// </summary>
+    private void StopCurrentStrategy(MovementStopReason reason, MoveMode nextMode = MoveMode.None, Node2D? collisionTarget = null)
+    {
+        if (_currentStrategy == null || _entity == null || _data == null) return;
+
+        var currentMode = _data.Get<MoveMode>(DataKey.MoveMode);
+        var stopContext = new MovementStopContext(reason, currentMode, _params, collisionTarget, nextMode);
+        _currentStrategy.OnStop(_entity, _data, stopContext);
+        _params.OnStop?.Invoke(stopContext);
     }
 }

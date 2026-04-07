@@ -13,10 +13,30 @@ namespace Slime.Config.Abilities
         [DataKey(nameof(DataKey.Name))]
         [Export] public string? Name { get; set; }
         /// <summary>
-        /// 技能逻辑处理器 ID（对应 IFeatureHandler.FeatureId，为空时默认用 Name）
+        /// 技能分组 ID（FeatureGroup 前缀）。
+        /// 与 Name 组合自动派生完整 FeatureHandlerId：{FeatureGroupId}.{Name}
+        /// 例：FeatureGroupId="Ability.Movement"，Name="Dash" → "Ability.Movement.Dash"
+        /// </summary>
+        [DataKey(nameof(DataKey.AbilityFeatureGroup))]
+        [Export] public string? FeatureGroupId { get; set; }
+        /// <summary>
+        /// 技能逻辑处理器 ID（可选覆盖）。
+        /// 为空时由 FeatureGroupId + Name 自动派生；仅在需要特殊映射时才手动填写。
         /// </summary>
         [DataKey(nameof(DataKey.FeatureHandlerId))]
         [Export] public string? FeatureHandlerId { get; set; }
+
+        /// <summary>
+        /// 解析最终 FeatureHandlerId。
+        /// 优先使用显式 FeatureHandlerId；为空则由 featureGroupId + "." + name 派生。
+        /// </summary>
+        public static string? ResolveFeatureHandlerId(string? featureHandlerId, string? featureGroupId, string? name)
+        {
+            if (!string.IsNullOrEmpty(featureHandlerId)) return featureHandlerId;
+            if (!string.IsNullOrEmpty(featureGroupId) && !string.IsNullOrEmpty(name))
+                return $"{featureGroupId}.{name}";
+            return null;
+        }
         /// <summary>
         /// 技能描述
         /// </summary>
@@ -108,16 +128,16 @@ namespace Slime.Config.Abilities
         /// <summary>
         /// 目标排序方式
         /// </summary>
-        [DataKey(nameof(DataKey.AbilityTargetSorting))]
-        [Export] public AbilityTargetSorting AbilityTargetSorting { get; set; }
+        [DataKey(nameof(DataKey.TargetSorting))]
+        [Export] public TargetSorting TargetSorting { get; set; }
 
         /// <summary>
-        /// 施法距离（索敌/瞄准射程；0=无限制）
+        /// 施法距离（索敌/瞄准射程；Dash 等位移技能可复用为位移距离；0=无限制）
         /// </summary>
         [DataKey(nameof(DataKey.AbilityCastRange))]
         [Export] public float AbilityCastRange { get; set; }
         /// <summary>
-        /// 效果半径（圆形/扇形 AOE 半径；冲刺=位移距离）
+        /// 效果半径（圆形/扇形 AOE 半径；Dash 等落点结算技能可复用为伤害范围）
         /// </summary>
         [DataKey(nameof(DataKey.AbilityEffectRadius))]
         [Export] public float AbilityEffectRadius { get; set; }

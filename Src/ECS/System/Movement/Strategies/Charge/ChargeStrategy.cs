@@ -79,7 +79,26 @@ public class ChargeStrategy : IMovementStrategy
     {
         if (entity is not Node2D node) return;
 
-        _currentSpeed = Mathf.Max(0f, @params.ActionSpeed);
+        // 从 TargetPoint 推导 MaxDistance（如果未显式设置）
+        float derivedMaxDistance = @params.MaxDistance;
+        if (derivedMaxDistance <= 0f && @params.TargetPoint != Vector2.Zero)
+        {
+            derivedMaxDistance = (node.GlobalPosition - @params.TargetPoint).Length();
+        }
+
+        // 速度推导：优先 ActionSpeed，其次 MaxDistance + MaxDuration，否则 0
+        if (@params.ActionSpeed > 0f)
+        {
+            _currentSpeed = @params.ActionSpeed;
+        }
+        else if (derivedMaxDistance > 0f && @params.MaxDuration > 0f)
+        {
+            _currentSpeed = derivedMaxDistance / @params.MaxDuration;
+        }
+        else
+        {
+            _currentSpeed = 0f;
+        }
 
         if (@params.isTrackTarget && @params.TargetNode == null)
             _log.Warn("isTrackTarget=true 但 TargetNode 未设置，追踪将无效，退化为固定方向冲刺。");

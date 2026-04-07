@@ -58,23 +58,14 @@ public interface IMovementStrategy
     MovementUpdateResult Update(IEntity entity, Data data, float delta, MovementParams @params);
 
     /// <summary>
-    /// 策略自然完成时调用一次（区别于 <c>OnExit</c>：<c>OnEnd</c> 仅在运动正常完成时触发；
-    /// 被强制打断切换时只触发 <c>OnExit</c>，不触发 <c>OnEnd</c>）。
+    /// 策略停止时调用一次，可选。
     /// <para>
-    /// 典型用途：回旋镖返回后触发拾取效果、追及结束后触发攻击判定。
-    /// <c>@params</c> 携带本次运动最终统计（<c>ElapsedTime</c>、<c>TraveledDistance</c>）。
+    /// 无论是自然完成、碰撞完成、被新运动打断还是组件注销，都会走统一的停止回调。
+    /// 典型用途：清理外部状态、根据停止原因决定是否结算命中或返回效果。
     /// </para>
     /// </summary>
     /// <param name="entity">当前运动实体</param>
     /// <param name="data">实体数据容器</param>
-    /// <param name="params">本次运动上下文参数（含最终 ElapsedTime / TraveledDistance）</param>
-    void OnEnd(IEntity entity, Data data, MovementParams @params) { }
-
-    /// <summary>
-    /// 退出策略时调用一次，可选（强制打断和自然完成均会触发）。
-    /// 策略私有状态随实例销毁自动清理，此处只做必要的外部清理。
-    /// </summary>
-    /// <param name="entity">当前运动实体</param>
-    /// <param name="data">实体数据容器</param>
-    void OnExit(IEntity entity, Data data) { }
+    /// <param name="context">停止上下文，包含停止原因、最终统计、碰撞目标与下一模式等信息</param>
+    void OnStop(IEntity entity, Data data, in MovementStopContext context) { }
 }

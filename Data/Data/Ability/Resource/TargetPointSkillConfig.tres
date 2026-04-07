@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 Name = "位置目标"
-FeatureHandlerId = "位置目标"
+FeatureGroupId = "Ability.Active"
 Description = "选择一个位置进行范围攻击"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

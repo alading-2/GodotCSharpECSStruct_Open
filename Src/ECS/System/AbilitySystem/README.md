@@ -81,6 +81,8 @@ ability.Events.Emit(
 - 由对应 `IFeatureHandler.OnActivated(...)` 执行具体技能逻辑
 - 发送 `Ability.Executed`
 
+其中 `AbilityConfig.FeatureHandlerId` 必须直接填写完整唯一 `FeatureId`，例如 `Ability.Movement.Dash`；`FeatureGroup` 仅用于分组查询，不参与运行时拼接。
+
 ---
 
 ## 返回值与请求-响应

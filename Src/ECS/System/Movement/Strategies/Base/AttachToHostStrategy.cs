@@ -56,12 +56,12 @@ public class AttachToHostStrategy : IMovementStrategy
     }
 
     /// <summary>
-    /// 退出时没有额外实例状态需要清理。
+    /// 停止时没有额外实例状态需要清理。
     /// <para>
     /// 宿主引用存储于 <c>MovementParams.TargetNode</c>，随 <c>SwitchStrategy</c> 替换 <c>_params</c> 时自然失效。
     /// </para>
     /// </summary>
-    public void OnExit(IEntity entity, Data data)
+    public void OnStop(IEntity entity, Data data, in MovementStopContext context)
     {
     }
 }

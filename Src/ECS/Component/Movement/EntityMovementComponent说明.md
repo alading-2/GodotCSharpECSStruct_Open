@@ -79,7 +79,7 @@ entity.Data.Set(DataKey.Acceleration, 10f);
 
 ## 6. SwitchStrategy 重置
 
-每次切换只重置三个共享 DataKey（Velocity / VelocityOverride / VelocityImpulse）和组件私有统计字段，其余实体属性（MoveSpeed、IsMovementLocked 等）保持不变。策略运行时状态（角度、起点等）存于策略私有字段，随实例一起丢弃，无需手动清理。
+每次切换只重置三个共享 DataKey（Velocity / VelocityOverride / VelocityImpulse）和组件私有统计字段，其余实体属性（MoveSpeed、IsMovementLocked 等）保持不变。旧策略会先收到一次 `OnStop(in MovementStopContext)`，停止原因通常为 `Interrupted`，之后其运行时状态（角度、起点等）随实例一起丢弃，无需手动清理。
 
 ## 7. 结束条件
 
@@ -103,6 +103,21 @@ entity.Events.On<GameEventType.Unit.MovementCompletedEventData>(
     GameEventType.Unit.MovementCompleted,
     evt => _log.Info($"Mode={evt.Mode} Elapsed={evt.ElapsedTime:F2}s Dist={evt.TraveledDistance:F1}px"));
 ```
+
+### 统一停止回调
+
+策略接口不再区分 `OnEnd` / `OnExit`，统一改为：
+
+```csharp
+void OnStop(IEntity entity, Data data, in MovementStopContext context)
+```
+
+其中 `context` 至少包含：
+
+- `Reason`：`Completed / Collision / Interrupted / ComponentUnregistered`
+- `Params`：本次运动最终参数与统计快照
+- `CollisionTarget`：若因碰撞停止则提供目标
+- `NextMode`：停止后即将切换的模式（例如回退默认模式）
 
 ## 8. Velocity 分层合成
 

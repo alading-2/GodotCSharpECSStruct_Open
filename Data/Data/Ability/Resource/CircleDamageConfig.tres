@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_script")
 Name = "CircleDamage"
-FeatureHandlerId = "CircleDamage"
+FeatureGroupId = "Ability.Active"
 Description = "周身燃起烈焰光环，每秒对周围敌人造成魔法伤害"
 AbilityIcon = ExtResource("1_elfag")
 AbilityType = 1

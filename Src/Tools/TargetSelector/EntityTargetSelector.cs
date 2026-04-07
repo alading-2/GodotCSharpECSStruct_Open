@@ -118,30 +118,30 @@ public static class EntityTargetSelector
     /// 对目标集合执行排序。
     /// 排序仅改变顺序，不改变元素集合；随机排序使用 Fisher-Yates 洗牌。
     /// </summary>
-    private static void SortTargets(List<IEntity> targets, Vector2 origin, AbilityTargetSorting sorting)
+    private static void SortTargets(List<IEntity> targets, Vector2 origin, TargetSorting sorting)
     {
         switch (sorting)
         {
-            case AbilityTargetSorting.None: break;
-            case AbilityTargetSorting.Nearest:
+            case TargetSorting.None: break;
+            case TargetSorting.Nearest:
                 targets.Sort((a, b) => GetEntityPosition(a).DistanceTo(origin).CompareTo(GetEntityPosition(b).DistanceTo(origin)));
                 break;
-            case AbilityTargetSorting.Farthest:
+            case TargetSorting.Farthest:
                 targets.Sort((a, b) => GetEntityPosition(b).DistanceTo(origin).CompareTo(GetEntityPosition(a).DistanceTo(origin)));
                 break;
-            case AbilityTargetSorting.LowestHealth:
+            case TargetSorting.LowestHealth:
                 targets.Sort((a, b) => a.Data.Get<float>(DataKey.CurrentHp).CompareTo(b.Data.Get<float>(DataKey.CurrentHp)));
                 break;
-            case AbilityTargetSorting.HighestHealth:
+            case TargetSorting.HighestHealth:
                 targets.Sort((a, b) => b.Data.Get<float>(DataKey.CurrentHp).CompareTo(a.Data.Get<float>(DataKey.CurrentHp)));
                 break;
-            case AbilityTargetSorting.HighestHealthPercent:
+            case TargetSorting.HighestHealthPercent:
                 targets.Sort((a, b) => b.Data.Get<float>(DataKey.HpPercent).CompareTo(a.Data.Get<float>(DataKey.HpPercent)));
                 break;
-            case AbilityTargetSorting.LowestHealthPercent:
+            case TargetSorting.LowestHealthPercent:
                 targets.Sort((a, b) => a.Data.Get<float>(DataKey.HpPercent).CompareTo(b.Data.Get<float>(DataKey.HpPercent)));
                 break;
-            case AbilityTargetSorting.Random:
+            case TargetSorting.Random:
                 Random rng = new Random();
                 for (int i = targets.Count - 1; i > 0; i--)
                 {
@@ -149,7 +149,7 @@ public static class EntityTargetSelector
                     (targets[i], targets[j]) = (targets[j], targets[i]);
                 }
                 break;
-            case AbilityTargetSorting.HighestThreat:
+            case TargetSorting.HighestThreat:
                 targets.Sort((a, b) =>
                     (b.Data.Has(DataKey.Threat) ? b.Data.Get<float>(DataKey.Threat) : 0).CompareTo(a.Data.Has(DataKey.Threat) ? a.Data.Get<float>(DataKey.Threat) : 0));
                 break;

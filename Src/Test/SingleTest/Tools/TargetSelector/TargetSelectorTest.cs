@@ -72,7 +72,7 @@ public partial class TargetSelectorTest : Node
                 CenterEntity = center,
                 TeamFilter = AbilityTargetTeamFilter.Enemy,
                 TypeFilter = EntityType.Unit,
-                Sorting = AbilityTargetSorting.Nearest,
+                Sorting = TargetSorting.Nearest,
                 MaxTargets = 2
             };
 

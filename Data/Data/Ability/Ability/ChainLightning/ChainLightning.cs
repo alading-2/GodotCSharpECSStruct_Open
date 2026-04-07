@@ -12,7 +12,7 @@ public readonly record struct ChainBounceContext(
     float Delay,
     float DamageDecay,
     AbilityTargetTeamFilter TeamFilter,
-    AbilityTargetSorting Sorting,
+    TargetSorting Sorting,
     PackedScene? LineScene
 );
 
@@ -72,7 +72,7 @@ internal class ChainLightningExecutor : AbilityFeatureHandlerBase
             Range = ability.Data.Get<float>(DataKey.AbilityChainRange),
             DamageDecay = ability.Data.Get<float>(DataKey.AbilityChainDamageDecay) / 100f,
             TeamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter),
-            Sorting = ability.Data.Get<AbilityTargetSorting>(DataKey.AbilityTargetSorting),
+            Sorting = ability.Data.Get<TargetSorting>(DataKey.TargetSorting),
             LineScene = ability.Data.Get<PackedScene>(DataKey.AbilityChainLineEffect)
         };
 

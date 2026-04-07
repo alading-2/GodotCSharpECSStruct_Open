@@ -85,7 +85,7 @@
       "AbilityTargetSelection": {
         "visibility": 1.0
       },
-      "AbilityTargetSorting": {
+      "TargetSorting": {
         "visibility": 1.0
       },
       "AbilityTargetTeamFilter": {

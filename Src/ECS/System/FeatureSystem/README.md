@@ -124,7 +124,7 @@
 
 路径：`Src/ECS/System/FeatureSystem/FeatureHandlerRegistry.cs`
 
-作用：维护 `FeatureHandlerId -> IFeatureHandler` 的映射。
+作用：维护 `完整 FeatureHandlerId -> IFeatureHandler` 的映射。
 
 通常通过 `[ModuleInitializer]` 自动注册。
 
@@ -187,7 +187,7 @@ TryTrigger
 → AbilitySystem 构建 FeatureContext
 → FeatureContext.ActivationData = CastContext
 → FeatureSystem.OnFeatureActivated(featureCtx)
-→ FeatureHandlerRegistry.Get(FeatureHandlerId)?.OnActivated(featureCtx)
+→ FeatureHandlerRegistry.Get(完整 FeatureHandlerId)?.OnActivated(featureCtx)
 → handler 把 AbilityExecutedResult 写入 featureCtx.ExtraData
 → AbilitySystem 读取结果并发出 Ability.Executed
 → FeatureSystem.OnFeatureEnded(featureCtx)
@@ -198,7 +198,8 @@ TryTrigger
 - `AbilitySystem` 负责施法编排
 - `FeatureSystem` 负责统一生命周期
 - `IFeatureHandler` 负责真正的技能效果逻辑
-- `AbilityConfig.FeatureHandlerId` 是 Ability 与 FeatureHandler 的桥接键
+- `AbilityConfig.FeatureHandlerId` 必须直接填写完整唯一 `FeatureId`，如 `Ability.Movement.Dash`
+- `FeatureGroup` 只用于 `GetByGroup` 分组查询，不参与运行时反向拼接
 
 ---
 
@@ -221,6 +222,7 @@ TryTrigger
 2. 实现 `FeatureId`
 3. 实现 `ExecuteAbility(CastContext context)`
 4. 在 `[ModuleInitializer]` 中注册到 `FeatureHandlerRegistry`
+5. 在 `AbilityConfig.FeatureHandlerId` 中填写同名完整唯一 `FeatureId`
 
 ---
 

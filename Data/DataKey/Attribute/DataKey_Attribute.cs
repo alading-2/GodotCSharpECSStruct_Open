@@ -339,16 +339,6 @@ public static partial class DataKey
     public static readonly DataMeta InvincibilityTime = DataRegistry.Register(
         new DataMeta { Key = nameof(InvincibilityTime), DisplayName = "无敌时间", Description = "无敌时间", Category = DataCategory_Attribute.Defense, Type = typeof(float), DefaultValue = 0f, MinValue = 0 });
 
-    // ========================================
-    // 技能相关 (Skill)
-    // ========================================
-    // 技能伤害百分比
-    public static readonly DataMeta AbilityDamageBonus = DataRegistry.Register(
-        new DataMeta { Key = nameof(AbilityDamageBonus), DisplayName = "技能伤害百分比", Description = "技能伤害百分比", Category = DataCategory_Attribute.Skill, Type = typeof(float), DefaultValue = 100f, MinValue = 0, IsPercentage = true, SupportModifiers = true });
-
-    // 技能冷却缩减
-    public static readonly DataMeta CooldownReduction = DataRegistry.Register(
-        new DataMeta { Key = nameof(CooldownReduction), DisplayName = "技能冷却缩减", Description = "技能冷却缩减百分比", Category = DataCategory_Attribute.Skill, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = GlobalConfig.MaxCooldownReduction, IsPercentage = true, SupportModifiers = true });
 
     // ========================================
     // 移动相关 (Movement)

@@ -117,7 +117,7 @@
     DataKey.AbilityTriggerMode,        // AbilityTriggerMode.Periodic
     DataKey.AbilityTargetGeometry,     // AbilityTargetGeometry.Circle
     DataKey.AbilityTargetTeamFilter,   // AbilityTargetTeamFilter.Enemy
-    DataKey.AbilityTargetSorting,      // AbilityTargetSorting.Nearest
+    DataKey.TargetSorting,      // TargetSorting.Nearest
     DataKey.AbilityCostType,           // AbilityCostType.Mana
     
     // 路径类型 (特殊处理)

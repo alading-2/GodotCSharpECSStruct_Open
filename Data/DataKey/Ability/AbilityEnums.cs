@@ -96,31 +96,6 @@ public enum AbilityTargetTeamFilter
 }
 
 /// <summary>
-/// 目标排序方式
-/// </summary>
-public enum AbilityTargetSorting
-{
-    /// <summary>无排序 (默认)</summary>
-    None = 0,
-    /// <summary>最近</summary>
-    Nearest = 1,
-    /// <summary>最远</summary>
-    Farthest = 2,
-    /// <summary>血量最低</summary>
-    LowestHealth = 3,
-    /// <summary>血量最高</summary>
-    HighestHealth = 4,
-    /// <summary>血量百分比最高</summary>
-    HighestHealthPercent = 5,
-    /// <summary>血量百分比最低</summary>
-    LowestHealthPercent = 6,
-    /// <summary>随机</summary>
-    Random = 7,
-    /// <summary>威胁值最高</summary>
-    HighestThreat = 8,
-}
-
-/// <summary>
 /// 技能消耗类型
 /// </summary>
 public enum AbilityCostType

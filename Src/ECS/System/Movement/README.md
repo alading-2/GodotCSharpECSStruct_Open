@@ -42,8 +42,8 @@ entity.Events.Emit(
 ## 职责分工
 
 - **业务层**：构建 `MovementParams`，触发 `MovementStarted` 事件，监听 `MovementCompleted`
-- **策略**：读 `in MovementParams`，计算本帧意图写入 `DataKey.Velocity`，私有字段存运行时状态
-- **组件**：持有 `_params`/`_elapsedTime`/`_traveledDistance`，切换策略，执行位移，检查结束，发事件
+- **策略**：读 `MovementParams`，计算本帧意图写入 `DataKey.Velocity`，私有字段存运行时状态；停止时通过 `OnStop(in MovementStopContext)` 接收统一结束语义
+- **组件**：持有 `_params`/`_elapsedTime`/`_traveledDistance`，切换策略，执行位移，检查结束，发事件，并统一分发停止原因
 
 ## 结束条件
 
@@ -52,6 +52,13 @@ entity.Events.Emit(
 - 策略返回 `MovementUpdateResult.Complete()`：主动完成
 - `DestroyOnComplete = true`：完成后销毁；否则回退 `DefaultMoveMode`
 - `DestroyOnCollision = true`：碰撞后销毁（同时先触发 `MovementCollision` 事件）
+
+## 生命周期
+
+- `OnEnter`：策略进入时初始化运行时缓存
+- `Update`：每帧计算运动意图
+- `OnStop`：统一停止回调，`MovementStopContext` 会携带 `Reason / Params / CollisionTarget / NextMode`
+- `MovementStopReason`：当前内置 `Completed / Collision / Interrupted / ComponentUnregistered`
 
 `MovementCompletedEventData` 直接携带 `ElapsedTime` / `TraveledDistance`，无需读 DataKey。
 

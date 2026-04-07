@@ -52,7 +52,7 @@ IFeatureAction             动作接口（最小执行单元）
 IFeatureHandler            代码钩子接口（复杂逻辑的生命周期方法）
 
  AbilitySystem Adapter      Ability 子域适配层
-   ├── 负责把 AbilityConfig.FeatureHandlerId 映射到 IFeatureHandler.FeatureId
+   ├── 负责把 AbilityConfig.FeatureHandlerId 作为完整唯一 FeatureId 透传给 IFeatureHandler
    ├── 负责把 CastContext 装进 FeatureContext.ActivationData
    └── 负责读取 FeatureContext.ExtraData 中的 AbilityExecutedResult 并发出 Ability.Executed
 ```
@@ -184,7 +184,7 @@ TryTrigger
 → AbilitySystem 完成 CanUse / SelectTargets / ConsumeCharge / StartCooldown / ConsumeCost
 → AbilitySystem 构建 FeatureContext（ActivationData = CastContext）
 → FeatureSystem.OnFeatureActivated(featureCtx)
-→ FeatureHandlerRegistry.Get(FeatureHandlerId)?.OnActivated(featureCtx)
+→ FeatureHandlerRegistry.Get(完整 FeatureHandlerId)?.OnActivated(featureCtx)
 → handler 将 AbilityExecutedResult 写入 featureCtx.ExtraData
 → AbilitySystem 读取结果并发出 Ability.Executed
 → FeatureSystem.OnFeatureEnded(featureCtx)
@@ -196,7 +196,8 @@ TryTrigger
 - `FeatureSystem` 负责统一生命周期钩子
 - 具体技能效果逻辑不再经过 `AbilityExecutorRegistry`
 - 每个技能逻辑类现在应实现 `IFeatureHandler`（或继承 `AbilityFeatureHandlerBase`）
-- `AbilityConfig.FeatureHandlerId` 是 Ability 与 FeatureHandler 的桥接键
+- `AbilityConfig.FeatureHandlerId` 必须直接填写完整唯一 `FeatureId`，例如 `Ability.Movement.Dash`
+- `FeatureGroup` 仅用于 `FeatureHandlerRegistry.GetByGroup()` 分组查询，不参与运行时反向拼接
 
 ---
 
@@ -362,7 +363,7 @@ if (feature != null)
 | `TargetSelector` | 目标选择仍由 AbilityTargetSelectionComponent 负责 |
 | `ResourceManagement` | 资源加载仍走 ResourceManagement.Load |
 | `TimerManager` | Feature 内定时器需在 OnGranted 注册、OnRemoved 取消 |
-| `AbilitySystem` | FeatureSystem 是通用核心；AbilitySystem 只是适配层，负责同步 Ability 键与 Feature 键，并在 Activated/Ended 阶段传入 CastContext |
+| `AbilitySystem` | FeatureSystem 是通用核心；AbilitySystem 只是适配层，负责透传完整 `FeatureHandlerId` 并在 Activated/Ended 阶段传入 CastContext |
 
 ### 10.1 状态所有权边界
 
@@ -372,10 +373,10 @@ if (feature != null)
 | `FeatureCategory` | `FeatureSystem` 核心 | Feature 分类信息 |
 | `FeatureEnabled` / `FeatureIsActive` / `FeatureActivationCount` | `FeatureSystem` 核心 | Feature 通用运行时状态 |
 | `AbilityTriggerMode` / `AbilityCooldown` / `AbilityTarget*` | `AbilitySystem` 适配层 | 主动施法子域的施法配置与选择规则 |
-| `FeatureHandlerId`（由 AbilityConfig 提供） | `AbilitySystem` 适配层 | Ability 与 IFeatureHandler 的桥接键，运行时由 FeatureSystem 使用 |
+| `FeatureHandlerId`（由 AbilityConfig 提供） | `AbilitySystem` 适配层 | Ability 与 IFeatureHandler 的精确桥接键，必须是完整唯一 ID |
 
 ### 10.2 推荐约束
 
 1. Feature 核心代码只读写 `Feature*` 键，不读写 `Ability*` 键。
-2. Ability 子域可以保留 `Ability*` 配置键，但执行逻辑应统一经 `FeatureHandlerId + IFeatureHandler` 接入。
+2. Ability 子域可以保留 `Ability*` 配置键，但执行逻辑应统一经 `完整 FeatureHandlerId + IFeatureHandler` 接入。
 3. 新增非 Ability 的 Feature 子域时，应直接使用 `FeatureDefinition + Feature*` 键，不要重新引入独立执行器注册表。

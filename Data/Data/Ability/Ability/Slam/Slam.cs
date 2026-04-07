@@ -49,70 +49,44 @@ internal class SlamExecutor : AbilityFeatureHandlerBase
         var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
 
         // 2. 在角色周围随机选点
-        // 使用 PositionTargetSelector 和 Circle 几何获取随机位置
         var pointQuery = new TargetSelectorQuery
         {
-            Geometry = GeometryType.Circle, // 形状：圆形
-            Origin = casterNode.GlobalPosition, // 位置：施法者位置
-            Range = abilityRange, // 半径：选点半径
-            MaxTargets = 1 // 最大目标数：1
+            Geometry = GeometryType.Circle,         // 形状：圆形
+            Origin = casterNode.GlobalPosition,     // 位置：施法者位置
+            Range = abilityRange,                   // 半径：选点半径
+            MaxTargets = 1                          // 只取一个随机点
         };
         var randomPoint = PositionTargetSelector.Query(pointQuery)[0];
 
-        // 3. 在随机点位置查询敌人目标
-        var query = new TargetSelectorQuery
-        {
-            Geometry = GeometryType.Circle, // 形状：圆形
-            Origin = randomPoint, // 位置：随机选点
-            Range = damageRadius, // 半径：伤害半径
-            CenterEntity = caster, // 中心实体：施法者
-            TeamFilter = AbilityTargetTeamFilter.Enemy, // 阵营：敌人
-            Sorting = AbilityTargetSorting.HighestThreat, // 排序：最近
-            MaxTargets = maxTargets // 最大目标数
-        };
-        var targets = EntityTargetSelector.Query(query);
-
-        // 4. 生成特效（在随机选点位置）
+        // 3. 获取特效场景
         var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);
-        if (effectScene != null)
-        {
-            EffectTool.Spawn(randomPoint, new EffectSpawnOptions(
-                VisualScene: effectScene,
-                Name: "裂地猛击特效",
-                Scale: Vector2.One * 0.6f
-            ));
-        }
 
-        // 5. 如果范围内没有目标，直接返回
-        if (targets == null || targets.Count == 0)
+        // 4. 执行命中（目标查询 + 特效生成 + 伤害结算，三步合一）
+        var result = AbilityImpactTool.Execute(randomPoint, caster, new AbilityImpactOptions
         {
-            _log.Info($"裂地猛击在位置 {randomPoint} 未命中任何目标");
-            return new AbilityExecutedResult { TargetsHit = 0 };
-        }
-
-        // 6. 计算最终伤害：技能基础伤害 × 施法者技能伤害倍率
-        var damage = ability.Data.Get<float>(DataKey.AbilityDamage)
-                   * caster.Data.Get<float>(DataKey.AbilityDamageBonus) / 100f;
-
-        // 7. 对每个目标应用伤害
-        int targetsHit = 0;
-        foreach (var target in targets)
-        {
-            if (target is IUnit unitVictim)
+            Query = new TargetSelectorQuery
             {
-                DamageService.Instance.Process(new DamageInfo
-                {
-                    Attacker = casterNode,
-                    Victim = unitVictim,
-                    Damage = damage,
-                    Type = DamageType.Magical,
-                    Tags = DamageTags.Area | DamageTags.Ability
-                });
-                targetsHit++;
+                Geometry = GeometryType.Circle,                 // 圆形范围
+                Origin = randomPoint,                           // 以随机点为圆心（内部会被 Execute 覆盖为 origin 参数）
+                Range = damageRadius,                           // 伤害半径
+                CenterEntity = caster,                          // 施法者作为阵营判断基准
+                TeamFilter = AbilityTargetTeamFilter.Enemy,     // 只打敌人
+                Sorting = TargetSorting.HighestThreat,          // 优先威胁最高的目标
+                MaxTargets = maxTargets                         // 最大命中数
+            },
+            Effect = effectScene != null
+                ? new EffectSpawnOptions(effectScene, Name: "裂地猛击特效", Scale: Vector2.One * 0.6f)
+                : null,
+            Damage = new DamageApplyOptions
+            {
+                Damage = ability.Data.Get<float>(nameof(DataKey.FinalAbilityDamage)), // 技能最终伤害
+                Type = DamageType.Magical,                                   // 魔法伤害
+                Tags = DamageTags.Area | DamageTags.Ability,                 // 范围技能标签
+                Attacker = casterNode                                        // 伤害来源
             }
-        }
+        });
 
-        _log.Info($"裂地猛击: 选点范围 {abilityRange}, 伤害半径 {damageRadius}, 最终伤害 {damage:F1}, 命中 {targetsHit}");
-        return new AbilityExecutedResult { TargetsHit = targetsHit };
+        _log.Info($"裂地猛击: 选点范围 {abilityRange}, 伤害半径 {damageRadius}, 最终伤害 {ability.Data.Get<float>(nameof(DataKey.FinalAbilityDamage)):F1}, 命中 {result.TargetsHit}");
+        return new AbilityExecutedResult { TargetsHit = result.TargetsHit };
     }
 }

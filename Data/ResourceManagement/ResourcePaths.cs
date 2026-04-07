@@ -254,16 +254,16 @@ public static class ResourcePaths
         },
         { ResourceCategory.DataAbility, new Dictionary<string, ResourceData>
             {
-                { DataAbility_ArcShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/ArcShotConfig.tres") },
+                { DataAbility_ArcShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/Movement/ArcShotConfig.tres") },
                 { DataAbility_AuraShieldConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/AuraShieldConfig.tres") },
-                { DataAbility_BezierShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/BezierShotConfig.tres") },
-                { DataAbility_BoomerangThrowConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/BoomerangThrowConfig.tres") },
+                { DataAbility_BezierShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/Movement/BezierShotConfig.tres") },
+                { DataAbility_BoomerangThrowConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/Movement/BoomerangThrowConfig.tres") },
                 { DataAbility_ChainLightningConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Ability/ChainLightning/Data/ChainLightningConfig.tres") },
                 { DataAbility_CircleDamageConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/CircleDamageConfig.tres") },
-                { DataAbility_DashConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/DashConfig.tres") },
+                { DataAbility_DashConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/Movement/DashConfig.tres") },
                 { DataAbility_OrbitSkillConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/OrbitSkillConfig.tres") },
-                { DataAbility_ParabolaShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/ParabolaShotConfig.tres") },
-                { DataAbility_SineWaveShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/SineWaveShotConfig.tres") },
+                { DataAbility_ParabolaShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/Movement/ParabolaShotConfig.tres") },
+                { DataAbility_SineWaveShotConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/Movement/SineWaveShotConfig.tres") },
                 { DataAbility_SlamConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/SlamConfig.tres") },
                 { DataAbility_TargetPointSkillConfig, new ResourceData(ResourceCategory.DataAbility, "res://Data/Data/Ability/Resource/TargetPointSkillConfig.tres") },
             }

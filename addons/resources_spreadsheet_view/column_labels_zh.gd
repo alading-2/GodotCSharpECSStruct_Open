@@ -108,7 +108,7 @@ const LABELS: Dictionary = {
 	"abilitytargetselection": "目标选择",
 	"abilitytargetgeometry": "目标形状",
 	"abilitytargetteamfilter": "目标阵营",
-	"abilitytargetsorting": "目标排序",
+	"TargetSorting": "目标排序",
 	"abilitycastrange": "施法距离",
 	"abilityeffectradius": "效果半径",
 	"abilityeffectlength": "效果长度",

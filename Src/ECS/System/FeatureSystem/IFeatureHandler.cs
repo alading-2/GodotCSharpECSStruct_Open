@@ -13,7 +13,7 @@
 public interface IFeatureHandler
 {
     /// <summary>
-    /// Feature 标识符（对应 .tres FeatureHandlerId 字段）
+    /// Feature 标识符（完整唯一 ID，对应 .tres FeatureHandlerId 字段）
     /// </summary>
     string FeatureId { get; }
 

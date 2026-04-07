@@ -54,7 +54,7 @@ public class FindEnemyAction : BehaviorNode
             Range = detectionRange,
             CenterEntity = ctx.Entity,
             TeamFilter = AbilityTargetTeamFilter.Enemy,
-            Sorting = AbilityTargetSorting.HighestThreat,
+            Sorting = TargetSorting.HighestThreat,
             MaxTargets = 1
         });
 

@@ -40,18 +40,18 @@ public static class AbilitySystem
     /// 使用施法上下文触发技能（统一流水线入口）
     /// <returns>触发结果：Success / Failed / WaitingForTarget</returns>
     /// </summary>
-    private static TriggerResult TryTriggerAbilityWithContext(CastContext context)
+    private static TriggerResult TryTriggerAbilityWithContext(CastContext abilityContext)
     {
-        if (context.Ability == null || context.Caster == null) return TriggerResult.Failed;
+        if (abilityContext.Ability == null || abilityContext.Caster == null) return TriggerResult.Failed;
 
         // 【新增】拦截已死亡角色的技能请求（防止周期性光环等技能死后继续触发新一轮的伤害判定）
-        if (context.Caster != null && context.Caster.Data.Get<bool>(DataKey.IsDead))
+        if (abilityContext.Caster != null && abilityContext.Caster.Data.Get<bool>(DataKey.IsDead))
         {
             _log.Debug($"技能触发失败: 施法者已阵亡");
             return TriggerResult.Failed;
         }
 
-        var ability = context.Ability;
+        var ability = abilityContext.Ability;
 
         // 事件驱动：就绪检查
         if (!CanUseAbility(ability))
@@ -63,7 +63,7 @@ public static class AbilitySystem
         // 注意：这里是流水线的核心环节，AbilityTargetSelectionComponent 会在此处填充 context.Targets 或 context.TargetPosition
         ability.Events.Emit(
             GameEventType.Ability.SelectTargets,
-            new GameEventType.Ability.SelectTargetsEventData(context)
+            new GameEventType.Ability.SelectTargetsEventData(abilityContext)
         );
 
         // ==================== 目标解析阶段（统一处理 Entity / Point / EntityOrPoint） ====================
@@ -71,7 +71,7 @@ public static class AbilitySystem
 
         // Entity 类型：必须有目标，否则中止流水线（避免空放浪费充能/冷却）
         if (targetSelection == AbilityTargetSelection.Entity
-            && !context.HasPreselectedTargets)
+            && !abilityContext.HasPreselectedTargets)
         {
             var abilityName = ability.Data.Get<string>(DataKey.Name);
             _log.Debug($"目标验证失败: {abilityName} 需要 Entity 目标但未找到");
@@ -80,17 +80,17 @@ public static class AbilitySystem
 
         // Point 类型：需要玩家指定位置，如果还没有则进入异步瞄准
         if (targetSelection == AbilityTargetSelection.Point
-            && !context.HasPreselectedPosition)
+            && !abilityContext.HasPreselectedPosition)
         {
-            RequestPlayerTargeting(context);
+            RequestPlayerTargeting(abilityContext);
             return TriggerResult.WaitingForTarget;
         }
 
         // EntityOrPoint 类型：先尝试 Entity 自动索敌，未命中则回退 Point 异步瞄准
         if (targetSelection == AbilityTargetSelection.EntityOrPoint
-            && !context.HasPreselectedTargets && !context.HasPreselectedPosition)
+            && !abilityContext.HasPreselectedTargets && !abilityContext.HasPreselectedPosition)
         {
-            RequestPlayerTargeting(context);
+            RequestPlayerTargeting(abilityContext);
             return TriggerResult.WaitingForTarget;
         }
 
@@ -146,20 +146,20 @@ public static class AbilitySystem
         // 发送激活事件，技能UI使用
         ability.Events.Emit(
             GameEventType.Ability.Activated,
-            new GameEventType.Ability.ActivatedEventData(context)
+            new GameEventType.Ability.ActivatedEventData(abilityContext)
         );
 
         // Feature 生命周期钩子：Activated（AbilitySystem 负责构建 FeatureContext，将 CastContext 存入 ActivationData）
         var featureCtx = new FeatureContext
         {
-            Owner = context.Caster,
+            Owner = abilityContext.Caster,
             Feature = ability,
-            ActivationData = context,
-            SourceEventData = context.SourceEventData
+            ActivationData = abilityContext,
+            SourceEventData = abilityContext.SourceEventData
         };
         FeatureSystem.OnFeatureActivated(featureCtx);
 
-        EmitAbilityExecutedEvent(context, featureCtx);
+        EmitAbilityExecutedEvent(abilityContext, featureCtx);
 
         // Feature 生命周期钩子：Ended（复用同一 FeatureContext 实例）
         FeatureSystem.OnFeatureEnded(featureCtx);

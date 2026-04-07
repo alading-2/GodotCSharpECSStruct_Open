@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Slime.Config.Abilities;
 
 /// <summary>
 /// EntityManager 的 Ability 扩展
@@ -91,6 +92,21 @@ public static partial class EntityManager
             GameEventType.Ability.Added,
             new GameEventType.Ability.AddedEventData(ability, owner)
         );
+
+        // 解析最终 FeatureHandlerId：优先显式值，否则由 FeatureGroupId + Name 自动派生
+        var rawHandlerId = ability.Data.Get<string>(DataKey.FeatureHandlerId);
+        var featureGroupId = ability.Data.Get<string>(DataKey.AbilityFeatureGroup);
+        var resolvedHandlerId = AbilityConfig.ResolveFeatureHandlerId(rawHandlerId, featureGroupId, abilityName);
+        if (!string.IsNullOrEmpty(resolvedHandlerId))
+        {
+            ability.Data.Set(DataKey.FeatureHandlerId, resolvedHandlerId);
+            if (!FeatureHandlerRegistry.HasHandler(resolvedHandlerId))
+                _abilityLog.Info($"技能 '{abilityName}' → FeatureHandlerId='{resolvedHandlerId}'（无对应处理器，视为纯数据技能）");
+        }
+        else
+        {
+            _abilityLog.Warn($"技能 '{abilityName}' 无法解析 FeatureHandlerId（FeatureGroupId 与 FeatureHandlerId 均为空）");
+        }
 
         // Feature 生命周期钩子：Granted
         FeatureSystem.OnFeatureGranted(ability, owner);

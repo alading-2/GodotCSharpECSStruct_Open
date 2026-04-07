@@ -96,7 +96,7 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
                     var geometry = ability.Data.Get<GeometryType>(DataKey.AbilityTargetGeometry);
                     var range = ability.Data.Get<float>(DataKey.AbilityCastRange);
                     var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
-                    var sorting = ability.Data.Get<AbilityTargetSorting>(DataKey.AbilityTargetSorting);
+                    var sorting = ability.Data.Get<TargetSorting>(DataKey.TargetSorting);
                     var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
 
                     // 构建查询参数
@@ -130,7 +130,7 @@ public partial class AbilityTargetSelectionComponent : Node, IComponent
                     var geometry = ability.Data.Get<GeometryType>(DataKey.AbilityTargetGeometry);
                     var range = ability.Data.Get<float>(DataKey.AbilityCastRange);
                     var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
-                    var sorting = ability.Data.Get<AbilityTargetSorting>(DataKey.AbilityTargetSorting);
+                    var sorting = ability.Data.Get<TargetSorting>(DataKey.TargetSorting);
                     var maxTargets = ability.Data.Get<int>(DataKey.AbilityMaxTargets);
 
                     var targets = EntityTargetSelector.Query(new TargetSelectorQuery

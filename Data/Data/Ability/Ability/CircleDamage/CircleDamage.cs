@@ -32,77 +32,36 @@ internal class CircleDamageExecutor : AbilityFeatureHandlerBase
 
         var casterNode2D = caster as Node2D;
 
-        // 1. 目标查询逻辑
-        // 由于烈焰光环通常由 TriggerComponent 周期性（Periodic）触发，
-        // 这种触发方式下，CastContext 可能不会由 AbilityTargetSelectionComponent 预填充目标，
-        // 因此需要在此处利用 TargetSelector 进行实时范围扫描。
-        var targets = context.Targets;
-        if (targets == null || targets.Count == 0)
-        {
-            // 获取技能配置中的伤害半径和阵营过滤条件
-            var range = ability.Data.Get<float>(DataKey.AbilityEffectRadius);
-            var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter);
+        // 从技能配置中读取参数
+        var range = ability.Data.Get<float>(DataKey.AbilityEffectRadius);            // 伤害半径
+        var teamFilter = ability.Data.Get<AbilityTargetTeamFilter>(DataKey.AbilityTargetTeamFilter); // 阵营过滤
+        var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);        // 特效场景
 
-            var query = new TargetSelectorQuery
+        // 执行命中（目标查询 + 特效 + 伤害，三步合一；ExecuteAroundCaster 每次 tick 自动取施法者当前位置）
+        var result = AbilityImpactTool.ExecuteAroundCaster(caster, new AbilityImpactOptions
+        {
+            Query = new TargetSelectorQuery
             {
-                Geometry = GeometryType.Circle, // 以施法者为圆心的圆形区域
-                Range = range,                  // 查询半径
-                Origin = casterNode2D?.GlobalPosition ?? Vector2.Zero,
-                CenterEntity = caster,
-                TeamFilter = teamFilter,        // 根据配置过滤目标阵营（通常为敌人）
-                Sorting = AbilityTargetSorting.None,
-                MaxTargets = -1               // 烈焰光环通常不限命中数量
-            };
-
-            // 执行核心空间查询并将结果存回上下文暂存
-            targets = EntityTargetSelector.Query(query);
-            context.Targets = targets;
-        }
-
-        // 2. 每次触发时生成视觉反馈
-        // 获取配置中的通用特效资源
-        var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);
-        if (effectScene != null && casterNode2D != null)
-        {
-            // 在施法者脚下生成特效，设置较大的缩放以符合光环意图
-            EffectTool.Spawn(casterNode2D.GlobalPosition, new EffectSpawnOptions(
-                VisualScene: effectScene,
-                Name: "烈焰光环特效",
-                Scale: new Vector2(2.0f, 2.0f)
-            ));
-        }
-
-        _log.Info($"[烈焰光环] 触发! 范围: {ability.Data.Get<float>(DataKey.AbilityEffectRadius)}, 找到目标: {targets?.Count ?? 0}");
-
-        // 如果没有探测到任何合法目标，则直接结束执行
-        if (targets == null || targets.Count == 0)
-        {
-            return new AbilityExecutedResult { TargetsHit = 0 };
-        }
-
-        // 3. 对扫描到的每个目标执行伤害结算
-        // 技能基础伤害 × 施法者技能伤害倍率
-        var damage = ability.Data.Get<float>(DataKey.AbilityDamage)
-                   * caster.Data.Get<float>(DataKey.AbilityDamageBonus) / 100f;
-        int hitCount = 0;
-        foreach (var target in targets)
-        {
-            if (target is IUnit victim)
+                Geometry = GeometryType.Circle,         // 圆形范围，以施法者为圆心
+                Origin = casterNode2D?.GlobalPosition ?? Vector2.Zero, // 初始位置（DoT tick 时会自动更新）
+                Range = range,                          // 查询半径
+                CenterEntity = caster,                  // 阵营判断基准
+                TeamFilter = teamFilter,                // 阵营过滤
+                MaxTargets = -1                         // 不限命中数量
+            },
+            Effect = effectScene != null && casterNode2D != null
+                ? new EffectSpawnOptions(effectScene, Name: "烈焰光环特效", Scale: new Vector2(2.0f, 2.0f))
+                : null,
+            Damage = new DamageApplyOptions
             {
-                // 调用伤害服务，标记为魔法伤害类型并附加 Area（范围）标签
-                DamageService.Instance.Process(new DamageInfo
-                {
-                    Attacker = casterNode2D,
-                    Victim = victim,
-                    Damage = damage,
-                    Type = DamageType.Magical,
-                    Tags = DamageTags.Area | DamageTags.Ability
-                });
-                hitCount++;
+                Damage = ability.Data.Get<float>(nameof(DataKey.FinalAbilityDamage)), // 技能最终伤害
+                Type = DamageType.Magical,                                   // 魔法伤害
+                Tags = DamageTags.Area | DamageTags.Ability,                 // 范围技能标签
+                Attacker = casterNode2D                                      // 伤害来源
             }
-        }
+        });
 
-        // 返回本次触发总计命中的目标数量
-        return new AbilityExecutedResult { TargetsHit = hitCount };
+        _log.Info($"[烈焰光环] 触发! 范围: {range}, 命中: {result.TargetsHit}");
+        return new AbilityExecutedResult { TargetsHit = result.TargetsHit };
     }
 }

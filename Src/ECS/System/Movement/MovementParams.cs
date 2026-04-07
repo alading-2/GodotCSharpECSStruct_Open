@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using System;
+using Godot;
 
 /// <summary>
 /// 单次移动的完整上下文：输入参数 + 运行时统计，存储于 <see cref="EntityMovementComponent"/>，按值传给策略。
@@ -217,4 +218,14 @@ public record struct MovementParams
     /// 返程会自动反向，形成镜像回收轨迹。
     /// </summary>
     public bool BoomerangIsClockwise { get; init; } = false;
+
+    // ======== 回调 ========
+
+    /// <summary>
+    /// 运动停止时的回调（可选）。
+    /// <para>在策略 <c>OnStop</c> 之后、<c>MovementCompleted</c> 事件之前调用。</para>
+    /// <para>通过 <c>context.IsCompleted</c> 区分自然完成与打断/碰撞停止。</para>
+    /// <para>技能等业务方可用此替代订阅全局 <c>MovementCompleted</c> 事件，避免跨帧事件管理。</para>
+    /// </summary>
+    public Action<MovementStopContext>? OnStop { get; init; } = null;
 }

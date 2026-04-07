@@ -196,6 +196,8 @@ public partial class EffectComponent : Node, IComponent
         var animName = ResolveDefaultAnimation();
         if (string.IsNullOrEmpty(animName)) return;
 
+        _currentAnimation = animName;
+        ApplyLoopingOverride(animName);
         _sprite.SpeedScale = PlayRate > 0 ? PlayRate : 1f;
         _sprite.Play(animName);
     }
@@ -240,6 +242,27 @@ public partial class EffectComponent : Node, IComponent
                 return found;
         }
         return null;
+    }
+
+    /// <summary>
+    /// 根据当前配置覆盖指定动画的循环属性。
+    /// </summary>
+    /// <param name="animName">需要处理的动画名称</param>
+    private void ApplyLoopingOverride(string animName)
+    {
+        if (_sprite?.SpriteFrames == null) return;
+
+        // IsLooping 为显式循环标记；如果设置了 MaxLifeTime，则也需要循环播放由计时器控制销毁
+        bool shouldLoop = IsLooping || MaxLifeTime > 0f;
+
+        // 如当前动画循环状态已符合预期，则不做任何修改，避免无谓的资源复制
+        if (_sprite.SpriteFrames.GetAnimationLoop(animName) == shouldLoop) return;
+
+        // Duplicate 会生成一个新的 SpriteFrames 资源，防止修改到其他实例共享的资源
+        if (_sprite.SpriteFrames.Duplicate() is not SpriteFrames duplicatedFrames) return;
+
+        duplicatedFrames.SetAnimationLoop(animName, shouldLoop);
+        _sprite.SpriteFrames = duplicatedFrames;
     }
 
     /// <summary>

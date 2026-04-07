@@ -8,6 +8,11 @@ public static partial class DataKey
 {
     // ============ 基础信息 ============
 
+    // 技能分组 ID（FeatureGroup 前缀，用于自动派生 FeatureHandlerId）
+    // 例：FeatureGroupId="Ability.Movement"，Name="Dash" → 自动派生 "Ability.Movement.Dash"
+    public static readonly DataMeta AbilityFeatureGroup = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityFeatureGroup), DisplayName = "技能分组", Category = DataCategory_Ability.Basic, Type = typeof(string), DefaultValue = "" });
+
     // 技能图标
     public static readonly DataMeta AbilityIcon = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityIcon), DisplayName = "技能图标", Category = DataCategory_Ability.Basic, Type = typeof(Texture2D), DefaultValue = null });
@@ -24,9 +29,51 @@ public static partial class DataKey
     public static readonly DataMeta AbilityMaxLevel = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityMaxLevel), DisplayName = "技能最大等级", Category = DataCategory_Ability.Basic, Type = typeof(int), DefaultValue = 10, MinValue = 1 });
 
+    // ========================================
+    // 技能相关 (Skill)
+    // ========================================
     // 技能伤害
     public static readonly DataMeta AbilityDamage = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityDamage), DisplayName = "技能伤害", Category = DataCategory_Ability.Effect, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+
+    // 技能伤害百分比
+    public static readonly DataMeta AbilityDamageBonus = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityDamageBonus), DisplayName = "技能伤害百分比", Description = "技能伤害百分比", Category = DataCategory_Attribute.Skill, Type = typeof(float), DefaultValue = 100f, MinValue = 0, IsPercentage = true, SupportModifiers = true });
+
+    // 最终伤害（由基础技能伤害和伤害加成计算得到）
+    public static readonly DataMeta FinalAbilityDamage = DataRegistry.Register(
+        new DataMeta
+        {
+            Key = nameof(FinalAbilityDamage),
+            DisplayName = "最终伤害",
+            Description = "技能最终伤害",
+            Category = DataCategory_Attribute.Computed,
+            Type = typeof(float),
+            DefaultValue = 0f,
+            MinValue = 0,
+            SupportModifiers = false,
+            Dependencies = [nameof(AbilityDamage), nameof(AbilityDamageBonus)],
+            Compute = (data) =>
+                {
+                    float baseDamage = data.Get<float>(nameof(AbilityDamage));
+                    float bonus = data.Get<float>(nameof(AbilityDamageBonus));
+                    return MyMath.AttributeBonusCalculation(baseDamage, bonus);
+                }
+        });
+
+    // 技能冷却缩减
+    public static readonly DataMeta CooldownReduction = DataRegistry.Register(
+        new DataMeta { Key = nameof(CooldownReduction), DisplayName = "技能冷却缩减", Description = "技能冷却缩减百分比", Category = DataCategory_Attribute.Skill, Type = typeof(float), DefaultValue = 0f, MinValue = 0, MaxValue = GlobalConfig.MaxCooldownReduction, IsPercentage = true, SupportModifiers = true });
+
+
+    public static readonly DataMeta AbilityDamageInterval = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityDamageInterval), DisplayName = "伤害间隔", Category = DataCategory_Ability.Effect, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+
+    public static readonly DataMeta AbilityDamageDuration = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityDamageDuration), DisplayName = "伤害持续时间", Category = DataCategory_Ability.Effect, Type = typeof(float), DefaultValue = 0f, MinValue = 0, SupportModifiers = true });
+
+    public static readonly DataMeta AbilityRepeatHitSameTarget = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityRepeatHitSameTarget), DisplayName = "允许重复命中同一目标", Category = DataCategory_Ability.Effect, Type = typeof(bool), DefaultValue = true });
 
     // ============ 冷却系统 ============
     // 冷却时间
@@ -91,8 +138,8 @@ public static partial class DataKey
         new DataMeta { Key = nameof(AbilityTargetTeamFilter), DisplayName = "阵营过滤", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetTeamFilter), DefaultValue = global::AbilityTargetTeamFilter.None });
 
     // 目标排序
-    public static readonly DataMeta AbilityTargetSorting = DataRegistry.Register(
-        new DataMeta { Key = nameof(AbilityTargetSorting), DisplayName = "目标排序", Category = DataCategory_Ability.Target, Type = typeof(AbilityTargetSorting), DefaultValue = global::AbilityTargetSorting.None });
+    public static readonly DataMeta TargetSorting = DataRegistry.Register(
+        new DataMeta { Key = nameof(TargetSorting), DisplayName = "目标排序", Category = DataCategory_Ability.Target, Type = typeof(TargetSorting), DefaultValue = global::TargetSorting.None });
 
     // 最大目标
     public static readonly DataMeta AbilityMaxTargets = DataRegistry.Register(

@@ -28,7 +28,7 @@ var targets = EntityTargetSelector.Query(new TargetSelectorQuery
     Range = 250f,
     CenterEntity = caster,
     TeamFilter = AbilityTargetTeamFilter.Enemy,
-    Sorting = AbilityTargetSorting.Nearest,
+    Sorting = TargetSorting.Nearest,
     MaxTargets = 5,
 });
 ```

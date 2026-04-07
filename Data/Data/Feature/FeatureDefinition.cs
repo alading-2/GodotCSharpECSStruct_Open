@@ -22,7 +22,7 @@ namespace Slime.Config.Features
         [DataKey(nameof(DataKey.Name))]
         [Export] public string? Name { get; set; }
 
-        /// <summary>Feature 处理器 ID（可选，为空时使用 Name）</summary>
+        /// <summary>Feature 处理器 ID（与 IFeatureHandler.FeatureId 精确对应；建议使用完整唯一 ID）</summary>
         [DataKey(nameof(DataKey.FeatureHandlerId))]
         [Export] public string? FeatureHandlerId { get; set; }
 

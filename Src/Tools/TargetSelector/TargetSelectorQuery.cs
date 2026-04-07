@@ -9,7 +9,7 @@ public readonly record struct TargetSelectorQuery
     /// <summary>
     /// 初始化 TargetSelectorQuery，设置默认不限目标数。
     /// </summary>
-    public TargetSelectorQuery() {}
+    public TargetSelectorQuery() { }
 
     // ==================== 几何参数 ====================
 
@@ -88,7 +88,7 @@ public IEntity? CenterEntity { get; init; }
 /// 排序规则（可选）。
 /// 如 Nearest / Farthest / LowestHealth / Random。
 /// </summary>
-public AbilityTargetSorting Sorting { get; init; }
+public TargetSorting Sorting { get; init; }
 
 /// <summary>
 /// 最大目标数量（可选）。
