@@ -62,12 +62,12 @@ internal class SlamExecutor : AbilityFeatureHandlerBase
         var effectScene = ability.Data.Get<PackedScene>(DataKey.EffectScene);
 
         // 4. 执行命中（目标查询 + 特效生成 + 伤害结算，三步合一）
-        var result = AbilityImpactTool.Execute(randomPoint, caster, new AbilityImpactOptions
+        var result = AbilityImpactTool.Execute(caster, new AbilityImpactOptions
         {
             Query = new TargetSelectorQuery
             {
                 Geometry = GeometryType.Circle,                 // 圆形范围
-                Origin = randomPoint,                           // 以随机点为圆心（内部会被 Execute 覆盖为 origin 参数）
+                Origin = randomPoint,                           // 以随机点为圆心
                 Range = damageRadius,                           // 伤害半径
                 CenterEntity = caster,                          // 施法者作为阵营判断基准
                 TeamFilter = AbilityTargetTeamFilter.Enemy,     // 只打敌人
@@ -75,7 +75,10 @@ internal class SlamExecutor : AbilityFeatureHandlerBase
                 MaxTargets = maxTargets                         // 最大命中数
             },
             Effect = effectScene != null
-                ? new EffectSpawnOptions(effectScene, Name: "裂地猛击特效", Scale: Vector2.One * 0.6f)
+                ? new EffectSpawnOptions(
+                    effectScene,
+                    Name: "裂地猛击特效",
+                    Scale: Vector2.One * 0.6f)
                 : null,
             Damage = new DamageApplyOptions
             {

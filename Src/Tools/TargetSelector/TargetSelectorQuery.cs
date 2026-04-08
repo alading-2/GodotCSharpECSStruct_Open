@@ -1,4 +1,5 @@
 using Godot;
+using System;
 
 /// <summary>
 /// TargetSelector 查询参数载体。
@@ -25,6 +26,12 @@ public readonly record struct TargetSelectorQuery
 /// </summary>
 public required Vector2 Origin
 { get; init; }
+
+/// <summary>
+/// 查询原点提供器（可选）。
+/// 非 null 时优先使用，用于光环/持续范围等需要实时跟随的场景。
+/// </summary>
+public Func<Vector2>? OriginProvider { get; init; }
 
 /// <summary>
 /// 方向向量（可选）。
@@ -95,4 +102,9 @@ public TargetSorting Sorting { get; init; }
 /// -1 表示不限。
 /// </summary>
 public int MaxTargets { get; init; } = -1;
+
+/// <summary>
+/// 解析本次查询应使用的原点。
+/// </summary>
+public Vector2 ResolveOrigin() => OriginProvider?.Invoke() ?? Origin;
 }

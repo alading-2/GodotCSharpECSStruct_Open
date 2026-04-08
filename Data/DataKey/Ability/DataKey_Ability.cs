@@ -75,6 +75,9 @@ public static partial class DataKey
     public static readonly DataMeta AbilityRepeatHitSameTarget = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityRepeatHitSameTarget), DisplayName = "允许重复命中同一目标", Category = DataCategory_Ability.Effect, Type = typeof(bool), DefaultValue = true });
 
+    public static readonly DataMeta AbilityApplyImmediateDamage = DataRegistry.Register(
+        new DataMeta { Key = nameof(AbilityApplyImmediateDamage), DisplayName = "立即造成一次伤害", Category = DataCategory_Ability.Effect, Type = typeof(bool), DefaultValue = true });
+
     // ============ 冷却系统 ============
     // 冷却时间
     public static readonly DataMeta AbilityCooldown = DataRegistry.Register(

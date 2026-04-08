@@ -13,6 +13,7 @@ using System.Linq;
 /// <param name="PlayRate">播放倍率</param>
 /// <param name="Offset">生成或附着偏移</param>
 /// <param name="IsLooping">是否循环播放</param>
+/// <param name="EffectPosition">特效位置；独立特效建议显式填写，附着特效可不填</param>
 public readonly record struct EffectSpawnOptions(
     PackedScene VisualScene,
     string Name = "Effect",
@@ -22,7 +23,8 @@ public readonly record struct EffectSpawnOptions(
     float Rotation = 0f,
     float PlayRate = 1f,
     Vector2? Offset = null,
-    bool IsLooping = false
+    bool IsLooping = false,
+    Vector2? EffectPosition = null
 );
 
 /// <summary>
@@ -39,10 +41,10 @@ public readonly record struct EffectSpawnOptions(
 /// 使用示例：
 /// <code>
 /// // 独立特效（在指定位置播放，播完自动销毁）
-/// EffectTool.Spawn(position, new EffectSpawnOptions(hitEffectScene));
+/// EffectTool.Spawn(new EffectSpawnOptions(hitEffectScene, EffectPosition: position));
 ///
 /// // 附着特效（跟随宿主，宿主销毁时自动销毁）
-/// EffectTool.Spawn(Vector2.Zero, new EffectSpawnOptions(buffEffectScene, Host: hostEntity));
+/// EffectTool.Spawn(new EffectSpawnOptions(buffEffectScene, Host: hostEntity));
 ///
 /// // 销毁宿主身上所有特效
 /// EffectTool.DestroyByHost(hostEntity);
@@ -56,15 +58,15 @@ public static partial class EffectTool
 
     /// <summary>
     /// 生成特效（统一入口）
-    /// - Host 为 null：独立特效，在 position 播放
+    /// - Host 为 null：独立特效，在 EffectPosition 指定的位置播放
     /// - Host 非 null：附着特效，跟随宿主位置，自动建立关系
     /// </summary>
-    /// <param name="position">生成位置（世界坐标，附着模式下使用宿主位置）</param>
     /// <param name="options">特效参数</param>
     /// <returns>生成的 EffectEntity，失败返回 null</returns>
-    public static EffectEntity? Spawn(Vector2 position, EffectSpawnOptions options)
+    public static EffectEntity? Spawn(EffectSpawnOptions options)
     {
         bool isAttached = options.Host != null;
+        Vector2 position = ResolveEffectPosition(options, isAttached);
 
         // 附着模式：使用宿主位置
         if (isAttached)
@@ -129,6 +131,29 @@ public static partial class EffectTool
         }
 
         return entity;
+    }
+
+    /// <summary>
+    /// 解析特效生成位置。
+    /// </summary>
+    private static Vector2 ResolveEffectPosition(EffectSpawnOptions options, bool isAttached)
+    {
+        if (isAttached)
+        {
+            if (options.Host is Node2D host2D)
+            {
+                return host2D.GlobalPosition;
+            }
+            return Vector2.Zero;
+        }
+
+        if (options.EffectPosition.HasValue)
+        {
+            return options.EffectPosition.Value;
+        }
+
+        _log.Warn($"独立特效 {options.Name} 未提供 EffectPosition，回退到 Vector2.Zero");
+        return Vector2.Zero;
     }
 
     // ==================== 销毁 ====================
@@ -239,4 +264,3 @@ public static partial class EffectTool
         entity.AddChild(visual);
     }
 }
-

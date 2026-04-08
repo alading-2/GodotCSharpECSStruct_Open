@@ -126,9 +126,11 @@ DamageTool.ScheduleDoT(
         Attacker = casterNode,
         TickInterval = 1.0f,
         TotalDuration = 5.0f,
-        AllowRepeatHitSameTarget = false  // 每目标只命中一次
+        AllowRepeatHitSameTarget = false, // 每目标只命中一次
+        ApplyImmediateTick = true         // 创建时先同步结算一次
     },
     guardian: casterNode,               // 施法者失效时自动取消计时器
+    immediate: false,                   // 是否创建后立即首跳
     hitRegistry: DamageTool.CreateHitRegistry()
 );
 ```
@@ -137,8 +139,11 @@ DamageTool.ScheduleDoT(
 
 - `TickInterval <= 0` 或 `TotalDuration <= 0`：退化为单次伤害
 - `AllowRepeatHitSameTarget = false`：配合 `hitRegistry` 实现整个 DoT 周期内每目标只命中一次
+- `ApplyImmediateTick = true`：适合通过 `AbilityImpactTool` 这种“先同步打一跳，再挂 DoT” 的命中模型
+- `TickInterval / TotalDuration` 是“单次技能执行内部”的 DoT 轴，不等于 `TriggerComponent.Periodic` 的“技能再次执行”轴
 - `guardian`：守护节点失效时提前终止 DoT，防止僵尸 tick
-- **绝大多数技能**通过 `AbilityImpactTool.Execute / ExecuteAroundCaster` 间接调用 `DamageTool`，不需要直接使用
+- `immediate = true`：通过 Timer 首帧立即执行一次 tick；`AbilityImpactTool` 默认仍用同步首跳保证返回命中数
+- **绝大多数技能**通过 `AbilityImpactTool.Execute(caster, options)` 间接调用 `DamageTool`，不需要直接使用
 
 关键文件：`Src/ECS/System/DamageSystem/DamageTool.cs`
 

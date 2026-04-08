@@ -197,13 +197,14 @@ public partial class TimerManager : Node
     /// </summary>
     /// <param name="duration">总持续总时长 (秒)</param>
     /// <param name="interval">每次回调（Tick）的触发频率 (秒)</param>
+    /// <param name="immediate">是否在创建后立即执行第一次回调 (默认 false)</param>
     /// <param name="useUnscaledTime">是否无视游戏暂停/缩放 (默认 false)</param>
     /// <returns>GameTimer 实例，建议后续追加 .Countdown() 配置进度回调</returns>
-    public GameTimer Countdown(float duration, float interval, bool useUnscaledTime = false)
+    public GameTimer Countdown(float duration, float interval, bool immediate = false, bool useUnscaledTime = false)
     {
         var timer = _timerPool.Get();
         // 倒计时本质上是一个带总量限制的循环定时器
-        timer.Configure(interval, true, useUnscaledTime, repeatCount: -1, totalDuration: duration);
+        timer.Configure(interval, true, useUnscaledTime, repeatCount: -1, totalDuration: duration, immediate: immediate);
         timer.Id = Guid.NewGuid().ToString();
         return timer;
     }

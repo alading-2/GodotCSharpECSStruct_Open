@@ -14,6 +14,7 @@ internal sealed record DamageApplyOptions
     public float TickInterval { get; init; }                            // DoT 间隔（秒），<=0 表示单次
     public float TotalDuration { get; init; }                           // DoT 总时长（秒），<=0 表示单次
     public bool AllowRepeatHitSameTarget { get; init; } = true;         // 是否允许重复命中同一目标
+    public bool ApplyImmediateTick { get; init; } = true;               // DoT 开始时是否先同步结算一次
 }
 
 /// <summary>
@@ -85,12 +86,14 @@ internal static class DamageTool
     /// <param name="targetsProvider">每次 tick 调用以获取最新目标列表（可返回 null 表示本轮跳过）</param>
     /// <param name="options">伤害参数（TickInterval 与 TotalDuration 必须 > 0）</param>
     /// <param name="guardian">守护节点；失效时自动取消计时器，防止僵尸 tick</param>
+    /// <param name="immediate">是否在创建 DoT 后立即执行第一次 tick</param>
     /// <param name="hitRegistry">命中注册表；非 null 时整个 DoT 生命周期内每目标只命中一次</param>
     /// <returns>GameTimer（可手动取消）；参数无效或依赖缺失时返回 null</returns>
     public static GameTimer? ScheduleDoT(
         System.Func<IReadOnlyList<IEntity>?> targetsProvider,
         DamageApplyOptions options,
         Node? guardian = null,
+        bool immediate = false,
         HashSet<ulong>? hitRegistry = null)
     {
         if (options.TickInterval <= 0f || options.TotalDuration <= 0f)
@@ -109,7 +112,7 @@ internal static class DamageTool
         var duration = Mathf.Max(options.TotalDuration, interval);
 
         GameTimer? timer = null;
-        timer = TimerManager.Instance.Countdown(duration, interval)
+        timer = TimerManager.Instance.Countdown(duration, interval, immediate: immediate)
             .OnLoop(() =>
             {
                 // 守护节点失效时终止 DoT，避免引用悬空和无效结算

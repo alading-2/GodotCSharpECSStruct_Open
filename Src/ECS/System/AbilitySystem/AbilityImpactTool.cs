@@ -12,8 +12,6 @@ internal sealed record AbilityImpactOptions
     public EffectSpawnOptions? Effect { get; init; }
     /// <summary>伤害参数；null 时不造成伤害。</summary>
     public DamageApplyOptions? Damage { get; init; }
-    /// <summary>特效生成位置覆盖；null 时使用 origin。</summary>
-    public Vector2? EffectPosition { get; init; }
 }
 
 /// <summary>
@@ -33,67 +31,90 @@ internal static class AbilityImpactTool
     private static readonly Log _log = new(nameof(AbilityImpactTool));
 
     /// <summary>
-    /// 在固定位置执行命中逻辑（查询 → 特效 → 伤害）。
-    /// 适合 Dash 落地、Slam 击打点、投射物爆炸等位置固定的技能。
+    /// 执行命中逻辑（查询 → 特效 → 伤害）。
+    /// Query 是唯一的命中锚点来源；特效默认复用 Query.Origin，伤害默认作用于 Query 选中的目标。
     /// </summary>
-    public static AbilityImpactResult Execute(Vector2 origin, IEntity caster, AbilityImpactOptions options)
+    public static AbilityImpactResult Execute(IEntity caster, AbilityImpactOptions options)
     {
-        return ExecuteInternal(() => origin, caster, options);
-    }
+        var query = ResolveQuery(options.Query);
 
-    /// <summary>
-    /// 以施法者当前位置执行命中逻辑（每次 tick 重新取施法者位置）。
-    /// 适合光环、持续范围技能等跟随施法者移动的技能。
-    /// </summary>
-    public static AbilityImpactResult ExecuteAroundCaster(IEntity caster, AbilityImpactOptions options)
-    {
-        if (caster is not Node2D casterNode) return default;
-        return ExecuteInternal(() => casterNode.GlobalPosition, caster, options);
-    }
-
-    private static AbilityImpactResult ExecuteInternal(
-        System.Func<Vector2> originProvider,
-        IEntity caster,
-        AbilityImpactOptions options)
-    {
-        var origin = originProvider();
-
-        // 1. 目标查询：始终用 originProvider() 覆盖 Query.Origin，保证 ExecuteAroundCaster 跟随施法者当前位置
-        List<IEntity>? targets = options.Query.HasValue
-            ? EntityTargetSelector.Query(options.Query.Value with { Origin = origin })
+        // 1. 目标查询：统一从 Query 内部解析本次命中中心
+        List<IEntity>? targets = query.HasValue
+            ? EntityTargetSelector.Query(query.Value)
             : null;
 
         // 2. 特效生成
         if (options.Effect.HasValue)
         {
-            EffectTool.Spawn(options.EffectPosition ?? origin, options.Effect.Value);
+            EffectTool.Spawn(ResolveEffectOptions(options.Effect.Value, query));
         }
 
-        // 3. 伤害结算：无目标或无伤害参数时跳过
-        if (options.Damage == null || targets == null || targets.Count == 0)
+        // 3. 伤害结算：无伤害参数时跳过；无 Query 时不做隐式伤害兜底
+        if (options.Damage == null)
+            return new AbilityImpactResult(targets?.Count ?? 0, null);
+
+        if (!query.HasValue)
+        {
+            _log.Warn("AbilityImpactTool.Execute: Damage 已配置但 Query 为空，跳过伤害结算"); // 伤害必须依赖 Query 选目标
+            return new AbilityImpactResult(0, null);
+        }
+
+        if (targets == null || targets.Count == 0)
             return new AbilityImpactResult(targets?.Count ?? 0, null);
 
         var dmg = options.Damage;
+        // 判断是否能伤害同一个目标
         var hitRegistry = dmg.AllowRepeatHitSameTarget ? null : DamageTool.CreateHitRegistry();
 
-        // 立即结算一次（单次技能就此结束，DoT 技能还会挂载定时器）
-        int hitCount = DamageTool.ApplyToList(targets, dmg, hitRegistry);
+        bool hasDot = dmg.TickInterval > 0f && dmg.TotalDuration > 0f;
+        int hitCount = 0;
+        if (!hasDot || dmg.ApplyImmediateTick)
+        {
+            // 单次伤害总是立即结算；DoT 是否首跳立即结算由 DamageApplyOptions.ApplyImmediateTick 控制
+            hitCount = DamageTool.ApplyToList(targets, dmg, hitRegistry);
+        }
 
         // 若配置了持续伤害，委托 DamageTool 调度 DoT 定时器
         GameTimer? timer = null;
-        if (dmg.TickInterval > 0f && dmg.TotalDuration > 0f)
+        if (hasDot)
         {
-            // 每次 tick 用 originProvider() 重新取位置，支持 ExecuteAroundCaster 跟随施法者移动
+            // 每次 tick 重新解析 Query.Origin，支持跟随施法者移动的范围技能
             timer = DamageTool.ScheduleDoT(
-                () => options.Query.HasValue
-                    ? EntityTargetSelector.Query(options.Query.Value with { Origin = originProvider() })
-                    : null,
+                () =>
+                {
+                    var tickQuery = ResolveQuery(options.Query);
+                    return tickQuery.HasValue
+                        ? EntityTargetSelector.Query(tickQuery.Value)
+                        : null;
+                },
                 dmg,
                 caster as Node,     // guardian：施法者失效时自动终止 DoT
+                immediate: false,
                 hitRegistry
             );
         }
 
         return new AbilityImpactResult(hitCount, timer);
+    }
+
+    /// <summary>
+    /// 解析查询参数，优先使用 Query.OriginProvider。
+    /// </summary>
+    private static TargetSelectorQuery? ResolveQuery(TargetSelectorQuery? query)
+    {
+        if (!query.HasValue) return null;
+        var resolvedQuery = query.Value;
+        return resolvedQuery with { Origin = resolvedQuery.ResolveOrigin() };
+    }
+
+    /// <summary>
+    /// 解析特效参数；若未显式配置特效位置，则默认回落到 Query 的命中中心。
+    /// </summary>
+    private static EffectSpawnOptions ResolveEffectOptions(EffectSpawnOptions effect, TargetSelectorQuery? query)
+    {
+        if (effect.Host != null) return effect;
+        if (effect.EffectPosition.HasValue) return effect;
+        if (!query.HasValue) return effect;
+        return effect with { EffectPosition = query.Value.Origin };
     }
 }

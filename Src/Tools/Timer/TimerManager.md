@@ -57,6 +57,13 @@ TimerManager.Instance.Countdown(10.0f, 0.5f)
         progressBar.Value = progress;
     })
     .OnComplete(() => GD.Print("时间到"));
+
+// 立即执行模式：创建后立刻触发第一次回调
+TimerManager.Instance.Countdown(10.0f, 0.5f, immediate: true)
+    .OnCountdown((elapsed, progress) => {
+        label.Text = $"剩余 {10 - elapsed:F0}s";
+        progressBar.Value = progress;
+    });
 ```
 
 ### 真实时间（不受暂停影响）
@@ -112,7 +119,7 @@ public partial class Enemy : CharacterBody2D
 | `Delay(float duration)` | 延迟执行（单次） |
 | `Loop(float interval)` | 无限循环 |
 | `Repeat(float interval, int count)` | 重复 N 次 |
-| `Countdown(float duration, float interval)` | 倒计时 |
+| `Countdown(float duration, float interval, bool immediate = false)` | 倒计时，可选创建后立即首跳 |
 
 ### 链式配置
 

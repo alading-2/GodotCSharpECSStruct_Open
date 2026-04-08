@@ -203,6 +203,42 @@ TryTrigger
 
 ---
 
+## Ability 子域里的两种持续行为
+
+在 Ability/Feature 混合模型里，常见的“持续效果”其实有两种来源：
+
+### 1. TriggerComponent 的周期触发
+
+适合：
+
+- 每隔 N 秒重新放一次技能
+- 每次都完整走一遍 `TryTrigger → ExecuteAbility`
+
+典型配置：
+
+- `AbilityTriggerMode = Periodic`
+- `AbilityCooldown = 间隔秒数`
+- 逻辑写在 `ExecuteAbility(CastContext)`
+
+这类模型下，重复执行来自 `TriggerComponent` 的周期计时器，而不是技能内部 DoT。
+
+### 2. FeatureHandler 自己持有的长期逻辑
+
+适合：
+
+- 能力一授予就持续存在的光环
+- 常驻监听器
+- 自己管理的长期计时器或持续特效
+
+典型写法：
+
+- 在 `OnGranted` 里创建 `GameTimer` / 订阅事件 / 生成常驻特效
+- 在 `OnRemoved` 里显式取消计时器、取消订阅、销毁特效
+
+如果漏掉 `OnRemoved` 清理，就会留下悬空计时器或残留效果。
+
+---
+
 ## Ability 子域推荐写法
 
 当前项目新增了：

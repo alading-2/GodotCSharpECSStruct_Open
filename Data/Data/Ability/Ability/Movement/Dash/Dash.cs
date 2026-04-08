@@ -126,12 +126,12 @@ internal class DashExecutor : AbilityFeatureHandlerBase
         var impactPosition = casterNode2D.GlobalPosition;
 
         // 4. 执行落地命中（目标查询 + 特效 + 伤害，三步合一）
-        var result = AbilityImpactTool.Execute(impactPosition, caster, new AbilityImpactOptions
+        var result = AbilityImpactTool.Execute(caster, new AbilityImpactOptions
         {
             Query = new TargetSelectorQuery
             {
                 Geometry = GeometryType.Circle,                 // 圆形范围
-                Origin = impactPosition,                        // 落点为圆心（内部会被 Execute 覆盖为 origin 参数）
+                Origin = impactPosition,                        // 落点为圆心
                 Range = damageRadius,                           // 技能配置的半径
                 CenterEntity = caster,                          // 施法者作为阵营判断基准
                 TeamFilter = AbilityTargetTeamFilter.Enemy,     // 仅筛选敌方单位
@@ -153,4 +153,3 @@ internal class DashExecutor : AbilityFeatureHandlerBase
         _log.Info($"冲刺结束: 落点={impactPosition}, 伤害半径={damageRadius}, 命中={result.TargetsHit}");
     }
 }
-

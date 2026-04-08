@@ -85,6 +85,26 @@ ability.Events.Emit(
 
 ---
 
+## 两条时间轴
+
+Ability 子域里有两套不同的时间语义：
+
+1. `TriggerComponent.Periodic`
+
+- 作用：控制技能多久重新执行一次
+- 配置：`AbilityTriggerMode = Periodic` + `AbilityCooldown`
+- 结果：每次都会重新进入 `TryTrigger / ExecuteAbility`
+
+2. `DamageApplyOptions.TickInterval / TotalDuration`
+
+- 作用：控制单次技能执行内部是否继续跳 DoT
+- 配置位置：`AbilityImpactTool -> DamageApplyOptions`
+- 结果：不会重新执行技能流水线，只会让当前这次技能继续跳伤害
+
+两者可以并存；并存时表示“每次周期触发都会再启动一条新的内部 DoT”。
+
+---
+
 ## 返回值与请求-响应
 
 `TryTrigger` 的结果不通过额外参数传递，而是放在 `CastContext.ResponseContext`：
