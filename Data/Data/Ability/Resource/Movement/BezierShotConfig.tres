@@ -31,8 +31,8 @@ _bundled = {
 
 [resource]
 script = ExtResource("1_script")
-Name = "BezierShot"
-FeatureGroupId = "Ability.Projectile"
+Name = "贝塞尔射击"
+FeatureGroupId = "技能.投射物"
 Description = "发射沿二次贝塞尔曲线飞行的弓形弹（验证 BezierCurve 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

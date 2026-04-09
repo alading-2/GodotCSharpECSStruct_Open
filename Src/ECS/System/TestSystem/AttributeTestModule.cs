@@ -17,6 +17,8 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>单个分类页的缓存结构，保存分类标题和该分类下的可编辑 DataMeta 列表。</summary>
     private sealed record CategoryEntry(string Title, List<DataMeta> Metas);
 
+    private readonly FeatureDebugService _featureDebugService = new();
+
     /// <summary>所有可编辑分类的缓存列表，初始化后用于驱动左侧分类面板。</summary>
     private readonly List<CategoryEntry> _categories = new();
 
@@ -181,7 +183,7 @@ public partial class AttributeTestModule : TestModuleBase
     {
         var title = new Label
         {
-            Text = "直接修改运行时 Data，仅展示可编辑项"
+            Text = "直接修改运行时 Data；支持 Modifier 的数值属性可额外挂临时 Feature 加成"
         };
         AddChild(title);
 
@@ -265,8 +267,90 @@ public partial class AttributeTestModule : TestModuleBase
             wrapper.AddChild(editor);
         }
 
+        var modifierEditor = CreateTemporaryModifierEditor(meta);
+        if (modifierEditor != null)
+        {
+            wrapper.AddChild(modifierEditor);
+        }
+
         wrapper.AddChild(new HSeparator());
         return wrapper;
+    }
+
+    /// <summary>
+    /// 为支持 Modifier 的数值属性创建临时 Feature 调试控件。
+    /// </summary>
+    private Control? CreateTemporaryModifierEditor(DataMeta meta)
+    {
+        if (selectedEntity == null || !SupportsTemporaryModifier(meta))
+        {
+            return null;
+        }
+
+        var row = new HBoxContainer();
+        row.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+
+        var label = new Label
+        {
+            Text = "临时加成",
+            CustomMinimumSize = new Vector2(80, 0)
+        };
+        row.AddChild(label);
+
+        var modifierValue = _featureDebugService.GetTemporaryModifierValue(selectedEntity, meta.Key);
+        var spin = new SpinBox
+        {
+            MinValue = meta.MinValue.HasValue ? -meta.MinValue.Value - 9999 : -999999,
+            MaxValue = meta.MaxValue ?? 999999,
+            Step = meta.IsInteger ? 1 : 0.1,
+            Value = modifierValue,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
+        row.AddChild(spin);
+
+        var applyButton = new Button
+        {
+            Text = "应用临时Feature"
+        };
+        applyButton.Pressed += () =>
+        {
+            if (selectedEntity == null)
+            {
+                return;
+            }
+
+            var result = _featureDebugService.ApplyTemporaryModifier(
+                selectedEntity,
+                meta.Key,
+                GetMetaDisplayName(meta),
+                meta.IsPercentage,
+                (float)spin.Value);
+            _entityHintLabel.Text = result.Message;
+            Refresh();
+        };
+        row.AddChild(applyButton);
+
+        var clearButton = new Button
+        {
+            Text = "清除"
+        };
+        clearButton.Pressed += () =>
+        {
+            if (selectedEntity == null)
+            {
+                return;
+            }
+
+            var result = _featureDebugService.ClearTemporaryModifier(
+                selectedEntity,
+                meta.Key,
+                GetMetaDisplayName(meta));
+            _entityHintLabel.Text = result.Message;
+            Refresh();
+        };
+        row.AddChild(clearButton);
+
+        return row;
     }
 
     /// <summary>
@@ -378,6 +462,22 @@ public partial class AttributeTestModule : TestModuleBase
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 判断某个属性是否适合使用临时 Modifier 调试。
+    /// </summary>
+    private static bool SupportsTemporaryModifier(DataMeta meta)
+    {
+        return meta.IsNumeric && meta.SupportModifiers == true && !meta.IsComputed;
+    }
+
+    /// <summary>
+    /// 获取元数据的稳定展示名称。
+    /// </summary>
+    private static string GetMetaDisplayName(DataMeta meta)
+    {
+        return string.IsNullOrWhiteSpace(meta.DisplayName) ? meta.Key : meta.DisplayName;
     }
 
     /// <summary>

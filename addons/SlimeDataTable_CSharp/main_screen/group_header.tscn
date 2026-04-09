@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://bqp4v8x3nwf8k"]
+
+[ext_resource type="Script" path="res://addons/resources_spreadsheet_view/main_screen/group_header.gd" id="1_group"]
+
+[node name="GroupHeader" type="PanelContainer"]
+offset_right = 200.0
+offset_bottom = 28.0
+script = ExtResource("1_group")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "▼ 分组名称 (0)"
+horizontal_alignment = 1
+vertical_alignment = 1

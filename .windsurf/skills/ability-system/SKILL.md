@@ -193,7 +193,7 @@ var result = AbilityImpactTool.Execute(caster, new AbilityImpactOptions
 // 推荐：继承 AbilityFeatureHandlerBase，把 CastContext → AbilityExecutedResult 的桥接复用掉
 internal class MyAbilityHandler : AbilityFeatureHandlerBase
 {
-    public override string FeatureId => "Ability.Active.MyAbility";
+    public override string FeatureId => "技能.主动.我的技能";
 
     [ModuleInitializer]
     public static void Initialize()
@@ -228,8 +228,11 @@ internal class MyAbilityHandler : AbilityFeatureHandlerBase
 
 `AbilityConfig` 中 `FeatureGroupId + Name` 自动派生完整 `FeatureHandlerId`：
 
-- `.tres` 只需维护 `FeatureGroupId`（如 `"Ability.Movement"`）和 `Name`（如 `"Dash"`）
-- `EntityManager.AddAbility` 在 Spawn 后自动解析写回 `DataKey.FeatureHandlerId = "Ability.Movement.Dash"`
+- `.tres` 只需维护 `FeatureGroupId`（如 `"技能.位移"`）和 `Name`（如 `"冲刺"`）
+- 技能展示分组统一直接使用 `FeatureGroupId`，不要再额外维护 `AbilityCategory`
+- 调试/UI 删除技能时，如果已经拿到了运行时 `AbilityEntity` 或 `DataKey.Id`，必须按实例移除，不要再退回按 `Name` 删除
+- 运行时技能测试面板依赖 `TestSystem.SelectedEntity` 作为操作目标；全局测试场景生成玩家后，应主动把玩家设为当前选中实体，避免左侧技能库点击后只提示未选中实体
+- `EntityManager.AddAbility` 在 Spawn 后自动解析写回 `DataKey.FeatureHandlerId = "技能.位移.冲刺"`
 - 仅在需要特殊映射时才手动填写 `FeatureHandlerId` 覆盖
 
 `FeatureGroup`（处理器声明的 `IFeatureHandler.FeatureGroup`）仅用于 `FeatureHandlerRegistry.GetByGroup()` 分组查询，不参与运行时前缀拼接。
@@ -309,6 +312,19 @@ protected override AbilityExecutedResult ExecuteAbility(CastContext context)
     return new AbilityExecutedResult { TargetsHit = 1 };
 }
 ```
+
+投射物接入运动策略时，必须保证 `MovementParams` 和策略契约一致：
+
+- `MoveMode.BezierCurve`
+  - 至少提供 `ActionSpeed` 或 `MaxDuration` 之一
+  - 两者都缺失会被视为无效配置，策略会直接完成以避免实体永久滞留
+- `MoveMode.Boomerang`
+  - 必须显式传入 `TargetNode = casterNode`
+  - 回旋镖返程依赖该宿主节点，不能依赖祖先回溯兜底
+- `MoveMode.SineWave`
+  - 需保证存在明确的推进参数与结束参数，常见组合为 `ActionSpeed + MaxDistance`
+
+如果一个投射物技能需要“飞行后自动销毁”，除了设置 `DestroyOnComplete = true`，还必须先确认对应策略一定存在可达成的完成条件。
 
 ## 技能增删查
 

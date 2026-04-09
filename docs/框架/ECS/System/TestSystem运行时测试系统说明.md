@@ -16,6 +16,8 @@
 - `Src/ECS/System/TestSystem/TestSystem.cs`
 - `Src/ECS/System/TestSystem/TestModuleBase.cs`
 - `Src/ECS/System/TestSystem/AttributeTestModule.cs`
+- `Src/ECS/System/TestSystem/AbilityTestService.cs`
+- `Src/ECS/System/TestSystem/AbilityTestViewModels.cs`
 - `Src/ECS/System/TestSystem/AbilityTestModule.cs`
 
 ---
@@ -44,7 +46,9 @@
 | **系统宿主** | `TestSystem.cs` | AutoLoad 注册、UI 根面板、模块注册与切换、实体选择 |
 | **模块基类** | `TestModuleBase.cs` | 统一生命周期与当前选中实体注入 |
 | **属性模块** | `AttributeTestModule.cs` | 按 `DataCategory` 展示并编辑实体的可编辑 `Data` |
-| **技能模块** | `AbilityTestModule.cs` | 展示可用技能配置与当前技能列表，执行技能增删与启停 |
+| **技能服务** | `AbilityTestService.cs` | 缓存技能目录、解析分类、构建视图模型、封装技能增删启停 |
+| **技能视图模型** | `AbilityTestViewModels.cs` | 纯展示数据结构，承载分类分组与技能条目信息 |
+| **技能模块** | `AbilityTestModule.cs` | 渲染双树界面、处理点击 / 右键菜单，并把操作转发给技能服务 |
 
 ### 3.2 核心关系
 
@@ -58,8 +62,14 @@ TestSystem
   ├── AttributeTestModule
   │     └── 基于 DataRegistry + DataMeta 生成属性编辑器
   │
+  └── AbilityTestService
+        ├── 扫描 DataAbility 目录
+        ├── 解析 AbilityCategory / FeatureGroupId
+        ├── 构建左侧技能库 / 右侧当前技能视图模型
+        └── 封装 Add / Remove / Enable / Disable
+          │
   └── AbilityTestModule
-        └── 基于 ResourceManagement + EntityManager_Ability 管理技能
+        └── 基于双 Tree + PopupMenu 展示并触发技能管理操作
 ```
 
 ### 3.3 为什么采用模块化设计
@@ -139,6 +149,9 @@ TestSystem
 | **清除选择按钮** | 清空当前选中实体 |
 | **刷新按钮** | 手动刷新当前模块视图 |
 | **模块宿主容器** | 当前模块 UI 的挂载区域 |
+
+在全局测试场景中，如果希望技能测试页打开后就能直接管理玩家技能，测试代码应在生成玩家后主动调用 `TestSystem.Instance.SetSelectedEntity(player)`。
+否则技能面板会处于“未选中实体”状态，左侧添加动作只能给出提示，不能真正执行。
 
 ## 4.4 实体选择
 
@@ -343,9 +356,14 @@ TestSystem
 左侧“可用技能配置”列表来自：
 
 - `ResourcePaths.Resources[ResourceCategory.DataAbility]`
-- `ResourceManagement.Load<Resource>(...)`
+- `ResourceManagement.Load<AbilityConfig>(...)`
 
-模块会遍历所有 `DataAbility` 配置，并通过反射读取资源上的 `Name` 属性作为显示名。
+`AbilityTestService` 会遍历所有 `DataAbility` 配置，并优先读取：
+
+- `AbilityConfig.Name`
+- `AbilityConfig.AbilityCategory`
+
+如果旧资源尚未补齐 `AbilityCategory`，则退回 `FeatureGroupId` / 资源路径推导分类。
 
 这样做的意义是：
 
@@ -353,48 +371,52 @@ TestSystem
 - 不需要手写候选技能表
 - 新增技能资源后，测试模块通常可自动感知
 
-## 7.3 双列表结构
+## 7.3 双树结构与职责拆分
 
-界面分为左右两列：
+当前实现不再把“资源扫描、分类、业务操作、UI 控件”堆在一个脚本里，而是拆为两层：
+
+| 层次 | 作用 |
+|------|------|
+| `AbilityTestService` | 负责技能目录缓存、分类排序、条目视图构建、增删启停 |
+| `AbilityTestModule` | 负责左右双 `Tree` 渲染、状态文本、右键 `PopupMenu`、事件订阅 |
+
+界面分为左右两棵树：
 
 | 区域 | 作用 |
 |------|------|
-| **左侧可用技能配置** | 显示项目内所有可添加技能 |
-| **右侧当前技能** | 显示当前选中实体已拥有技能 |
-
-按钮区提供：
-
-- `添加 ▶`
-- `移除`
-- `切换启用`
-
-这是最直接、最低理解成本的技能调试界面。
+| **左侧技能库 Tree** | 按 `AbilityCategory` 分类显示项目内所有可添加技能；已拥有技能会灰显 |
+| **右侧当前技能 Tree** | 按 `AbilityCategory` 分类显示当前实体已拥有技能；禁用技能会灰显 |
+| **右键菜单 PopupMenu** | 作用于右侧技能条目，提供启用 / 禁用 / 移除 |
 
 ## 7.4 技能操作方式
 
 ### 添加技能
 
-点击“添加”时：
+点击左侧叶子节点时：
 
-- 读取左侧选中的配置资源
+- `AbilityTestModule` 从树节点元数据拿到 `ResourceKey`
+- 左侧树直接监听 `Tree.item_selected`，不再依赖 `GuiInput + GetItemAtPosition()` 的坐标命中
+- 即使当前没有选中实体，左侧叶子仍可选中，模块会明确提示“请先选择一个实体”，而不是静默无响应
+- `AbilityTestService.AddAbility(...)` 读取缓存配置
 - 调用 `EntityManager.AddAbility(selectedEntity, config)`
 
 该流程遵循项目既有技能生命周期管理，不绕开框架。
 
 ### 移除技能
 
-点击“移除”时：
+点击右侧叶子节点时：
 
-- 找到右侧列表对应的技能实体
-- 读取其 `DataKey.Name`
-- 调用 `EntityManager.RemoveAbility(selectedEntity, abilityName)`
+- `AbilityTestModule` 从树节点元数据拿到技能实例 `Id`
+- `AbilityTestService` 先解析出目标 `AbilityEntity`
+- 再调用 `EntityManager.RemoveAbility(selectedEntity, ability)`，按运行时实例精确移除
 
 ### 切换启用
 
-点击“切换启用”时：
+右键右侧叶子节点时：
 
-- 读取技能实体的 `DataKey.AbilityEnabled`
-- 再通过 `ability.Data.Set(DataKey.AbilityEnabled, !currentEnabled)` 切换状态
+- 弹出 `PopupMenu`
+- 根据当前 `FeatureEnabled` 状态显示“启用技能”或“禁用技能”
+- 由 `AbilityTestService` 调用 `FeatureSystem.EnableFeature(...)` / `DisableFeature(...)`
 
 这适合快速验证：
 
@@ -404,11 +426,12 @@ TestSystem
 
 ## 7.5 当前技能展示
 
-右侧列表每一项会展示：
+右侧每个技能条目会展示：
 
-- 启用状态（`✓ / ✗`）
+- 启用状态（`启用 / 禁用`）
 - 技能名称
 - 技能类型 `AbilityType`
+- 触发模式 `AbilityTriggerMode`
 
 例如：
 
@@ -429,8 +452,18 @@ TestSystem
 
 - `GameEventType.Ability.Added`
 - `GameEventType.Ability.Removed`
+- `GameEventType.Feature.Enabled`
+- `GameEventType.Feature.Disabled`
 
-因此在技能被外部逻辑增删后，右侧列表能自动刷新，避免面板与真实状态脱节。
+因此在技能被外部逻辑增删或启停后，左右两棵树都能自动刷新，避免面板与真实状态脱节。
+
+同时，`AbilityTestService` 会把添加 / 移除 / 启用 / 禁用操作写入日志，至少包含：
+
+- 当前宿主实体名
+- 技能名
+- 技能实例 ID
+
+这样当测试面板出现“点了 A 却删了 B”这类问题时，可以直接从日志定位是 UI 命中错误、实例解析错误，还是生命周期调用错误。
 
 同样地，模块在实体切换或模块失活时会取消订阅，防止重复监听。
 
@@ -463,15 +496,15 @@ TestSystem
   → 切到“技能测试”
   → 开启实体选择
   → 选择一个实体
-  → 从左侧列表添加技能
-  → 在右侧列表移除或切换启用状态
+  → 从左侧分类树点击添加技能
+  → 在右侧分类树点击移除或右键切换启用状态
 ```
 
 适合验证：
 
 - `EntityManager_Ability` 增删逻辑是否正常
 - 主动技能栏是否随技能变更更新
-- `AbilityEnabled` 对触发链的影响是否正确
+- `FeatureEnabled` 对触发链的影响是否正确
 
 ---
 

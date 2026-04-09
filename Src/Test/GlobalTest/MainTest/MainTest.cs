@@ -1,4 +1,5 @@
 using Godot;
+using System.Threading.Tasks;
 
 
 
@@ -33,6 +34,7 @@ public partial class MainTest : Node
         });
 
         _log.Info($"玩家生成成功: {_player.Name} at {_player.GlobalPosition}");
+        await BindPlayerToTestSystemAsync();
 
         // 1.5. 生成一个敌人用于测试单位目标选择
         _log.Info("步骤 1.5: 生成测试敌人");
@@ -60,6 +62,29 @@ public partial class MainTest : Node
         AddManualSkills();
 
         _log.Info("测试场景初始化完成！");
+    }
+
+    /// <summary>
+    /// 把主测试玩家绑定为 TestSystem 当前实体，避免技能测试面板处于“未选中实体”状态。
+    /// </summary>
+    private async Task BindPlayerToTestSystemAsync()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        // 等待一帧，确保 AutoLoad/TestSystem 已进入场景树并完成 _Ready。
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+        if (TestSystem.Instance == null)
+        {
+            _log.Warn("TestSystem 尚未准备完成，未能自动选中测试玩家");
+            return;
+        }
+
+        TestSystem.Instance.SetSelectedEntity(_player);
+        _log.Info("已将测试玩家设为 TestSystem 当前实体");
     }
 
     private void CreateSkillBarUI()

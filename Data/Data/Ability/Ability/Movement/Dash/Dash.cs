@@ -26,7 +26,7 @@ internal class DashExecutor : AbilityFeatureHandlerBase
     }
 
     /// <summary>
-    /// 技能功能 ID：对应配置中的 Ability.Movement.Dash
+    /// 技能功能 ID：对应配置中的 技能.位移.冲刺
     /// </summary>
     public override string FeatureId => global::FeatureId.Ability.Movement.Dash;
 

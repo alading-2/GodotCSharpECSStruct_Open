@@ -74,6 +74,21 @@ public partial class ActiveSkillBarUI : UIBase
     /// </summary>
     protected override void OnUnbind()
     {
+        _entity!.Events.Off<GameEventType.Ability.AddedEventData>(
+            GameEventType.Ability.Added,
+            OnAbilityAdded
+        );
+
+        _entity!.Events.Off<GameEventType.Ability.RemovedEventData>(
+            GameEventType.Ability.Removed,
+            OnAbilityRemoved
+        );
+
+        _entity!.Events.Off<GameEventType.UI.ActiveSkillSelectedEventData>(
+            GameEventType.UI.ActiveSkillSelected,
+            OnActiveSkillSelected
+        );
+
         ClearAllSlots();
     }
 
@@ -96,7 +111,7 @@ public partial class ActiveSkillBarUI : UIBase
 
     private void OnAbilityRemoved(GameEventType.Ability.RemovedEventData evt)
     {
-        _log.Debug($"检测到技能移除: {evt.abilityName}");
+        _log.Debug($"检测到技能移除: {evt.abilityName} ({evt.abilityId})");
         UpdateAllSlots();
     }
 

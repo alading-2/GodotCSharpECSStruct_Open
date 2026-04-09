@@ -120,20 +120,34 @@ public static partial class EntityManager
     /// </summary>
     /// <param name="owner">技能拥有者</param>
     /// <param name="abilityName">技能名称</param>
-    public static void RemoveAbility(IEntity owner, string abilityName)
+    public static bool RemoveAbility(IEntity owner, string abilityName)
     {
-        if (owner == null || string.IsNullOrEmpty(abilityName)) return;
+        if (owner == null || string.IsNullOrEmpty(abilityName)) return false;
 
         var ability = GetAbilityByName(owner, abilityName);
         if (ability == null)
         {
             _abilityLog.Warn($"单位不拥有技能 {abilityName}");
-            return;
+            return false;
         }
+
+        return RemoveAbility(owner, ability);
+    }
+
+    /// <summary>
+    /// 从单位移除指定技能实例。
+    /// </summary>
+    /// <param name="owner">技能拥有者</param>
+    /// <param name="ability">要移除的技能实例</param>
+    /// <returns>成功移除返回 true，否则返回 false</returns>
+    public static bool RemoveAbility(IEntity owner, AbilityEntity ability)
+    {
+        if (owner == null || ability == null) return false;
 
         // 获取 ID（从 Data 读取）
         var ownerId = owner.Data.Get<string>(DataKey.Id) ?? string.Empty;
         var abilityId = ability.Data.Get<string>(DataKey.Id) ?? string.Empty;
+        var abilityName = ability.Data.Get<string>(DataKey.Name) ?? string.Empty;
 
         // 移除关系
         EntityRelationshipManager.RemoveRelationship(
@@ -151,10 +165,11 @@ public static partial class EntityManager
         // 发送事件
         owner.Events.Emit(
             GameEventType.Ability.Removed,
-            new GameEventType.Ability.RemovedEventData(abilityName, owner)
+            new GameEventType.Ability.RemovedEventData(abilityName, abilityId, owner)
         );
 
-        _abilityLog.Info($"移除技能: {abilityName} <- {ownerId}");
+        _abilityLog.Info($"移除技能实例: {abilityName} ({abilityId}) <- {ownerId}");
+        return true;
     }
 
     // ==================== Ability 查询 ====================
@@ -220,6 +235,29 @@ public static partial class EntityManager
                 return ability;
             }
         }
+        return null;
+    }
+
+    /// <summary>
+    /// 根据运行时实例 ID 获取技能。
+    /// </summary>
+    public static AbilityEntity? GetAbilityById(IEntity owner, string abilityId)
+    {
+        if (owner == null || string.IsNullOrWhiteSpace(abilityId))
+        {
+            return null;
+        }
+
+        var abilities = GetAbilities(owner);
+        foreach (var ability in abilities)
+        {
+            var currentId = ability.Data.Get<string>(DataKey.Id);
+            if (currentId == abilityId)
+            {
+                return ability;
+            }
+        }
+
         return null;
     }
 }

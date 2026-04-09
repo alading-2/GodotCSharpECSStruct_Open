@@ -31,8 +31,8 @@ _bundled = {
 
 [resource]
 script = ExtResource("1_script")
-Name = "AuraShield"
-FeatureGroupId = "Ability.Passive"
+Name = "光环护盾"
+FeatureGroupId = "技能.被动"
 Description = "在玩家旁生成跟随护盾，接触敌人造成伤害（验证 AttachToHost 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

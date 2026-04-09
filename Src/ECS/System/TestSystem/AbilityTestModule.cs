@@ -1,23 +1,28 @@
 using Godot;
-using System.Collections.Generic;
 
 /// <summary>
 /// 技能测试模块。
 /// <para>
-/// 提供一个运行时调试界面，用于查看当前实体已挂载的技能、从资源列表中添加技能、
-/// 移除技能以及切换技能启用状态。
+/// 提供一个运行时调试界面，用于按分组路径查看技能库，并给当前实体执行添加 / 移除 / 启停。
 /// </para>
 /// <para>
-/// 该模块本身不负责技能逻辑执行，只负责把编辑器/资源层的技能配置与实体运行时能力列表连接起来。
+/// 模块本身只负责 UI 展示与输入转发，具体数据组织与操作由 <see cref="AbilityTestService"/> 负责。
 /// </para>
 /// </summary>
 public partial class AbilityTestModule : TestModuleBase
 {
-    /// <summary>左侧“可用技能配置”列表，用于从资源库中挑选要添加的技能。</summary>
-    private ItemList _availableList = null!;
+    private static readonly Log _log = new(nameof(AbilityTestModule));
+    private const int AbilityMenuToggleEnabled = 1;
+    private const int AbilityMenuRemove = 2;
 
-    /// <summary>右侧“当前技能”列表，展示当前实体已经拥有的技能实例。</summary>
-    private ItemList _currentList = null!;
+    /// <summary>技能测试服务，负责缓存技能目录和执行业务操作。</summary>
+    private readonly AbilityTestService _service = new();
+
+    /// <summary>左侧技能库树，按分组路径展示所有可添加技能。</summary>
+    private Tree _availableTree = null!;
+
+    /// <summary>右侧当前技能树，按分组路径展示当前实体已拥有技能。</summary>
+    private Tree _currentTree = null!;
 
     /// <summary>提示当前是否已经选中实体的说明标签。</summary>
     private Label _entityHintLabel = null!;
@@ -25,16 +30,17 @@ public partial class AbilityTestModule : TestModuleBase
     /// <summary>操作反馈区，用于显示添加 / 移除 / 切换启用状态的结果。</summary>
     private Label _statusLabel = null!;
 
-    /// <summary>
-    /// 缓存所有可用技能配置（显示名 → Resource）。
-    /// <para>
-    /// 这里直接缓存 Resource 实例，避免每次点击按钮都重新加载配置资源。
-    /// </para>
-    /// </summary>
-    private readonly List<(string DisplayName, Resource Config)> _allConfigs = new();
+    /// <summary>右侧技能上下文菜单，用于右键启用 / 禁用 / 移除。</summary>
+    private PopupMenu _abilityContextMenu = null!;
 
     /// <summary>当前已经为其订阅技能事件的实体，避免重复订阅同一个目标。</summary>
     private IEntity? _subscribedEntity;
+
+    /// <summary>当前右键菜单指向的技能实例 ID。</summary>
+    private string? _contextAbilityId;
+
+    /// <summary>是否已经排队等待一次延迟刷新，避免同一帧重复重建 Tree。</summary>
+    private bool _refreshQueued;
 
     /// <summary>模块在 TestSystem 下拉框中的显示名称。</summary>
     internal override string DisplayName => "技能测试";
@@ -42,13 +48,12 @@ public partial class AbilityTestModule : TestModuleBase
     /// <summary>
     /// 模块初始化。
     /// <para>
-    /// 先加载全部技能配置，再构建 UI，确保界面列表和资源数据保持一致。
+    /// 服务在字段初始化时已完成技能库缓存，这里只负责构建 UI。
     /// </para>
     /// </summary>
     internal override void Initialize(TestSystem system)
     {
         base.Initialize(system);
-        LoadAllAbilityConfigs();
         BuildUi();
     }
 
@@ -60,7 +65,7 @@ public partial class AbilityTestModule : TestModuleBase
         UnsubscribeEntityEvents();
         base.OnSelectedEntityChanged(entity);
         SubscribeEntityEvents();
-        Refresh();
+        RequestRefresh();
     }
 
     /// <summary>
@@ -69,7 +74,7 @@ public partial class AbilityTestModule : TestModuleBase
     internal override void OnActivated()
     {
         SubscribeEntityEvents();
-        Refresh();
+        RequestRefresh();
     }
 
     /// <summary>
@@ -85,83 +90,30 @@ public partial class AbilityTestModule : TestModuleBase
     /// </summary>
     internal override void Refresh()
     {
-        RefreshCurrentAbilityList();
-    }
-
-    // ───────────────── 初始化 ─────────────────
-
-    /// <summary>
-    /// 从资源表中加载全部技能配置，并抽取可显示名称。
-    /// <para>
-    /// 这里使用反射读取配置里的 Name 字段，和实体侧的技能创建逻辑保持一致。
-    /// </para>
-    /// </summary>
-    private void LoadAllAbilityConfigs()
-    {
-        if (!ResourcePaths.Resources.TryGetValue(ResourceCategory.DataAbility, out var entries))
-        {
-            return;
-        }
-
-        foreach (var (resKey, _) in entries)
-        {
-            var config = ResourceManagement.Load<Resource>(resKey, ResourceCategory.DataAbility);
-            if (config == null)
-            {
-                continue;
-            }
-
-            // 通过反射取 Name 属性（与 EntityManager_Ability 内部逻辑一致）
-            var nameProp = config.GetType().GetProperty(DataKey.Name);
-            var abilityName = nameProp?.GetValue(config) as string;
-            _allConfigs.Add((string.IsNullOrEmpty(abilityName) ? resKey : abilityName, config));
-        }
+        RebuildAvailableTree();
+        RebuildCurrentTree();
     }
 
     /// <summary>
     /// 构建技能测试模块 UI。
     /// <para>
-    /// 左侧是可添加配置，右侧是当前实体技能列表，中间通过按钮完成添加、移除和启用切换。
+    /// 左侧点击叶子节点直接添加技能，右侧点击叶子节点直接移除技能，右键弹出启停菜单。
     /// </para>
     /// </summary>
     private void BuildUi()
     {
+        MouseFilter = Control.MouseFilterEnum.Stop;
+
+        AddChild(new Label
+        {
+            Text = "左侧点击添加技能，右侧点击移除技能，右键右侧技能可启用 / 禁用"
+        });
+
         _entityHintLabel = new Label { Text = "请先选择一个实体" };
         AddChild(_entityHintLabel);
 
         _statusLabel = new Label { Text = "" };
         AddChild(_statusLabel);
-
-        // 操作按钮行
-        var buttonRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        AddChild(buttonRow);
-
-        var addBtn = new Button
-        {
-            Text = "添加 ▶",
-            TooltipText = "将左侧选中配置添加到当前实体",
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
-        addBtn.Pressed += OnAddPressed;
-        buttonRow.AddChild(addBtn);
-
-        var removeBtn = new Button
-        {
-            Text = "移除",
-            TooltipText = "移除右侧选中技能",
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
-        removeBtn.Pressed += OnRemovePressed;
-        buttonRow.AddChild(removeBtn);
-
-        var toggleBtn = new Button
-        {
-            Text = "切换启用",
-            TooltipText = "启用/禁用右侧选中技能",
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
-        toggleBtn.Pressed += OnToggleEnabledPressed;
-        buttonRow.AddChild(toggleBtn);
 
         // 双列表布局
         var split = new HSplitContainer
@@ -178,20 +130,20 @@ public partial class AbilityTestModule : TestModuleBase
             SizeFlagsVertical = Control.SizeFlags.ExpandFill
         };
         split.AddChild(leftBox);
-        leftBox.AddChild(new Label { Text = "可用技能配置" });
+        leftBox.AddChild(new Label { Text = "技能库（点击添加）" });
 
-        _availableList = new ItemList
+        _availableTree = new Tree
         {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SelectMode = ItemList.SelectModeEnum.Single
+            HideRoot = true,
+            SelectMode = Tree.SelectModeEnum.Single,
+            AllowRmbSelect = false,
+            Columns = 1,
+            MouseFilter = Control.MouseFilterEnum.Stop
         };
-        leftBox.AddChild(_availableList);
-
-        foreach (var (name, _) in _allConfigs)
-        {
-            _availableList.AddItem(name);
-        }
+        _availableTree.Connect("item_selected", Callable.From(OnAvailableTreeItemSelected));
+        leftBox.AddChild(_availableTree);
 
         // ── 右侧：当前实体技能 ──
         var rightBox = new VBoxContainer
@@ -200,136 +152,192 @@ public partial class AbilityTestModule : TestModuleBase
             SizeFlagsVertical = Control.SizeFlags.ExpandFill
         };
         split.AddChild(rightBox);
-        rightBox.AddChild(new Label { Text = "当前技能" });
+        rightBox.AddChild(new Label { Text = "当前技能（点击移除 / 右键启停）" });
 
-        _currentList = new ItemList
+        _currentTree = new Tree
         {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SelectMode = ItemList.SelectModeEnum.Single
+            HideRoot = true,
+            SelectMode = Tree.SelectModeEnum.Single,
+            AllowRmbSelect = true,
+            Columns = 1,
+            MouseFilter = Control.MouseFilterEnum.Stop
         };
-        rightBox.AddChild(_currentList);
+        _currentTree.GuiInput += OnCurrentTreeGuiInput;
+        rightBox.AddChild(_currentTree);
+
+        _abilityContextMenu = new PopupMenu();
+        _abilityContextMenu.IdPressed += OnAbilityContextMenuPressed;
+        AddChild(_abilityContextMenu);
+
+        RequestRefresh();
     }
 
     // ───────────────── 刷新 ─────────────────
 
     /// <summary>
-    /// 刷新右侧当前技能列表，同时更新顶部实体提示与状态文本。
+    /// 重建左侧技能库树。
     /// </summary>
-    private void RefreshCurrentAbilityList()
+    private void RebuildAvailableTree()
     {
-        _currentList.Clear();
+        _availableTree.Clear();
+        var root = _availableTree.CreateItem();
+
+        var groups = _service.GetCatalogGroups(selectedEntity);
+        foreach (var group in groups)
+        {
+            var categoryItem = _availableTree.CreateItem(root);
+            categoryItem.SetText(0, $"{group.GroupPath} ({group.Items.Count})");
+            categoryItem.SetSelectable(0, false);
+            categoryItem.Collapsed = false;
+
+            foreach (var item in group.Items)
+            {
+                var abilityItem = _availableTree.CreateItem(categoryItem);
+                abilityItem.SetText(0, BuildCatalogItemText(item));
+                abilityItem.SetTooltipText(0, BuildCatalogTooltip(item));
+                abilityItem.SetSelectable(0, true);
+                abilityItem.SetMetadata(0, item.ResourceKey);
+
+                if (item.IsOwned)
+                {
+                    abilityItem.SetCustomColor(0, new Color(0.6f, 0.6f, 0.6f));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 重建右侧当前技能树，同时更新顶部实体提示。
+    /// </summary>
+    private void RebuildCurrentTree()
+    {
+        _currentTree.Clear();
+        var root = _currentTree.CreateItem();
 
         if (selectedEntity == null)
         {
             _entityHintLabel.Text = "请先选择一个实体";
-            _statusLabel.Text = "";
             return;
         }
 
         var entityName = selectedEntity.Data.Get<string>(DataKey.Name);
-        var abilities = EntityManager.GetAbilities(selectedEntity);
-        _entityHintLabel.Text = $"实体: {entityName} | 技能数: {abilities.Count}";
+        var groups = _service.GetOwnedGroups(selectedEntity);
+        var totalCount = 0;
 
-        foreach (var ability in abilities)
+        foreach (var group in groups)
         {
-            var abilityName = ability.Data.Get<string>(DataKey.Name);
-            var enabled = ability.Data.Get<bool>(DataKey.FeatureEnabled);
-            var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType);
-            _currentList.AddItem($"[{(enabled ? "✓" : "✗")}] {abilityName}  ({abilityType})");
+            totalCount += group.Items.Count;
+
+            var categoryItem = _currentTree.CreateItem(root);
+            categoryItem.SetText(0, $"{group.GroupPath} ({group.Items.Count})");
+            categoryItem.SetSelectable(0, false);
+            categoryItem.Collapsed = false;
+
+            foreach (var item in group.Items)
+            {
+                var abilityItem = _currentTree.CreateItem(categoryItem);
+                abilityItem.SetText(0, BuildOwnedItemText(item));
+                abilityItem.SetMetadata(0, item.AbilityId);
+                abilityItem.SetTooltipText(0, BuildOwnedTooltip(item));
+
+                if (!item.IsEnabled)
+                {
+                    abilityItem.SetCustomColor(0, new Color(0.65f, 0.65f, 0.65f));
+                }
+            }
         }
+
+        _entityHintLabel.Text = $"实体: {entityName} | 技能数: {totalCount}";
     }
 
     // ───────────────── 操作 ─────────────────
 
     /// <summary>
-    /// 将左侧选中的技能配置添加到当前实体。
+    /// 左侧技能树选中处理。
+    /// <para>
+    /// 直接订阅 Tree 的 item_selected 信号，避免依赖 GuiInput 坐标命中导致点击叶子不触发。
+    /// </para>
     /// </summary>
-    private void OnAddPressed()
+    private void OnAvailableTreeItemSelected()
+    {
+        HandleAvailableTreeSelection();
+    }
+
+    /// <summary>
+    /// 右侧当前技能树点击处理。
+    /// </summary>
+    private void OnCurrentTreeGuiInput(InputEvent @event)
+    {
+        if (@event is not InputEventMouseButton mouseEvent)
+        {
+            return;
+        }
+
+        if (!mouseEvent.Pressed)
+        {
+            return;
+        }
+
+        var item = _currentTree.GetItemAtPosition(mouseEvent.Position);
+        if (!TryGetItemMetadata(item, out var abilityId))
+        {
+            return;
+        }
+
+        if (mouseEvent.ButtonIndex == MouseButton.Left)
+        {
+            _log.Info($"[技能测试UI] 点击移除技能: abilityId={abilityId}");
+            var result = _service.RemoveAbility(selectedEntity, abilityId);
+            ShowStatus(result.Message);
+            RequestRefresh();
+            return;
+        }
+
+        if (mouseEvent.ButtonIndex != MouseButton.Right)
+        {
+            return;
+        }
+
+        if (!_service.TryGetOwnedItem(selectedEntity, abilityId, out var itemView))
+        {
+            return;
+        }
+
+        _log.Info($"[技能测试UI] 打开技能右键菜单: ability={itemView.DisplayName} abilityId={itemView.AbilityId} enabled={itemView.IsEnabled}");
+        OpenAbilityContextMenu(itemView, mouseEvent.Position);
+    }
+
+    /// <summary>
+    /// 处理左侧技能树当前选中项。
+    /// <para>
+    /// 通过 deferred 等待 Tree 完成内部选中状态更新，避免点击坐标和真实选中项不一致。
+    /// </para>
+    /// </summary>
+    private void HandleAvailableTreeSelection()
     {
         if (selectedEntity == null)
         {
+            _log.Warn("[技能测试UI] 左侧点击添加技能失败：当前没有选中实体");
             ShowStatus("请先选择一个实体");
             return;
         }
 
-        var selected = _availableList.GetSelectedItems();
-        if (selected.Length == 0)
+        var item = _availableTree.GetSelected();
+        if (!TryGetItemMetadata(item, out var resourceKey))
         {
-            ShowStatus("请在左侧选择要添加的技能配置");
+            if (item != null)
+            {
+                _log.Debug($"[技能测试UI] 左侧树选中项无技能元数据: text={item.GetText(0)}");
+            }
             return;
         }
 
-        var (displayName, config) = _allConfigs[selected[0]];
-        var ability = EntityManager.AddAbility(selectedEntity, config);
-        ShowStatus(ability != null ? $"已添加: {displayName}" : $"添加失败 (可能已拥有): {displayName}");
-        Refresh();
-    }
-
-    /// <summary>
-    /// 移除右侧选中的技能实例。
-    /// </summary>
-    private void OnRemovePressed()
-    {
-        if (selectedEntity == null)
-        {
-            return;
-        }
-
-        var selected = _currentList.GetSelectedItems();
-        if (selected.Length == 0)
-        {
-            ShowStatus("请在右侧选择要移除的技能");
-            return;
-        }
-
-        var abilities = EntityManager.GetAbilities(selectedEntity);
-        var idx = selected[0];
-        if (idx >= abilities.Count)
-        {
-            return;
-        }
-
-        var abilityName = abilities[idx].Data.Get<string>(DataKey.Name);
-        EntityManager.RemoveAbility(selectedEntity, abilityName);
-        ShowStatus($"已移除: {abilityName}");
-        Refresh();
-    }
-
-    /// <summary>
-    /// 在启用 / 禁用之间切换当前技能。
-    /// </summary>
-    private void OnToggleEnabledPressed()
-    {
-        if (selectedEntity == null)
-        {
-            return;
-        }
-
-        var selected = _currentList.GetSelectedItems();
-        if (selected.Length == 0)
-        {
-            ShowStatus("请在右侧选择要切换的技能");
-            return;
-        }
-
-        var abilities = EntityManager.GetAbilities(selectedEntity);
-        var idx = selected[0];
-        if (idx >= abilities.Count)
-        {
-            return;
-        }
-
-        var ability = abilities[idx];
-        var abilityName = ability.Data.Get<string>(DataKey.Name);
-        var currentEnabled = ability.Data.Get<bool>(DataKey.FeatureEnabled);
-        if (currentEnabled)
-            FeatureSystem.DisableFeature(ability, selectedEntity);
-        else
-            FeatureSystem.EnableFeature(ability, selectedEntity);
-
-        ShowStatus($"{(currentEnabled ? "已禁用" : "已启用")}: {abilityName}");
-        Refresh();
+        _log.Info($"[技能测试UI] 点击添加技能: resourceKey={resourceKey}");
+        var result = _service.AddAbility(selectedEntity, resourceKey);
+        ShowStatus(result.Message);
+        RequestRefresh();
     }
 
     /// <summary>
@@ -340,10 +348,112 @@ public partial class AbilityTestModule : TestModuleBase
         _statusLabel.Text = message;
     }
 
+    /// <summary>
+    /// 打开技能右键菜单。
+    /// </summary>
+    private void OpenAbilityContextMenu(AbilityOwnedItemView itemView, Vector2 localPosition)
+    {
+        _contextAbilityId = itemView.AbilityId;
+
+        _abilityContextMenu.Clear();
+        _abilityContextMenu.AddItem(itemView.IsEnabled ? "禁用技能" : "启用技能", AbilityMenuToggleEnabled);
+        _abilityContextMenu.AddSeparator();
+        _abilityContextMenu.AddItem("移除技能", AbilityMenuRemove);
+
+        _abilityContextMenu.Position = (Vector2I)(_currentTree.GetGlobalPosition() + localPosition); // 菜单弹到鼠标附近
+        _abilityContextMenu.Popup();
+    }
+
+    /// <summary>
+    /// 处理右键菜单动作。
+    /// </summary>
+    private void OnAbilityContextMenuPressed(long id)
+    {
+        if (string.IsNullOrWhiteSpace(_contextAbilityId))
+        {
+            return;
+        }
+
+        if (!_service.TryGetOwnedItem(selectedEntity, _contextAbilityId, out var itemView))
+        {
+            return;
+        }
+
+        _log.Info($"[技能测试UI] 执行右键菜单: ability={itemView.DisplayName} abilityId={itemView.AbilityId} action={id}");
+        AbilityActionResult result = id switch
+        {
+            AbilityMenuToggleEnabled => _service.SetAbilityEnabled(
+                selectedEntity,
+                _contextAbilityId!,
+                !itemView.IsEnabled),
+            AbilityMenuRemove => _service.RemoveAbility(
+                selectedEntity,
+                _contextAbilityId!),
+            _ => default
+        };
+
+        if (!string.IsNullOrWhiteSpace(result.Message))
+        {
+            ShowStatus(result.Message);
+            RequestRefresh();
+        }
+    }
+
+    /// <summary>
+    /// 尝试从树节点读取叶子元数据。
+    /// </summary>
+    private static bool TryGetItemMetadata(TreeItem? item, out string metadata)
+    {
+        metadata = string.Empty;
+        if (item == null)
+        {
+            return false;
+        }
+
+        var raw = item.GetMetadata(0);
+        metadata = raw.AsString();
+        return !string.IsNullOrWhiteSpace(metadata);
+    }
+
+    /// <summary>
+    /// 构建左侧技能库条目文本。
+    /// </summary>
+    private static string BuildCatalogItemText(AbilityCatalogItemView item)
+    {
+        var ownedFlag = item.IsOwned ? " [已拥有]" : string.Empty;
+        return $"{item.DisplayName}{ownedFlag}  ({item.AbilityType}/{item.TriggerMode})";
+    }
+
+    /// <summary>
+    /// 构建右侧已拥有技能条目文本。
+    /// </summary>
+    private static string BuildOwnedItemText(AbilityOwnedItemView item)
+    {
+        var enabledFlag = item.IsEnabled ? "启用" : "禁用";
+        return $"{item.DisplayName} [{enabledFlag}]  ({item.AbilityType}/{item.TriggerMode})";
+    }
+
+    /// <summary>
+    /// 构建左侧技能条目提示文本。
+    /// </summary>
+    private static string BuildCatalogTooltip(AbilityCatalogItemView item)
+    {
+        return $"{item.DisplayName}\n分组: {item.GroupPath}\n类型: {item.AbilityType}\n触发: {item.TriggerMode}\n\n{item.Description}";
+    }
+
+    /// <summary>
+    /// 构建右侧技能条目提示文本。
+    /// </summary>
+    private static string BuildOwnedTooltip(AbilityOwnedItemView item)
+    {
+        var enabledText = item.IsEnabled ? "是" : "否";
+        return $"{item.DisplayName}\n分组: {item.GroupPath}\n类型: {item.AbilityType}\n触发: {item.TriggerMode}\n启用: {enabledText}\n\n{item.Description}";
+    }
+
     // ───────────────── 事件订阅 ─────────────────
 
     /// <summary>
-    /// 订阅当前选中实体的技能增删事件。
+    /// 订阅当前选中实体的技能与 Feature 状态事件。
     /// <para>
     /// 当实体技能发生变化时，界面需要自动刷新，避免用户看到过期列表。
     /// </para>
@@ -360,6 +470,10 @@ public partial class AbilityTestModule : TestModuleBase
             GameEventType.Ability.Added, OnAbilityChanged);
         _subscribedEntity.Events.On<GameEventType.Ability.RemovedEventData>(
             GameEventType.Ability.Removed, OnAbilityRemovedEvt);
+        _subscribedEntity.Events.On<GameEventType.Feature.EnabledEventData>(
+            GameEventType.Feature.Enabled, OnFeatureEnabled);
+        _subscribedEntity.Events.On<GameEventType.Feature.DisabledEventData>(
+            GameEventType.Feature.Disabled, OnFeatureDisabled);
     }
 
     /// <summary>
@@ -376,6 +490,10 @@ public partial class AbilityTestModule : TestModuleBase
             GameEventType.Ability.Added, OnAbilityChanged);
         _subscribedEntity.Events.Off<GameEventType.Ability.RemovedEventData>(
             GameEventType.Ability.Removed, OnAbilityRemovedEvt);
+        _subscribedEntity.Events.Off<GameEventType.Feature.EnabledEventData>(
+            GameEventType.Feature.Enabled, OnFeatureEnabled);
+        _subscribedEntity.Events.Off<GameEventType.Feature.DisabledEventData>(
+            GameEventType.Feature.Disabled, OnFeatureDisabled);
         _subscribedEntity = null;
     }
 
@@ -386,7 +504,7 @@ public partial class AbilityTestModule : TestModuleBase
     {
         if (Visible)
         {
-            Refresh();
+            RequestRefresh();
         }
     }
 
@@ -397,7 +515,63 @@ public partial class AbilityTestModule : TestModuleBase
     {
         if (Visible)
         {
-            Refresh();
+            RequestRefresh();
         }
+    }
+
+    /// <summary>
+    /// 技能启停状态变化后的刷新回调。
+    /// </summary>
+    private void OnFeatureEnabled(GameEventType.Feature.EnabledEventData _)
+    {
+        RefreshVisibleModule();
+    }
+
+    /// <summary>
+    /// 技能禁用后的刷新回调。
+    /// </summary>
+    private void OnFeatureDisabled(GameEventType.Feature.DisabledEventData _)
+    {
+        RefreshVisibleModule();
+    }
+
+    /// <summary>
+    /// 仅在模块可见时刷新，避免后台模块做无意义重绘。
+    /// </summary>
+    private void RefreshVisibleModule()
+    {
+        if (Visible)
+        {
+            RequestRefresh();
+        }
+    }
+
+    /// <summary>
+    /// 请求在当前 UI 事件处理完成后统一刷新一次，避免 Tree 正在处理交互时立刻重建。
+    /// </summary>
+    private void RequestRefresh()
+    {
+        if (_refreshQueued)
+        {
+            return;
+        }
+
+        _refreshQueued = true;
+        CallDeferred(nameof(FlushRefresh));
+    }
+
+    /// <summary>
+    /// 执行延迟刷新。
+    /// </summary>
+    private void FlushRefresh()
+    {
+        _refreshQueued = false;
+
+        if (!IsInsideTree())
+        {
+            return;
+        }
+
+        Refresh();
     }
 }

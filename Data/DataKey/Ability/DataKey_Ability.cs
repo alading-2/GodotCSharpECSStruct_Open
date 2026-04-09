@@ -9,7 +9,7 @@ public static partial class DataKey
     // ============ 基础信息 ============
 
     // 技能分组 ID（FeatureGroup 前缀，用于自动派生 FeatureHandlerId）
-    // 例：FeatureGroupId="Ability.Movement"，Name="Dash" → 自动派生 "Ability.Movement.Dash"
+    // 例：FeatureGroupId="技能.位移"，Name="冲刺" → 自动派生 "技能.位移.冲刺"
     public static readonly DataMeta AbilityFeatureGroup = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityFeatureGroup), DisplayName = "技能分组", Category = DataCategory_Ability.Basic, Type = typeof(string), DefaultValue = "" });
 
@@ -17,7 +17,9 @@ public static partial class DataKey
     public static readonly DataMeta AbilityIcon = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityIcon), DisplayName = "技能图标", Category = DataCategory_Ability.Basic, Type = typeof(Texture2D), DefaultValue = null });
 
-    // 技能类型
+    /// <summary>
+    /// 技能类型。
+    /// </summary>
     public static readonly DataMeta AbilityType = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityType), DisplayName = "技能类型", Category = DataCategory_Ability.Basic, Type = typeof(AbilityType), DefaultValue = global::AbilityType.Passive });
 
@@ -172,7 +174,9 @@ public static partial class DataKey
     // 特效场景路径，不走约束系统
     public const string EffectScene = "EffectScene";
 
-    // 投射物视觉场景路径，不走约束系统
+    /// <summary>
+    /// 投射物视觉场景路径，不走约束系统。
+    /// </summary>
     public const string ProjectileScene = "ProjectileScene";
 
     // ============ 状态标记 ============

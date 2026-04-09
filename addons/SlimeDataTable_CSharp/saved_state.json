@@ -1,0 +1,270 @@
+{
+  "column_properties": {
+    "": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0
+      },
+      "resource_name": {
+        "visibility": 0
+      },
+      "resource_path": {
+        "visibility": 0
+      }
+    },
+    "res://Data/Data/Ability/": {
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      },
+      "resource_path": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Ability/Ability/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      },
+      "resource_path": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Ability/Resource/": {
+      "AbilityChainCount": {
+        "visibility": 1.0
+      },
+      "AbilityChainRange": {
+        "visibility": 1.0
+      },
+      "AbilityChargeTime": {
+        "visibility": 1.0
+      },
+      "AbilityCooldown": {
+        "visibility": 1.0
+      },
+      "AbilityCostAmount": {
+        "visibility": 1.0
+      },
+      "AbilityCostType": {
+        "visibility": 1.0
+      },
+      "AbilityIcon": {
+        "visibility": 1.0
+      },
+      "AbilityLength": {
+        "visibility": 1.0
+      },
+      "AbilityLevel": {
+        "visibility": 1.0
+      },
+      "AbilityMaxCharges": {
+        "visibility": 1.0
+      },
+      "AbilityMaxLevel": {
+        "visibility": 1.0
+      },
+      "AbilityMaxTargets": {
+        "visibility": 1.0
+      },
+      "AbilityRange": {
+        "visibility": 1.0
+      },
+      "AbilityTargetGeometry": {
+        "visibility": 1.0
+      },
+      "AbilityTargetSelection": {
+        "visibility": 1.0
+      },
+      "AbilityTargetTeamFilter": {
+        "visibility": 1.0
+      },
+      "AbilityTriggerMode": {
+        "visibility": 1.0
+      },
+      "AbilityType": {
+        "visibility": 1.0
+      },
+      "AbilityWidth": {
+        "visibility": 1.0
+      },
+      "BaseSkillDamage": {
+        "visibility": 1.0
+      },
+      "Description": {
+        "visibility": 1.0
+      },
+      "EntityType": {
+        "visibility": 1.0
+      },
+      "IsAbilityUsesCharges": {
+        "visibility": 1.0
+      },
+      "Name": {
+        "visibility": 1.0
+      },
+      "TargetSorting": {
+        "visibility": 1.0
+      },
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      },
+      "resource_path": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Resources/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Resources/Abilities/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Resources/Enemies/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Unit/Enemy/": {
+      "DetectionRange": {
+        "visibility": 1.0
+      },
+      "ExpReward": {
+        "visibility": 1.0
+      },
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      },
+      "resource_path": {
+        "visibility": 0.0
+      }
+    },
+    "res://Data/Data/Unit/Player/Resource/": {
+      "BaseHp": {
+        "visibility": 1.0
+      },
+      "BaseHpRegen": {
+        "visibility": 1.0
+      },
+      "BaseMana": {
+        "visibility": 1.0
+      },
+      "BaseManaRegen": {
+        "visibility": 1.0
+      },
+      "BaseSkillDamage": {
+        "visibility": 1.0
+      },
+      "CooldownReduction": {
+        "visibility": 1.0
+      },
+      "CurrentMana": {
+        "visibility": 1.0
+      },
+      "DeathType": {
+        "visibility": 1.0
+      },
+      "LifeSteal": {
+        "visibility": 1.0
+      },
+      "Name": {
+        "visibility": 1.0
+      },
+      "PickupRange": {
+        "visibility": 1.0
+      },
+      "Team": {
+        "visibility": 1.0
+      },
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      },
+      "resource_path": {
+        "visibility": 0.0
+      }
+    },
+    "res://备份/test/godot-resources-as-sheets-plugin/example/Items/items/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      }
+    },
+    "res://备份/test/godot-resources-as-sheets-plugin/example/Random Upgrades/icons/": {
+      "metadata/_custom_type_script": {
+        "visibility": 0.0
+      },
+      "resource_local_to_scene": {
+        "visibility": 0.0
+      },
+      "resource_name": {
+        "visibility": 0.0
+      }
+    }
+  },
+  "recent_paths": [
+    "res://Data/Data/Unit/Enemy/",
+    "res://Data/Data/Unit/Player/Resource/",
+    "res://Data/Data/Ability/"
+  ],
+  "table_functions": {
+    "filter": [
+      "return true"
+    ],
+    "process": [
+      "return value"
+    ]
+  }
+}

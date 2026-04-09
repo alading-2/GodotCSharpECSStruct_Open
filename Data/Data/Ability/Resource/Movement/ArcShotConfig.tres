@@ -31,8 +31,8 @@ _bundled = {
 
 [resource]
 script = ExtResource("1_script")
-Name = "ArcShot"
-FeatureGroupId = "Ability.Projectile"
+Name = "圆弧射击"
+FeatureGroupId = "技能.投射物"
 Description = "发射沿圆弧轨迹飞行的投射物（验证 CircularArc 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

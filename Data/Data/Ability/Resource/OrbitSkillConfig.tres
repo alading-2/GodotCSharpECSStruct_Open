@@ -31,8 +31,8 @@ _bundled = {
 
 [resource]
 script = ExtResource("1_script")
-Name = "OrbitSkill"
-FeatureGroupId = "Ability.Passive"
+Name = "环绕技能"
+FeatureGroupId = "技能.被动"
 Description = "生成多个投射物环绕玩家旋转，碰触敌人造成伤害（验证 Orbit 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

@@ -65,7 +65,7 @@ public static class FeatureHandlerRegistry
 
     /// <summary>
     /// 获取指定分组及其所有子分组下的全部处理器。
-    /// group 使用 FeatureId.Ability.Groups.* 常量，如 "Ability.Active"。
+    /// group 使用 FeatureId.Ability.Groups.* 常量，如 "技能.主动"。
     /// </summary>
     public static IReadOnlyList<IFeatureHandler> GetByGroup(string group)
     {
@@ -92,7 +92,7 @@ public static class FeatureHandlerRegistry
         var group = handler.FeatureGroup;
         if (string.IsNullOrEmpty(group)) return;
 
-        // 拆 "Ability.Movement" → 注册到 "Ability" 和 "Ability.Movement"
+        // 拆 "技能.位移" → 注册到 "技能" 和 "技能.位移"
         int start = 0;
         while (true)
         {

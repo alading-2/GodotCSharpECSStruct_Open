@@ -15,7 +15,7 @@ namespace Slime.Config.Abilities
         /// <summary>
         /// 技能分组 ID（FeatureGroup 前缀）。
         /// 与 Name 组合自动派生完整 FeatureHandlerId：{FeatureGroupId}.{Name}
-        /// 例：FeatureGroupId="Ability.Movement"，Name="Dash" → "Ability.Movement.Dash"
+        /// 例：FeatureGroupId="技能.位移"，Name="冲刺" → "技能.位移.冲刺"
         /// </summary>
         [DataKey(nameof(DataKey.AbilityFeatureGroup))]
         [Export] public string? FeatureGroupId { get; set; }
@@ -165,6 +165,9 @@ namespace Slime.Config.Abilities
         [DataKey(nameof(DataKey.EffectScene))]
         [Export] public PackedScene? EffectScene { get; set; }
 
+        /// <summary>
+        /// 技能投射物视觉场景。
+        /// </summary>
         [DataKey(nameof(DataKey.ProjectileScene))]
         [Export] public PackedScene? ProjectileScene { get; set; }
 

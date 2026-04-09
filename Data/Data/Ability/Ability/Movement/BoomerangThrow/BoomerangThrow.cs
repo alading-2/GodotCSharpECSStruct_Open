@@ -52,6 +52,7 @@ internal class BoomerangThrowExecutor : AbilityFeatureHandlerBase
                 {
                     Mode = MoveMode.Boomerang,
                     TargetPoint = throwTarget,
+                    TargetNode = casterNode, // 显式指定返程宿主，避免策略退回到不可靠的祖先回溯。
                     ActionSpeed = 460f,
                     BoomerangArcHeight = 26f,
                     BoomerangPauseTime = 0.08f,

@@ -13,7 +13,7 @@ public static partial class GameEventType
         /// <summary>技能被移除</summary>
         public const string Removed = "ability:removed";
         /// <summary>技能被移除事件数据</summary>
-        public readonly record struct RemovedEventData(string abilityName, IEntity Owner);
+        public readonly record struct RemovedEventData(string abilityName, string abilityId, IEntity Owner);
 
         /// <summary>技能升级</summary>
         public const string LevelUp = "ability:level_up";
