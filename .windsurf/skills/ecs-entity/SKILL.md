@@ -6,17 +6,19 @@ description: 创建新 Entity、管理 Entity 生命周期（Spawn/Register/Dest
 # ECS Entity 规范
 
 ## 核心原则
+
 - **Scene 即 Entity**：`.tscn` 场景文件就是 Entity，实现 `IEntity` 接口
 - **统一生命周期**：必须通过 `EntityManager.Spawn/Register/Destroy`，禁止直接 `new` 或 `QueueFree()`
 - **两种类型**：对象池版（高频：Enemy/Bullet/Item）和非对象池版（低频：Player/Boss）
 
 ## VisualRoot / 碰撞约定（2026-04）
+
 - `EntityManager.Spawn` 会在组件注册前按 `VisualScenePath` 注入 `VisualRoot`
 - 注入不再局限于 `UnitConfig` / `IUnit`；任意配置资源只要暴露 `VisualScenePath`（如 `ProjectileConfig`）即可复用同一套视觉挂载流程
 - `SpriteFramesGenerator` / 视觉场景可提供 `VisualRoot/CollisionShape2D` 或 `VisualRoot/CollisionPolygon2D` 作为碰撞模板
 - 受击区、拾取区等业务碰撞节点直接作为 `Area2D` 挂在 Entity 场景里
 - 视觉体碰撞由 `CollisionComponent` 桥接，受击区碰撞由 `HurtboxComponent` 自身处理
-- `EntityManager` 会把模板同步到 Entity 根节点；若根节点现有碰撞节点类型不匹配，会删除旧节点并创建对应类型的新节点
+- `EntityManager` 会把模板同步到 Entity 根节点；若根节点现有碰撞节点类型不匹配，会删除旧节点并创建对应类型的新节点；若新的视觉场景未提供碰撞模板，则会删除 Entity 根节点已有的 `CollisionShape2D`，避免残留旧碰撞
 - 依赖视觉或碰撞配置的组件，可以假设 `OnComponentRegistered` 执行时 `VisualRoot` 已注入完成
 
 ## IEntity 接口实现（必须）
@@ -127,12 +129,14 @@ private void OnDamaged(GameEventType.Unit.DamagedEventData evt)
 ```
 
 ## 禁止事项
+
 - ❌ 直接 `new EnemyEntity()` 创建实体
 - ❌ 直接 `entity.QueueFree()` 销毁实体
 - ❌ 在 `_Ready()` 中订阅 Entity.Events（应在 `OnPoolAcquire` 或 `OnComponentRegistered`）
 - ❌ 在 Entity 中存储业务状态字段（如 `private float _hp`）→ 必须存 Data
 
 ## 关键文件路径
+
 - **标准模板**（新建 Entity 从这里复制）→ `Src/ECS/Entity/TemplateEntity.cs`
 - **接口定义** → `Src/ECS/Entity/IEntity.cs`
 - **开发规范** → `Src/ECS/Entity/Entity规范.md`
@@ -142,5 +146,5 @@ private void OnDamaged(GameEventType.Unit.DamagedEventData evt)
 - **架构设计** → `Docs/框架/ECS/Entity/Entity架构设计理念.md`
 - **对象池接口** → `Src/Tools/ObjectPool/IPoolable.cs`
 - **对象池初始化** → 搜索 `ObjectPoolInit.cs`
-- **特效实体参考** → `Src/ECS/Entity/Effect/EffectEntity.cs`
+- **特效实体参考** → `Src/ECS/Entity/Effect/EffectEntity.cs`（`Area2D + IEntity + IPoolable`）
 - **特效服务入口** → `Src/ECS/System/EffectSystem/EffectTool.cs`

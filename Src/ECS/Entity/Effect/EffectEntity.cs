@@ -10,7 +10,7 @@ using Godot;
 /// - 继承 Node2D 以支持 2D 空间变换（位置/旋转/缩放）
 /// - 通过 EffectTool 统一生成和销毁
 /// </summary>
-public partial class EffectEntity : Node2D, IEntity, IPoolable
+public partial class EffectEntity : Area2D, IEntity, IPoolable
 {
     private static readonly Log _log = new(nameof(EffectEntity));
 

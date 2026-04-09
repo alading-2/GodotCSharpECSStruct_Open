@@ -14,7 +14,7 @@ public static partial class EntityManager
     /// <para>
     /// 碰撞模板可为 VisualRoot 下名为 "CollisionShape2D" 或 "CollisionPolygon2D" 的纯碰撞节点。
     /// 仅同步形状数据与局部变换，Entity 的 collision_layer / collision_mask 已直接在其 .tscn 根节点设置，无需此处传递。
-    /// 同步完成后删除模板，VisualRoot 只保留视觉内容。
+    /// 同步完成后删除模板，VisualRoot 只保留视觉内容；若视觉场景未提供碰撞模板，则删除 Entity 根节点已有的 CollisionShape2D，避免旧碰撞残留。
     /// </para>
     /// </summary>
     /// <param name="entity">目标实体节点</param>
@@ -24,7 +24,11 @@ public static partial class EntityManager
         // 查找碰撞模板节点（支持 CollisionShape2D 和 CollisionPolygon2D）
         Node? template = visualRoot.GetNodeOrNull<CollisionShape2D>("CollisionShape2D") as Node;
         template ??= visualRoot.GetNodeOrNull<CollisionPolygon2D>("CollisionPolygon2D") as Node;
-        if (template == null) return;
+        if (template == null)
+        {
+            RemoveRootCollisionShape(entity);
+            return;
+        }
 
         // 尝试同步碰撞模板
         if (!TrySyncCollisionTemplate(entity, template))
@@ -153,6 +157,24 @@ public static partial class EntityManager
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 删除实体根节点下的 CollisionShape2D。
+    /// <para>
+    /// 当新的 VisualRoot 未提供碰撞模板时，清理旧的根 CollisionShape2D，避免对象池复用或视觉切换后继续保留脏碰撞。
+    /// </para>
+    /// </summary>
+    /// <param name="entity">目标实体节点</param>
+    private static void RemoveRootCollisionShape(Node entity)
+    {
+        var collision = entity.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+        if (collision == null) return;
+
+        entity.RemoveChild(collision);
+        collision.QueueFree();
+
+        _log.Debug($"[{entity.Name}] VisualRoot 未提供碰撞模板，已删除根节点旧 CollisionShape2D");
     }
 
     /// <summary>
