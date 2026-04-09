@@ -31,6 +31,121 @@
 | `AbilityTestViewModels.cs` | 技能测试共享视图模型 |
 | `AbilityTestModule.cs` | 技能测试 UI，负责双 Tree、右键菜单与事件刷新 |
 
+## 2.1 第一次看这个系统，推荐按这个顺序读
+
+如果你是第一次接手 `TestSystem`，不要一上来就从某个模块细节往里钻，建议按“**宿主 -> 协议 -> 模块 -> 服务 -> 正式链路**”这个顺序看。
+
+### 第一步：先看 `TestSystem.cs`
+
+先看这个文件，因为它回答的是“**系统怎么启动、UI 怎么搭起来、模块怎么接进来**”。
+
+你重点看这几类内容：
+
+- `ModuleInitializer + AutoLoad.Register(...)`：系统为什么会自动出现
+- `_Ready()`：当前注册了哪些模块，默认打开哪个模块
+- `BuildUi()`：整个测试 UI 是怎么组织的
+- `SetSelectedEntity(...)`：选中实体后，状态如何广播给各模块
+- `SwitchModule(...)`：模块切换时，生命周期是怎么流转的
+- `_UnhandledInput()` / `FindEntityAtScreenPosition(...)`：鼠标点选实体的入口在哪里
+
+如果你只想先建立全局认知，**先把这个文件看明白，其他文件就不会散**。
+
+### 第二步：再看 `TestModuleBase.cs`
+
+这个文件回答的是“**所有测试模块必须遵守什么协议**”。
+
+你要重点理解这几个生命周期：
+
+- `Initialize(TestSystem system)`
+- `OnSelectedEntityChanged(IEntity? entity)`
+- `OnActivated()`
+- `OnDeactivated()`
+- `Refresh()`
+
+看懂它之后，你就知道所有模块都应该把逻辑挂在哪个阶段，不会在读具体模块时迷路。
+
+### 第三步：按你的目标选模块读
+
+#### 如果你要看属性测试
+
+推荐顺序：
+
+1. `AttributeTestModule.cs`
+2. `FeatureDebugService.cs`
+3. 相关 `DataKey / DataMeta / DataCategory`
+
+这样看的原因是：
+
+- `AttributeTestModule.cs` 先让你看懂 UI 如何根据元数据生成
+- 然后看 `FeatureDebugService.cs`，理解“临时加成”为什么不直接硬改 Data
+- 最后再回到 `DataMeta`，确认哪些字段允许编辑、哪些字段支持 Modifier
+
+你读属性测试时，重点抓住两条线：
+
+- **直接覆写线**：`entity.Data.Set(...)`
+- **临时加成线**：`FeatureDebugService.ApplyTemporaryModifier(...)`
+
+#### 如果你要看技能测试
+
+推荐顺序：
+
+1. `AbilityTestModule.cs`
+2. `AbilityTestService.cs`
+3. `FeatureDebugService.cs`
+4. `AbilityTestViewModels.cs`
+
+这样看的原因是：
+
+- `AbilityTestModule.cs` 先让你看懂界面和交互
+- `AbilityTestService.cs` 再回答“数据从哪来、操作怎么做”
+- `FeatureDebugService.cs` 再告诉你操作最后是如何转发到正式链路
+- `AbilityTestViewModels.cs` 最后补齐展示数据结构
+
+你读技能测试时，重点抓住一条主链：
+
+- **UI 输入** -> `AbilityTestModule`
+- **业务编排** -> `AbilityTestService`
+- **正式系统适配** -> `FeatureDebugService`
+- **运行时能力生命周期** -> `EntityManager / FeatureSystem`
+
+### 第四步：最后再看 `FeatureDebugService.cs`
+
+很多人第一次看会直接钻这个文件，但更好的方式是**先知道谁在调用它，再看它怎么转发**。
+
+这个文件的核心定位不是“再做一套测试逻辑”，而是：
+
+- 给 `TestSystem` 提供统一调试适配层
+- 把调试动作转发到正式运行时 API
+- 避免 UI 模块直接操作底层系统
+
+你重点看：
+
+- `GrantAbility(...)`
+- `RemoveAbility(...)`
+- `SetFeatureEnabled(...)`
+- `ApplyTemporaryModifier(...)`
+- `ClearTemporaryModifier(...)`
+
+### 第五步：带着代码回头看正式说明
+
+当你把上面几个文件看过一遍后，再去看：
+
+- `Docs/框架/ECS/System/TestSystem运行时测试系统说明.md`
+
+这时你会更容易把“代码实现”和“设计边界”对上。
+
+建议你重点确认三件事：
+
+- `TestSystem` 只是测试宿主，不是正式玩法 UI
+- 技能测试只负责管理，不负责执行
+- Feature / Ability 生命周期必须继续复用正式系统，而不是在这里另起炉灶
+
+### 一个最实用的阅读口诀
+
+如果你只记一句话，就记这个：
+
+- **先看宿主 `TestSystem`，再看协议 `TestModuleBase`，然后按模块读 UI 和服务，最后看 `FeatureDebugService` 怎么接正式链路。**
+
 ## 3. 使用方式
 
 ### 3.1 运行时打开面板
