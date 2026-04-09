@@ -49,8 +49,8 @@ description: 编写或修改 Data 目录下的数据配置、Config、DataKey、
 
 补充约定：
 
-- 像 `AbilityCategory` 这种“需要跟随资源进入运行时 Data、供 UI / 调试读取”的展示字段，仍然放在 `Data/Data/Ability/AbilityConfig.cs`
-- 不要因为它偏展示就塞进 `Data/Config/`；只要运行时实体和系统要读，就属于 `Data/Data/`
+- 像 `FeatureGroupId` 这种“既参与运行时处理器映射，又供 UI / 调试直接展示”的技能分组字段，应放在 `Data/Data/Ability/AbilityConfig.cs`
+- 不要再为技能额外维护 `AbilityCategory` 这类重复展示字段；只要运行时实体和系统要读，就属于 `Data/Data/`
 
 推荐写法：
 

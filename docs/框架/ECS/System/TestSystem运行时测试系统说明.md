@@ -16,9 +16,11 @@
 - `Src/ECS/System/TestSystem/TestSystem.cs`
 - `Src/ECS/System/TestSystem/TestModuleBase.cs`
 - `Src/ECS/System/TestSystem/AttributeTestModule.cs`
+- `Src/ECS/System/TestSystem/FeatureDebugService.cs`
 - `Src/ECS/System/TestSystem/AbilityTestService.cs`
 - `Src/ECS/System/TestSystem/AbilityTestViewModels.cs`
 - `Src/ECS/System/TestSystem/AbilityTestModule.cs`
+- `Src/ECS/System/TestSystem/README.md`
 
 ---
 
@@ -32,7 +34,7 @@
 | **统一入口** | 由 `TestSystem` 统一承载测试面板、实体选择和模块切换 |
 | **模块可扩展** | 新测试能力通过继承 `TestModuleBase` 接入，而不是改动核心流程 |
 | **数据驱动** | 属性测试优先依赖 `DataMeta` 元数据，而非手写字段面板 |
-| **遵守框架边界** | 技能增删走 `EntityManager_Ability`，属性修改走 `entity.Data`，避免绕开现有系统 |
+| **复用正式链路** | 技能 / Feature 调试统一转发到 `EntityManager`、`FeatureSystem` 等正式运行时 API |
 | **运行时同步** | 面板在实体数据或技能变化后可自动刷新，避免显示过期状态 |
 
 ---
@@ -45,8 +47,9 @@
 |------|------|------|
 | **系统宿主** | `TestSystem.cs` | AutoLoad 注册、UI 根面板、模块注册与切换、实体选择 |
 | **模块基类** | `TestModuleBase.cs` | 统一生命周期与当前选中实体注入 |
-| **属性模块** | `AttributeTestModule.cs` | 按 `DataCategory` 展示并编辑实体的可编辑 `Data` |
-| **技能服务** | `AbilityTestService.cs` | 缓存技能目录、解析分类、构建视图模型、封装技能增删启停 |
+| **属性模块** | `AttributeTestModule.cs` | 按 `DataCategory` 展示并编辑实体的可编辑 `Data`，并为支持 Modifier 的属性提供临时加成入口 |
+| **调试适配层** | `FeatureDebugService.cs` | 把调试动作转发到正式 `EntityManager` / `FeatureSystem` 链路 |
+| **技能服务** | `AbilityTestService.cs` | 缓存技能目录、解析分组、构建视图模型、封装技能增删启停 |
 | **技能视图模型** | `AbilityTestViewModels.cs` | 纯展示数据结构，承载分类分组与技能条目信息 |
 | **技能模块** | `AbilityTestModule.cs` | 渲染双树界面、处理点击 / 右键菜单，并把操作转发给技能服务 |
 
@@ -60,17 +63,26 @@ TestSystem
   ├── 负责注册/切换 TestModule
   │
   ├── AttributeTestModule
-  │     └── 基于 DataRegistry + DataMeta 生成属性编辑器
+  │     ├── 基于 DataRegistry + DataMeta 生成属性编辑器
+  │     └── 对支持 Modifier 的数值属性通过 FeatureDebugService 管理临时加成
   │
-  └── AbilityTestService
-        ├── 扫描 DataAbility 目录
-        ├── 解析 AbilityCategory / FeatureGroupId
-        ├── 构建左侧技能库 / 右侧当前技能视图模型
-        └── 封装 Add / Remove / Enable / Disable
-          │
+  ├── FeatureDebugService
+  │     ├── GrantAbility / RemoveAbility
+  │     ├── SetFeatureEnabled
+  │     ├── GrantFeature
+  │     └── ApplyTemporaryModifier / ClearTemporaryModifier
+  │
+  ├── AbilityTestService
+  │     ├── 扫描 DataAbility 目录
+  │     ├── 解析 FeatureGroupId / 资源路径兜底分组
+  │     ├── 构建左侧技能库 / 右侧当前技能视图模型
+  │     └── 通过 FeatureDebugService 封装 Add / Remove / Enable / Disable
+  │
   └── AbilityTestModule
-        └── 基于双 Tree + PopupMenu 展示并触发技能管理操作
+  │     └── 基于双 Tree + PopupMenu 展示并触发技能管理操作
 ```
+
+`TestSystem` 只负责调试宿主、实体选择和模块切换；真正的能力生命周期仍由正式 `EntityManager`、`FeatureSystem`、`AbilitySystem` 负责。
 
 ### 3.3 为什么采用模块化设计
 
@@ -163,8 +175,9 @@ TestSystem
 左键点击屏幕
   → TestSystem._UnhandledInput()
   → FindEntityAtScreenPosition(mousePosition)
-  → 使用 2D 物理点查询获取命中对象
+  → 优先使用 2D 物理点查询获取命中对象
   → 尝试向上解析为 IEntity
+  → 未命中时再按距离兜底找最近的 Node2D 实体
   → SetSelectedEntity(entity)
   → 广播给所有测试模块
   → 当前模块刷新显示
@@ -172,7 +185,8 @@ TestSystem
 
 这里的关键点是：
 
-- 选择目标不是直接遍历场景树，而是走**物理点击拾取**
+- 选择目标不是直接遍历场景树，而是优先走**物理点击拾取**
+- 纯视觉或无碰撞调试对象还能走最近距离兜底选择
 - 真正被选中的对象必须能解析为 `IEntity`
 - `TestSystem` 只维护一个当前选中实体：`SelectedEntity`
 
@@ -230,7 +244,10 @@ TestSystem
 
 ## 6.1 模块定位
 
-`AttributeTestModule` 用于直接编辑选中实体的运行时 `Data`，但只允许编辑**可编辑项**，不允许直接操作计算属性。
+`AttributeTestModule` 用于调试选中实体的运行时属性，但当前已经形成**双轨调试模式**：
+
+- **状态覆写**：直接调用 `entity.Data.Set(...)` 修改运行时值
+- **临时加成**：对支持 Modifier 的数值属性，通过运行时 `FeatureDefinition` 挂载临时 Feature
 
 其核心思想是：
 
@@ -295,7 +312,30 @@ TestSystem
 
 来生成更合理的编辑体验。
 
-## 6.5 特殊保护逻辑
+## 6.5 临时加成能力
+
+当一个 `DataMeta` 同时满足以下条件时，属性行下方会额外出现“临时加成”控件：
+
+- `meta.IsNumeric == true`
+- `meta.SupportModifiers == true`
+- `meta.IsComputed == false`
+
+此时模块会通过 `FeatureDebugService` 提供三项能力：
+
+- `GetTemporaryModifierValue(...)`：读取当前挂载的临时加成值
+- `ApplyTemporaryModifier(...)`：用运行时 `FeatureDefinition` 给目标属性追加 `Additive` Modifier
+- `ClearTemporaryModifier(...)`：移除当前临时 Feature
+
+当当前临时 Feature 的命名规则为：
+
+- `TestSystem.Modifier.{dataKey}`
+
+这意味着 TestSystem 的属性调试已经不再是“所有东西都硬改 Data”，而是形成了：
+
+- **直接状态改写**：适合瞬时验证、临时覆写
+- **Feature 持续加成**：适合验证正式 Modifier / FeatureSystem 链路
+
+## 6.6 特殊保护逻辑
 
 属性测试模块额外做了两类安全保护：
 
@@ -325,7 +365,7 @@ TestSystem
 
 这能避免测试面板把实体推入明显非法的资源状态。
 
-## 6.6 实时刷新机制
+## 6.7 实时刷新机制
 
 模块会订阅当前实体的 `GameEventType.Data.PropertyChanged` 事件。
 
@@ -361,9 +401,12 @@ TestSystem
 `AbilityTestService` 会遍历所有 `DataAbility` 配置，并优先读取：
 
 - `AbilityConfig.Name`
-- `AbilityConfig.AbilityCategory`
+- `AbilityConfig.FeatureGroupId`
+- `AbilityConfig.Description`
+- `AbilityConfig.AbilityType`
+- `AbilityConfig.AbilityTriggerMode`
 
-如果旧资源尚未补齐 `AbilityCategory`，则退回 `FeatureGroupId` / 资源路径推导分类。
+如果旧资源尚未补齐 `FeatureGroupId`，则退回资源路径或 `AbilityType` 兜底分类。
 
 这样做的意义是：
 
@@ -384,8 +427,8 @@ TestSystem
 
 | 区域 | 作用 |
 |------|------|
-| **左侧技能库 Tree** | 按 `AbilityCategory` 分类显示项目内所有可添加技能；已拥有技能会灰显 |
-| **右侧当前技能 Tree** | 按 `AbilityCategory` 分类显示当前实体已拥有技能；禁用技能会灰显 |
+| **左侧技能库 Tree** | 按分组路径显示项目内所有可添加技能；已拥有技能会灰显 |
+| **右侧当前技能 Tree** | 按分组路径显示当前实体已拥有技能；禁用技能会灰显 |
 | **右键菜单 PopupMenu** | 作用于右侧技能条目，提供启用 / 禁用 / 移除 |
 
 ## 7.4 技能操作方式
@@ -398,7 +441,7 @@ TestSystem
 - 左侧树直接监听 `Tree.item_selected`，不再依赖 `GuiInput + GetItemAtPosition()` 的坐标命中
 - 即使当前没有选中实体，左侧叶子仍可选中，模块会明确提示“请先选择一个实体”，而不是静默无响应
 - `AbilityTestService.AddAbility(...)` 读取缓存配置
-- 调用 `EntityManager.AddAbility(selectedEntity, config)`
+- 由 `FeatureDebugService.GrantAbility(...)` 转发到正式 `EntityManager.AddAbility(...)`
 
 该流程遵循项目既有技能生命周期管理，不绕开框架。
 
@@ -408,7 +451,7 @@ TestSystem
 
 - `AbilityTestModule` 从树节点元数据拿到技能实例 `Id`
 - `AbilityTestService` 先解析出目标 `AbilityEntity`
-- 再调用 `EntityManager.RemoveAbility(selectedEntity, ability)`，按运行时实例精确移除
+- 再通过 `FeatureDebugService.RemoveAbility(...)` 转发到正式移除链路，按运行时实例精确移除
 
 ### 切换启用
 
@@ -416,7 +459,7 @@ TestSystem
 
 - 弹出 `PopupMenu`
 - 根据当前 `FeatureEnabled` 状态显示“启用技能”或“禁用技能”
-- 由 `AbilityTestService` 调用 `FeatureSystem.EnableFeature(...)` / `DisableFeature(...)`
+- 由 `AbilityTestService` 通过 `FeatureDebugService.SetFeatureEnabled(...)` 调用 `FeatureSystem.EnableFeature(...)` / `DisableFeature(...)`
 
 这适合快速验证：
 
@@ -432,6 +475,7 @@ TestSystem
 - 技能名称
 - 技能类型 `AbilityType`
 - 触发模式 `AbilityTriggerMode`
+- 分组路径与描述提示
 
 例如：
 
@@ -480,7 +524,8 @@ TestSystem
   → 鼠标点击一个单位
   → 左侧选择属性分类
   → 在右侧编辑对应属性
-  → 模块通过 entity.Data.Set(...) 写回运行时数据
+  → 需要直接覆写时使用基础控件
+  → 需要验证持续加成时使用“临时加成”控件
 ```
 
 适合验证：
@@ -488,6 +533,7 @@ TestSystem
 - 护甲、攻击、暴击率等是否立即生效
 - `DataMeta` 的上下限约束是否正确
 - 某些状态标记是否能触发对应组件行为
+- `SupportModifiers` 属性是否能正确走 FeatureSystem 加成链路
 
 ## 8.2 调试技能
 
@@ -505,6 +551,7 @@ TestSystem
 - `EntityManager_Ability` 增删逻辑是否正常
 - 主动技能栏是否随技能变更更新
 - `FeatureEnabled` 对触发链的影响是否正确
+- 技能测试是否只承担管理职责，而不承担执行职责
 
 ---
 
@@ -561,12 +608,20 @@ RegisterModule(new MyTestModule());
 | **仅用于调试** | 不应作为正式玩家 UI 使用 |
 | **属性测试不改计算属性** | 计算属性应继续由 Data 计算链维护 |
 | **技能测试不直接执行技能** | 执行仍应走 `TryTrigger` / `AbilitySystem` |
-| **依赖可点击实体** | 鼠标拾取基于物理查询，无法选中未参与该链路的对象 |
+| **属性调试分双轨** | 状态覆写可直写 `Data`，持续数值加成优先走 `FeatureSystem` |
+| **依赖可点击实体** | 鼠标拾取优先基于物理查询；纯视觉对象仅能走最近距离兜底选择 |
 | **模块自行管理订阅** | 宿主不统一清理模块内部事件 |
 
 ---
 
-## 十一、后续可扩展方向
+## 十一、相关文档与后续可扩展方向
+
+如果你要继续扩展或维护 TestSystem，建议优先阅读：
+
+- `Src/ECS/System/TestSystem/README.md` - 源码目录使用说明
+- `Docs/框架/项目索引.md` - 项目级导航入口
+- `.windsurf/skills/test-system/SKILL.md` - TestSystem 专用 skill
+- `.windsurf/skills/feature-system/SKILL.md` - FeatureSystem 边界与生命周期规范
 
 当前系统已经具备稳定的宿主结构，后续推荐优先扩展：
 
@@ -599,6 +654,8 @@ RegisterModule(new MyTestModule());
 - 它统一了运行时调试入口
 - 它把实体选择、模块切换和调试 UI 宿主职责集中管理
 - 它通过 `TestModuleBase` 形成稳定的扩展协议
-- 它通过 `AttributeTestModule` 和 `AbilityTestModule` 验证了“数据驱动 + 模块化”的设计可行性
+- 它通过 `FeatureDebugService` 保证调试动作继续复用正式运行时链路
+- 它通过 `AttributeTestModule` 的双轨调试模式，兼顾状态覆写与正式 Modifier 流程验证
+- 它通过 `AbilityTestModule` 和 `AbilityTestService` 验证了“数据驱动 + 模块化 + 服务适配层”的设计可行性
 
 未来只要继续遵守这套结构，就可以把更多系统级调试能力持续沉淀到同一套测试框架中。
