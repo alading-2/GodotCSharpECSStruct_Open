@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="MarkdownSettings">
+    <option name="customStylesheetText" value="/* 优化后的 Obsidian 彩色方案 (适用于 Rider) */&#10;&#10;/* 一级标题：柔粉红 */&#10;h1 {&#10;    color: #eb6f92 !important;&#10;    border-bottom: 1px solid #31748f !important;&#10;    font-weight: 700;&#10;}&#10;&#10;/* 二级标题：浅蓝 */&#10;h2 {&#10;    color: #8ccad4 !important;&#10;    border-bottom: none !important;&#10;}&#10;&#10;/* 浅绿色 */&#10;h3 {&#10;    color: #abcf96 !important;&#10;}&#10;&#10;/* 浅紫色 */&#10;h4 {&#10;    color: #c4a7e7 !important;&#10;}&#10;&#10;/* 浅粉/橙 */&#10;h5 {&#10;    color: #ebbcba !important;&#10;}&#10;&#10;/* 珊瑚色 */&#10;h6 {&#10;    color: #908caa !important;&#10;}&#10;&#10;/* 超链接：使用明亮的青蓝色 */&#10;a {&#10;    color: #dd95aa !important;&#10;    text-decoration: none !important;&#10;    border-bottom: 3px dashed #a780a7 !important;&#10;    transition: all 0.2s ease-in-out;&#10;}&#10;&#10;a:hover {&#10;    color: #eb6f92 !important;&#10;    border-bottom: 1px solid #eb6f92 !important;&#10;    background-color: rgba(235, 111, 146, 0.1) !important;&#10;}&#10;&#10;/* 加粗文字颜色：浅橙 */&#10;strong, b {&#10;    color: rgb(238, 203, 162) !important;&#10;}&#10;&#10;/* 代码块背景稍微提亮 */&#10;code {&#10;    padding: 2px 4px;&#10;    border-radius: 4px;&#10;}" />
+    <option name="useCustomStylesheetText" value="true" />
+  </component>
+</project>

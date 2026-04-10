@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Src/ECS/System/TestSystem/AttributeTestModule.cs" id="1_attribute_script"]
+
+[node name="AttributeTestModule" type="VBoxContainer"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_attribute_script")
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 2
+text = "直接修改运行时 Data；支持 Modifier 的数值属性可额外挂临时 Feature 加成"
+
+[node name="EntityHintLabel" type="Label" parent="."]
+layout_mode = 2
+text = "请先选择一个实体"
+
+[node name="Split" type="HSplitContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CategoryList" type="ItemList" parent="Split"]
+custom_minimum_size = Vector2(160, 460)
+layout_mode = 2
+size_flags_vertical = 3
+select_mode = 0
+
+[node name="EditorScroll" type="ScrollContainer" parent="Split"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="EditorContainer" type="VBoxContainer" parent="Split/EditorScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3

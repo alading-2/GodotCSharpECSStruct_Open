@@ -23,13 +23,16 @@
 
 | 文件 | 职责 |
 |------|------|
-| `TestSystem.cs` | 调试系统宿主，负责 AutoLoad、主面板、实体选择、模块注册与切换 |
+| `TestSystem.cs` | 调试系统宿主，负责 AutoLoad、场景骨架绑定、实体选择、模块注册与切换 |
+| `TestSystem.tscn` | 测试系统主面板骨架，导出模块场景并承载顶部工具栏、信息栏与模块宿主区 |
 | `TestModuleBase.cs` | 所有测试模块的统一基类 |
 | `AttributeTestModule.cs` | 属性测试模块，负责 Data 编辑与临时加成 UI |
+| `AttributeTestModule.tscn` | 属性测试固定布局骨架，提供分类列表与右侧滚动编辑区 |
 | `FeatureDebugService.cs` | 调试适配层，负责把调试操作转发到正式 Feature / Ability 生命周期 |
 | `AbilityTestService.cs` | 技能测试服务，负责目录缓存、分组、视图模型与业务操作 |
 | `AbilityTestViewModels.cs` | 技能测试共享视图模型 |
 | `AbilityTestModule.cs` | 技能测试 UI，负责双 Tree、右键菜单与事件刷新 |
+| `AbilityTestModule.tscn` | 技能测试固定布局骨架，提供左右双树与右键菜单节点 |
 
 ## 2.1 第一次看这个系统，推荐按这个顺序读
 
@@ -37,13 +40,13 @@
 
 ### 第一步：先看 `TestSystem.cs`
 
-先看这个文件，因为它回答的是“**系统怎么启动、UI 怎么搭起来、模块怎么接进来**”。
+先看这个文件，因为它回答的是“**系统怎么启动、主界面怎么绑定、模块怎么接进来**”。
 
 你重点看这几类内容：
 
 - `ModuleInitializer + AutoLoad.Register(...)`：系统为什么会自动出现
 - `_Ready()`：当前注册了哪些模块，默认打开哪个模块
-- `BuildUi()`：整个测试 UI 是怎么组织的
+- `TestSystem.tscn + CacheUiNodes()`：主面板骨架在哪里、代码如何拿到关键节点
 - `SetSelectedEntity(...)`：选中实体后，状态如何广播给各模块
 - `SwitchModule(...)`：模块切换时，生命周期是怎么流转的
 - `_UnhandledInput()` / `FindEntityAtScreenPosition(...)`：鼠标点选实体的入口在哪里
@@ -70,13 +73,15 @@
 
 推荐顺序：
 
-1. `AttributeTestModule.cs`
-2. `FeatureDebugService.cs`
-3. 相关 `DataKey / DataMeta / DataCategory`
+1. `AttributeTestModule.tscn`
+2. `AttributeTestModule.cs`
+3. `FeatureDebugService.cs`
+4. 相关 `DataKey / DataMeta / DataCategory`
 
 这样看的原因是：
 
-- `AttributeTestModule.cs` 先让你看懂 UI 如何根据元数据生成
+- `AttributeTestModule.tscn` 先让你看懂固定布局
+- `AttributeTestModule.cs` 再看右侧属性编辑行如何根据元数据动态生成
 - 然后看 `FeatureDebugService.cs`，理解“临时加成”为什么不直接硬改 Data
 - 最后再回到 `DataMeta`，确认哪些字段允许编辑、哪些字段支持 Modifier
 
@@ -89,14 +94,16 @@
 
 推荐顺序：
 
-1. `AbilityTestModule.cs`
-2. `AbilityTestService.cs`
-3. `FeatureDebugService.cs`
-4. `AbilityTestViewModels.cs`
+1. `AbilityTestModule.tscn`
+2. `AbilityTestModule.cs`
+3. `AbilityTestService.cs`
+4. `FeatureDebugService.cs`
+5. `AbilityTestViewModels.cs`
 
 这样看的原因是：
 
-- `AbilityTestModule.cs` 先让你看懂界面和交互
+- `AbilityTestModule.tscn` 先让你看懂左右双栏固定布局
+- `AbilityTestModule.cs` 再回答树节点如何重建、交互怎么转发
 - `AbilityTestService.cs` 再回答“数据从哪来、操作怎么做”
 - `FeatureDebugService.cs` 再告诉你操作最后是如何转发到正式链路
 - `AbilityTestViewModels.cs` 最后补齐展示数据结构
@@ -144,7 +151,7 @@
 
 如果你只记一句话，就记这个：
 
-- **先看宿主 `TestSystem`，再看协议 `TestModuleBase`，然后按模块读 UI 和服务，最后看 `FeatureDebugService` 怎么接正式链路。**
+- **先看宿主 `TestSystem.cs + TestSystem.tscn`，再看协议 `TestModuleBase`，然后按模块读 `*.tscn` 骨架、`*.cs` 动态逻辑和服务层，最后看 `FeatureDebugService` 怎么接正式链路。**
 
 ## 3. 使用方式
 

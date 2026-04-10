@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -13,6 +14,7 @@ using System.Runtime.CompilerServices;
 /// </summary>
 public partial class TestSystem : CanvasLayer
 {
+    /// <summary>测试系统日志器，用于记录初始化与关键调试操作。</summary>
     private static readonly Log _log = new(nameof(TestSystem));
 
     /// <summary>测试系统单例，方便其它调试工具直接访问当前测试面板。</summary>
@@ -20,6 +22,9 @@ public partial class TestSystem : CanvasLayer
 
     /// <summary>当前被测试面板选中的实体；属性面板、技能面板等都会围绕它刷新。</summary>
     public IEntity? SelectedEntity { get; private set; }
+
+    [Export] private PackedScene? _attributeModuleScene;
+    [Export] private PackedScene? _abilityModuleScene;
 
     /// <summary>当前已注册的测试模块列表，顺序就是下拉菜单显示顺序。</summary>
     private readonly List<TestModuleBase> _modules = new();
@@ -39,12 +44,6 @@ public partial class TestSystem : CanvasLayer
     /// <summary>承载整个调试界面的面板容器。</summary>
     private PanelContainer _panel = null!;
 
-    /// <summary>真正放置各个测试模块实例的宿主容器。</summary>
-    private VBoxContainer _moduleHost = null!;
-
-    /// <summary>显示当前选中实体名称、类型和 ID 的标签。</summary>
-    private Label _selectedEntityLabel = null!;
-
     /// <summary>提示用户如何进入选实体模式的说明文本。</summary>
     private Label _selectionHintLabel = null!;
 
@@ -57,46 +56,31 @@ public partial class TestSystem : CanvasLayer
     /// <summary>强制刷新当前模块内容的按钮。</summary>
     private Button _refreshButton = null!;
 
+    /// <summary>显示当前选中实体名称、类型和 ID 的标签。</summary>
+    private Label _selectedEntityLabel = null!;
+
+    /// <summary>真正放置各个测试模块实例的宿主容器。</summary>
+    private VBoxContainer _moduleHost = null!;
+
     /// <summary>面板当前可见性缓存，用于避免重复处理隐藏/显示逻辑。</summary>
     private bool _panelVisible = true;
 
-    // 模块初始化入口。
-    // 这里把 TestSystem 注册到 AutoLoad，确保只在调试环境中随项目启动自动挂载。
+    /// <summary>
+    /// 模块初始化入口。
+    /// <para>
+    /// 把 TestSystem 注册到 AutoLoad，确保仅在调试优先级链路中自动挂载。
+    /// </para>
+    /// </summary>
     [ModuleInitializer]
     internal static void Initialize()
     {
         AutoLoad.Register(new AutoLoad.AutoLoadConfig
         {
             Name = nameof(TestSystem),
-            InitAction = () => Init(),
-            Priority = AutoLoad.Priority.Debug
+            Scene = ResourceManagement.Load<PackedScene>(nameof(TestSystem), ResourceCategory.System),
+            Priority = AutoLoad.Priority.Debug,
+            ParentPath = "Debug"
         });
-    }
-
-    /// <summary>
-    /// 创建测试系统节点并挂到 Debug 目录下。
-    /// <para>
-    /// 这里做双重保护：如果单例已存在则直接返回；如果 AutoLoad 还没准备好，也不会重复创建。
-    /// </para>
-    /// </summary>
-    private static void Init()
-    {
-        if (Instance != null && GodotObject.IsInstanceValid(Instance))
-        {
-            return;
-        }
-
-        if (AutoLoad.Instance == null)
-        {
-            return;
-        }
-
-        var parent = ParentManager.EnsurePath(AutoLoad.Instance, "Debug");
-        var system = new TestSystem
-        {
-            Name = nameof(TestSystem)
-        };
-        parent.AddChild(system);
     }
 
     /// <summary>
@@ -120,9 +104,10 @@ public partial class TestSystem : CanvasLayer
     /// </summary>
     public override void _Ready()
     {
-        BuildUi();
-        RegisterModule(new AttributeTestModule());
-        RegisterModule(new AbilityTestModule());
+        CacheUiNodes();
+        BindUiEvents();
+        RegisterModule(InstantiateModule<AttributeTestModule>(_attributeModuleScene, nameof(AttributeTestModule)));
+        RegisterModule(InstantiateModule<AbilityTestModule>(_abilityModuleScene, nameof(AbilityTestModule)));
         SwitchModule(0);
         UpdateSelectedEntityDisplay();
         _log.Info("TestSystem 初始化完成");
@@ -208,157 +193,36 @@ public partial class TestSystem : CanvasLayer
         }
     }
 
-    /// <summary>
-    /// 构建测试系统主界面。
-    /// <para>
-    /// UI 结构分为：总开关按钮、模块选择器、实体选择工具栏、模块宿主区。
-    /// </para>
-    /// </summary>
-    private void BuildUi()
+    private void CacheUiNodes()
     {
-        _root = new Control
-        {
-            Name = "Root",
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        AddChild(_root);
+        _root = GetNode<Control>("Root");
+        _toggleButton = GetNode<Button>("Root/TopLeft/Layout/Toolbar/ToggleButton");
+        _moduleSelector = GetNode<OptionButton>("Root/TopLeft/Layout/Toolbar/ModuleSelector");
+        _panel = GetNode<PanelContainer>("Root/TopLeft/Layout/Panel");
+        _selectionHintLabel = GetNode<Label>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/SelectionHintLabel");
+        _selectionToggle = GetNode<CheckButton>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow/SelectionToggle");
+        _refreshButton = GetNode<Button>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow/RefreshButton");
+        _clearSelectionButton = GetNode<Button>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow/ClearSelectionButton");
+        _selectedEntityLabel = GetNode<Label>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow/SelectedEntityLabel");
+        _moduleHost = GetNode<VBoxContainer>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost");
 
-        var margin = new MarginContainer
-        {
-            Name = "TopLeft",
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        margin.OffsetLeft = 12;
-        margin.OffsetTop = 12;
-        margin.OffsetRight = 12;
-        margin.OffsetBottom = 12;
-        _root.AddChild(margin);
+        _root.MouseFilter = Control.MouseFilterEnum.Ignore;
+        GetNode<Control>("Root/TopLeft").MouseFilter = Control.MouseFilterEnum.Ignore;
+        GetNode<Control>("Root/TopLeft/Layout").MouseFilter = Control.MouseFilterEnum.Ignore;
+        GetNode<Control>("Root/TopLeft/Layout/Toolbar").MouseFilter = Control.MouseFilterEnum.Ignore;
+        _panel.MouseFilter = Control.MouseFilterEnum.Stop;
+        GetNode<Control>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout").MouseFilter = Control.MouseFilterEnum.Ignore;
+        _selectionHintLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
+        GetNode<Control>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow").MouseFilter = Control.MouseFilterEnum.Ignore;
+        _moduleHost.MouseFilter = Control.MouseFilterEnum.Ignore;
+    }
 
-        var layout = new VBoxContainer
-        {
-            Name = "Layout",
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        layout.CustomMinimumSize = new Vector2(620, 0);
-        margin.AddChild(layout);
-
-        var toolbar = new HBoxContainer
-        {
-            Name = "Toolbar",
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        layout.AddChild(toolbar);
-
-        _toggleButton = new Button
-        {
-            Text = "测试",
-            CustomMinimumSize = new Vector2(88, 36),
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
+    private void BindUiEvents()
+    {
         _toggleButton.Pressed += OnTogglePressed;
-        toolbar.AddChild(_toggleButton);
-
-        _moduleSelector = new OptionButton
-        {
-            CustomMinimumSize = new Vector2(220, 36),
-            MouseFilter = Control.MouseFilterEnum.Stop,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-        };
         _moduleSelector.ItemSelected += OnModuleSelected;
-        toolbar.AddChild(_moduleSelector);
-
-        _panel = new PanelContainer
-        {
-            Name = "Panel",
-            CustomMinimumSize = new Vector2(620, 620),
-            MouseFilter = Control.MouseFilterEnum.Stop,
-            Visible = true
-        };
-        layout.AddChild(_panel);
-
-        var panelMargin = new MarginContainer();
-        panelMargin.AddThemeConstantOverride("margin_left", 12);
-        panelMargin.AddThemeConstantOverride("margin_top", 12);
-        panelMargin.AddThemeConstantOverride("margin_right", 12);
-        panelMargin.AddThemeConstantOverride("margin_bottom", 12);
-        _panel.AddChild(panelMargin);
-
-        var panelLayout = new VBoxContainer
-        {
-            Name = "PanelLayout",
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        panelMargin.AddChild(panelLayout);
-
-        var titleLabel = new Label
-        {
-            Text = "运行时测试系统"
-        };
-        panelLayout.AddChild(titleLabel);
-
-        _selectionHintLabel = new Label
-        {
-            Text = "开启“选择实体”后，点击场景中的实体即可切换测试目标"
-        };
-        panelLayout.AddChild(_selectionHintLabel);
-
-        var infoRow = new HBoxContainer
-        {
-            Name = "InfoRow",
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        panelLayout.AddChild(infoRow);
-
-        _selectionToggle = new CheckButton
-        {
-            Text = "选择实体",
-            ButtonPressed = true,
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
-        infoRow.AddChild(_selectionToggle);
-
-        _refreshButton = new Button
-        {
-            Text = "刷新",
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
         _refreshButton.Pressed += RefreshCurrentModule;
-        infoRow.AddChild(_refreshButton);
-
-        _clearSelectionButton = new Button
-        {
-            Text = "清空选择",
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
         _clearSelectionButton.Pressed += () => SetSelectedEntity(null);
-        infoRow.AddChild(_clearSelectionButton);
-
-        var entityLabelTitle = new Label
-        {
-            Text = "当前实体:"
-        };
-        infoRow.AddChild(entityLabelTitle);
-
-        _selectedEntityLabel = new Label
-        {
-            Text = "未选择",
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart
-        };
-        infoRow.AddChild(_selectedEntityLabel);
-
-        var separator = new HSeparator();
-        panelLayout.AddChild(separator);
-
-        _moduleHost = new VBoxContainer
-        {
-            Name = "ModuleHost",
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        panelLayout.AddChild(_moduleHost);
     }
 
     /// <summary>
@@ -372,6 +236,22 @@ public partial class TestSystem : CanvasLayer
         _moduleSelector.AddItem(module.DisplayName);
         _moduleHost.AddChild(module);
         module.OnSelectedEntityChanged(SelectedEntity);
+    }
+
+    private static T InstantiateModule<T>(PackedScene? scene, string sceneName) where T : TestModuleBase
+    {
+        if (scene == null)
+        {
+            throw new InvalidOperationException($"测试模块场景未配置: {sceneName}");
+        }
+
+        var instance = scene.Instantiate<T>();
+        if (instance == null)
+        {
+            throw new InvalidOperationException($"测试模块场景实例化失败: {sceneName}");
+        }
+
+        return instance;
     }
 
     /// <summary>

@@ -14,12 +14,15 @@
 当前系统位于：
 
 - `Src/ECS/System/TestSystem/TestSystem.cs`
+- `Src/ECS/System/TestSystem/TestSystem.tscn`
 - `Src/ECS/System/TestSystem/TestModuleBase.cs`
 - `Src/ECS/System/TestSystem/AttributeTestModule.cs`
+- `Src/ECS/System/TestSystem/AttributeTestModule.tscn`
 - `Src/ECS/System/TestSystem/FeatureDebugService.cs`
 - `Src/ECS/System/TestSystem/AbilityTestService.cs`
 - `Src/ECS/System/TestSystem/AbilityTestViewModels.cs`
 - `Src/ECS/System/TestSystem/AbilityTestModule.cs`
+- `Src/ECS/System/TestSystem/AbilityTestModule.tscn`
 - `Src/ECS/System/TestSystem/README.md`
 
 ---
@@ -45,24 +48,25 @@
 
 | 层次 | 文件 | 职责 |
 |------|------|------|
-| **系统宿主** | `TestSystem.cs` | AutoLoad 注册、UI 根面板、模块注册与切换、实体选择 |
+| **系统宿主** | `TestSystem.cs` + `TestSystem.tscn` | AutoLoad 注册、主界面骨架绑定、模块注册与切换、实体选择 |
 | **模块基类** | `TestModuleBase.cs` | 统一生命周期与当前选中实体注入 |
-| **属性模块** | `AttributeTestModule.cs` | 按 `DataCategory` 展示并编辑实体的可编辑 `Data`，并为支持 Modifier 的属性提供临时加成入口 |
+| **属性模块** | `AttributeTestModule.cs` + `AttributeTestModule.tscn` | 按 `DataCategory` 展示并编辑实体的可编辑 `Data`，并为支持 Modifier 的属性提供临时加成入口 |
 | **调试适配层** | `FeatureDebugService.cs` | 把调试动作转发到正式 `EntityManager` / `FeatureSystem` 链路 |
 | **技能服务** | `AbilityTestService.cs` | 缓存技能目录、解析分组、构建视图模型、封装技能增删启停 |
 | **技能视图模型** | `AbilityTestViewModels.cs` | 纯展示数据结构，承载分类分组与技能条目信息 |
-| **技能模块** | `AbilityTestModule.cs` | 渲染双树界面、处理点击 / 右键菜单，并把操作转发给技能服务 |
+| **技能模块** | `AbilityTestModule.cs` + `AbilityTestModule.tscn` | 渲染双树界面、处理点击 / 右键菜单，并把操作转发给技能服务 |
 
 ### 3.2 核心关系
 
 ```text
 TestSystem
   ├── 负责 AutoLoad 初始化
-  ├── 负责构建调试 UI
+  ├── 负责绑定 TestSystem.tscn 主界面骨架
   ├── 负责鼠标点击选择 IEntity
   ├── 负责注册/切换 TestModule
   │
   ├── AttributeTestModule
+  │     ├── 基于 AttributeTestModule.tscn 提供固定布局
   │     ├── 基于 DataRegistry + DataMeta 生成属性编辑器
   │     └── 对支持 Modifier 的数值属性通过 FeatureDebugService 管理临时加成
   │
@@ -79,6 +83,7 @@ TestSystem
   │     └── 通过 FeatureDebugService 封装 Add / Remove / Enable / Disable
   │
   └── AbilityTestModule
+  │     ├── 基于 AbilityTestModule.tscn 提供固定布局
   │     └── 基于双 Tree + PopupMenu 展示并触发技能管理操作
 ```
 
@@ -119,14 +124,13 @@ TestSystem
 - 调试系统可随游戏启动自动挂载
 - 可以通过 `AutoLoad.Priority.Debug` 归入调试层级
 
-创建时机上，`Init()` 会：
+创建时机上，`AutoLoad.Register(...)` 会：
 
-- 检查 `Instance` 是否已存在
-- 检查 `AutoLoad.Instance` 是否可用
-- 通过 `ParentManager.EnsurePath(AutoLoad.Instance, "Debug")` 确保调试挂点存在
-- 动态创建 `TestSystem` 并挂到 `Debug` 节点下
+- 通过 `ResourceManagement.Load<PackedScene>(nameof(TestSystem), ResourceCategory.System)` 加载宿主场景
+- 使用 `AutoLoad.Priority.Debug` 把它挂到调试层级
+- 通过 `ParentPath = "Debug"` 自动挂到 `Debug` 节点下
 
-这意味着 `TestSystem` 是**纯代码创建**的调试面板，而非 `.tscn` 驱动。
+这意味着 `TestSystem` 现在是**场景骨架 + C# 绑定**的调试面板：固定结构放在 `.tscn`，动态模块与运行时数据刷新保留在代码中。
 
 ## 4.2 单例与生命周期
 
@@ -145,10 +149,17 @@ TestSystem
 
 ## 4.3 UI 结构
 
-`_Ready()` 中调用 `BuildUi()` 构建整个界面，并注册两个模块：
+`_Ready()` 中会先缓存 `TestSystem.tscn` 中的关键节点，再实例化两个模块场景：
 
 - `AttributeTestModule`
 - `AbilityTestModule`
+
+其中：
+
+- `TestSystem.tscn` 承载顶部工具栏、信息栏和模块宿主容器
+- `AttributeTestModule.tscn` 提供左侧分类列表和右侧滚动编辑区
+- `AbilityTestModule.tscn` 提供左右双树、状态栏和右键菜单节点
+- `*.cs` 仍负责动态属性行、Tree 节点重建和事件转发
 
 当前 UI 由以下部分组成：
 
@@ -582,13 +593,26 @@ public partial class MyTestModule : TestModuleBase
 }
 ```
 
-### 第二步：在 `TestSystem._Ready()` 中注册
+### 第二步：创建模块场景
+
+创建：
+
+- `MyTestModule.tscn`
+
+把固定 UI 骨架放进场景，把脚本挂到根节点。
+
+### 第三步：在 `TestSystem` 中注册
 
 ```csharp
-RegisterModule(new MyTestModule());
+RegisterModule(InstantiateModule<MyTestModule>(_myTestModuleScene, nameof(MyTestModule)));
 ```
 
-### 第三步：遵循模块边界
+同时需要：
+
+- 在 `TestSystem.cs` 增加导出 `PackedScene` 字段
+- 在 `TestSystem.tscn` 给该字段绑定 `MyTestModule.tscn`
+
+### 第四步：遵循模块边界
 
 建议遵守以下原则：
 

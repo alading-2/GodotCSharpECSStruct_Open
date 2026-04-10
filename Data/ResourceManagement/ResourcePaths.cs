@@ -95,6 +95,7 @@ public static class ResourcePaths
     public const string System_DamageStatisticsSystem = "DamageStatisticsSystem";
     public const string System_RecoverySystem = "RecoverySystem";
     public const string System_SpawnSystem = "SpawnSystem";
+    public const string System_TestSystem = "TestSystem";
 
     // --- Tools ---
     public const string Tools_ObjectPoolInit = "ObjectPoolInit";
@@ -240,6 +241,7 @@ public static class ResourcePaths
                 { System_DamageStatisticsSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/System/DamageSystem/DamageStatisticsSystem.tscn") },
                 { System_RecoverySystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/System/RecoverySystem/RecoverySystem.tscn") },
                 { System_SpawnSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/System/Spawn/SpawnSystem.tscn") },
+                { System_TestSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/System/TestSystem/TestSystem.tscn") },
             }
         },
         { ResourceCategory.Tools, new Dictionary<string, ResourceData>

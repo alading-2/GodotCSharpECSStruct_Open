@@ -17,6 +17,7 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>单个分类页的缓存结构，保存分类标题和该分类下的可编辑 DataMeta 列表。</summary>
     private sealed record CategoryEntry(string Title, List<DataMeta> Metas);
 
+    /// <summary>Feature 调试服务，用于临时 Modifier 的挂载、读取与清理。</summary>
     private readonly FeatureDebugService _featureDebugService = new();
 
     /// <summary>所有可编辑分类的缓存列表，初始化后用于驱动左侧分类面板。</summary>
@@ -47,7 +48,8 @@ public partial class AttributeTestModule : TestModuleBase
     {
         base.Initialize(system);
         BuildCategoryData();
-        BuildUi();
+        CacheUiNodes();
+        PopulateCategoryList();
         if (_categories.Count > 0)
         {
             _categoryList.Select(0);
@@ -173,62 +175,28 @@ public partial class AttributeTestModule : TestModuleBase
         return meta.IsBoolean || meta.IsNumeric || meta.IsEnum || meta.IsString || meta.HasOptions;
     }
 
-    /// <summary>
-    /// 构建属性测试模块 UI。
-    /// <para>
-    /// 左侧显示分类列表，右侧显示当前分类下的所有编辑行。
-    /// </para>
-    /// </summary>
-    private void BuildUi()
+    private void CacheUiNodes()
     {
-        var title = new Label
-        {
-            Text = "直接修改运行时 Data；支持 Modifier 的数值属性可额外挂临时 Feature 加成"
-        };
-        AddChild(title);
-
-        _entityHintLabel = new Label
-        {
-            Text = "请先选择一个实体"
-        };
-        AddChild(_entityHintLabel);
-
-        var split = new HSplitContainer
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        AddChild(split);
-
-        _categoryList = new ItemList
-        {
-            CustomMinimumSize = new Vector2(160, 460),
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SelectMode = ItemList.SelectModeEnum.Single
-        };
+        MouseFilter = Control.MouseFilterEnum.Stop;
+        _entityHintLabel = GetNode<Label>("EntityHintLabel");
+        _categoryList = GetNode<ItemList>("Split/CategoryList");
+        _editorContainer = GetNode<VBoxContainer>("Split/EditorScroll/EditorContainer");
         _categoryList.ItemSelected += OnCategorySelected;
-        split.AddChild(_categoryList);
+    }
 
+    private void PopulateCategoryList()
+    {
+        _categoryList.Clear();
         foreach (var category in _categories)
         {
             _categoryList.AddItem(category.Title);
         }
-
-        var scroll = new ScrollContainer
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        split.AddChild(scroll);
-
-        _editorContainer = new VBoxContainer
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        scroll.AddChild(_editorContainer);
     }
 
+    /// <summary>
+    /// 左侧分类切换回调。
+    /// </summary>
+    /// <param name="index">当前选中的分类索引。</param>
     private void OnCategorySelected(long index)
     {
         Refresh();
@@ -486,6 +454,8 @@ public partial class AttributeTestModule : TestModuleBase
     /// 这里会根据元数据类型做基础转换，并在必要时对当前生命 / 魔法做上限夹紧。
     /// </para>
     /// </summary>
+    /// <param name="meta">属性元数据。</param>
+    /// <param name="value">UI 编辑后的原始值。</param>
     private void ApplyMetaValue(DataMeta meta, object value)
     {
         if (selectedEntity == null)
@@ -532,6 +502,7 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>
     /// 当最大生命 / 最大魔法相关字段变化时，保证当前值不超过新的上限。
     /// </summary>
+    /// <param name="key">本次被修改的 DataKey。</param>
     private void ClampCurrentResourceIfNeeded(string key)
     {
         if (selectedEntity == null)
@@ -600,6 +571,7 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>
     /// 数据变化后的统一刷新回调。
     /// </summary>
+    /// <param name="evt">属性变更事件数据。</param>
     private void OnEntityDataChanged(GameEventType.Data.PropertyChangedEventData evt)
     {
         if (!Visible)

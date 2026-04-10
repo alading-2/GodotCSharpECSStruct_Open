@@ -11,8 +11,13 @@ using Godot;
 /// </summary>
 public partial class AbilityTestModule : TestModuleBase
 {
+    /// <summary>技能测试模块日志器，用于记录点击操作与右键菜单行为。</summary>
     private static readonly Log _log = new(nameof(AbilityTestModule));
+
+    /// <summary>右键菜单命令：切换启用状态。</summary>
     private const int AbilityMenuToggleEnabled = 1;
+
+    /// <summary>右键菜单命令：移除技能。</summary>
     private const int AbilityMenuRemove = 2;
 
     /// <summary>技能测试服务，负责缓存技能目录和执行业务操作。</summary>
@@ -54,7 +59,9 @@ public partial class AbilityTestModule : TestModuleBase
     internal override void Initialize(TestSystem system)
     {
         base.Initialize(system);
-        BuildUi();
+        CacheUiNodes();
+        BindUiEvents();
+        RequestRefresh();
     }
 
     /// <summary>
@@ -94,84 +101,21 @@ public partial class AbilityTestModule : TestModuleBase
         RebuildCurrentTree();
     }
 
-    /// <summary>
-    /// 构建技能测试模块 UI。
-    /// <para>
-    /// 左侧点击叶子节点直接添加技能，右侧点击叶子节点直接移除技能，右键弹出启停菜单。
-    /// </para>
-    /// </summary>
-    private void BuildUi()
+    private void CacheUiNodes()
     {
         MouseFilter = Control.MouseFilterEnum.Stop;
+        _entityHintLabel = GetNode<Label>("EntityHintLabel");
+        _statusLabel = GetNode<Label>("StatusLabel");
+        _availableTree = GetNode<Tree>("Split/LeftBox/AvailableTree");
+        _currentTree = GetNode<Tree>("Split/RightBox/CurrentTree");
+        _abilityContextMenu = GetNode<PopupMenu>("AbilityContextMenu");
+    }
 
-        AddChild(new Label
-        {
-            Text = "左侧点击添加技能，右侧点击移除技能，右键右侧技能可启用 / 禁用"
-        });
-
-        _entityHintLabel = new Label { Text = "请先选择一个实体" };
-        AddChild(_entityHintLabel);
-
-        _statusLabel = new Label { Text = "" };
-        AddChild(_statusLabel);
-
-        // 双列表布局
-        var split = new HSplitContainer
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        AddChild(split);
-
-        // ── 左侧：可用技能配置 ──
-        var leftBox = new VBoxContainer
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        split.AddChild(leftBox);
-        leftBox.AddChild(new Label { Text = "技能库（点击添加）" });
-
-        _availableTree = new Tree
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            HideRoot = true,
-            SelectMode = Tree.SelectModeEnum.Single,
-            AllowRmbSelect = false,
-            Columns = 1,
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
+    private void BindUiEvents()
+    {
         _availableTree.Connect("item_selected", Callable.From(OnAvailableTreeItemSelected));
-        leftBox.AddChild(_availableTree);
-
-        // ── 右侧：当前实体技能 ──
-        var rightBox = new VBoxContainer
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        split.AddChild(rightBox);
-        rightBox.AddChild(new Label { Text = "当前技能（点击移除 / 右键启停）" });
-
-        _currentTree = new Tree
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            HideRoot = true,
-            SelectMode = Tree.SelectModeEnum.Single,
-            AllowRmbSelect = true,
-            Columns = 1,
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
         _currentTree.GuiInput += OnCurrentTreeGuiInput;
-        rightBox.AddChild(_currentTree);
-
-        _abilityContextMenu = new PopupMenu();
         _abilityContextMenu.IdPressed += OnAbilityContextMenuPressed;
-        AddChild(_abilityContextMenu);
-
-        RequestRefresh();
     }
 
     // ───────────────── 刷新 ─────────────────
@@ -268,9 +212,10 @@ public partial class AbilityTestModule : TestModuleBase
     /// <summary>
     /// 右侧当前技能树点击处理。
     /// </summary>
-    private void OnCurrentTreeGuiInput(InputEvent @event)
+    /// <param name="inputEvent">树控件输入事件。</param>
+    private void OnCurrentTreeGuiInput(InputEvent inputEvent)
     {
-        if (@event is not InputEventMouseButton mouseEvent)
+        if (inputEvent is not InputEventMouseButton mouseEvent)
         {
             return;
         }
@@ -351,6 +296,8 @@ public partial class AbilityTestModule : TestModuleBase
     /// <summary>
     /// 打开技能右键菜单。
     /// </summary>
+    /// <param name="itemView">当前右键命中的技能视图。</param>
+    /// <param name="localPosition">鼠标在右侧技能树中的本地坐标。</param>
     private void OpenAbilityContextMenu(AbilityOwnedItemView itemView, Vector2 localPosition)
     {
         _contextAbilityId = itemView.AbilityId;
@@ -367,6 +314,7 @@ public partial class AbilityTestModule : TestModuleBase
     /// <summary>
     /// 处理右键菜单动作。
     /// </summary>
+    /// <param name="id">菜单命令 Id。</param>
     private void OnAbilityContextMenuPressed(long id)
     {
         if (string.IsNullOrWhiteSpace(_contextAbilityId))
@@ -402,6 +350,9 @@ public partial class AbilityTestModule : TestModuleBase
     /// <summary>
     /// 尝试从树节点读取叶子元数据。
     /// </summary>
+    /// <param name="item">要读取的树节点。</param>
+    /// <param name="metadata">输出的元数据字符串。</param>
+    /// <returns>读取到非空元数据时返回 true。</returns>
     private static bool TryGetItemMetadata(TreeItem? item, out string metadata)
     {
         metadata = string.Empty;

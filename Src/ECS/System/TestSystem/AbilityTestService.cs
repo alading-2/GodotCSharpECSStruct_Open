@@ -12,7 +12,10 @@ using System.Collections.Generic;
 /// </summary>
 internal sealed class AbilityTestService
 {
+    /// <summary>技能分组兜底路径：当配置与运行时数据都无法提供分组时使用。</summary>
     private const string DefaultGroupPath = "技能.未分类";
+
+    /// <summary>Feature 调试服务，用于复用正式链路执行授予、移除与启停。</summary>
     private readonly FeatureDebugService _featureDebugService = new();
 
     /// <summary>缓存全部技能配置（ResourceKey → AbilityConfig）。</summary>
@@ -40,6 +43,9 @@ internal sealed class AbilityTestService
         AbilityTriggerMode TriggerMode
     );
 
+    /// <summary>
+    /// 初始化技能测试服务并预热技能目录缓存。
+    /// </summary>
     public AbilityTestService()
     {
         LoadAllAbilityConfigs();
@@ -48,6 +54,9 @@ internal sealed class AbilityTestService
     /// <summary>
     /// 为当前实体添加一个技能实例。
     /// </summary>
+    /// <param name="owner">技能拥有者实体，为空时返回失败结果。</param>
+    /// <param name="resourceKey">技能资源键（ResourceKey）。</param>
+    /// <returns>添加操作结果，包含成功标记与提示文本。</returns>
     public AbilityActionResult AddAbility(IEntity? owner, string resourceKey)
     {
         if (string.IsNullOrWhiteSpace(resourceKey))
@@ -67,6 +76,9 @@ internal sealed class AbilityTestService
     /// <summary>
     /// 移除指定技能实例。
     /// </summary>
+    /// <param name="owner">技能拥有者实体，为空时返回失败结果。</param>
+    /// <param name="abilityId">运行时技能实例 Id。</param>
+    /// <returns>移除操作结果，包含成功标记与提示文本。</returns>
     public AbilityActionResult RemoveAbility(IEntity? owner, string abilityId)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
@@ -82,6 +94,10 @@ internal sealed class AbilityTestService
     /// <summary>
     /// 切换指定技能实例的启用状态。
     /// </summary>
+    /// <param name="owner">技能拥有者实体，为空时返回失败结果。</param>
+    /// <param name="abilityId">运行时技能实例 Id。</param>
+    /// <param name="isEnabled">目标启用状态，true 为启用，false 为禁用。</param>
+    /// <returns>启停操作结果，包含成功标记与提示文本。</returns>
     public AbilityActionResult SetAbilityEnabled(IEntity? owner, string abilityId, bool isEnabled)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
@@ -97,6 +113,10 @@ internal sealed class AbilityTestService
     /// <summary>
     /// 按技能实例 Id 查询当前实体的技能视图。
     /// </summary>
+    /// <param name="owner">技能拥有者实体。</param>
+    /// <param name="abilityId">运行时技能实例 Id。</param>
+    /// <param name="itemView">输出的技能视图数据。</param>
+    /// <returns>存在对应技能实例时返回 true，否则返回 false。</returns>
     public bool TryGetOwnedItem(IEntity? owner, string abilityId, out AbilityOwnedItemView itemView)
     {
         itemView = default;
@@ -118,6 +138,8 @@ internal sealed class AbilityTestService
     /// <summary>
     /// 获取技能库视图，并根据当前实体标记“已拥有”状态。
     /// </summary>
+    /// <param name="owner">当前选中的实体，可为空。</param>
+    /// <returns>按分组路径组织后的技能库视图集合。</returns>
     public IReadOnlyList<AbilityGroupPathGroup<AbilityCatalogItemView>> GetCatalogGroups(IEntity? owner)
     {
         var ownedNames = new HashSet<string>(StringComparer.Ordinal);
@@ -157,6 +179,8 @@ internal sealed class AbilityTestService
     /// <summary>
     /// 获取当前实体已拥有技能的分类视图。
     /// </summary>
+    /// <param name="owner">当前选中的实体，可为空。</param>
+    /// <returns>按分组路径组织后的已拥有技能视图集合。</returns>
     public IReadOnlyList<AbilityGroupPathGroup<AbilityOwnedItemView>> GetOwnedGroups(IEntity? owner)
     {
         var views = new List<AbilityOwnedItemView>();
@@ -399,7 +423,17 @@ internal sealed class AbilityTestService
         return string.Compare(left, right, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// 创建成功结果。
+    /// </summary>
+    /// <param name="message">返回给 UI 的提示文本。</param>
+    /// <returns>成功状态的操作结果。</returns>
     private static AbilityActionResult Success(string message) => new(true, message);
 
+    /// <summary>
+    /// 创建失败结果。
+    /// </summary>
+    /// <param name="message">返回给 UI 的提示文本。</param>
+    /// <returns>失败状态的操作结果。</returns>
     private static AbilityActionResult Fail(string message) => new(false, message);
 }
