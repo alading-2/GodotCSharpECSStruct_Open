@@ -2,6 +2,8 @@
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Brotato_my", "Brotato_my.csproj", "{AE6B7051-3537-441F-BA8A-DDE0652D2096}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceGenerator", "Tools\ResourceGenerator\ResourceGenerator.csproj", "{7D7C8074-B986-4DD3-B750-B4C33247C967}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 	Debug|Any CPU = Debug|Any CPU
@@ -15,5 +17,11 @@ Global
 		{AE6B7051-3537-441F-BA8A-DDE0652D2096}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
 		{AE6B7051-3537-441F-BA8A-DDE0652D2096}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
 		{AE6B7051-3537-441F-BA8A-DDE0652D2096}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+		{7D7C8074-B986-4DD3-B750-B4C33247C967}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D7C8074-B986-4DD3-B750-B4C33247C967}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D7C8074-B986-4DD3-B750-B4C33247C967}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D7C8074-B986-4DD3-B750-B4C33247C967}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{7D7C8074-B986-4DD3-B750-B4C33247C967}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D7C8074-B986-4DD3-B750-B4C33247C967}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal
