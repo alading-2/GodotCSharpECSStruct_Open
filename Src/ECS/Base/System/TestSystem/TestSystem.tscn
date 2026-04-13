@@ -1,11 +1,13 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" uid="uid://dvbxvo8fbyewj" path="res://Src/ECS/Base/System/TestSystem/TestSystem.cs" id="1_test_system"]
+[ext_resource type="Script" path="res://Src/ECS/Base/System/TestSystem/TestSystem.cs" id="1_test_system"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/AttributeTestModule.tscn" id="2_attribute"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/AbilityTestModule.tscn" id="3_ability"]
 
 [node name="TestSystem" type="CanvasLayer"]
 script = ExtResource("1_test_system")
+_attributeModuleScene = ExtResource("2_attribute")
+_abilityModuleScene = ExtResource("3_ability")
 
 [node name="Root" type="Control" parent="."]
 layout_mode = 3
@@ -95,9 +97,3 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-
-[node name="AttributeTestModule" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost" instance=ExtResource("2_attribute")]
-visible = false
-
-[node name="AbilityTestModule" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost" instance=ExtResource("3_ability")]
-visible = false

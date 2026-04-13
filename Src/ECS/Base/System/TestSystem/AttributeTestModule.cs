@@ -7,7 +7,9 @@ using System.Linq;
 /// 属性测试模块。
 /// <para>
 /// 提供一个运行时调试面板，用于按分类查看并直接编辑实体的 Data 属性。
-/// 每个属性条目都由独立场景资产承载，模块只负责绑定数据和刷新列表。
+/// </para>
+/// <para>
+/// 这个模块不关心具体属性如何计算，只负责把 DataRegistry 中的元数据转换成可交互 UI。
 /// </para>
 /// </summary>
 public partial class AttributeTestModule : TestModuleBase
@@ -18,21 +20,19 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>Feature 调试服务，用于临时 Modifier 的挂载、读取与清理。</summary>
     private readonly FeatureDebugService _featureDebugService = new();
 
-    /// <summary>所有可编辑分类的缓存列表。</summary>
+    /// <summary>所有可编辑分类的缓存列表，初始化后用于驱动左侧分类面板。</summary>
     private readonly List<CategoryEntry> _categories = new();
-
-    [Export] private PackedScene? _editorRowScene;
 
     /// <summary>左侧分类列表。</summary>
     private ItemList _categoryList = null!;
 
-    /// <summary>右侧编辑器容器。</summary>
+    /// <summary>右侧编辑器容器，当前分类下的所有属性编辑行都会动态挂在这里。</summary>
     private VBoxContainer _editorContainer = null!;
 
-    /// <summary>顶部实体提示文字。</summary>
+    /// <summary>顶部实体提示文字，用于显示当前编辑目标。</summary>
     private Label _entityHintLabel = null!;
 
-    /// <summary>当前订阅了 Data 变化事件的实体。</summary>
+    /// <summary>当前订阅了 Data 变化事件的实体，避免重复订阅。</summary>
     private IEntity? _subscribedEntity;
 
     /// <summary>模块在 TestSystem 下拉框中的显示名称。</summary>
@@ -40,10 +40,13 @@ public partial class AttributeTestModule : TestModuleBase
 
     /// <summary>
     /// 模块初始化。
+    /// <para>
+    /// 先整理分类数据，再构建 UI；如果存在分类，默认选中第一个分类，保证界面打开后立即可用。
+    /// </para>
     /// </summary>
-    internal override void Initialize(ITestModuleHost host)
+    internal override void Initialize(TestSystem system)
     {
-        base.Initialize(host);
+        base.Initialize(system);
         BuildCategoryData();
         CacheUiNodes();
         PopulateCategoryList();
@@ -51,36 +54,31 @@ public partial class AttributeTestModule : TestModuleBase
         {
             _categoryList.Select(0);
         }
-
-        RequestRefresh();
+        Refresh();
     }
 
     /// <summary>
-    /// 选中实体变化时，先解除旧订阅，再绑定新实体并请求刷新。
+    /// 选中实体变化时，先解除旧订阅，再绑定新实体并刷新界面。
     /// </summary>
     internal override void OnSelectedEntityChanged(IEntity? entity)
     {
         UnsubscribeEntityEvents();
         base.OnSelectedEntityChanged(entity);
-        if (Visible)
-        {
-            SubscribeEntityEvents();
-        }
-
-        RequestRefresh();
+        SubscribeEntityEvents();
+        Refresh();
     }
 
     /// <summary>
-    /// 模块被切换到前台时，恢复订阅并刷新。
+    /// 模块被切换到前台时，恢复订阅并强制刷新。
     /// </summary>
     internal override void OnActivated()
     {
         SubscribeEntityEvents();
-        RequestRefresh();
+        Refresh();
     }
 
     /// <summary>
-    /// 模块离开前台时，取消订阅。
+    /// 模块离开前台时，取消订阅，避免后台界面持续响应数据变化。
     /// </summary>
     internal override void OnDeactivated()
     {
@@ -89,6 +87,9 @@ public partial class AttributeTestModule : TestModuleBase
 
     /// <summary>
     /// 刷新当前显示内容。
+    /// <para>
+    /// 会先清空旧编辑器行，再根据当前分类重新生成对应的编辑控件。
+    /// </para>
     /// </summary>
     internal override void Refresh()
     {
@@ -100,41 +101,27 @@ public partial class AttributeTestModule : TestModuleBase
             return;
         }
 
-        var entityName = selectedEntity.Data.Get<string>(DataKey.Name.Key);
-        if (string.IsNullOrWhiteSpace(entityName))
-        {
-            entityName = entityNode.Name.ToString();
-        }
-
-        _entityHintLabel.Text = $"当前实体：{entityName} ({entityNode.GetType().Name})";
+        _entityHintLabel.Text = $"当前实体：{selectedEntity.Data.Get<string>(DataKey.Name.Key)} ({entityNode.GetType().Name})";
 
         if (_categories.Count == 0)
         {
             return;
         }
 
-        var selectedItems = _categoryList.GetSelectedItems();
-        var selectedIndex = selectedItems.Length > 0 ? selectedItems[0] : 0;
-        var categoryIndex = Mathf.Clamp(selectedIndex, 0, _categories.Count - 1);
-        var category = _categories[categoryIndex];
+        var index = Mathf.Clamp(_categoryList.GetSelectedItems().FirstOrDefault(), 0, _categories.Count - 1);
+        var category = _categories[index];
 
         foreach (var meta in category.Metas)
         {
-            var row = InstantiateScene<AttributeEditorRow>(_editorRowScene, nameof(AttributeEditorRow));
-            row.Bind(
-                selectedEntity, // entity
-                meta, // meta
-                _featureDebugService, // featureDebugService
-                ApplyMetaValue, // onValueCommitted
-                message => _entityHintLabel.Text = message, // onStatusChanged
-                RequestRefresh // onRefreshRequested
-            );
-            _editorContainer.AddChild(row);
+            _editorContainer.AddChild(CreateEditorRow(meta));
         }
     }
 
     /// <summary>
     /// 收集所有可编辑分类的数据元信息。
+    /// <para>
+    /// 这里按业务域分组，保证左侧列表的分类顺序稳定且符合玩家理解习惯。
+    /// </para>
     /// </summary>
     private void BuildCategoryData()
     {
@@ -153,6 +140,9 @@ public partial class AttributeTestModule : TestModuleBase
 
     /// <summary>
     /// 将某个分类中可编辑的 DataMeta 收集进缓存。
+    /// <para>
+    /// 只保留真正适合在运行时调试面板直接修改的元数据，避免把计算项或不可编辑项放进界面。
+    /// </para>
     /// </summary>
     private void AddCategory(string title, Enum category)
     {
@@ -171,6 +161,9 @@ public partial class AttributeTestModule : TestModuleBase
 
     /// <summary>
     /// 判断某个元数据是否适合在运行时编辑。
+    /// <para>
+    /// 计算项、不可枚举的复杂类型等不会出现在调试面板中。
+    /// </para>
     /// </summary>
     private static bool IsEditableMeta(DataMeta meta)
     {
@@ -203,14 +196,266 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>
     /// 左侧分类切换回调。
     /// </summary>
+    /// <param name="index">当前选中的分类索引。</param>
     private void OnCategorySelected(long index)
     {
-        RequestRefresh();
+        Refresh();
+    }
+
+    /// <summary>
+    /// 创建单个分类条目对应的编辑行。
+    /// <para>
+    /// 上层负责标题、键名与分割线；下层由 CreateEditor 按数据类型生成真正的编辑控件。
+    /// </para>
+    /// </summary>
+    private Control CreateEditorRow(DataMeta meta)
+    {
+        var wrapper = new VBoxContainer();
+        wrapper.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+
+        var header = new HBoxContainer();
+        wrapper.AddChild(header);
+
+        var title = new Label
+        {
+            Text = string.IsNullOrWhiteSpace(meta.DisplayName) ? meta.Key : meta.DisplayName,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
+        header.AddChild(title);
+
+        var keyLabel = new Label
+        {
+            Text = meta.Key
+        };
+        header.AddChild(keyLabel);
+
+        var editor = CreateEditor(meta);
+        if (editor != null)
+        {
+            wrapper.AddChild(editor);
+        }
+
+        var modifierEditor = CreateTemporaryModifierEditor(meta);
+        if (modifierEditor != null)
+        {
+            wrapper.AddChild(modifierEditor);
+        }
+
+        wrapper.AddChild(new HSeparator());
+        return wrapper;
+    }
+
+    /// <summary>
+    /// 为支持 Modifier 的数值属性创建临时 Feature 调试控件。
+    /// </summary>
+    private Control? CreateTemporaryModifierEditor(DataMeta meta)
+    {
+        if (selectedEntity == null || !SupportsTemporaryModifier(meta))
+        {
+            return null;
+        }
+
+        var row = new HBoxContainer();
+        row.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+
+        var label = new Label
+        {
+            Text = "临时加成",
+            CustomMinimumSize = new Vector2(80, 0)
+        };
+        row.AddChild(label);
+
+        var modifierValue = _featureDebugService.GetTemporaryModifierValue(selectedEntity, meta.Key);
+        var spin = new SpinBox
+        {
+            MinValue = meta.MinValue.HasValue ? -meta.MinValue.Value - 9999 : -999999,
+            MaxValue = meta.MaxValue ?? 999999,
+            Step = meta.IsInteger ? 1 : 0.1,
+            Value = modifierValue,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
+        row.AddChild(spin);
+
+        var applyButton = new Button
+        {
+            Text = "应用临时Feature"
+        };
+        applyButton.Pressed += () =>
+        {
+            if (selectedEntity == null)
+            {
+                return;
+            }
+
+            var result = _featureDebugService.ApplyTemporaryModifier(
+                selectedEntity,
+                meta.Key,
+                GetMetaDisplayName(meta),
+                meta.IsPercentage,
+                (float)spin.Value);
+            _entityHintLabel.Text = result.Message;
+            Refresh();
+        };
+        row.AddChild(applyButton);
+
+        var clearButton = new Button
+        {
+            Text = "清除"
+        };
+        clearButton.Pressed += () =>
+        {
+            if (selectedEntity == null)
+            {
+                return;
+            }
+
+            var result = _featureDebugService.ClearTemporaryModifier(
+                selectedEntity,
+                meta.Key,
+                GetMetaDisplayName(meta));
+            _entityHintLabel.Text = result.Message;
+            Refresh();
+        };
+        row.AddChild(clearButton);
+
+        return row;
+    }
+
+    /// <summary>
+    /// 创建单个 DataMeta 的编辑控件。
+    /// <para>
+    /// 会根据元数据类型自动生成 CheckButton、OptionButton、SpinBox 或 LineEdit。
+    /// </para>
+    /// </summary>
+    private Control? CreateEditor(DataMeta meta)
+    {
+        if (selectedEntity == null)
+        {
+            return null;
+        }
+
+        if (meta.IsBoolean)
+        {
+            var toggle = new CheckButton
+            {
+                ButtonPressed = selectedEntity.Data.Get<bool>(meta.Key),
+                Text = selectedEntity.Data.Get<bool>(meta.Key) ? "已开启" : "已关闭"
+            };
+            toggle.Toggled += pressed =>
+            {
+                toggle.Text = pressed ? "已开启" : "已关闭";
+                ApplyMetaValue(meta, pressed);
+            };
+            return toggle;
+        }
+
+        if (meta.IsEnum)
+        {
+            var option = new OptionButton();
+            var values = Enum.GetValues(meta.Type);
+            var currentValue = selectedEntity.Data.Get<int>(meta.Key);
+            int selectedIndex = 0;
+            int index = 0;
+            foreach (var value in values)
+            {
+                option.AddItem(value?.ToString() ?? string.Empty);
+                if (Convert.ToInt32(value) == currentValue)
+                {
+                    selectedIndex = index;
+                }
+                index++;
+            }
+
+            option.Selected = selectedIndex;
+            option.ItemSelected += idx =>
+            {
+                var rawValue = values.GetValue((int)idx);
+                if (rawValue != null)
+                {
+                    ApplyMetaValue(meta, rawValue);
+                }
+            };
+            return option;
+        }
+
+        if (meta.HasOptions)
+        {
+            var option = new OptionButton();
+            for (int i = 0; i < meta.Options!.Count; i++)
+            {
+                option.AddItem(meta.Options[i]);
+            }
+
+            option.Selected = selectedEntity.Data.Get<int>(meta.Key);
+            option.ItemSelected += idx => ApplyMetaValue(meta, (int)idx);
+            return option;
+        }
+
+        if (meta.IsNumeric)
+        {
+            var spin = new SpinBox
+            {
+                MinValue = meta.MinValue ?? -999999,
+                MaxValue = meta.MaxValue ?? 999999,
+                Step = meta.IsInteger ? 1 : 0.1,
+                Value = meta.IsInteger
+                    ? selectedEntity.Data.Get<int>(meta.Key)
+                    : selectedEntity.Data.Get<float>(meta.Key),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+            };
+            spin.ValueChanged += value =>
+            {
+                if (meta.IsInteger)
+                {
+                    ApplyMetaValue(meta, (int)Math.Round(value));
+                }
+                else
+                {
+                    ApplyMetaValue(meta, (float)value);
+                }
+            };
+            return spin;
+        }
+
+        if (meta.IsString)
+        {
+            var lineEdit = new LineEdit
+            {
+                Text = selectedEntity.Data.Get<string>(meta.Key),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+            };
+            lineEdit.TextSubmitted += text => ApplyMetaValue(meta, text);
+            lineEdit.FocusExited += () => ApplyMetaValue(meta, lineEdit.Text);
+            return lineEdit;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 判断某个属性是否适合使用临时 Modifier 调试。
+    /// </summary>
+    private static bool SupportsTemporaryModifier(DataMeta meta)
+    {
+        return meta.IsNumeric && meta.SupportModifiers == true && !meta.IsComputed;
+    }
+
+    /// <summary>
+    /// 获取元数据的稳定展示名称。
+    /// </summary>
+    private static string GetMetaDisplayName(DataMeta meta)
+    {
+        return string.IsNullOrWhiteSpace(meta.DisplayName) ? meta.Key : meta.DisplayName;
     }
 
     /// <summary>
     /// 把 UI 中编辑后的值写回实体 Data。
+    /// <para>
+    /// 这里会根据元数据类型做基础转换，并在必要时对当前生命 / 魔法做上限夹紧。
+    /// </para>
     /// </summary>
+    /// <param name="meta">属性元数据。</param>
+    /// <param name="value">UI 编辑后的原始值。</param>
     private void ApplyMetaValue(DataMeta meta, object value)
     {
         if (selectedEntity == null)
@@ -251,12 +496,13 @@ public partial class AttributeTestModule : TestModuleBase
         }
 
         ClampCurrentResourceIfNeeded(meta.Key);
-        RequestRefresh();
+        Refresh();
     }
 
     /// <summary>
     /// 当最大生命 / 最大魔法相关字段变化时，保证当前值不超过新的上限。
     /// </summary>
+    /// <param name="key">本次被修改的 DataKey。</param>
     private void ClampCurrentResourceIfNeeded(string key)
     {
         if (selectedEntity == null)
@@ -287,6 +533,9 @@ public partial class AttributeTestModule : TestModuleBase
 
     /// <summary>
     /// 订阅当前实体的 Data 变化事件。
+    /// <para>
+    /// 这样当其它系统修改了属性时，调试面板也能同步刷新。
+    /// </para>
     /// </summary>
     private void SubscribeEntityEvents()
     {
@@ -322,6 +571,7 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>
     /// 数据变化后的统一刷新回调。
     /// </summary>
+    /// <param name="evt">属性变更事件数据。</param>
     private void OnEntityDataChanged(GameEventType.Data.PropertyChangedEventData evt)
     {
         if (!Visible)
@@ -329,11 +579,11 @@ public partial class AttributeTestModule : TestModuleBase
             return;
         }
 
-        RequestRefresh();
+        Refresh();
     }
 
     /// <summary>
-    /// 清理右侧编辑器中的旧行。
+    /// 清理右侧编辑器中的旧行，避免重复堆叠。
     /// </summary>
     private void ClearEditorRows()
     {
@@ -341,21 +591,5 @@ public partial class AttributeTestModule : TestModuleBase
         {
             child.QueueFree();
         }
-    }
-
-    private static T InstantiateScene<T>(PackedScene? scene, string sceneName) where T : Node
-    {
-        if (scene == null)
-        {
-            throw new InvalidOperationException($"属性测试场景未配置: {sceneName}");
-        }
-
-        var instance = scene.Instantiate<T>();
-        if (instance == null)
-        {
-            throw new InvalidOperationException($"属性测试场景实例化失败: {sceneName}");
-        }
-
-        return instance;
     }
 }

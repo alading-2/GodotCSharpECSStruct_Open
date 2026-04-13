@@ -12,14 +12,11 @@ using Godot;
 /// </summary>
 public abstract partial class TestModuleBase : VBoxContainer
 {
-    /// <summary>当前挂载的宿主上下文，供子模块访问统一的测试入口。</summary>
-    protected ITestModuleHost testHost = null!;
+    /// <summary>当前挂载的 TestSystem 上下文，供子模块访问统一的测试入口与公共工具。</summary>
+    protected TestSystem testSystem = null!;
 
     /// <summary>当前被 TestSystem 选中的实体，子模块刷新时直接读取即可。</summary>
     protected IEntity? selectedEntity;
-
-    /// <summary>是否已经排队等待一次延迟刷新，避免同一帧重复重建 UI。</summary>
-    private bool _refreshQueued;
 
     /// <summary>模块在下拉列表中显示的名称。</summary>
     internal abstract string DisplayName { get; }
@@ -31,9 +28,9 @@ public abstract partial class TestModuleBase : VBoxContainer
     /// 子类只需要在调用 base 后继续构建自己的 UI 即可。
     /// </para>
     /// </summary>
-    internal virtual void Initialize(ITestModuleHost host)
+    internal virtual void Initialize(TestSystem system)
     {
-        testHost = host;
+        testSystem = system;
         Visible = false;
         SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         SizeFlagsVertical = Control.SizeFlags.ExpandFill;
@@ -61,37 +58,5 @@ public abstract partial class TestModuleBase : VBoxContainer
     /// <summary>外部请求刷新模块 UI 时回调，子类负责把当前实体状态重新渲染到界面。</summary>
     internal virtual void Refresh()
     {
-    }
-
-    /// <summary>
-    /// 请求延迟刷新模块。
-    /// <para>
-    /// 统一在 UI 事件结束后再重建界面，避免控件交互过程中立刻销毁当前节点树。
-    /// </para>
-    /// </summary>
-    internal void RequestRefresh()
-    {
-        if (_refreshQueued)
-        {
-            return;
-        }
-
-        _refreshQueued = true;
-        CallDeferred(nameof(FlushRefresh));
-    }
-
-    /// <summary>
-    /// 执行一次延迟刷新。
-    /// </summary>
-    private void FlushRefresh()
-    {
-        _refreshQueued = false;
-
-        if (!IsInsideTree())
-        {
-            return;
-        }
-
-        Refresh();
     }
 }

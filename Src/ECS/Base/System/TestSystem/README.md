@@ -2,7 +2,7 @@
 
 ## 1. 目录定位
 
-`Src/ECS/Base/System/TestSystem/` 用来承载项目的运行时测试系统源码。
+`Src/ECS/System/TestSystem/` 用来承载项目的运行时测试系统源码。
 
 这套系统面向开发调试阶段，目标是：
 
