@@ -50,9 +50,9 @@ dotnet run --project Tools/ResourceGenerator/ResourceGenerator.csproj
 
 1. **配置优先**: 位于 `Data/Data/Resources` 下的 `.tres` 文件。
 2. **路径匹配**: 
-   - `res://Src/UI/` -> `UI`
-   - `res://Src/ECS/Entity/` -> `Entity`
-   - `res://Src/ECS/Component/` -> `Component`
+   - `res://Src/ECS/UI/` -> `UI`
+   - `res://Src/ECS/Base/Entity/` -> `Entity`
+   - `res://Src/ECS/Base/Component/` -> `Component`
    - `res://assets/` -> `Asset`
 3. **兜底**: 其他 unrecognized 路径归类为 `Other`。
 

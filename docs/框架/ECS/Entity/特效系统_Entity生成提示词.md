@@ -24,7 +24,7 @@
 
 ## 2. 为什么这次必须统一用 Entity
 
-根据 `Src/ECS/Entity/Core` 当前实现，Entity 核心逻辑已经很完整：
+根据 `Src/ECS/Base/Entity/Core` 当前实现，Entity 核心逻辑已经很完整：
 
 ### 2.1 `EntityManager.Spawn` 已经覆盖特效需要的生命周期入口
 

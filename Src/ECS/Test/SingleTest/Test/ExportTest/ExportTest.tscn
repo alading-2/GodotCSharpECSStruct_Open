@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://16ad2vufvt2y"]
+
+[ext_resource type="Script" uid="uid://bvmbaogkgc485" path="res://Src/ECS/Test/SingleTest/Test/ExportTest/ExportTest.cs" id="1_dc8wi"]
+
+[node name="Node2D" type="Node"]
+script = ExtResource("1_dc8wi")

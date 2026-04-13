@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dybtw2ypr4qf1" path="res://Src/ECS/Base/Component/Ability/ChargeComponent/ChargeComponent.cs" id="1_charge"]
+
+[node name="ChargeComponent" type="Node"]
+script = ExtResource("1_charge")

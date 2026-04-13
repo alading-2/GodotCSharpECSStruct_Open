@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://yk8n6ger14ca" path="res://Src/ECS/Base/System/DamageSystem/DamageService.cs" id="1_damage"]
+
+[node name="DamageService" type="Node"]
+script = ExtResource("1_damage")

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cgcycpcolil4c"]
+
+[ext_resource type="Script" uid="uid://damndn81rj73s" path="res://Src/ECS/Base/System/Spawn/SpawnSystem.cs" id="1_script"]
+
+[node name="SpawnSystem" type="Node"]
+script = ExtResource("1_script")

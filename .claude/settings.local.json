@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(find Src -name \"*.cs\" -exec head -5 {} \\\\; -print)",
+      "Bash(grep -E \"\\(^namespace|^//|^using|$\\)\")",
+      "Bash(dotnet run:*)",
+      "Bash(sed -i 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' .windsurf/skills/**/*.md)",
+      "Bash(sed -i 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' .windsurf/skills/**/*.md)",
+      "Bash(sed -i 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' .windsurf/skills/**/*.md)",
+      "Bash(sed -i 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' .windsurf/skills/**/*.md)",
+      "Bash(sed -i 's|Src/ECS/System/|Src/ECS/Base/System/|g' .windsurf/skills/**/*.md)",
+      "Bash(sed -i 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' Docs/框架/项目索引.md)",
+      "Bash(sed -i 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' Docs/框架/项目索引.md)",
+      "Bash(sed -i 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' Docs/框架/项目索引.md)",
+      "Bash(sed -i 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' Docs/框架/项目索引.md)",
+      "Bash(sed -i 's|Src/ECS/System/|Src/ECS/Base/System/|g' Docs/框架/项目索引.md)",
+      "Bash(find Docs -name '*.md' -exec sed -i -e 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' -e 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' -e 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' -e 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' -e 's|Src/ECS/System/|Src/ECS/Base/System/|g' -e 's|Src/AI/|Src/ECS/AI/|g' -e 's|Src/Tools/|Src/ECS/Tools/|g' -e 's|Src/UI/|Src/ECS/UI/|g' -e 's|Src/Test/|Src/ECS/Test/|g' '{}' ';')",
+      "Bash(find .opencode/skills .codex/skills -name '*.md' -exec sed -i -e 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' -e 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' -e 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' -e 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' -e 's|Src/ECS/System/|Src/ECS/Base/System/|g' -e 's|Src/AI/|Src/ECS/AI/|g' -e 's|Src/Tools/|Src/ECS/Tools/|g' -e 's|Src/UI/|Src/ECS/UI/|g' '{}' ';')",
+      "Bash(sed -i -e 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' -e 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' -e 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' -e 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' -e 's|Src/ECS/System/|Src/ECS/Base/System/|g' -e 's|Src/AI/|Src/ECS/AI/|g' -e 's|Src/Tools/|Src/ECS/Tools/|g' -e 's|Src/UI/|Src/ECS/UI/|g' Tools/ResourceGenerator/README.md)",
+      "Bash(find Data -name '*.md' -exec sed -i -e 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' -e 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' -e 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' -e 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' -e 's|Src/ECS/System/|Src/ECS/Base/System/|g' -e 's|Src/AI/|Src/ECS/AI/|g' -e 's|Src/Tools/|Src/ECS/Base/Tools/|g' -e 's|Src/UI/|Src/ECS/UI/|g' '{}' ';')",
+      "Bash(find .claude/skills -name '*.md' -exec sed -i -e 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' -e 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' -e 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' -e 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' -e 's|Src/ECS/System/|Src/ECS/Base/System/|g' -e 's|Src/AI/|Src/ECS/AI/|g' -e 's|Src/Tools/|Src/ECS/Tools/|g' -e 's|Src/UI/|Src/ECS/UI/|g' '{}' ';')",
+      "Bash(find Src/ECS/Base -name '*.md' -exec sed -i -e 's|Src/ECS/Entity/|Src/ECS/Base/Entity/|g' -e 's|Src/ECS/Component/|Src/ECS/Base/Component/|g' -e 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' -e 's|Src/ECS/Event/|Src/ECS/Base/Event/|g' -e 's|Src/ECS/System/|Src/ECS/Base/System/|g' -e 's|Src/AI/|Src/ECS/AI/|g' -e 's|Src/Tools/|Src/ECS/Tools/|g' -e 's|Src/UI/|Src/ECS/UI/|g' '{}' ';')",
+      "Bash(sed -i 's|Src/ECS/Data`|Src/ECS/Base/Data`|g' .windsurf/skills/**/*.md .claude/skills/**/*.md Docs/**/*.md Src/**/*.md)",
+      "Bash(sed -i 's|\\(Src/ECS/Data\\)|\\(Src/ECS/Base/Data\\)|g' .windsurf/skills/**/*.md .claude/skills/**/*.md Docs/**/*.md Src/**/*.md)",
+      "Bash(sed -i 's|Src/ECS/Data/|Src/ECS/Base/Data/|g' .windsurf/skills/**/*.md .claude/skills/**/*.md Docs/**/*.md Src/**/*.md)",
+      "Bash(sed -i 's|`Src/AI/|`Src/ECS/AI/|g' .windsurf/skills/**/*.md .claude/skills/**/*.md Docs/**/*.md Src/**/*.md)",
+      "Bash(sed -i 's|\\(Src/AI/|\\(Src/ECS/AI/|g' .windsurf/skills/**/*.md .claude/skills/**/*.md Docs/**/*.md Src/**/*.md)",
+      "Bash(wc:*)",
+      "WebSearch",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
+    ]
+  }
+}

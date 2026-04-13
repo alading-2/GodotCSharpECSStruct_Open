@@ -18,15 +18,15 @@ class ResourceGenerator
         { "assets/Unit/Player", ResourceCategory.AssetUnitPlayer }, // 长度 18 — 自动更优先
         { "assets/Unit/Enemy", ResourceCategory.AssetUnitEnemy },  // 长度 16 — 自动更优先
         { "assets/Projectile", ResourceCategory.AssetProjectile },
-        { "Src/UI", ResourceCategory.UI },
-        { "Src/ECS/Entity", ResourceCategory.Entity },
-        { "Src/ECS/Component", ResourceCategory.Component },
+        { "Src/ECS/UI", ResourceCategory.UI },
+        { "Src/ECS/Base/Entity", ResourceCategory.Entity },
+        { "Src/ECS/Base/Component", ResourceCategory.Component },
         { "Data/Data", ResourceCategory.Data },         // 兜底
         { "Data/Data/Ability", ResourceCategory.DataAbility },  // 自动更优先
         { "Data/Data/Unit", ResourceCategory.DataUnit },      // 自动更优先
-        { "Src/ECS/System", ResourceCategory.System },
-        { "Src/Tools", ResourceCategory.Tools },
-        { "Src/Test", ResourceCategory.Test },
+        { "Src/ECS/Base/System", ResourceCategory.System },
+        { "Src/ECS/Tools", ResourceCategory.Tools },
+        { "Src/ECS/Test", ResourceCategory.Test },
     };
 
     private static readonly string[] ExcludePaths = {

@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://un2fds2fs1tc"]
-
-[ext_resource type="Script" uid="uid://gitygqu63cu7" path="res://Src/ECS/Component/Effect/EffectComponent/EffectComponent.cs" id="1_8g1sv"]
-
-[node name="EffectComponent" type="Node" unique_id=1317693693]
-script = ExtResource("1_8g1sv")

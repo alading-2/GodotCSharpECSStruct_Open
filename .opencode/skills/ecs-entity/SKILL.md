@@ -137,14 +137,14 @@ private void OnDamaged(GameEventType.Unit.DamagedEventData evt)
 
 ## 关键文件路径
 
-- **标准模板**（新建 Entity 从这里复制）→ `Src/ECS/Entity/TemplateEntity.cs`
-- **接口定义** → `Src/ECS/Entity/IEntity.cs`
-- **开发规范** → `Src/ECS/Entity/Entity规范.md`
-- **API 手册** → `Src/ECS/Entity/Core/EntityManager.md`
-- **核心实现** → `Src/ECS/Entity/Core/EntityManager.cs`
-- **关系管理** → `Src/ECS/Entity/Core/EntityRelationshipManager.cs`
+- **标准模板**（新建 Entity 从这里复制）→ `Src/ECS/Base/Entity/TemplateEntity.cs`
+- **接口定义** → `Src/ECS/Base/Entity/IEntity.cs`
+- **开发规范** → `Src/ECS/Base/Entity/Entity规范.md`
+- **API 手册** → `Src/ECS/Base/Entity/Core/EntityManager.md`
+- **核心实现** → `Src/ECS/Base/Entity/Core/EntityManager.cs`
+- **关系管理** → `Src/ECS/Base/Entity/Core/EntityRelationshipManager.cs`
 - **架构设计** → `Docs/框架/ECS/Entity/Entity架构设计理念.md`
-- **对象池接口** → `Src/Tools/ObjectPool/IPoolable.cs`
+- **对象池接口** → `Src/ECS/Tools/ObjectPool/IPoolable.cs`
 - **对象池初始化** → 搜索 `ObjectPoolInit.cs`
-- **特效实体参考** → `Src/ECS/Entity/Effect/EffectEntity.cs`（`Area2D + IEntity + IPoolable`）
-- **特效服务入口** → `Src/ECS/System/EffectSystem/EffectTool.cs`
+- **特效实体参考** → `Src/ECS/Base/Entity/Effect/EffectEntity.cs`（`Area2D + IEntity + IPoolable`）
+- **特效服务入口** → `Src/ECS/Base/System/EffectSystem/EffectTool.cs`

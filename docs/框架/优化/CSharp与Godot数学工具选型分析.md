@@ -367,8 +367,8 @@ Godot 的 `Tween` 不是只会补位置。
 
 由项目自研，保持轻量纯函数：
 
-- `Src/Tools/Math/Curves`
-- `Src/Tools/Math/Geometry`
+- `Src/ECS/Tools/Math/Curves`
+- `Src/ECS/Tools/Math/Geometry`
 
 目标：
 

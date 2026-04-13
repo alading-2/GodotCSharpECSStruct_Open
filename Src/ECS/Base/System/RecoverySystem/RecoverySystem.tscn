@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://bfdy550hxdnt3" path="res://Src/ECS/Base/System/RecoverySystem/RecoverySystem.cs" id="1_recovery"]
+
+[node name="RecoverySystem" type="Node"]
+script = ExtResource("1_recovery")

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b8q7x5y203a4c"]
+
+[ext_resource type="Script" uid="uid://df06lom0n1plw" path="res://Src/ECS/Base/Component/Ability/AbilityTargetSelectionComponent/AbilityTargetSelectionComponent.cs" id="1_target_selection"]
+
+[node name="AbilityTargetSelectionComponent" type="Node"]
+script = ExtResource("1_target_selection")

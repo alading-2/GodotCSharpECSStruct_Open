@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://activeskillinputtest"]
-
-[ext_resource type="Script" path="res://Src/Test/SingleTest/ECS/System/ActiveSkillInputTest/ActiveSkillInputTest.cs" id="1"]
-
-[node name="ActiveSkillInputTest" type="Node"]
-script = ExtResource("1")

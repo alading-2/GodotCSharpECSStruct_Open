@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://b8y4k2q1w71a"]
+
+[ext_resource type="Script" uid="uid://bku7on2fidj5" path="res://Src/ECS/Test/SingleTest/ECS/ECSTest/Entity/TestEntity.cs" id="1_test_entity"]
+
+
+[node name="TestEntity" type="Node"]
+script = ExtResource("1_test_entity")

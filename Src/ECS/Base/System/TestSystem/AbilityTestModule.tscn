@@ -1,0 +1,69 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Src/ECS/Base/System/TestSystem/AbilityTestModule.cs" id="1_ability_script"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/AbilityCards/AbilityGroupPanel.tscn" id="2_group_panel"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/AbilityCards/AbilityCatalogCard.tscn" id="3_catalog_card"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/AbilityCards/AbilityOwnedCard.tscn" id="4_owned_card"]
+
+[node name="AbilityTestModule" type="VBoxContainer"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_ability_script")
+_groupPanelScene = ExtResource("2_group_panel")
+_catalogCardScene = ExtResource("3_catalog_card")
+_ownedCardScene = ExtResource("4_owned_card")
+
+[node name="InstructionLabel" type="Label" parent="."]
+layout_mode = 2
+text = "左侧点击添加技能，右侧点击移除技能，右键右侧技能可启用 / 禁用"
+
+[node name="EntityHintLabel" type="Label" parent="."]
+layout_mode = 2
+text = "请先选择一个实体"
+
+[node name="StatusLabel" type="Label" parent="."]
+layout_mode = 2
+text = ""
+
+[node name="Split" type="HSplitContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LeftBox" type="VBoxContainer" parent="Split"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AvailableTitle" type="Label" parent="Split/LeftBox"]
+layout_mode = 2
+text = "技能库（按钮添加）"
+
+[node name="AvailableScroll" type="ScrollContainer" parent="Split/LeftBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AvailableGroups" type="VBoxContainer" parent="Split/LeftBox/AvailableScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RightBox" type="VBoxContainer" parent="Split"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CurrentTitle" type="Label" parent="Split/RightBox"]
+layout_mode = 2
+text = "当前技能（按钮移除 / 启停）"
+
+[node name="CurrentScroll" type="ScrollContainer" parent="Split/RightBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CurrentGroups" type="VBoxContainer" parent="Split/RightBox/CurrentScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3

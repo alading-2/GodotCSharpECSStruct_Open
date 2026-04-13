@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://d16dgodax7nkn"]
+
+[ext_resource type="Script" uid="uid://de3h37enh4mb7" path="res://Src/ECS/Base/Entity/Projectile/ProjectileEntity.cs" id="1_proj"]
+[ext_resource type="PackedScene" uid="uid://bpgdbip0j58ml" path="res://Src/ECS/Base/Component/Movement/EntityMovementComponent.tscn" id="2_movement"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/Component/Collision/CollisionComponent/CollisionComponent.tscn" id="3_collision"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_shape"]
+radius = 8.0
+
+[node name="ProjectileEntity" type="Area2D" unique_id=802504127]
+collision_layer = 8
+collision_mask = 6
+script = ExtResource("1_proj")
+
+[node name="Component" type="Node" parent="." unique_id=1678879125]
+
+[node name="EntityMovementComponent" parent="Component" unique_id=765902932 instance=ExtResource("2_movement")]
+
+[node name="CollisionComponent" parent="Component" unique_id=1096018957 instance=ExtResource("3_collision")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1829095546]
+shape = SubResource("CircleShape2D_shape")

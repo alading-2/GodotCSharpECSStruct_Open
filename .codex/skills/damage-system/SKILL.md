@@ -145,7 +145,7 @@ DamageTool.ScheduleDoT(
 - `immediate = true`：通过 Timer 首帧立即执行一次 tick；`AbilityImpactTool` 默认仍用同步首跳保证返回命中数
 - **绝大多数技能**通过 `AbilityImpactTool.Execute(caster, options)` 间接调用 `DamageTool`，不需要直接使用
 
-关键文件：`Src/ECS/System/DamageSystem/DamageTool.cs`
+关键文件：`Src/ECS/Base/System/DamageSystem/DamageTool.cs`
 
 ## 禁止事项
 
@@ -158,10 +158,10 @@ DamageTool.ScheduleDoT(
 
 ## 关键文件路径
 
-- **核心服务** → `Src/ECS/System/DamageSystem/DamageService.cs`
-- **伤害信息** → `Src/ECS/System/DamageSystem/DamageInfo.cs`
-- **处理器接口** → `Src/ECS/System/DamageSystem/IDamageProcessor.cs`
-- **接触伤害组件** → `Src/ECS/Component/Collision/ContactDamageComponent/ContactDamageComponent.cs`
-- **扩展指南** → `Src/ECS/System/DamageSystem/README.md`
-- **内置处理器目录** → `Src/ECS/System/DamageSystem/Processors/`
+- **核心服务** → `Src/ECS/Base/System/DamageSystem/DamageService.cs`
+- **伤害信息** → `Src/ECS/Base/System/DamageSystem/DamageInfo.cs`
+- **处理器接口** → `Src/ECS/Base/System/DamageSystem/IDamageProcessor.cs`
+- **接触伤害组件** → `Src/ECS/Base/Component/Collision/ContactDamageComponent/ContactDamageComponent.cs`
+- **扩展指南** → `Src/ECS/Base/System/DamageSystem/README.md`
+- **内置处理器目录** → `Src/ECS/Base/System/DamageSystem/Processors/`
 - **设计理念** → `Docs/框架/ECS/System/伤害系统设计理念.md`

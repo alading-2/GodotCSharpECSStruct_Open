@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://q81pa1wqlc6d" path="res://Src/ECS/UI/Core/UIManager.cs" id="1"]
+
+[node name="UIManager" type="Node"]
+script = ExtResource("1")

@@ -19,7 +19,7 @@ description: 编写或修改 Data 目录下的数据配置、Config、DataKey、
 ## 与 `ecs-data` 的分工
 
 - **`data-authoring`**：负责 `Data/` 目录下的配置结构、DataKey 定义、事件协议、字段映射
-- **`ecs-data`**：负责 `Src/ECS/Data/` 运行时容器、`DataMeta`、`DataRegistry`、读写规则
+- **`ecs-data`**：负责 `Src/ECS/Base/Data/` 运行时容器、`DataMeta`、`DataRegistry`、读写规则
 
 ## 目录职责
 
@@ -125,7 +125,7 @@ public static readonly DataMeta BaseHp = DataRegistry.Register(
 
 修改 `Data/` 目录后，通常需要顺手检查：
 
-- `Src/ECS/Data/README.md` 是否仍和现状一致
+- `Src/ECS/Base/Data/README.md` 是否仍和现状一致
 - `Docs/框架/项目索引.md` 是否需要补导航
 - `Docs/框架/ECS/Data/` 主文档是否需要同步
 - `.windsurf/skills/ecs-data/SKILL.md` 是否需要联动更新

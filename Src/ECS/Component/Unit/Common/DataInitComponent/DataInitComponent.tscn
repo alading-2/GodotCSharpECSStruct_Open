@@ -1,7 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" uid="uid://ch2nivgdrbpo7" path="res://Src/ECS/Component/Unit/Common/DataInitComponent/DataInitComponent.cs" id="1_script"]
-
-
-[node name="DataInitComponent" type="Node"]
-script = ExtResource("1_script")

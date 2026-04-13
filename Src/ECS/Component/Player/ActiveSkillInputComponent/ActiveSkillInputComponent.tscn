@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://dn6ijis6tlt0k"]
-
-[ext_resource type="Script" uid="uid://b1kiyobluq08d" path="res://Src/ECS/Component/Player/ActiveSkillInputComponent/ActiveSkillInputComponent.cs" id="1_34mps"]
-
-[node name="ActiveSkillInputComponent" type="Node" unique_id=1196432089]
-script = ExtResource("1_34mps")

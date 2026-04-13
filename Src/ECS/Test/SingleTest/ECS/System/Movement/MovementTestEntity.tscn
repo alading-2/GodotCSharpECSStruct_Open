@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://budu3cqg3fai" path="res://Src/ECS/Test/SingleTest/ECS/System/Movement/MovementTestEntity.cs" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://bpgdbip0j58ml" path="res://Src/ECS/Base/Component/Movement/EntityMovementComponent.tscn" id="2_movement"]
+
+[node name="MovementTestEntity" type="Area2D"]
+script = ExtResource("1_script")
+monitoring = false
+monitorable = false
+
+[node name="EntityMovementComponent" parent="." instance=ExtResource("2_movement")]

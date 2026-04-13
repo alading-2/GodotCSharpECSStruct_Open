@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Src/ECS/Base/System/TestSystem/AttributeEditors/AttributeModifierEditor.cs" id="1_script"]
+
+[node name="AttributeModifierEditor" type="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("1_script")
+
+[node name="ModifierLabel" type="Label" parent="."]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "临时加成"
+
+[node name="ModifierValueSpinBox" type="SpinBox" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ApplyButton" type="Button" parent="."]
+layout_mode = 2
+text = "应用临时Feature"
+
+[node name="ClearButton" type="Button" parent="."]
+layout_mode = 2
+text = "清除"

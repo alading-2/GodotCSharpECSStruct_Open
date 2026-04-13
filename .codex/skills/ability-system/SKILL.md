@@ -353,18 +353,18 @@ EntityManager.RemoveAbility(ownerEntity, ability);
 ## 关键文件路径
 
 - **架构设计（唯一概念文档）** → `Docs/框架/ECS/Ability/技能系统架构设计理念.md`
-- **核心系统** → `Src/ECS/System/AbilitySystem/AbilitySystem.cs`
-- **Ability → Feature 桥接基类** → `Src/ECS/System/AbilitySystem/AbilityFeatureHandlerBase.cs`
-- **技能命中工具** → `Src/ECS/System/AbilitySystem/AbilityImpactTool.cs`
-- **技能 CRUD** → `Src/ECS/System/AbilitySystem/EntityManager_Ability.cs`
-- **模块说明** → `Src/ECS/System/AbilitySystem/README.md`
-- **Feature 生命周期系统** → `Src/ECS/System/FeatureSystem/FeatureSystem.cs`
-- **技能实体** → `Src/ECS/Entity/Ability/AbilityEntity.cs`
+- **核心系统** → `Src/ECS/Base/System/AbilitySystem/AbilitySystem.cs`
+- **Ability → Feature 桥接基类** → `Src/ECS/Base/System/AbilitySystem/AbilityFeatureHandlerBase.cs`
+- **技能命中工具** → `Src/ECS/Base/System/AbilitySystem/AbilityImpactTool.cs`
+- **技能 CRUD** → `Src/ECS/Base/System/AbilitySystem/EntityManager_Ability.cs`
+- **模块说明** → `Src/ECS/Base/System/AbilitySystem/README.md`
+- **Feature 生命周期系统** → `Src/ECS/Base/System/FeatureSystem/FeatureSystem.cs`
+- **技能实体** → `Src/ECS/Base/Entity/Ability/AbilityEntity.cs`
 - **施法上下文** → `Data/EventType/Ability/CastContext.cs`
 - **事件定义** → `Data/EventType/Ability/GameEventType_Ability.cs`
 - **技能枚举定义** → `Data/DataKey/Ability/AbilityEnums.cs`
-- **目标排序枚举** → `Src/Tools/TargetSelector/TargetSorting.cs`
-- **触发组件** → `Src/ECS/Component/Ability/TriggerComponent/`
-- **冷却组件** → `Src/ECS/Component/Ability/CooldownComponent/`
-- **充能组件** → `Src/ECS/Component/Ability/ChargeComponent/`
-- **目标选择组件** → `Src/ECS/Component/Ability/AbilityTargetSelectionComponent/`
+- **目标排序枚举** → `Src/ECS/Tools/TargetSelector/TargetSorting.cs`
+- **触发组件** → `Src/ECS/Base/Component/Ability/TriggerComponent/`
+- **冷却组件** → `Src/ECS/Base/Component/Ability/CooldownComponent/`
+- **充能组件** → `Src/ECS/Base/Component/Ability/ChargeComponent/`
+- **目标选择组件** → `Src/ECS/Base/Component/Ability/AbilityTargetSelectionComponent/`

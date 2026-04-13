@@ -12,7 +12,7 @@ description: 在 Entity 或 Component 中读写 Data 数据容器、定义新 Da
 - **自动管理**：对象池回收时 EntityManager 自动 `Clear`，无需手动重置
 - **不限制语义统一**：数值型参数表示"不限制"时，统一使用 `-1`，不要使用 `0`
 
-如果你修改的是 `Data/Config`、`Data/Data`、`Data/DataKey`、`Data/EventType` 这些**数据目录配置文件**，应优先参考 `data-authoring`，本 Skill 主要关注 `Src/ECS/Data/` 运行时容器。
+如果你修改的是 `Data/Config`、`Data/Data`、`Data/DataKey`、`Data/EventType` 这些**数据目录配置文件**，应优先参考 `data-authoring`，本 Skill 主要关注 `Src/ECS/Base/Data/` 运行时容器。
 
 ## 基础读写
 
@@ -167,8 +167,8 @@ private int _unitState;      // 禁止！→ DataKey.UnitState
 - ❌ 新增 `const string` DataKey → 用 `static readonly DataMeta`
 
 ## 关键文件路径
-- **核心容器** → `Src/ECS/Data/Data.cs`
-- **元数据类** → `Src/ECS/Data/DataMeta.cs`
-- **使用指南** → `Src/ECS/Data/README.md`
+- **核心容器** → `Src/ECS/Base/Data/Data.cs`
+- **元数据类** → `Src/ECS/Base/Data/DataMeta.cs`
+- **使用指南** → `Src/ECS/Base/Data/README.md`
 - **DataKey 目录** → `Data/DataKey/`（按模块分类）
-- **数据注册** → `Src/ECS/Data/DataRegistry.cs`
+- **数据注册** → `Src/ECS/Base/Data/DataRegistry.cs`

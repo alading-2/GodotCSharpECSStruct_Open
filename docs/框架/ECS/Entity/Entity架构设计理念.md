@@ -630,7 +630,7 @@ Enemy.tscn
 
 ## 相关文档
 
-- **API 使用指南**：[`Src/ECS/Entity/Core/README.md`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/README.md)
+- **API 使用指南**：[`Src/ECS/Base/Entity/Core/README.md`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/README.md)
 - **EntityManager 详细设计**：[`Docs/框架/ECS/Entity/EntityManager设计说明.md`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Docs/框架/ECS/Entity/EntityManager设计说明.md)
 - **项目规则**：[`.agent/rules/projectrules.md`](file:///e:/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/.agent/rules/projectrules.md)
 

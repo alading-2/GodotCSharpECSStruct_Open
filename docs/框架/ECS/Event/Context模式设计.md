@@ -194,5 +194,5 @@ Events.Emit("unit:dead", new DeadContext());  // ❌ 应该用 EventData
 ## 相关文档
 
 - [EventBus 架构设计](EventBus架构设计.md)
-- [EventBus 使用说明](../../../../Src/ECS/Event/README_EventBus.md)
+- [EventBus 使用说明](../../../../Src/ECS/Base/Event/README_EventBus.md)
 - [AbilityContext 源码](../../../../Data/EventType/Ability/AbilityContext.cs)

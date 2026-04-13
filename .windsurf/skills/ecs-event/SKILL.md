@@ -114,10 +114,10 @@ public void OnPoolRelease()
 - ❌ 事件数据用 class（用 `readonly record struct`）
 
 ## 关键文件路径
-- **核心引擎** → `Src/ECS/Event/EventBus.cs`
-- **全局总线** → `Src/ECS/Event/GlobalEventBus.cs`
-- **事件上下文** → `Src/ECS/Event/EventContext.cs`
-- **最佳实践** → `Src/ECS/Event/README_EventBus.md`
+- **核心引擎** → `Src/ECS/Base/Event/EventBus.cs`
+- **全局总线** → `Src/ECS/Base/Event/GlobalEventBus.cs`
+- **事件上下文** → `Src/ECS/Base/Event/EventContext.cs`
+- **最佳实践** → `Src/ECS/Base/Event/README_EventBus.md`
 - **架构设计** → `Docs/框架/ECS/Event/EventBus架构设计.md`
 - **事件类型定义目录** → `Data/EventType/`
 - **技能事件** → `Data/EventType/Ability/GameEventType_Ability.cs`

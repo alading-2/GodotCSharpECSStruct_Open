@@ -24,7 +24,7 @@ public override void _ExitTree() { timer?.Cancel(); }
 public void OnPoolRelease() { timer?.Cancel(); }
 ```
 
-API 文档：`Src/Tools/Timer/TimerManager.md`
+API 文档：`Src/ECS/Tools/Timer/TimerManager.md`
 
 ---
 
@@ -59,7 +59,7 @@ public void OnPoolRelease() { /* 归还时清理 */ }
 public void OnPoolReset()   { /* 数据重置，通常留空 */ }
 ```
 
-API 文档：`Src/Tools/ObjectPool/ObjectPool.md`
+API 文档：`Src/ECS/Tools/ObjectPool/ObjectPool.md`
 
 ### 对象池实体激活时序（重要）
 
@@ -117,9 +117,9 @@ var targets = EntityTargetSelector.Query(new TargetSelectorQuery
 TeamFilter 选项：`Enemy` / `Ally` / `All` / `Self`
 Sorting 选项：`Nearest` / `Farthest` / `LowestHp` / `HighestHp` / `Random`
 
-目标排序枚举定义：`Src/Tools/TargetSelector/TargetSorting.cs`
+目标排序枚举定义：`Src/ECS/Tools/TargetSelector/TargetSorting.cs`
 
-API 文档：`Src/Tools/TargetSelector/README.md`
+API 文档：`Src/ECS/Tools/TargetSelector/README.md`
 
 ---
 
@@ -156,13 +156,13 @@ API 文档：`Data/ResourceManagement/ResourceManagement.md`
 
 ## 关键文件路径
 
-- **TimerManager** → `Src/Tools/Timer/TimerManager.cs` | 文档 → `Src/Tools/Timer/TimerManager.md`
-- **GameTimer** → `Src/Tools/Timer/GameTimer.cs`
-- **ObjectPool** → `Src/Tools/ObjectPool/ObjectPool.cs` | 文档 → `Src/Tools/ObjectPool/ObjectPool.md`
-- **IPoolable 接口** → `Src/Tools/ObjectPool/IPoolable.cs`
-- **ObjectPoolManager** → `Src/Tools/ObjectPool/ObjectPoolManager.cs`
-- **TargetSelector** → `Src/Tools/TargetSelector/TargetSelector.cs` | 文档 → `Src/Tools/TargetSelector/README.md`
-- **TargetSelectorQuery** → `Src/Tools/TargetSelector/TargetSelectorQuery.cs`
-- **WaveMath** → `Src/Tools/Math/WaveMath.cs` | 场景：标准正弦波采样、偏移差分、频率转角频率
+- **TimerManager** → `Src/ECS/Tools/Timer/TimerManager.cs` | 文档 → `Src/ECS/Tools/Timer/TimerManager.md`
+- **GameTimer** → `Src/ECS/Tools/Timer/GameTimer.cs`
+- **ObjectPool** → `Src/ECS/Tools/ObjectPool/ObjectPool.cs` | 文档 → `Src/ECS/Tools/ObjectPool/ObjectPool.md`
+- **IPoolable 接口** → `Src/ECS/Tools/ObjectPool/IPoolable.cs`
+- **ObjectPoolManager** → `Src/ECS/Tools/ObjectPool/ObjectPoolManager.cs`
+- **TargetSelector** → `Src/ECS/Tools/TargetSelector/TargetSelector.cs` | 文档 → `Src/ECS/Tools/TargetSelector/README.md`
+- **TargetSelectorQuery** → `Src/ECS/Tools/TargetSelector/TargetSelectorQuery.cs`
+- **WaveMath** → `Src/ECS/Tools/Math/WaveMath.cs` | 场景：标准正弦波采样、偏移差分、频率转角频率
 - **ResourceManagement** → `Data/ResourceManagement/ResourceManagement.cs` | 文档 → `Data/ResourceManagement/ResourceManagement.md`
 - **ResourcePaths（自动生成）** → `Data/ResourceManagement/ResourcePaths.cs`

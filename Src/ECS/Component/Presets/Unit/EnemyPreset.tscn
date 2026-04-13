@@ -1,7 +1,0 @@
-[gd_scene format=3 uid="uid://cgixcuwqqfvep"]
-
-[ext_resource type="PackedScene" path="res://Src/ECS/Component/Unit/Enemy/AI/AIComponent.tscn" id="2_2bh15"]
-
-[node name="EnemyPreset" type="Node2D" unique_id=447881530]
-
-[node name="AIComponent" parent="." unique_id=915672749 instance=ExtResource("2_2bh15")]

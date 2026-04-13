@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://jx6dhoafnfft"]
+
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/Component/Collision/PickupComponent/PickupComponent.tscn" id="1_l1d4d"]
+[ext_resource type="PackedScene" uid="uid://dn6ijis6tlt0k" path="res://Src/ECS/Base/Component/Player/ActiveSkillInputComponent/ActiveSkillInputComponent.tscn" id="3_h4de5"]
+
+[node name="PlayerPreset" type="Node2D" unique_id=1164705830]
+
+[node name="PickupComponent" parent="." unique_id=207861529 instance=ExtResource("1_l1d4d")]
+
+[node name="ActiveSkillInputComponent" parent="." unique_id=1196432089 instance=ExtResource("3_h4de5")]

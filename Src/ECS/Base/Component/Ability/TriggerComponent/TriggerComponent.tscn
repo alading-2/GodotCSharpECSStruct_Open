@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://bcua6ii8xsi4x" path="res://Src/ECS/Base/Component/Ability/TriggerComponent/TriggerComponent.cs" id="1_trigger"]
+
+[node name="TriggerComponent" type="Node"]
+script = ExtResource("1_trigger")

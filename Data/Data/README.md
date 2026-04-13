@@ -126,4 +126,4 @@ public partial class UnitConfig : Resource
 
 - `Data/README.md`：`Data/` 顶层目录分工
 - `Data/DataKey/README.md`：DataKey 与 DataMeta 定义规范
-- `Src/ECS/Data/README.md`：运行时 Data 容器说明
+- `Src/ECS/Base/Data/README.md`：运行时 Data 容器说明

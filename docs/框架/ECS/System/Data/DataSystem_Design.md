@@ -7,7 +7,7 @@
 ## 现在应该看哪里
 
 - **当前 Data 系统主说明** → `Docs/框架/ECS/Data/DataSystem_Design.md`
-- **运行时容器说明** → `Src/ECS/Data/README.md`
+- **运行时容器说明** → `Src/ECS/Base/Data/README.md`
 - **Data 目录职责** → `Data/README.md`
 - **Config 映射规则** → `Data/Data/README.md`
 - **DataKey 定义规范** → `Data/DataKey/README.md`

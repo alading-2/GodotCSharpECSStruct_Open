@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" uid="uid://dyw2wdk5k1cym" path="res://Src/ECS/Component/Unit/TargetingIndicatorControlComponent/TargetingIndicatorControlComponent.cs" id="1_control"]
-
-[node name="TargetingIndicatorControlComponent" type="Node"]
-script = ExtResource("1_control")

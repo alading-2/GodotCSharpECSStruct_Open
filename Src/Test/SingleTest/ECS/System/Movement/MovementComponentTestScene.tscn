@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://b2yptt462pep1"]
-
-[ext_resource type="Script" uid="uid://dql85nevaljb4" path="res://Src/Test/SingleTest/ECS/System/Movement/MovementComponentTestScene.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://Src/Test/SingleTest/ECS/System/Movement/MovementTestEntity.tscn" id="2_entity"]
-
-[node name="MovementComponentTestScene" type="Node2D" unique_id=908182277]
-script = ExtResource("1_script")
-_movementTestEntityScene = ExtResource("2_entity")

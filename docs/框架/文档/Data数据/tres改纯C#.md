@@ -105,28 +105,28 @@ Wrote file successfully.
 
 **Output:**
 ```
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/DamageSystem/DamageService.cs(20,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Base/AIControlledStrategy.cs(22,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Base/PlayerInputStrategy.cs(15,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Base/AttachToHostStrategy.cs(35,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Charge/ChargeStrategy.cs(68,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Curve/CircularArcStrategy.cs(54,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Curve/BezierCurveStrategy.cs(53,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Orbit/OrbitStrategy.cs(83,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Curve/ParabolaStrategy.cs(52,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Projectile/BoomerangStrategy.cs(83,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Wave/SineWaveStrategy.cs(68,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/RecoverySystem/RecoverySystem.cs(29,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Spawn/SpawnSystem.cs(18,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/TargetingSystem/TargetingManager.cs(18,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/TestSystem/TestSystem.cs(65,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Test/SingleTest/ECS/Data/TestDataRegister.cs(12,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/ObjectPool/ObjectPoolInit.cs(52,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager_Component_Init.cs(14,10): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/Timer/TimerManager.cs(34,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/Core/UIManager.cs(28,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/UI/HealthBarUI/HealthBarUI.cs(25,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/UI/DamageNumberUI/DamageNumberSystem.cs(24,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/DamageSystem/DamageService.cs(20,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Base/AIControlledStrategy.cs(22,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Base/PlayerInputStrategy.cs(15,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Base/AttachToHostStrategy.cs(35,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Charge/ChargeStrategy.cs(68,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Curve/CircularArcStrategy.cs(54,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Curve/BezierCurveStrategy.cs(53,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Orbit/OrbitStrategy.cs(83,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Curve/ParabolaStrategy.cs(52,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Projectile/BoomerangStrategy.cs(83,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Wave/SineWaveStrategy.cs(68,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/RecoverySystem/RecoverySystem.cs(29,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Spawn/SpawnSystem.cs(18,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/TargetingSystem/TargetingManager.cs(18,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/TestSystem/TestSystem.cs(65,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Test/SingleTest/ECS/Data/TestDataRegister.cs(12,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/ObjectPool/ObjectPoolInit.cs(52,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager_Component_Init.cs(14,10): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/Timer/TimerManager.cs(34,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/Core/UIManager.cs(28,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/UI/HealthBarUI/HealthBarUI.cs(25,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/UI/DamageNumberUI/DamageNumberSystem.cs(24,6): warning CA2255: The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2255) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/addons/DataConfigEditor/ConfigTablePanel.cs(101,17): error CS0117: 'Tree' does not contain a definition for 'HideFloating' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/addons/DataConfigEditor/ConfigTablePanel.cs(412,37): error CS1061: 'Tree' does not contain a definition for 'GetEditedItem' and no accessible extension method 'GetEditedItem' accepting a first argument of type 'Tree' could be found (are you missing a using directive or an assembly reference?) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/addons/DataConfigEditor/ConfigTablePanel.cs(446,41): error CS1061: 'TreeItem' does not contain a definition for 'HasMetadata' and no accessible extension method 'HasMetadata' accepting a first argument of type 'TreeItem' could be found (are you missing a using directive or an assembly reference?) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
@@ -2484,9 +2484,9 @@ Resource
 - `Data/Data/Ability/Ability/ChainLightning/Data/ChainAbilityConfig.cs` — chained ability config (inherits AbilityConfig)
 - `Data/Data/Feature/FeatureDefinition.cs` — feature definition
 - `Data/DataKey/Attribute/DataKey_Attribute.cs` — DataKey definitions (~460 lines, ~50+ keys)
-- `Src/ECS/Data/DataMeta.cs` — metadata class (Key, Type, DefaultValue, Min, Max, Category, etc.)
-- `Src/ECS/Data/DataKeyAttribute.cs` — `[DataKey("xxx")]` attribute
-- `Src/ECS/Data/Data.cs` — `LoadFromResource()` and `BuildPropertyCache()` (lines 430-474)
+- `Src/ECS/Base/Data/DataMeta.cs` — metadata class (Key, Type, DefaultValue, Min, Max, Category, etc.)
+- `Src/ECS/Base/Data/DataKeyAttribute.cs` — `[DataKey("xxx")]` attribute
+- `Src/ECS/Base/Data/Data.cs` — `LoadFromResource()` and `BuildPropertyCache()` (lines 430-474)
 - `Data/ResourceManagement/ResourcePaths.cs` — auto-generated path constants
 - `Data/ResourceManagement/ResourceManagement.cs` — resource loading API
 - `Tools/ResourceGenerator/ResourceGenerator.cs` — standalone .NET tool that scans .tscn/.tres
@@ -4136,7 +4136,7 @@ public enum AbilityActivateResult
 ### 三、目标选取/几何枚举（TargetSelector）
 
 #### 11. `TargetSorting` - 目标排序方式
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/TargetSelector/TargetSorting.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/TargetSelector/TargetSorting.cs`
 ```csharp
 public enum TargetSorting
 {
@@ -4153,7 +4153,7 @@ public enum TargetSorting
 ```
 
 #### 12. `GeometryType` - 目标几何形状
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/TargetSelector/GeometryType.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/TargetSelector/GeometryType.cs`
 ```csharp
 public enum GeometryType
 {
@@ -4173,7 +4173,7 @@ public enum GeometryType
 
 #### 13. `LifecycleState` - 生命周期状态
 #### 14. `DeathType` - 死亡类型
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs`
 
 ```csharp
 public enum LifecycleState
@@ -4198,7 +4198,7 @@ public enum DeathType
 
 #### 15. `DamageType` - 伤害类型
 #### 16. `DamageTags` - 伤害标签 [Flags]
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/DamageSystem/DamageInfo.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/DamageSystem/DamageInfo.cs`
 
 ```csharp
 public enum DamageType
@@ -4247,7 +4247,7 @@ public enum MoveMode
 ```
 
 #### 18. `MovementStopReason` - 运动策略停止原因
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/MovementStopReason.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/MovementStopReason.cs`
 ```csharp
 public enum MovementStopReason
 {
@@ -4259,7 +4259,7 @@ public enum MovementStopReason
 ```
 
 #### 19. `ScalarBoundMode` - 标量参数边界模式
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/ScalarDriver/ScalarMotion.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/ScalarDriver/ScalarMotion.cs`
 ```csharp
 public enum ScalarBoundMode
 {
@@ -4278,7 +4278,7 @@ public enum ScalarBoundMode
 ### 七、攻击系统枚举
 
 #### 20. `AttackState` - 攻击状态
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/AttackComponent/AttackComponent.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/AttackComponent/AttackComponent.cs`
 ```csharp
 public enum AttackState
 {
@@ -4308,7 +4308,7 @@ public enum AttackCancelReason
 ### 八、技能系统运行时枚举
 
 #### 22. `TriggerResult` - 技能触发结果
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/AbilitySystem/TriggerResult.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/AbilitySystem/TriggerResult.cs`
 ```csharp
 public enum TriggerResult
 {
@@ -4319,7 +4319,7 @@ public enum TriggerResult
 ```
 
 #### 23. `AbilityCheckPhase` - 技能检查阶段
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/AbilitySystem/AbilityCheckPhase.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/AbilitySystem/AbilityCheckPhase.cs`
 ```csharp
 public enum AbilityCheckPhase
 {
@@ -4336,7 +4336,7 @@ public enum AbilityCheckPhase
 ### 九、生成系统枚举
 
 #### 24. `SpawnPositionStrategy` - 敌人生成位置策略
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Spawn/SpawnPositionCalculator.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Spawn/SpawnPositionCalculator.cs`
 ```csharp
 public enum SpawnPositionStrategy
 {
@@ -4355,7 +4355,7 @@ public enum SpawnPositionStrategy
 ### 十、ECS 框架枚举
 
 #### 25. `EventPriority` - 事件优先级
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Event/EventBus.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Event/EventBus.cs`
 ```csharp
 public enum EventPriority
 {
@@ -4370,7 +4370,7 @@ public enum EventPriority
 ```
 
 #### 26. `RelationshipConstraint` - 关系约束类型
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityRelationshipManager.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityRelationshipManager.cs`
 ```csharp
 public enum RelationshipConstraint
 {
@@ -4381,7 +4381,7 @@ public enum RelationshipConstraint
 ```
 
 #### 27. `ModifierType` - 修改器类型
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Data/DataModifier.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Data/DataModifier.cs`
 ```csharp
 public enum ModifierType
 {
@@ -4398,7 +4398,7 @@ public enum ModifierType
 ### 十一、AI 系统枚举
 
 #### 28. `NodeState` - 行为树节点返回状态
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/AI/Core/BehaviorNode.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/AI/Core/BehaviorNode.cs`
 ```csharp
 public enum NodeState
 {
@@ -4426,7 +4426,7 @@ public enum AIState
 ### 十二、其他系统枚举
 
 #### 30. `AnimPlayMode` - 动画播放模式
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/UnitAnimationComponent/UnitAnimationComponent.cs`
 ```csharp
 public enum AnimPlayMode
 {
@@ -4436,7 +4436,7 @@ public enum AnimPlayMode
 ```
 
 #### 31. `HealSource` - 治疗来源
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/HealthComponent/HealSource.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/HealthComponent/HealSource.cs`
 ```csharp
 public enum HealSource
 {
@@ -4450,7 +4450,7 @@ public enum HealSource
 ```
 
 #### 32. `LogLevel` - 日志等级
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/Logger/Log.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/Logger/Log.cs`
 ```csharp
 public enum LogLevel
 {
@@ -4590,7 +4590,7 @@ public enum DataCategory_AI
 ```
 
 #### 41. `TestCategory` - 测试数据分类
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Test/SingleTest/ECS/Data/TestCategory.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Test/SingleTest/ECS/Data/TestCategory.cs`
 ```csharp
 public enum TestCategory
 {
@@ -4608,7 +4608,7 @@ public enum TestCategory
 
 #### 42. `CharacterType` - 角色类型（测试用）
 #### 43. `Abilities` - 能力标志位 [Flags]（测试用）
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Test/SingleTest/Test/ExportTest/ExportTest.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Test/SingleTest/Test/ExportTest/ExportTest.cs`
 ```csharp
 public enum CharacterType
 {
@@ -4631,7 +4631,7 @@ public enum Abilities
 ```
 
 #### 44. `DemoId` - 移动测试 Demo 标识（private，测试用）
-**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Test/SingleTest/ECS/System/Movement/MovementComponentTestScene.cs`
+**文件**: `/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Test/SingleTest/ECS/System/Movement/MovementComponentTestScene.cs`
 ```csharp
 private enum DemoId
 {
@@ -4664,28 +4664,28 @@ private enum DemoId
 | 8 | `AbilityTargetTeamFilter` | `Data/DataKey/Ability/AbilityEnums.cs` | [Flags] |
 | 9 | `AbilityCostType` | `Data/DataKey/Ability/AbilityEnums.cs` | |
 | 10 | `AbilityActivateResult` | `Data/DataKey/Ability/AbilityEnums.cs` | |
-| 11 | `TargetSorting` | `Src/Tools/TargetSelector/TargetSorting.cs` | |
-| 12 | `GeometryType` | `Src/Tools/TargetSelector/GeometryType.cs` | |
-| 13 | `LifecycleState` | `Src/ECS/Component/.../LifecycleComponent.cs` | |
-| 14 | `DeathType` | `Src/ECS/Component/.../LifecycleComponent.cs` | |
-| 15 | `DamageType` | `Src/ECS/System/DamageSystem/DamageInfo.cs` | |
-| 16 | `DamageTags` | `Src/ECS/System/DamageSystem/DamageInfo.cs` | [Flags] |
+| 11 | `TargetSorting` | `Src/ECS/Tools/TargetSelector/TargetSorting.cs` | |
+| 12 | `GeometryType` | `Src/ECS/Tools/TargetSelector/GeometryType.cs` | |
+| 13 | `LifecycleState` | `Src/ECS/Base/Component/.../LifecycleComponent.cs` | |
+| 14 | `DeathType` | `Src/ECS/Base/Component/.../LifecycleComponent.cs` | |
+| 15 | `DamageType` | `Src/ECS/Base/System/DamageSystem/DamageInfo.cs` | |
+| 16 | `DamageTags` | `Src/ECS/Base/System/DamageSystem/DamageInfo.cs` | [Flags] |
 | 17 | `MoveMode` | `Data/DataKey/.../MovementEnums.cs` | |
-| 18 | `MovementStopReason` | `Src/ECS/System/Movement/MovementStopReason.cs` | |
-| 19 | `ScalarBoundMode` | `Src/ECS/System/Movement/.../ScalarMotion.cs` | |
-| 20 | `AttackState` | `Src/ECS/Component/.../AttackComponent.cs` | |
+| 18 | `MovementStopReason` | `Src/ECS/Base/System/Movement/MovementStopReason.cs` | |
+| 19 | `ScalarBoundMode` | `Src/ECS/Base/System/Movement/.../ScalarMotion.cs` | |
+| 20 | `AttackState` | `Src/ECS/Base/Component/.../AttackComponent.cs` | |
 | 21 | `AttackCancelReason` | `Data/EventType/.../GameEventType_Attack.cs` | |
-| 22 | `TriggerResult` | `Src/ECS/System/AbilitySystem/TriggerResult.cs` | |
-| 23 | `AbilityCheckPhase` | `Src/ECS/System/AbilitySystem/AbilityCheckPhase.cs` | |
-| 24 | `SpawnPositionStrategy` | `Src/ECS/System/Spawn/SpawnPositionCalculator.cs` | |
-| 25 | `EventPriority` | `Src/ECS/Event/EventBus.cs` | |
-| 26 | `RelationshipConstraint` | `Src/ECS/Entity/Core/EntityRelationshipManager.cs` | |
-| 27 | `ModifierType` | `Src/ECS/Data/DataModifier.cs` | |
-| 28 | `NodeState` | `Src/AI/Core/BehaviorNode.cs` | |
+| 22 | `TriggerResult` | `Src/ECS/Base/System/AbilitySystem/TriggerResult.cs` | |
+| 23 | `AbilityCheckPhase` | `Src/ECS/Base/System/AbilitySystem/AbilityCheckPhase.cs` | |
+| 24 | `SpawnPositionStrategy` | `Src/ECS/Base/System/Spawn/SpawnPositionCalculator.cs` | |
+| 25 | `EventPriority` | `Src/ECS/Base/Event/EventBus.cs` | |
+| 26 | `RelationshipConstraint` | `Src/ECS/Base/Entity/Core/EntityRelationshipManager.cs` | |
+| 27 | `ModifierType` | `Src/ECS/Base/Data/DataModifier.cs` | |
+| 28 | `NodeState` | `Src/ECS/AI/Core/BehaviorNode.cs` | |
 | 29 | `AIState` | `Data/DataKey/AI/DataKey_AI.cs` | |
-| 30 | `AnimPlayMode` | `Src/ECS/Component/.../UnitAnimationComponent.cs` | |
-| 31 | `HealSource` | `Src/ECS/Component/.../HealSource.cs` | |
-| 32 | `LogLevel` | `Src/Tools/Logger/Log.cs` | |
+| 30 | `AnimPlayMode` | `Src/ECS/Base/Component/.../UnitAnimationComponent.cs` | |
+| 31 | `HealSource` | `Src/ECS/Base/Component/.../HealSource.cs` | |
+| 32 | `LogLevel` | `Src/ECS/Tools/Logger/Log.cs` | |
 | 33 | `ResourceCategory` | `Data/ResourceManagement/ResourceCategory.cs` | |
 | 34 | `DataCategory_Base` | `Data/DataKey/Base/DataCategory_Base.cs` | |
 | 35 | `DataCategory_Unit` | `Data/DataKey/Unit/DataCategory_Unit.cs` | |
@@ -4694,10 +4694,10 @@ private enum DemoId
 | 38 | `DataCategory_Ability` | `Data/DataKey/Ability/DataCategory_Ability.cs` | |
 | 39 | `DataCategory_Feature` | `Data/DataKey/Feature/DataCategory_Feature.cs` | |
 | 40 | `DataCategory_AI` | `Data/DataKey/AI/DataCategory_AI.cs` | |
-| 41 | `TestCategory` | `Src/Test/.../TestCategory.cs` | |
-| 42 | `CharacterType` | `Src/Test/.../ExportTest.cs` | |
-| 43 | `Abilities` | `Src/Test/.../ExportTest.cs` | [Flags] |
-| 44 | `DemoId` | `Src/Test/.../MovementComponentTestScene.cs` | private |
+| 41 | `TestCategory` | `Src/ECS/Test/.../TestCategory.cs` | |
+| 42 | `CharacterType` | `Src/ECS/Test/.../ExportTest.cs` | |
+| 43 | `Abilities` | `Src/ECS/Test/.../ExportTest.cs` | [Flags] |
+| 44 | `DemoId` | `Src/ECS/Test/.../MovementComponentTestScene.cs` | private |
 
 其中用户指定的 10 个枚举全部找到：
 - **EntityType** (#2)、**AbilityType** (#4)、**AbilityTriggerMode** (#5)、**AbilityCostType** (#9)、**AbilityTargetSelection** (#6)、**GeometryType** (#12)、**AbilityTargetTeamFilter** (#8)、**TargetSorting** (#11)、**Team** (#1)、**DeathType** (#14)、**SpawnPositionStrategy** (#24)
@@ -7663,16 +7663,16 @@ MSBuild version 17.8.49+7806cbf7b for .NET
   Determining projects to restore...
   Restored /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj (in 2.96 sec).
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Health.cs(42,42): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.cs(14,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/Core/UIBase.cs(27,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'float'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/Core/UIBase.cs(28,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/Core/UIBase.cs(29,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.cs(15,5): warning CS1570: XML comment has badly formed XML -- 'End tag was not expected at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Ability/TriggerComponent/TriggerComponent.cs(14,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/Core/UIBase.cs(27,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'float'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/Core/UIBase.cs(28,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/Core/UIBase.cs(29,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Ability/TriggerComponent/TriggerComponent.cs(15,5): warning CS1570: XML comment has badly formed XML -- 'End tag was not expected at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/addons/DataConfigEditor/EnumCommentCache.cs(16,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'The character(s) '=' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- '3' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'The character(s) '=' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- '3' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Health.cs(42,42): warning CS1570: XML comment has badly formed XML -- 'The character(s) '=' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Movement.cs(35,15): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'GameEventType.Unit.MovementCollisionEventData'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Movement.cs(36,15): warning CS1570: XML comment has badly formed XML -- 'End tag 'para' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
@@ -7681,48 +7681,48 @@ MSBuild version 17.8.49+7806cbf7b for .NET
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Autoload/AutoLoad.cs(41,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'PackedScene'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Autoload/AutoLoad.cs(42,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'example' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Autoload/AutoLoad.cs(43,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'example'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(95,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'HealthComponent'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(96,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(126,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(127,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(131,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(131,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/IEntity.cs(28,29): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/IEntity.cs(28,29): warning CS1570: XML comment has badly formed XML -- 'The character(s) '-' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/IEntity.cs(28,57): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/IEntity.cs(28,57): warning CS1570: XML comment has badly formed XML -- 'The character(s) '-' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/IEntity.cs(29,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag ''.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/IEntity.cs(30,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element ''.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/IEntity.cs(30,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/NodeLifecycle/NodeLifecycleManager.cs(26,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Base/AIControlledStrategy.cs(13,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'list' does not match the start tag 'item'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Base/AIControlledStrategy.cs(14,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'para' does not match the start tag 'list'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/NodeLifecycle/NodeLifecycleManager.cs(27,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Base/AIControlledStrategy.cs(16,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'para'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Base/AIControlledStrategy.cs(17,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/NodeLifecycle/NodeLifecycleManager.cs(28,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/NodeLifecycle/NodeLifecycleManager.cs(41,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Node'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/NodeLifecycle/NodeLifecycleManager.cs(42,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/ObjectPool/ObjectPool.cs(113,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'param' does not match the start tag 'T'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Tools/ObjectPool/ObjectPool.cs(119,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'param'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(95,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'HealthComponent'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(96,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(126,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(127,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(131,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(131,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/IEntity.cs(28,29): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/IEntity.cs(28,29): warning CS1570: XML comment has badly formed XML -- 'The character(s) '-' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/IEntity.cs(28,57): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/IEntity.cs(28,57): warning CS1570: XML comment has badly formed XML -- 'The character(s) '-' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/IEntity.cs(29,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag ''.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/IEntity.cs(30,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element ''.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/IEntity.cs(30,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/NodeLifecycle/NodeLifecycleManager.cs(26,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Base/AIControlledStrategy.cs(13,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'list' does not match the start tag 'item'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Base/AIControlledStrategy.cs(14,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'para' does not match the start tag 'list'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/NodeLifecycle/NodeLifecycleManager.cs(27,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Base/AIControlledStrategy.cs(16,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'para'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Base/AIControlledStrategy.cs(17,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/NodeLifecycle/NodeLifecycleManager.cs(28,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/NodeLifecycle/NodeLifecycleManager.cs(41,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Node'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/NodeLifecycle/NodeLifecycleManager.cs(42,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/ObjectPool/ObjectPool.cs(113,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'param' does not match the start tag 'T'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Tools/ObjectPool/ObjectPool.cs(119,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'param'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/DataNew/Feature/FeatureDefinitionData.cs(49,16): error CS0246: The type or namespace name 'List<>' could not be found (are you missing a using directive or an assembly reference?) [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 
 Build FAILED.
 
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Health.cs(42,42): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.cs(14,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/Core/UIBase.cs(27,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'float'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/Core/UIBase.cs(28,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/UI/Core/UIBase.cs(29,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Ability/TriggerComponent/TriggerComponent.cs(15,5): warning CS1570: XML comment has badly formed XML -- 'End tag was not expected at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Ability/TriggerComponent/TriggerComponent.cs(14,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/Core/UIBase.cs(27,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'float'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/Core/UIBase.cs(28,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/UI/Core/UIBase.cs(29,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Ability/TriggerComponent/TriggerComponent.cs(15,5): warning CS1570: XML comment has badly formed XML -- 'End tag was not expected at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/addons/DataConfigEditor/EnumCommentCache.cs(16,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'The character(s) '=' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- '3' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Component/Unit/Common/LifecycleComponent/LifecycleComponent.cs(197,33): warning CS1570: XML comment has badly formed XML -- 'The character(s) '=' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/System/Movement/Strategies/Orbit/OrbitStrategy.cs(48,24): warning CS1570: XML comment has badly formed XML -- '3' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Health.cs(42,42): warning CS1570: XML comment has badly formed XML -- 'The character(s) '=' cannot be used at this location.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Movement.cs(35,15): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'GameEventType.Unit.MovementCollisionEventData'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Data/EventType/Unit/GameEventType_Unit_Movement.cs(36,15): warning CS1570: XML comment has badly formed XML -- 'End tag 'para' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
@@ -7731,14 +7731,14 @@ Build FAILED.
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Autoload/AutoLoad.cs(41,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'PackedScene'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Autoload/AutoLoad.cs(42,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'example' does not match the start tag 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 /mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/Autoload/AutoLoad.cs(43,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'example'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(95,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'HealthComponent'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(96,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(126,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(127,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
-/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Entity/Core/EntityManager.cs(131,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(95,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'HealthComponent'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(96,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(97,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(126,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'code' does not match the start tag 'Player'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(127,11): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'Enemy'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
+/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Src/ECS/Base/Entity/Core/EntityManager.cs(131,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'code'.' [/mnt/e/Godot/Games/MyGames/复刻土豆兄弟/brotato-my/Brotato_my.csproj]
 
 ```
 

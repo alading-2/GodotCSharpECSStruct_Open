@@ -14,7 +14,7 @@
 
 > 文档收敛说明：`AISystem_Prompt.md` 已移除，本文件作为 Docs 侧唯一 AI 说明。
 >
-> 源码目录说明：`Src/AI` 的基类"有什么用、怎么用"请看 `Src/AI/README.md`。
+> 源码目录说明：`Src/AI` 的基类"有什么用、怎么用"请看 `Src/ECS/AI/README.md`。
 
 ---
 
@@ -331,7 +331,7 @@ ResetChildrenExcept(1, ctx) 遍历：
 
 ---
 
-## 3.4 敌人行为树模块（`Src/AI/Nodes/`）
+## 3.4 敌人行为树模块（`Src/ECS/AI/Nodes/`）
 
 **职责分工**（两个文件）：
 
@@ -367,7 +367,7 @@ var tree = new SelectorNode("自定义Boss")
 - `ChaseBranch()`：FindEnemy → HasTarget → MoveTo(AttackRange)
 - `PatrolBranch()`：RandomWander → WaitIdle
 
-### 原子条件节点（`Src/AI/Conditions/`）
+### 原子条件节点（`Src/ECS/AI/Conditions/`）
 
 - `HasValidTargetCondition`：校验 `DataKey.TargetNode` 存活且非 Dead/Reviving
 - `IsInRangeCondition(dataKey)`：通用范围检测，传入不同 DataKey 可用于攻击/技能
@@ -375,7 +375,7 @@ var tree = new SelectorNode("自定义Boss")
 - `IsAbilityReadyCondition(name)`：技能冷却完毕或有充能可用
 - `IsLowHpCondition(threshold)`：血量百分比低于阈值（0~100）
 
-### 原子动作节点（`Src/AI/Actions/`）
+### 原子动作节点（`Src/ECS/AI/Actions/`）
 
 - `FindEnemyAction`：`TargetSelector.Query` 索敌，含仇恨锁定/丢失机制
 - `MoveToTargetAction(stopRangeKey?)`：向目标移动，到达 stopRangeKey 距离后返回 Success
@@ -542,7 +542,7 @@ _runner.SetTree(EnemyBehaviorTreeBuilder.BuildRangedTree());
 
 ### 6.3 新增原子节点
 
-1. 在 `Src/AI/Conditions/` 或 `Src/AI/Actions/` 下新建类文件
+1. 在 `Src/ECS/AI/Conditions/` 或 `Src/ECS/AI/Actions/` 下新建类文件
 2. 继承 `BehaviorNode`，实现 `Evaluate(AIContext ctx)`
 3. 若节点有内部状态（计时/缓存），同时实现 `Reset(AIContext? ctx)` 并清理 Data 黑板
 4. 共性频控需求用 `CooldownNode` 装饰器包装
@@ -561,7 +561,7 @@ _runner.SetTree(EnemyBehaviorTreeBuilder.BuildRangedTree());
 
 ## 7. 维护约定
 
-- 若新增原子节点，需更新 `Src/AI/README.md` 的节点速查表。
+- 若新增原子节点，需更新 `Src/ECS/AI/README.md` 的节点速查表。
 - 若修改行为树结构或节点返回语义，需同步更新本说明第 3.4 节。
 - 若新增 AI 关键 DataKey/Event，需补充到本文第 4 节。
 - 若更改攻击状态机时序（WindUp/Recovery/CD 语义），需验证：

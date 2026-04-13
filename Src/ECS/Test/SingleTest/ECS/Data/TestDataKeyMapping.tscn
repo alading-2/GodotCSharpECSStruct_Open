@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dqew603cc64u1"]
+
+[ext_resource type="Script" uid="uid://wk878ea1ixyo" path="res://Src/ECS/Test/SingleTest/ECS/Data/TestDataKeyMapping.cs" id="1_m4q7v"]
+
+[node name="Node" type="Node" unique_id=529701724]
+script = ExtResource("1_m4q7v")

@@ -156,6 +156,6 @@ public static readonly DataMeta BaseHp = ...
 
 - `Data/README.md`：`Data/` 总目录分工
 - `Data/Data/README.md`：配置类如何映射到 `Data`
-- `Src/ECS/Data/README.md`：运行时 Data 容器说明
-- `Src/ECS/Data/DataMeta.cs`：DataMeta 结构定义
-- `Src/ECS/Data/DataRegistry.cs`：元数据注册表
+- `Src/ECS/Base/Data/README.md`：运行时 Data 容器说明
+- `Src/ECS/Base/Data/DataMeta.cs`：DataMeta 结构定义
+- `Src/ECS/Base/Data/DataRegistry.cs`：元数据注册表

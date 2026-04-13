@@ -116,11 +116,11 @@ protected override void OnBind()
 - ❌ 在 `_Process` 中每帧轮询 Data（应事件驱动）
 
 ## 关键文件路径
-- **核心基类** → `Src/UI/Core/UIBase.cs`
-- **管理器** → `Src/UI/Core/UIManager.cs`
-- **开发指南** → `Src/UI/README.md`
+- **核心基类** → `Src/ECS/UI/Core/UIBase.cs`
+- **管理器** → `Src/ECS/UI/Core/UIManager.cs`
+- **开发指南** → `Src/ECS/UI/README.md`
 - **架构设计** → `Docs/框架/UI/UI架构设计理念.md`
-- **血条示例** → `Src/UI/UI/HealthBarUI/HealthBarUI.cs`
-- **伤害数字示例** → `Src/UI/UI/DamageNumberUI/DamageNumberUI.cs`
-- **技能栏示例** → `Src/UI/UI/SkillUI/ActiveSkillBarUI.cs`
-- **技能槽示例** → `Src/UI/UI/SkillUI/ActiveSkillSlotUI.cs`
+- **血条示例** → `Src/ECS/UI/UI/HealthBarUI/HealthBarUI.cs`
+- **伤害数字示例** → `Src/ECS/UI/UI/DamageNumberUI/DamageNumberUI.cs`
+- **技能栏示例** → `Src/ECS/UI/UI/SkillUI/ActiveSkillBarUI.cs`
+- **技能槽示例** → `Src/ECS/UI/UI/SkillUI/ActiveSkillSlotUI.cs`

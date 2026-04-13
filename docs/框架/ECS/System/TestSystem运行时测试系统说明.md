@@ -13,17 +13,17 @@
 
 当前系统位于：
 
-- `Src/ECS/System/TestSystem/TestSystem.cs`
-- `Src/ECS/System/TestSystem/TestSystem.tscn`
-- `Src/ECS/System/TestSystem/TestModuleBase.cs`
-- `Src/ECS/System/TestSystem/AttributeTestModule.cs`
-- `Src/ECS/System/TestSystem/AttributeTestModule.tscn`
-- `Src/ECS/System/TestSystem/FeatureDebugService.cs`
-- `Src/ECS/System/TestSystem/AbilityTestService.cs`
-- `Src/ECS/System/TestSystem/AbilityTestViewModels.cs`
-- `Src/ECS/System/TestSystem/AbilityTestModule.cs`
-- `Src/ECS/System/TestSystem/AbilityTestModule.tscn`
-- `Src/ECS/System/TestSystem/README.md`
+- `Src/ECS/Base/System/TestSystem/TestSystem.cs`
+- `Src/ECS/Base/System/TestSystem/TestSystem.tscn`
+- `Src/ECS/Base/System/TestSystem/TestModuleBase.cs`
+- `Src/ECS/Base/System/TestSystem/AttributeTestModule.cs`
+- `Src/ECS/Base/System/TestSystem/AttributeTestModule.tscn`
+- `Src/ECS/Base/System/TestSystem/FeatureDebugService.cs`
+- `Src/ECS/Base/System/TestSystem/AbilityTestService.cs`
+- `Src/ECS/Base/System/TestSystem/AbilityTestViewModels.cs`
+- `Src/ECS/Base/System/TestSystem/AbilityTestModule.cs`
+- `Src/ECS/Base/System/TestSystem/AbilityTestModule.tscn`
+- `Src/ECS/Base/System/TestSystem/README.md`
 
 ---
 
@@ -642,7 +642,7 @@ RegisterModule(InstantiateModule<MyTestModule>(_myTestModuleScene, nameof(MyTest
 
 如果你要继续扩展或维护 TestSystem，建议优先阅读：
 
-- `Src/ECS/System/TestSystem/README.md` - 源码目录使用说明
+- `Src/ECS/Base/System/TestSystem/README.md` - 源码目录使用说明
 - `Docs/框架/项目索引.md` - 项目级导航入口
 - `.windsurf/skills/test-system/SKILL.md` - TestSystem 专用 skill
 - `.windsurf/skills/feature-system/SKILL.md` - FeatureSystem 边界与生命周期规范

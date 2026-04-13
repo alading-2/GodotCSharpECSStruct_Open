@@ -1,7 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" uid="uid://csoitybq8wypq" path="res://Src/Test/SingleTest/Tools/Math/MyMathTest.cs" id="1_mymath"]
-
-
-[node name="MyMathTest" type="Node"]
-script = ExtResource("1_mymath")

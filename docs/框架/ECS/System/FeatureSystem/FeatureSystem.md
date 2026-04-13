@@ -262,7 +262,7 @@ EntityManager.RemoveAbility(owner, name)
 | `Data/DataKey/Feature/DataCategory_Feature.cs` | `enum` | Feature 数据分类（Basic / Trigger / Modifier / State）|
 | `Data/EventType/Feature/GameEventType_Feature.cs` | `partial GameEventType` | 生命周期事件（Granted / Enabled / Disabled / Activated / Ended / Removed）|
 
-### 系统层（Src/ECS/System/FeatureSystem/）
+### 系统层（Src/ECS/Base/System/FeatureSystem/）
 
 | 文件 | 类型 | 说明 |
 |:---|:---|:---|
@@ -282,7 +282,7 @@ EntityManager.RemoveAbility(owner, name)
 |:---|:---|
 | `EntityManager_Ability.cs` | `AddAbility` 后调 `OnFeatureGranted`；`RemoveAbility` 前调 `OnFeatureRemoved` |
 | `AbilitySystem.cs` | 构建 `FeatureContext`，在 Execute 阶段调用 `OnFeatureActivated / OnFeatureEnded`，并从 `ExtraData` 读取 `AbilityExecutedResult` |
-| `Src/ECS/System/AbilitySystem/AbilityFeatureHandlerBase.cs` | Ability 子域对 `IFeatureHandler` 的桥接基类：把 `CastContext` 转成 `ExecuteAbility` 调用并写回执行结果 |
+| `Src/ECS/Base/System/AbilitySystem/AbilityFeatureHandlerBase.cs` | Ability 子域对 `IFeatureHandler` 的桥接基类：把 `CastContext` 转成 `ExecuteAbility` 调用并写回执行结果 |
 
 ---
 

@@ -162,16 +162,16 @@ FixedDirection / TargetPoint / TargetEntity / OrbitPoint / OrbitEntity / Spiral 
 - 否则 → `Velocity + VelocityImpulse`
 
 ## 关键文件路径
-- **标准模板**（新建 Component 从这里复制）→ `Src/ECS/Component/TemplateComponent.cs`
-- **接口定义** → `Src/ECS/Component/IComponent.cs`
-- **开发规范** → `Src/ECS/Component/Component规范.md`
+- **标准模板**（新建 Component 从这里复制）→ `Src/ECS/Base/Component/TemplateComponent.cs`
+- **接口定义** → `Src/ECS/Base/Component/IComponent.cs`
+- **开发规范** → `Src/ECS/Base/Component/Component规范.md`
 - **设计理念** → `Docs/框架/ECS/Component/Component数据驱动设计理念.md`
-- **现有通用组件** → `Src/ECS/Component/Unit/Common/`（HealthComponent、AttackComponent 等）
-- **技能组件** → `Src/ECS/Component/Ability/`（CooldownComponent、ChargeComponent 等）
-- **运动策略调度器** → `Src/ECS/Component/Movement/EntityMovementComponent.cs`
-- **运动策略接口** → `Src/ECS/System/Movement/IMovementStrategy.cs`
-- **运动策略实现** → `Src/ECS/System/Movement/Strategies/`
-- **速度合成** → `Src/ECS/System/Movement/VelocityResolver.cs`
-- **运动说明文档** → `Src/ECS/Component/Movement/EntityMovementComponent说明.md`
-- **移动系统README** → `Src/ECS/System/Movement/README.md`
+- **现有通用组件** → `Src/ECS/Base/Component/Unit/Common/`（HealthComponent、AttackComponent 等）
+- **技能组件** → `Src/ECS/Base/Component/Ability/`（CooldownComponent、ChargeComponent 等）
+- **运动策略调度器** → `Src/ECS/Base/Component/Movement/EntityMovementComponent.cs`
+- **运动策略接口** → `Src/ECS/Base/System/Movement/IMovementStrategy.cs`
+- **运动策略实现** → `Src/ECS/Base/System/Movement/Strategies/`
+- **速度合成** → `Src/ECS/Base/System/Movement/VelocityResolver.cs`
+- **运动说明文档** → `Src/ECS/Base/Component/Movement/EntityMovementComponent说明.md`
+- **移动系统README** → `Src/ECS/Base/System/Movement/README.md`
 - **移动系统设计文档** → `Docs/框架/ECS/System/移动系统设计说明.md`

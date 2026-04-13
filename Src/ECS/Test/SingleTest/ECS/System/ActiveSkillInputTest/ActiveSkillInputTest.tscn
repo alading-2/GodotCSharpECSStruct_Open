@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d4fx4eslwjxmt"]
+
+[ext_resource type="Script" uid="uid://cf1fpbdx175cb" path="res://Src/ECS/Test/SingleTest/ECS/System/ActiveSkillInputTest/ActiveSkillInputTest.cs" id="1"]
+
+[node name="ActiveSkillInputTest" type="Node"]
+script = ExtResource("1")
