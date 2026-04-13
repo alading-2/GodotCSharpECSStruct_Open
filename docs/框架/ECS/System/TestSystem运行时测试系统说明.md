@@ -16,13 +16,13 @@
 - `Src/ECS/Base/System/TestSystem/TestSystem.cs`
 - `Src/ECS/Base/System/TestSystem/TestSystem.tscn`
 - `Src/ECS/Base/System/TestSystem/TestModuleBase.cs`
-- `Src/ECS/Base/System/TestSystem/AttributeTestModule.cs`
-- `Src/ECS/Base/System/TestSystem/AttributeTestModule.tscn`
+- `Src/ECS/Base/System/TestSystem/Attribute/AttributeTestModule.cs`
+- `Src/ECS/Base/System/TestSystem/Attribute/AttributeTestModule.tscn`
 - `Src/ECS/Base/System/TestSystem/FeatureDebugService.cs`
-- `Src/ECS/Base/System/TestSystem/AbilityTestService.cs`
-- `Src/ECS/Base/System/TestSystem/AbilityTestViewModels.cs`
-- `Src/ECS/Base/System/TestSystem/AbilityTestModule.cs`
-- `Src/ECS/Base/System/TestSystem/AbilityTestModule.tscn`
+- `Src/ECS/Base/System/TestSystem/Ability/AbilityTestService.cs`
+- `Src/ECS/Base/System/TestSystem/Ability/AbilityTestViewModels.cs`
+- `Src/ECS/Base/System/TestSystem/Ability/AbilityTestModule.cs`
+- `Src/ECS/Base/System/TestSystem/Ability/AbilityTestModule.tscn`
 - `Src/ECS/Base/System/TestSystem/README.md`
 
 ---
@@ -48,13 +48,13 @@
 
 | 层次 | 文件 | 职责 |
 |------|------|------|
-| **系统宿主** | `TestSystem.cs` + `TestSystem.tscn` | AutoLoad 注册、主界面骨架绑定、模块注册与切换、实体选择 |
+| **系统宿主** | `TestSystem.cs` + `TestSystem.tscn` | AutoLoad 注册、主界面骨架绑定、扫描 `ModuleHost` 下的模块场景并注册、实体选择 |
 | **模块基类** | `TestModuleBase.cs` | 统一生命周期与当前选中实体注入 |
-| **属性模块** | `AttributeTestModule.cs` + `AttributeTestModule.tscn` | 按 `DataCategory` 展示并编辑实体的可编辑 `Data`，并为支持 Modifier 的属性提供临时加成入口 |
+| **属性模块** | `Attribute/AttributeTestModule.cs` + `AttributeTestModule.tscn` + `AttributeEditorRow.tscn` 等 | 展示并编辑实体的可编辑 `Data`，并通过词条/编辑器 `PackedScene` 复用属性 UI |
 | **调试适配层** | `FeatureDebugService.cs` | 把调试动作转发到正式 `EntityManager` / `FeatureSystem` 链路 |
-| **技能服务** | `AbilityTestService.cs` | 缓存技能目录、解析分组、构建视图模型、封装技能增删启停 |
-| **技能视图模型** | `AbilityTestViewModels.cs` | 纯展示数据结构，承载分类分组与技能条目信息 |
-| **技能模块** | `AbilityTestModule.cs` + `AbilityTestModule.tscn` | 渲染双树界面、处理点击 / 右键菜单，并把操作转发给技能服务 |
+| **技能服务** | `Ability/AbilityTestService.cs` | 缓存技能目录、解析分组、构建视图模型、封装技能增删启停；内部通过 `DataKey.XXX.Key` 显式访问 Data 键名 |
+| **技能视图模型** | `Ability/AbilityTestViewModels.cs` | 纯展示数据结构，承载分类分组与技能条目信息 |
+| **技能模块** | `Ability/AbilityTestModule.cs` + `AbilityTestModule.tscn` + `AbilityGroupSection.tscn` 等 | 渲染左右双列滚动区，基于分组区块与卡片条目场景处理添加 / 移除 / 启停 |
 
 ### 3.2 核心关系
 
@@ -63,11 +63,11 @@ TestSystem
   ├── 负责 AutoLoad 初始化
   ├── 负责绑定 TestSystem.tscn 主界面骨架
   ├── 负责鼠标点击选择 IEntity
-  ├── 负责注册/切换 TestModule
+  ├── 负责扫描 ModuleHost 子场景并注册/切换 TestModule
   │
   ├── AttributeTestModule
   │     ├── 基于 AttributeTestModule.tscn 提供固定布局
-  │     ├── 基于 DataRegistry + DataMeta 生成属性编辑器
+  │     ├── 基于 DataRegistry + DataMeta 组装属性词条场景
   │     └── 对支持 Modifier 的数值属性通过 FeatureDebugService 管理临时加成
   │
   ├── FeatureDebugService
@@ -84,7 +84,7 @@ TestSystem
   │
   └── AbilityTestModule
   │     ├── 基于 AbilityTestModule.tscn 提供固定布局
-  │     └── 基于双 Tree + PopupMenu 展示并触发技能管理操作
+  │     └── 基于分组区块场景 + 技能卡片场景展示并触发技能管理操作
 ```
 
 `TestSystem` 只负责调试宿主、实体选择和模块切换；真正的能力生命周期仍由正式 `EntityManager`、`FeatureSystem`、`AbilitySystem` 负责。
@@ -149,17 +149,15 @@ TestSystem
 
 ## 4.3 UI 结构
 
-`_Ready()` 中会先缓存 `TestSystem.tscn` 中的关键节点，再实例化两个模块场景：
-
-- `AttributeTestModule`
-- `AbilityTestModule`
+`_Ready()` 中会先缓存 `TestSystem.tscn` 中的关键节点，再扫描 `ModuleHost` 下已经挂载好的模块场景。
 
 其中：
 
 - `TestSystem.tscn` 承载顶部工具栏、信息栏和模块宿主容器
-- `AttributeTestModule.tscn` 提供左侧分类列表和右侧滚动编辑区
-- `AbilityTestModule.tscn` 提供左右双树、状态栏和右键菜单节点
-- `*.cs` 仍负责动态属性行、Tree 节点重建和事件转发
+- `Attribute/AttributeTestModule.tscn` 提供左侧分类列表和右侧滚动编辑区
+- `Ability/AbilityTestModule.tscn` 提供左右双列滚动区、状态栏与条目宿主节点
+- `Attribute/AttributeEditorRow.tscn / Ability/AbilityGroupSection.tscn` 等子场景负责复用条目结构
+- `*.cs` 负责视图模型绑定、事件转发和正式系统调用适配
 
 当前 UI 由以下部分组成：
 
@@ -212,7 +210,7 @@ TestSystem
 
 模块注册后：
 
-- 加入宿主容器
+- 使用场景中现成子节点作为模块实例
 - 注入 `TestSystem` 引用
 - 按 `DisplayName` 加入下拉菜单
 
@@ -425,32 +423,32 @@ TestSystem
 - 不需要手写候选技能表
 - 新增技能资源后，测试模块通常可自动感知
 
-## 7.3 双树结构与职责拆分
+## 7.3 双列列表结构与职责拆分
 
 当前实现不再把“资源扫描、分类、业务操作、UI 控件”堆在一个脚本里，而是拆为两层：
 
 | 层次 | 作用 |
 |------|------|
 | `AbilityTestService` | 负责技能目录缓存、分类排序、条目视图构建、增删启停 |
-| `AbilityTestModule` | 负责左右双 `Tree` 渲染、状态文本、右键 `PopupMenu`、事件订阅 |
+| `AbilityTestModule` | 负责左右双列滚动区、状态文本、按钮交互与事件订阅 |
+| `AbilityGroupSection / AbilityCatalogItem / AbilityOwnedItem` | 负责分组区块与技能卡片骨架复用 |
 
-界面分为左右两棵树：
+界面分为左右两列列表：
 
 | 区域 | 作用 |
 |------|------|
-| **左侧技能库 Tree** | 按分组路径显示项目内所有可添加技能；已拥有技能会灰显 |
-| **右侧当前技能 Tree** | 按分组路径显示当前实体已拥有技能；禁用技能会灰显 |
-| **右键菜单 PopupMenu** | 作用于右侧技能条目，提供启用 / 禁用 / 移除 |
+| **左侧技能库卡片列** | 按分组路径显示项目内所有可添加技能；已拥有技能会置灰并禁用“添加”按钮 |
+| **右侧当前技能卡片列** | 按分组路径显示当前实体已拥有技能；通过按钮执行启用 / 禁用 / 移除 |
 
 ## 7.4 技能操作方式
 
 ### 添加技能
 
-点击左侧叶子节点时：
+点击左侧技能卡片的“添加”按钮时：
 
-- `AbilityTestModule` 从树节点元数据拿到 `ResourceKey`
-- 左侧树直接监听 `Tree.item_selected`，不再依赖 `GuiInput + GetItemAtPosition()` 的坐标命中
-- 即使当前没有选中实体，左侧叶子仍可选中，模块会明确提示“请先选择一个实体”，而不是静默无响应
+- `AbilityCatalogItem` 发出 `AddRequested(resourceKey)`
+- `AbilityTestModule` 接收资源键并校验当前是否已选中实体
+- 即使当前没有选中实体，模块也会明确提示“请先选择一个实体”，而不是静默无响应
 - `AbilityTestService.AddAbility(...)` 读取缓存配置
 - 由 `FeatureDebugService.GrantAbility(...)` 转发到正式 `EntityManager.AddAbility(...)`
 
@@ -458,18 +456,18 @@ TestSystem
 
 ### 移除技能
 
-点击右侧叶子节点时：
+点击右侧技能卡片的“移除”按钮时：
 
-- `AbilityTestModule` 从树节点元数据拿到技能实例 `Id`
-- `AbilityTestService` 先解析出目标 `AbilityEntity`
-- 再通过 `FeatureDebugService.RemoveAbility(...)` 转发到正式移除链路，按运行时实例精确移除
+- `AbilityOwnedItem` 发出 `RemoveRequested(abilityId)`
+- `AbilityTestModule` 把运行时实例 Id 转发给 `AbilityTestService.RemoveAbility(...)`
+- 由 `FeatureDebugService.RemoveAbility(...)` 转发到正式移除链路，按运行时实例精确移除
 
 ### 切换启用
 
-右键右侧叶子节点时：
+点击右侧技能卡片的“启用 / 禁用”按钮时：
 
-- 弹出 `PopupMenu`
-- 根据当前 `FeatureEnabled` 状态显示“启用技能”或“禁用技能”
+- `AbilityOwnedItem` 根据当前状态显示“启用”或“禁用”按钮文案
+- 点击后发出 `ToggleEnabledRequested(abilityId, targetEnabled)`
 - 由 `AbilityTestService` 通过 `FeatureDebugService.SetFeatureEnabled(...)` 调用 `FeatureSystem.EnableFeature(...)` / `DisableFeature(...)`
 
 这适合快速验证：
@@ -510,15 +508,17 @@ TestSystem
 - `GameEventType.Feature.Enabled`
 - `GameEventType.Feature.Disabled`
 
-因此在技能被外部逻辑增删或启停后，左右两棵树都能自动刷新，避免面板与真实状态脱节。
+因此在技能被外部逻辑增删或启停后，左右两列列表都会自动刷新，避免面板与真实状态脱节。
 
-同时，`AbilityTestService` 会把添加 / 移除 / 启用 / 禁用操作写入日志，至少包含：
+同时，`AbilityTestModule` 会把添加 / 移除 / 启用 / 禁用操作写入日志（`Info` 级别），至少包含：
 
 - 当前宿主实体名
 - 技能名
 - 技能实例 ID
 
-这样当测试面板出现“点了 A 却删了 B”这类问题时，可以直接从日志定位是 UI 命中错误、实例解析错误，还是生命周期调用错误。
+TestSystem 内部统一使用 `Info / Warn / Error` 三级日志，**不使用 `Debug` 级别**。`Warn` 用于节点回退查找和操作前置条件不满足；`Error` 用于场景实例化失败和分组渲染异常。
+
+这样当测试面板出现"点了 A 却删了 B"这类问题时，可以直接从日志定位是 UI 命中错误、实例解析错误，还是生命周期调用错误。
 
 同样地，模块在实体切换或模块失活时会取消订阅，防止重复监听。
 
@@ -553,8 +553,8 @@ TestSystem
   → 切到“技能测试”
   → 开启实体选择
   → 选择一个实体
-  → 从左侧分类树点击添加技能
-  → 在右侧分类树点击移除或右键切换启用状态
+  → 从左侧技能库卡片点击“添加”按钮
+  → 在右侧当前技能卡片点击“启用 / 禁用 / 移除”按钮
 ```
 
 适合验证：
@@ -601,16 +601,11 @@ public partial class MyTestModule : TestModuleBase
 
 把固定 UI 骨架放进场景，把脚本挂到根节点。
 
-### 第三步：在 `TestSystem` 中注册
+### 第三步：在 `TestSystem.tscn` 中挂载
 
-```csharp
-RegisterModule(InstantiateModule<MyTestModule>(_myTestModuleScene, nameof(MyTestModule)));
-```
+在 `TestSystem.tscn` 的 `ModuleHost` 下直接挂载 `MyTestModule.tscn`，由 `TestSystem` 在 `_Ready()` 扫描 `TestModuleBase` 子节点完成注册。
 
-同时需要：
-
-- 在 `TestSystem.cs` 增加导出 `PackedScene` 字段
-- 在 `TestSystem.tscn` 给该字段绑定 `MyTestModule.tscn`
+不需要修改 `TestSystem.cs` 的注册逻辑，也不需要新增导出 `PackedScene` 字段。
 
 ### 第四步：遵循模块边界
 
@@ -635,6 +630,23 @@ RegisterModule(InstantiateModule<MyTestModule>(_myTestModuleScene, nameof(MyTest
 | **属性调试分双轨** | 状态覆写可直写 `Data`，持续数值加成优先走 `FeatureSystem` |
 | **依赖可点击实体** | 鼠标拾取优先基于物理查询；纯视觉对象仅能走最近距离兜底选择 |
 | **模块自行管理订阅** | 宿主不统一清理模块内部事件 |
+| **DataKey 显式访问** | `Data.Get/Set` 必须使用 `DataKey.XXX.Key`，不依赖 `DataMeta` 隐式转换 |
+| **日志仅用 Info/Warn/Error** | 不使用 `LogLevel.Debug`，Debug 级别在运行时测试面板中属于冗余输出 |
+
+### 10.1 DataKey 显式访问规范
+
+在 TestSystem 内部访问 `Data.Get/Set` 时，**必须使用 `DataKey.XXX.Key` 显式取键名**：
+
+```csharp
+// ✅ 正确
+ability.Data.Get<string>(DataKey.Name.Key);
+entity.Data.Set(DataKey.CurrentHp.Key, value);
+
+// ❌ 错误：依赖 DataMeta 的 implicit operator string
+ability.Data.Get<string>(DataKey.Name);
+```
+
+原因：规避不同工程上下文下 `DataMeta` 到 `string` 的编译兼容差异。早期代码曾使用反射 `ResolveDataKey` 方法绕过此问题，现已统一改为直接 `.Key` 访问，移除了 `using System.Reflection` 和相关反射方法。
 
 ---
 

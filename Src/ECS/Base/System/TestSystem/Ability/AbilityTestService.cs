@@ -147,7 +147,7 @@ internal sealed class AbilityTestService
         {
             foreach (var ability in EntityManager.GetAbilities(owner))
             {
-                var abilityName = ability.Data.Get<string>(nameof(DataKey.Name));
+                var abilityName = ability.Data.Get<string>(DataKey.Name.Key); // 解析 DataKey.Name 键名
                 if (!string.IsNullOrWhiteSpace(abilityName))
                 {
                     ownedNames.Add(abilityName);
@@ -215,7 +215,7 @@ internal sealed class AbilityTestService
             return;
         }
 
-        foreach (var (resourceKey, resourceData) in entries)
+        foreach (var (resourceKey, _) in entries)
         {
             var config = ResourceManagement.Load<AbilityConfig>(resourceKey, ResourceCategory.DataAbility);
             if (config == null)
@@ -224,7 +224,7 @@ internal sealed class AbilityTestService
             }
 
             var displayName = string.IsNullOrWhiteSpace(config.Name) ? resourceKey : config.Name!;
-            var groupPath = ResolveGroupPath(config, resourceData.Path);
+            var groupPath = ResolveGroupPath(config);
             var description = string.IsNullOrWhiteSpace(config.Description)
                 ? "暂无描述"
                 : config.Description!;
@@ -260,13 +260,13 @@ internal sealed class AbilityTestService
     /// </summary>
     private AbilityOwnedItemView CreateOwnedItemView(AbilityEntity ability)
     {
-        var abilityName = ability.Data.Get<string>(DataKey.Name);
+        var abilityName = ability.Data.Get<string>(DataKey.Name.Key);
         var groupPath = ResolveGroupPath(ability);
-        var description = ability.Data.Get<string>(DataKey.Description);
-        var abilityId = ability.Data.Get<string>(DataKey.Id);
-        var isEnabled = ability.Data.Get<bool>(DataKey.FeatureEnabled);
-        var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType);
-        var triggerMode = (AbilityTriggerMode)ability.Data.Get<int>(DataKey.AbilityTriggerMode);
+        var description = ability.Data.Get<string>(DataKey.Description.Key);
+        var abilityId = ability.Data.Get<string>(DataKey.Id.Key);
+        var isEnabled = ability.Data.Get<bool>(DataKey.FeatureEnabled.Key);
+        var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType.Key);
+        var triggerMode = (AbilityTriggerMode)ability.Data.Get<int>(DataKey.AbilityTriggerMode.Key);
 
         RegisterGroupPathOrder(groupPath);
 
@@ -293,7 +293,7 @@ internal sealed class AbilityTestService
 
         foreach (var ability in EntityManager.GetAbilities(owner))
         {
-            var currentAbilityId = ability.Data.Get<string>(DataKey.Id);
+            var currentAbilityId = ability.Data.Get<string>(DataKey.Id.Key);
             if (string.Equals(currentAbilityId, abilityId, StringComparison.Ordinal))
             {
                 return ability;
@@ -306,23 +306,24 @@ internal sealed class AbilityTestService
     /// <summary>
     /// 解析技能展示分组路径。
     /// <para>
-    /// 统一使用 FeatureGroupId；若旧资源尚未补齐，则按资源路径 / 技能类型兜底。
+    /// 统一使用 FeatureGroupId；若旧资源尚未补齐，则按技能类型 / 触发模式兜底。
     /// </para>
     /// </summary>
-    private static string ResolveGroupPath(AbilityConfig config, string resourcePath)
+    private static string ResolveGroupPath(AbilityConfig config)
     {
         if (!string.IsNullOrWhiteSpace(config.FeatureGroupId))
         {
             return config.FeatureGroupId.Trim();
         }
 
-        if (resourcePath.Contains("/Movement/", StringComparison.Ordinal))
+        if ((config.AbilityTriggerMode & AbilityTriggerMode.Manual) != 0)
         {
-            return FeatureId.Ability.Groups.Movement;
+            return FeatureId.Ability.Groups.Active;
         }
 
         return config.AbilityType switch
         {
+            AbilityType.Active => FeatureId.Ability.Groups.Active,
             AbilityType.Passive => FeatureId.Ability.Groups.Passive,
             AbilityType.Weapon => "技能.武器",
             _ => DefaultGroupPath
@@ -334,7 +335,7 @@ internal sealed class AbilityTestService
     /// </summary>
     private static string ResolveGroupPath(AbilityEntity ability)
     {
-        var featureGroup = ability.Data.Get<string>(DataKey.AbilityFeatureGroup);
+        var featureGroup = ability.Data.Get<string>(DataKey.AbilityFeatureGroup.Key);
         if (!string.IsNullOrWhiteSpace(featureGroup))
         {
             return featureGroup.Trim();
@@ -343,6 +344,7 @@ internal sealed class AbilityTestService
         var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType);
         return abilityType switch
         {
+            AbilityType.Active => FeatureId.Ability.Groups.Active,
             AbilityType.Passive => FeatureId.Ability.Groups.Passive,
             AbilityType.Weapon => "技能.武器",
             _ => DefaultGroupPath

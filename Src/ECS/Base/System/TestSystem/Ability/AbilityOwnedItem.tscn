@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Src/ECS/Base/System/TestSystem/Ability/AbilityOwnedItemControl.cs" id="1_owned_script"]
+
+[node name="AbilityOwnedItem" type="PanelContainer"]
+size_flags_horizontal = 3
+script = ExtResource("1_owned_script")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TopRow" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Margin/Layout/TopRow" unique_name_in_owner=true]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "技能名"
+
+[node name="ToggleButton" type="Button" parent="Margin/Layout/TopRow" unique_name_in_owner=true]
+layout_mode = 2
+text = "禁用"
+
+[node name="RemoveButton" type="Button" parent="Margin/Layout/TopRow" unique_name_in_owner=true]
+layout_mode = 2
+text = "移除"
+
+[node name="MetaLabel" type="Label" parent="Margin/Layout" unique_name_in_owner=true]
+layout_mode = 2
+text = "主动 / 手动 / 启用"
+
+[node name="DescriptionLabel" type="Label" parent="Margin/Layout" unique_name_in_owner=true]
+layout_mode = 2
+autowrap_mode = 3
+text = "技能描述"

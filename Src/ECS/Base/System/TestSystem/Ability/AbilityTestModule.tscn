@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dlturcouoe0n" path="res://Src/ECS/Base/System/TestSystem/Ability/AbilityTestModule.cs" id="1_ability_script"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/Ability/AbilityGroupSection.tscn" id="2_group_section"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/Ability/AbilityCatalogItem.tscn" id="3_catalog_item"]
+[ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/Ability/AbilityOwnedItem.tscn" id="4_owned_item"]
+
+[node name="AbilityTestModule" type="VBoxContainer"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_ability_script")
+_groupSectionScene = ExtResource("2_group_section")
+_catalogItemScene = ExtResource("3_catalog_item")
+_ownedItemScene = ExtResource("4_owned_item")
+
+[node name="InstructionLabel" type="Label" parent="."]
+layout_mode = 2
+text = "左侧点击添加技能，右侧用按钮启用 / 禁用 / 移除"
+
+[node name="EntityHintLabel" type="Label" parent="."]
+layout_mode = 2
+text = "请先选择一个实体"
+
+[node name="StatusLabel" type="Label" parent="."]
+layout_mode = 2
+text = ""
+
+[node name="Split" type="HSplitContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LeftBox" type="VBoxContainer" parent="Split"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AvailableTitle" type="Label" parent="Split/LeftBox"]
+layout_mode = 2
+text = "技能库（点击添加）"
+
+[node name="AvailableScroll" type="ScrollContainer" parent="Split/LeftBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AvailableGroupContainer" type="VBoxContainer" parent="Split/LeftBox/AvailableScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="RightBox" type="VBoxContainer" parent="Split"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CurrentTitle" type="Label" parent="Split/RightBox"]
+layout_mode = 2
+text = "当前技能（按钮操作）"
+
+[node name="CurrentScroll" type="ScrollContainer" parent="Split/RightBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CurrentGroupContainer" type="VBoxContainer" parent="Split/RightBox/CurrentScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8

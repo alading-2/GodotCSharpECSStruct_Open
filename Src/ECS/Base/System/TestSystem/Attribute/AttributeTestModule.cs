@@ -14,6 +14,8 @@ using System.Linq;
 /// </summary>
 public partial class AttributeTestModule : TestModuleBase
 {
+    private static readonly Log _log = new(nameof(AttributeTestModule));
+
     /// <summary>单个分类页的缓存结构，保存分类标题和该分类下的可编辑 DataMeta 列表。</summary>
     private sealed record CategoryEntry(string Title, List<DataMeta> Metas);
 
@@ -22,6 +24,24 @@ public partial class AttributeTestModule : TestModuleBase
 
     /// <summary>所有可编辑分类的缓存列表，初始化后用于驱动左侧分类面板。</summary>
     private readonly List<CategoryEntry> _categories = new();
+
+    /// <summary>属性词条场景。</summary>
+    [Export] private PackedScene? _editorRowScene;
+
+    /// <summary>布尔属性编辑器场景。</summary>
+    [Export] private PackedScene? _checkEditorScene;
+
+    /// <summary>下拉属性编辑器场景。</summary>
+    [Export] private PackedScene? _optionEditorScene;
+
+    /// <summary>数值属性编辑器场景。</summary>
+    [Export] private PackedScene? _numericEditorScene;
+
+    /// <summary>文本属性编辑器场景。</summary>
+    [Export] private PackedScene? _textEditorScene;
+
+    /// <summary>临时加成编辑器场景。</summary>
+    [Export] private PackedScene? _modifierEditorScene;
 
     /// <summary>左侧分类列表。</summary>
     private ItemList _categoryList = null!;
@@ -101,19 +121,35 @@ public partial class AttributeTestModule : TestModuleBase
             return;
         }
 
-        _entityHintLabel.Text = $"当前实体：{selectedEntity.Data.Get<string>(DataKey.Name.Key)} ({entityNode.GetType().Name})";
+        _entityHintLabel.Text = $"当前实体：{selectedEntity.Data.Get<string>(DataKey.Name)} ({entityNode.GetType().Name})";
 
         if (_categories.Count == 0)
         {
+            ShowPlaceholder("未找到可编辑属性分类");
             return;
         }
 
         var index = Mathf.Clamp(_categoryList.GetSelectedItems().FirstOrDefault(), 0, _categories.Count - 1);
         var category = _categories[index];
+        var renderedRowCount = 0;
 
         foreach (var meta in category.Metas)
         {
-            _editorContainer.AddChild(CreateEditorRow(meta));
+            try
+            {
+                var row = CreateEditorRow(meta);
+                _editorContainer.AddChild(row);
+                renderedRowCount++;
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"[属性测试UI] 渲染属性词条失败: category={category.Title} key={GetMetaKey(meta)} error={ex}");
+            }
+        }
+
+        if (renderedRowCount == 0)
+        {
+            ShowPlaceholder($"分类“{category.Title}”未生成任何可编辑控件，请检查日志");
         }
     }
 
@@ -210,39 +246,33 @@ public partial class AttributeTestModule : TestModuleBase
     /// </summary>
     private Control CreateEditorRow(DataMeta meta)
     {
-        var wrapper = new VBoxContainer();
-        wrapper.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        var metaKey = GetMetaKey(meta);
 
-        var header = new HBoxContainer();
-        wrapper.AddChild(header);
+        var row = InstantiateScene<AttributeEditorRow>(_editorRowScene, nameof(AttributeEditorRow));
 
-        var title = new Label
+        row.ConfigureHeader(GetMetaDisplayName(meta), metaKey); // 绑定词条标题
+
+        try
         {
-            Text = string.IsNullOrWhiteSpace(meta.DisplayName) ? meta.Key : meta.DisplayName,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-        };
-        header.AddChild(title);
-
-        var keyLabel = new Label
+            row.SetEditor(CreateEditor(meta)); // 绑定主编辑器
+        }
+        catch (Exception ex)
         {
-            Text = meta.Key
-        };
-        header.AddChild(keyLabel);
-
-        var editor = CreateEditor(meta);
-        if (editor != null)
-        {
-            wrapper.AddChild(editor);
+            _log.Error($"[属性测试UI] 主编辑器创建失败: key={metaKey} error={ex}");
+            row.SetEditor(CreateInlineErrorLabel("主编辑器创建失败"));
         }
 
-        var modifierEditor = CreateTemporaryModifierEditor(meta);
-        if (modifierEditor != null)
+        try
         {
-            wrapper.AddChild(modifierEditor);
+            row.SetModifierEditor(CreateTemporaryModifierEditor(meta)); // 绑定临时加成编辑器
+        }
+        catch (Exception ex)
+        {
+            _log.Error($"[属性测试UI] 临时Modifier编辑器创建失败: key={metaKey} error={ex}");
+            row.SetModifierEditor(null);
         }
 
-        wrapper.AddChild(new HSeparator());
-        return wrapper;
+        return row;
     }
 
     /// <summary>
@@ -255,32 +285,15 @@ public partial class AttributeTestModule : TestModuleBase
             return null;
         }
 
-        var row = new HBoxContainer();
-        row.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-
-        var label = new Label
-        {
-            Text = "临时加成",
-            CustomMinimumSize = new Vector2(80, 0)
-        };
-        row.AddChild(label);
-
-        var modifierValue = _featureDebugService.GetTemporaryModifierValue(selectedEntity, meta.Key);
-        var spin = new SpinBox
-        {
-            MinValue = meta.MinValue.HasValue ? -meta.MinValue.Value - 9999 : -999999,
-            MaxValue = meta.MaxValue ?? 999999,
-            Step = meta.IsInteger ? 1 : 0.1,
-            Value = modifierValue,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-        };
-        row.AddChild(spin);
-
-        var applyButton = new Button
-        {
-            Text = "应用临时Feature"
-        };
-        applyButton.Pressed += () =>
+        var editor = InstantiateScene<AttributeModifierEditor>(_modifierEditorScene, nameof(AttributeModifierEditor));
+        var modifierValue = _featureDebugService.GetTemporaryModifierValue(selectedEntity, GetMetaKey(meta));
+        editor.SetTitle("临时加成"); // 绑定固定标题
+        editor.ConfigureRange(
+            meta.MinValue.HasValue ? -meta.MinValue.Value - 9999 : -999999,
+            meta.MaxValue ?? 999999,
+            meta.IsInteger ? 1 : 0.1);
+        editor.Value = modifierValue;
+        editor.BindApply(() =>
         {
             if (selectedEntity == null)
             {
@@ -289,20 +302,14 @@ public partial class AttributeTestModule : TestModuleBase
 
             var result = _featureDebugService.ApplyTemporaryModifier(
                 selectedEntity,
-                meta.Key,
+                GetMetaKey(meta),
                 GetMetaDisplayName(meta),
                 meta.IsPercentage,
-                (float)spin.Value);
+                (float)editor.Value);
             _entityHintLabel.Text = result.Message;
             Refresh();
-        };
-        row.AddChild(applyButton);
-
-        var clearButton = new Button
-        {
-            Text = "清除"
-        };
-        clearButton.Pressed += () =>
+        });
+        editor.BindClear(() =>
         {
             if (selectedEntity == null)
             {
@@ -311,14 +318,13 @@ public partial class AttributeTestModule : TestModuleBase
 
             var result = _featureDebugService.ClearTemporaryModifier(
                 selectedEntity,
-                meta.Key,
+                GetMetaKey(meta),
                 GetMetaDisplayName(meta));
             _entityHintLabel.Text = result.Message;
             Refresh();
-        };
-        row.AddChild(clearButton);
+        });
 
-        return row;
+        return editor;
     }
 
     /// <summary>
@@ -336,11 +342,9 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsBoolean)
         {
-            var toggle = new CheckButton
-            {
-                ButtonPressed = selectedEntity.Data.Get<bool>(meta.Key),
-                Text = selectedEntity.Data.Get<bool>(meta.Key) ? "已开启" : "已关闭"
-            };
+            var toggle = InstantiateScene<CheckButton>(_checkEditorScene, nameof(CheckButton));
+            toggle.ButtonPressed = selectedEntity.Data.Get<bool>(GetMetaKey(meta));
+            toggle.Text = toggle.ButtonPressed ? "已开启" : "已关闭";
             toggle.Toggled += pressed =>
             {
                 toggle.Text = pressed ? "已开启" : "已关闭";
@@ -351,9 +355,9 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsEnum)
         {
-            var option = new OptionButton();
+            var option = InstantiateScene<OptionButton>(_optionEditorScene, nameof(OptionButton));
             var values = Enum.GetValues(meta.Type);
-            var currentValue = selectedEntity.Data.Get<int>(meta.Key);
+            var currentValue = selectedEntity.Data.Get<int>(GetMetaKey(meta));
             int selectedIndex = 0;
             int index = 0;
             foreach (var value in values)
@@ -380,29 +384,26 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.HasOptions)
         {
-            var option = new OptionButton();
+            var option = InstantiateScene<OptionButton>(_optionEditorScene, nameof(OptionButton));
             for (int i = 0; i < meta.Options!.Count; i++)
             {
                 option.AddItem(meta.Options[i]);
             }
 
-            option.Selected = selectedEntity.Data.Get<int>(meta.Key);
+            option.Selected = selectedEntity.Data.Get<int>(GetMetaKey(meta));
             option.ItemSelected += idx => ApplyMetaValue(meta, (int)idx);
             return option;
         }
 
         if (meta.IsNumeric)
         {
-            var spin = new SpinBox
-            {
-                MinValue = meta.MinValue ?? -999999,
-                MaxValue = meta.MaxValue ?? 999999,
-                Step = meta.IsInteger ? 1 : 0.1,
-                Value = meta.IsInteger
-                    ? selectedEntity.Data.Get<int>(meta.Key)
-                    : selectedEntity.Data.Get<float>(meta.Key),
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-            };
+            var spin = InstantiateScene<SpinBox>(_numericEditorScene, nameof(SpinBox));
+            spin.MinValue = meta.MinValue ?? -999999;
+            spin.MaxValue = meta.MaxValue ?? 999999;
+            spin.Step = meta.IsInteger ? 1 : 0.1;
+            spin.Value = meta.IsInteger
+                ? selectedEntity.Data.Get<int>(GetMetaKey(meta))
+                : selectedEntity.Data.Get<float>(GetMetaKey(meta));
             spin.ValueChanged += value =>
             {
                 if (meta.IsInteger)
@@ -419,17 +420,33 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsString)
         {
-            var lineEdit = new LineEdit
-            {
-                Text = selectedEntity.Data.Get<string>(meta.Key),
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-            };
+            var lineEdit = InstantiateScene<LineEdit>(_textEditorScene, nameof(LineEdit));
+            lineEdit.Text = selectedEntity.Data.Get<string>(GetMetaKey(meta));
             lineEdit.TextSubmitted += text => ApplyMetaValue(meta, text);
             lineEdit.FocusExited += () => ApplyMetaValue(meta, lineEdit.Text);
             return lineEdit;
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 实例化一个 UI 场景。
+    /// </summary>
+    private static T InstantiateScene<T>(PackedScene? scene, string sceneName) where T : Node
+    {
+        if (scene == null)
+        {
+            throw new InvalidOperationException($"属性测试场景未配置: {sceneName}");
+        }
+
+        var instance = scene.Instantiate<T>();
+        if (instance == null)
+        {
+            throw new InvalidOperationException($"属性测试场景实例化失败: {sceneName}");
+        }
+
+        return instance;
     }
 
     /// <summary>
@@ -445,7 +462,23 @@ public partial class AttributeTestModule : TestModuleBase
     /// </summary>
     private static string GetMetaDisplayName(DataMeta meta)
     {
-        return string.IsNullOrWhiteSpace(meta.DisplayName) ? meta.Key : meta.DisplayName;
+        var metaKey = GetMetaKey(meta);
+        return string.IsNullOrWhiteSpace(meta.DisplayName) ? metaKey : meta.DisplayName;
+    }
+
+    /// <summary>
+    /// 获取元数据的键名。
+    /// </summary>
+    private static string GetMetaKey(DataMeta meta) => meta.Key;
+
+    private static Control CreateInlineErrorLabel(string message)
+    {
+        return new Label
+        {
+            Text = message,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
     }
 
     /// <summary>
@@ -463,12 +496,14 @@ public partial class AttributeTestModule : TestModuleBase
             return;
         }
 
-        if (meta.Key == DataKey.CurrentHp)
+        var metaKey = GetMetaKey(meta);
+
+        if (metaKey == GetMetaKey(DataKey.CurrentHp))
         {
             var maxHp = selectedEntity.Data.Get<float>(DataKey.FinalHp);
             value = Mathf.Clamp(Convert.ToSingle(value), 0f, maxHp);
         }
-        else if (meta.Key == DataKey.CurrentMana)
+        else if (metaKey == GetMetaKey(DataKey.CurrentMana))
         {
             var maxMana = selectedEntity.Data.Get<float>(DataKey.FinalMana);
             value = Mathf.Clamp(Convert.ToSingle(value), 0f, maxMana);
@@ -476,26 +511,26 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsInteger)
         {
-            selectedEntity.Data.Set(meta.Key, Convert.ToInt32(value));
+            selectedEntity.Data.Set(metaKey, Convert.ToInt32(value));
         }
         else if (meta.IsFloatingPoint)
         {
-            selectedEntity.Data.Set(meta.Key, Convert.ToSingle(value));
+            selectedEntity.Data.Set(metaKey, Convert.ToSingle(value));
         }
         else if (meta.IsBoolean)
         {
-            selectedEntity.Data.Set(meta.Key, Convert.ToBoolean(value));
+            selectedEntity.Data.Set(metaKey, Convert.ToBoolean(value));
         }
         else if (meta.IsString)
         {
-            selectedEntity.Data.Set(meta.Key, Convert.ToString(value) ?? string.Empty);
+            selectedEntity.Data.Set(metaKey, Convert.ToString(value) ?? string.Empty);
         }
         else
         {
-            selectedEntity.Data.Set(meta.Key, value);
+            selectedEntity.Data.Set(metaKey, value);
         }
 
-        ClampCurrentResourceIfNeeded(meta.Key);
+        ClampCurrentResourceIfNeeded(metaKey);
         Refresh();
     }
 
@@ -510,7 +545,7 @@ public partial class AttributeTestModule : TestModuleBase
             return;
         }
 
-        if (key == DataKey.BaseHp || key == DataKey.HpBonus)
+        if (key == GetMetaKey(DataKey.BaseHp) || key == GetMetaKey(DataKey.HpBonus))
         {
             var currentHp = selectedEntity.Data.Get<float>(DataKey.CurrentHp);
             var maxHp = selectedEntity.Data.Get<float>(DataKey.FinalHp);
@@ -520,7 +555,7 @@ public partial class AttributeTestModule : TestModuleBase
             }
         }
 
-        if (key == DataKey.BaseMana || key == DataKey.ManaBonus)
+        if (key == GetMetaKey(DataKey.BaseMana) || key == GetMetaKey(DataKey.ManaBonus))
         {
             var currentMana = selectedEntity.Data.Get<float>(DataKey.CurrentMana);
             var maxMana = selectedEntity.Data.Get<float>(DataKey.FinalMana);
@@ -591,5 +626,16 @@ public partial class AttributeTestModule : TestModuleBase
         {
             child.QueueFree();
         }
+    }
+
+    private void ShowPlaceholder(string message)
+    {
+        var label = new Label
+        {
+            Text = message,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
+        _editorContainer.AddChild(label);
     }
 }

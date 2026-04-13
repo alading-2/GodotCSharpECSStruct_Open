@@ -2,7 +2,7 @@
 
 ## 1. 目录定位
 
-`Src/ECS/System/TestSystem/` 用来承载项目的运行时测试系统源码。
+`Src/ECS/Base/System/TestSystem/` 用来承载项目的运行时测试系统源码，属性测试模块位于 `Attribute/` 子目录，技能测试模块位于 `Ability/` 子目录。
 
 这套系统面向开发调试阶段，目标是：
 
@@ -23,16 +23,18 @@
 
 | 文件 | 职责 |
 |------|------|
-| `TestSystem.cs` | 调试系统宿主，负责 AutoLoad、场景骨架绑定、实体选择、模块注册与切换 |
-| `TestSystem.tscn` | 测试系统主面板骨架，导出模块场景并承载顶部工具栏、信息栏与模块宿主区 |
+| `TestSystem.cs` | 调试系统宿主，负责 AutoLoad、场景骨架绑定、实体选择、扫描 `ModuleHost` 子节点注册模块与切换 |
+| `TestSystem.tscn` | 测试系统主面板骨架，承载顶部工具栏、信息栏与模块宿主区，并直接挂载模块场景 |
 | `TestModuleBase.cs` | 所有测试模块的统一基类 |
-| `AttributeTestModule.cs` | 属性测试模块，负责 Data 编辑与临时加成 UI |
-| `AttributeTestModule.tscn` | 属性测试固定布局骨架，提供分类列表与右侧滚动编辑区 |
 | `FeatureDebugService.cs` | 调试适配层，负责把调试操作转发到正式 Feature / Ability 生命周期 |
-| `AbilityTestService.cs` | 技能测试服务，负责目录缓存、分组、视图模型与业务操作 |
-| `AbilityTestViewModels.cs` | 技能测试共享视图模型 |
-| `AbilityTestModule.cs` | 技能测试 UI，负责双 Tree、右键菜单与事件刷新 |
-| `AbilityTestModule.tscn` | 技能测试固定布局骨架，提供左右双树与右键菜单节点 |
+| `Attribute/AttributeTestModule.cs` | 属性测试模块，负责 Data 编辑与临时加成 UI 绑定 |
+| `Attribute/AttributeTestModule.tscn` | 属性测试固定布局骨架，提供分类列表与右侧滚动编辑区 |
+| `Attribute/AttributeEditorRow.tscn` 等 | 属性词条复用场景，负责词条骨架与具体编辑器结构 |
+| `Ability/AbilityTestService.cs` | 技能测试服务，负责目录缓存、分组、视图模型与业务操作；内部通过 `DataKey.XXX.Key` 显式访问 Data 键名 |
+| `Ability/AbilityTestViewModels.cs` | 技能测试共享视图模型 |
+| `Ability/AbilityTestModule.cs` | 技能测试 UI，负责左右双列列表、卡片交互与事件刷新 |
+| `Ability/AbilityTestModule.tscn` | 技能测试固定布局骨架，提供左右滚动区与卡片宿主节点 |
+| `Ability/AbilityGroupSection.tscn / AbilityCatalogItem.tscn / AbilityOwnedItem.tscn` | 技能条目复用场景，负责分组区块与卡片结构 |
 
 ## 2.1 第一次看这个系统，推荐按这个顺序读
 
@@ -45,7 +47,7 @@
 你重点看这几类内容：
 
 - `ModuleInitializer + AutoLoad.Register(...)`：系统为什么会自动出现
-- `_Ready()`：当前注册了哪些模块，默认打开哪个模块
+- `_Ready()`：当前会扫描哪些模块，默认打开哪个模块
 - `TestSystem.tscn + CacheUiNodes()`：主面板骨架在哪里、代码如何拿到关键节点
 - `SetSelectedEntity(...)`：选中实体后，状态如何广播给各模块
 - `SwitchModule(...)`：模块切换时，生命周期是怎么流转的
@@ -73,15 +75,17 @@
 
 推荐顺序：
 
-1. `AttributeTestModule.tscn`
-2. `AttributeTestModule.cs`
-3. `FeatureDebugService.cs`
-4. 相关 `DataKey / DataMeta / DataCategory`
+1. `Attribute/AttributeTestModule.tscn`
+2. `Attribute/AttributeEditorRow.tscn` 与各类 `Attribute*Editor.tscn`
+3. `Attribute/AttributeTestModule.cs`
+4. `FeatureDebugService.cs`
+5. 相关 `DataKey / DataMeta / DataCategory`
 
 这样看的原因是：
 
-- `AttributeTestModule.tscn` 先让你看懂固定布局
-- `AttributeTestModule.cs` 再看右侧属性编辑行如何根据元数据动态生成
+- `Attribute/AttributeTestModule.tscn` 先让你看懂固定布局
+- `Attribute/AttributeEditorRow.tscn` 等复用场景先让你看懂每个词条的固定结构
+- `Attribute/AttributeTestModule.cs` 再看右侧属性编辑行如何根据元数据实例化这些场景
 - 然后看 `FeatureDebugService.cs`，理解“临时加成”为什么不直接硬改 Data
 - 最后再回到 `DataMeta`，确认哪些字段允许编辑、哪些字段支持 Modifier
 
@@ -94,19 +98,21 @@
 
 推荐顺序：
 
-1. `AbilityTestModule.tscn`
-2. `AbilityTestModule.cs`
-3. `AbilityTestService.cs`
-4. `FeatureDebugService.cs`
-5. `AbilityTestViewModels.cs`
+1. `Ability/AbilityTestModule.tscn`
+2. `Ability/AbilityGroupSection.tscn / AbilityCatalogItem.tscn / AbilityOwnedItem.tscn`
+3. `Ability/AbilityTestModule.cs`
+4. `Ability/AbilityTestService.cs`
+5. `FeatureDebugService.cs`
+6. `Ability/AbilityTestViewModels.cs`
 
 这样看的原因是：
 
-- `AbilityTestModule.tscn` 先让你看懂左右双栏固定布局
-- `AbilityTestModule.cs` 再回答树节点如何重建、交互怎么转发
-- `AbilityTestService.cs` 再回答“数据从哪来、操作怎么做”
+- `Ability/AbilityTestModule.tscn` 先让你看懂左右双栏固定布局
+- `Ability/AbilityGroupSection.tscn / AbilityCatalogItem.tscn / AbilityOwnedItem.tscn` 先让你看懂分组区块与卡片结构
+- `Ability/AbilityTestModule.cs` 再回答列表如何重建、交互怎么转发
+- `Ability/AbilityTestService.cs` 再回答“数据从哪来、操作怎么做”
 - `FeatureDebugService.cs` 再告诉你操作最后是如何转发到正式链路
-- `AbilityTestViewModels.cs` 最后补齐展示数据结构
+- `Ability/AbilityTestViewModels.cs` 最后补齐展示数据结构
 
 你读技能测试时，重点抓住一条主链：
 
@@ -245,9 +251,8 @@ TestSystem.Instance?.SetSelectedEntity(entity);
 
 ### 交互方式
 
-- 左侧树：点击叶子添加技能
-- 右侧树：点击叶子移除技能
-- 右键右侧叶子：启用 / 禁用 / 移除
+- 左侧卡片：点击“添加”按钮
+- 右侧卡片：点击“启用 / 禁用 / 移除”按钮
 
 底层不会绕开正式系统，而是通过：
 
@@ -316,6 +321,32 @@ RegisterModule(new MyTestModule());
 - 不要在这里新增一套测试版技能执行系统
 - 不要直接编辑计算属性
 
+### 7.1 DataKey 访问规范
+
+在 TestSystem 内部访问 `Data.Get/Set` 时，**必须使用 `DataKey.XXX.Key` 显式取键名**，不要依赖 `DataMeta` 的隐式转换：
+
+```csharp
+// ✅ 正确：显式 .Key
+ability.Data.Get<string>(DataKey.Name.Key);
+
+// ❌ 错误：依赖隐式转换（某些工程上下文下编译兼容性差）
+ability.Data.Get<string>(DataKey.Name);
+```
+
+原因：规避不同工程上下文下 `DataMeta` 到 `string` 的编译兼容差异。
+
+### 7.2 日志级别规范
+
+TestSystem UI 控件统一使用以下日志级别：
+
+| 级别 | 用途 |
+|------|------|
+| `Info` | 用户操作确认（点击添加/移除/切换等） |
+| `Warn` | 节点回退查找、操作前置条件不满足 |
+| `Error` | 场景实例化失败、分组渲染异常 |
+
+**不要使用 `LogLevel.Debug`**。运行时测试系统的日志面向开发者调试，Debug 级别在测试面板中属于冗余输出。
+
 ## 8. 你通常会改哪些地方
 
 ### 新增调试模块
@@ -323,7 +354,7 @@ RegisterModule(new MyTestModule());
 通常要改：
 
 - 新模块源码文件
-- `TestSystem.cs` 注册入口
+- `TestSystem.tscn` 的 `ModuleHost` 下挂载新模块场景
 - `Docs/框架/ECS/System/TestSystem运行时测试系统说明.md`
 - `.windsurf/skills/test-system/SKILL.md`
 - `Docs/框架/项目索引.md`
@@ -332,7 +363,7 @@ RegisterModule(new MyTestModule());
 
 通常要改：
 
-- `AttributeTestModule.cs`
+- `Attribute/AttributeTestModule.cs`
 - 必要时 `FeatureDebugService.cs`
 - 相关 `DataMeta / DataKey / DataCategory`
 - 正式说明文档与 skill
@@ -341,8 +372,8 @@ RegisterModule(new MyTestModule());
 
 通常要改：
 
-- `AbilityTestModule.cs`
-- `AbilityTestService.cs`
+- `Ability/AbilityTestModule.cs`
+- `Ability/AbilityTestService.cs`
 - 必要时 `FeatureDebugService.cs`
 - 正式说明文档与 skill
 
@@ -354,4 +385,6 @@ RegisterModule(new MyTestModule());
 - 未选中实体时是否有明确提示
 - 是否绕开了正式 `EntityManager / FeatureSystem`
 - 是否错误地把技能测试做成了执行入口
+- Data.Get/Set 调用是否使用 `DataKey.XXX.Key` 显式访问
+- 日志是否仅使用 `Info / Warn / Error`，无 `Debug` 级别
 - 文档、项目索引、skill 是否同步更新

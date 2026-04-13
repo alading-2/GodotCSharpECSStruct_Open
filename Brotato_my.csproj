@@ -8,6 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="备份\**" />
-    <Compile Remove="Tools\ResourceGenerator\**" />
+    <Compile Remove="Tools\**" />
   </ItemGroup>
 </Project>

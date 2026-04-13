@@ -23,9 +23,6 @@ public partial class TestSystem : CanvasLayer
     /// <summary>当前被测试面板选中的实体；属性面板、技能面板等都会围绕它刷新。</summary>
     public IEntity? SelectedEntity { get; private set; }
 
-    [Export] private PackedScene? _attributeModuleScene;
-    [Export] private PackedScene? _abilityModuleScene;
-
     /// <summary>当前已注册的测试模块列表，顺序就是下拉菜单显示顺序。</summary>
     private readonly List<TestModuleBase> _modules = new();
 
@@ -106,9 +103,11 @@ public partial class TestSystem : CanvasLayer
     {
         CacheUiNodes();
         BindUiEvents();
-        RegisterModule(InstantiateModule<AttributeTestModule>(_attributeModuleScene, nameof(AttributeTestModule)));
-        RegisterModule(InstantiateModule<AbilityTestModule>(_abilityModuleScene, nameof(AbilityTestModule)));
-        SwitchModule(0);
+        RegisterModulesFromScene();
+        if (_modules.Count > 0)
+        {
+            SwitchModule(0);
+        }
         UpdateSelectedEntityDisplay();
         _log.Info("TestSystem 初始化完成");
     }
@@ -234,24 +233,35 @@ public partial class TestSystem : CanvasLayer
         _modules.Add(module);
         _modulesByIndex[_modules.Count - 1] = module;
         _moduleSelector.AddItem(module.DisplayName);
-        _moduleHost.AddChild(module);
         module.OnSelectedEntityChanged(SelectedEntity);
     }
 
-    private static T InstantiateModule<T>(PackedScene? scene, string sceneName) where T : TestModuleBase
+    /// <summary>
+    /// 从模块宿主节点中扫描并注册所有测试模块。
+    /// <para>
+    /// 宿主层不再直接依赖具体模块类型；后续新增模块只需要把模块场景挂到 ModuleHost 下即可接入。
+    /// </para>
+    /// </summary>
+    private void RegisterModulesFromScene()
     {
-        if (scene == null)
+        _modules.Clear();
+        _modulesByIndex.Clear();
+        _moduleSelector.Clear();
+
+        foreach (Node child in _moduleHost.GetChildren())
         {
-            throw new InvalidOperationException($"测试模块场景未配置: {sceneName}");
+            if (child is not TestModuleBase module)
+            {
+                continue;
+            }
+
+            RegisterModule(module);
         }
 
-        var instance = scene.Instantiate<T>();
-        if (instance == null)
+        if (_modules.Count == 0)
         {
-            throw new InvalidOperationException($"测试模块场景实例化失败: {sceneName}");
+            _log.Warn("TestSystem 未在 ModuleHost 下找到任何测试模块，请检查 TestSystem.tscn 挂载配置");
         }
-
-        return instance;
     }
 
     /// <summary>
