@@ -91,7 +91,16 @@ public static class ResourcePaths
     public const string AssetProjectile_LaserBolt = "LaserBolt";
 
     // --- System ---
+    public const string System_AbilityCatalogCard = "AbilityCatalogCard";
+    public const string System_AbilityGroupPanel = "AbilityGroupPanel";
+    public const string System_AbilityOwnedCard = "AbilityOwnedCard";
     public const string System_AbilityTestModule = "AbilityTestModule";
+    public const string System_AttributeBooleanEditor = "AttributeBooleanEditor";
+    public const string System_AttributeEditorRow = "AttributeEditorRow";
+    public const string System_AttributeEnumEditor = "AttributeEnumEditor";
+    public const string System_AttributeModifierEditor = "AttributeModifierEditor";
+    public const string System_AttributeNumericEditor = "AttributeNumericEditor";
+    public const string System_AttributeStringEditor = "AttributeStringEditor";
     public const string System_AttributeTestModule = "AttributeTestModule";
     public const string System_DamageService = "DamageService";
     public const string System_DamageStatisticsSystem = "DamageStatisticsSystem";
@@ -237,7 +246,16 @@ public static class ResourcePaths
         },
         { ResourceCategory.System, new Dictionary<string, ResourceData>
             {
+                { System_AbilityCatalogCard, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AbilityCards/AbilityCatalogCard.tscn") },
+                { System_AbilityGroupPanel, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AbilityCards/AbilityGroupPanel.tscn") },
+                { System_AbilityOwnedCard, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AbilityCards/AbilityOwnedCard.tscn") },
                 { System_AbilityTestModule, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AbilityTestModule.tscn") },
+                { System_AttributeBooleanEditor, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AttributeEditors/AttributeBooleanEditor.tscn") },
+                { System_AttributeEditorRow, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AttributeEditors/AttributeEditorRow.tscn") },
+                { System_AttributeEnumEditor, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AttributeEditors/AttributeEnumEditor.tscn") },
+                { System_AttributeModifierEditor, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AttributeEditors/AttributeModifierEditor.tscn") },
+                { System_AttributeNumericEditor, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AttributeEditors/AttributeNumericEditor.tscn") },
+                { System_AttributeStringEditor, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AttributeEditors/AttributeStringEditor.tscn") },
                 { System_AttributeTestModule, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/AttributeTestModule.tscn") },
                 { System_DamageService, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/DamageSystem/DamageService.tscn") },
                 { System_DamageStatisticsSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/DamageSystem/DamageStatisticsSystem.tscn") },
