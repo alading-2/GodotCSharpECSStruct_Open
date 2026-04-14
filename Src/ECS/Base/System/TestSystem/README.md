@@ -13,7 +13,7 @@
 
 如果你要理解概念与设计边界，请先看：
 
-- `Docs/框架/ECS/System/TestSystem运行时测试系统说明.md`
+- `Docs/框架/ECS/System/TestSystem.md`
 
 如果你要按规范扩展此目录，请看：
 
@@ -143,7 +143,7 @@
 
 当你把上面几个文件看过一遍后，再去看：
 
-- `Docs/框架/ECS/System/TestSystem运行时测试系统说明.md`
+- `Docs/框架/ECS/System/TestSystem.md`
 
 这时你会更容易把“代码实现”和“设计边界”对上。
 
@@ -342,8 +342,10 @@ TestSystem UI 控件统一使用以下日志级别：
 | 级别 | 用途 |
 |------|------|
 | `Info` | 用户操作确认（点击添加/移除/切换等） |
-| `Warn` | 节点回退查找、操作前置条件不满足 |
-| `Error` | 场景实例化失败、分组渲染异常 |
+| `Warn` | 操作前置条件不满足 |
+| `Error` | 节点最终缺失、场景实例化失败、分组渲染异常 |
+
+节点查找允许在 `unique-name` 与普通路径之间安静回退，不要为回退成功路径输出 `Warn`，避免测试面板初始化时刷屏。
 
 **不要使用 `LogLevel.Debug`**。运行时测试系统的日志面向开发者调试，Debug 级别在测试面板中属于冗余输出。
 
@@ -355,7 +357,7 @@ TestSystem UI 控件统一使用以下日志级别：
 
 - 新模块源码文件
 - `TestSystem.tscn` 的 `ModuleHost` 下挂载新模块场景
-- `Docs/框架/ECS/System/TestSystem运行时测试系统说明.md`
+- `Docs/框架/ECS/System/TestSystem.md`
 - `.windsurf/skills/test-system/SKILL.md`
 - `Docs/框架/项目索引.md`
 

@@ -6,7 +6,7 @@ using Godot;
 /// </summary>
 public class BaseDamageProcessor : IDamageProcessor
 {
-    private static readonly Log _log = new Log("BaseDamageProcessor");
+    private static readonly Log _log = new Log("BaseDamageProcessor", LogLevel.Warning);
     // 优先级 0：最先执行
     public int Priority { get; set; }
 

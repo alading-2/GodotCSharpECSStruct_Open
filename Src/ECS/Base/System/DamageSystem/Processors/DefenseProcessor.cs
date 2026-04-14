@@ -6,7 +6,7 @@ using System;
 /// </summary>
 public class DefenseProcessor : IDamageProcessor
 {
-    private static readonly Log _log = new Log("DefenseProcessor");
+    private static readonly Log _log = new Log("DefenseProcessor", LogLevel.Warning);
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)

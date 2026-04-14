@@ -38,7 +38,8 @@
       "Bash(cmd.exe /c \"dotnet --version\")",
       "Bash(cmd.exe:*)",
       "Bash(dotnet /home/slime/.nuget/packages/unvell.reogrid.dll/3.0.0/lib/netcoreapp3.0/unvell.ReoGrid.dll)",
-      "Read(//home/**)"
+      "Read(//home/**)",
+      "Bash(grep func try_edit_value:*)"
     ]
   }
 }

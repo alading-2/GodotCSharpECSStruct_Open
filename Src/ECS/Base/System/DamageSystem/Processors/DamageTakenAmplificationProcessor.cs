@@ -6,7 +6,7 @@ using Godot;
 /// </summary>
 public class DamageTakenAmplificationProcessor : IDamageProcessor
 {
-    private static readonly Log _log = new Log("DamageTakenAmplificationProcessor");
+    private static readonly Log _log = new Log("DamageTakenAmplificationProcessor", LogLevel.Warning);
     public int Priority { get; set; }
 
     public void Process(DamageInfo info)
