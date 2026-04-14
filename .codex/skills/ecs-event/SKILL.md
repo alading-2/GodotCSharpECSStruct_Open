@@ -41,6 +41,7 @@ GlobalEventBus.Global.Off<GameEventType.Unit.KilledEventData>(
 | 同一 Entity 内组件通信（HP变化、攻击请求） | `Entity.Events` |
 | 跨 Entity 通知（击杀、生成、全局状态） | `GlobalEventBus.Global` |
 | UI 监听特定 Entity 状态 | `Entity.Events`（绑定后监听） |
+| 通用调试基础设施（如鼠标选择系统） | `GlobalEventBus.Global` |
 
 ## 带返回值的事件（EventContext 模式）
 
@@ -71,6 +72,14 @@ private void OnCheckCanUse(GameEventType.Ability.CheckCanUseEventData evt)
 - `Hurtbox` 这类稳定业务语义优先拆成专用事件，如 `HurtboxEntered / HurtboxExited(Source, Hurtbox, Target, TargetEntity)`
 - 不要让业务长期依赖 `layer/mask -> CollisionType` 反查再二次过滤所有碰撞
 - 需要区分碰撞来源时，优先拆分为独立事件或独立组件，而不是在通用事件里继续塞语义标志
+
+调试基础设施建议：
+
+- 像“通用鼠标选择系统”这种被多个调试系统复用的能力，应做成独立 AutoLoad 系统
+- 对外只暴露全局事件，不要让调用方直接依赖具体系统实例
+- 推荐事件流：`StartRequested -> PreviewUpdated / Missed / Completed / CancelRequested`
+- 单击和框选结果统一走集合协议，`PrimaryEntity` 只表示默认主目标，不要把通用事件重新收窄成单实体事件
+- UI 点击仲裁优先依赖 Godot `_UnhandledInput` 和 `Control.MouseFilter`；`CollisionMask` 只负责世界物理候选粗过滤
 
 ## 定义新事件类型
 

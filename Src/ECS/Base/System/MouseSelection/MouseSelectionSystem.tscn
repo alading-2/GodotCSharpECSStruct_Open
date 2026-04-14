@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/ECS/Base/System/MouseSelection/MouseSelectionSystem.cs" id="1_mouse_selection"]
+
+[node name="MouseSelectionSystem" type="Node"]
+script = ExtResource("1_mouse_selection")

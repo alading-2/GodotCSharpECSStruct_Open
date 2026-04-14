@@ -22,6 +22,12 @@ namespace Slime.Config.Units
         [Export] public Team Team { get; set; } = (Team)DataKey.Team.DefaultValue!;
 
         /// <summary>
+        /// 实体类型。
+        /// </summary>
+        [DataKey(nameof(DataKey.EntityType))]
+        [Export] public EntityType EntityType { get; set; } = EntityType.Unit;
+
+        /// <summary>
         /// 死亡类型
         /// </summary>
         [DataKey(nameof(DataKey.DeathType))]

@@ -15,6 +15,9 @@
       }
     },
     "res://Data/Data/Ability/": {
+      "FeatureHandlerId": {
+        "visibility": 0.0
+      },
       "resource_local_to_scene": {
         "visibility": 0.0
       },

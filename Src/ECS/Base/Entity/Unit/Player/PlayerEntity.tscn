@@ -8,7 +8,7 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_05apk"]
 
 [node name="Player" type="CharacterBody2D" unique_id=1208168319]
-collision_layer = 2
+collision_layer = 258
 motion_mode = 1
 script = ExtResource("1_a3twn")
 

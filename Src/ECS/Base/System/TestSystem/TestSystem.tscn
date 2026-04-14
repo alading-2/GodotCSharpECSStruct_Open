@@ -1,103 +1,103 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://ds6313bkubtr0"]
 
 [ext_resource type="Script" uid="uid://dvbxvo8fbyewj" path="res://Src/ECS/Base/System/TestSystem/TestSystem.cs" id="1_test_system"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/Attribute/AttributeTestModule.tscn" id="2_attribute"]
 [ext_resource type="PackedScene" path="res://Src/ECS/Base/System/TestSystem/Ability/AbilityTestModule.tscn" id="3_ability"]
 
-[node name="TestSystem" type="CanvasLayer"]
+[node name="TestSystem" type="CanvasLayer" unique_id=1380235471]
 script = ExtResource("1_test_system")
 
-[node name="Root" type="Control" parent="."]
+[node name="Root" type="Control" parent="." unique_id=1239098797]
+custom_minimum_size = Vector2(680, 744)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-custom_minimum_size = Vector2(680, 744)
 
-[node name="TopLeft" type="MarginContainer" parent="Root"]
+[node name="TopLeft" type="MarginContainer" parent="Root" unique_id=1016796394]
 layout_mode = 1
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 656.0
 offset_bottom = 720.0
 
-[node name="Layout" type="VBoxContainer" parent="Root/TopLeft"]
+[node name="Layout" type="VBoxContainer" parent="Root/TopLeft" unique_id=361840170]
 custom_minimum_size = Vector2(620, 0)
 layout_mode = 2
 
-[node name="Toolbar" type="HBoxContainer" parent="Root/TopLeft/Layout"]
+[node name="Toolbar" type="HBoxContainer" parent="Root/TopLeft/Layout" unique_id=678811488]
 layout_mode = 2
 
-[node name="ToggleButton" type="Button" parent="Root/TopLeft/Layout/Toolbar"]
+[node name="ToggleButton" type="Button" parent="Root/TopLeft/Layout/Toolbar" unique_id=1540733275]
 custom_minimum_size = Vector2(88, 36)
 layout_mode = 2
 text = "测试"
 
-[node name="ModuleSelector" type="OptionButton" parent="Root/TopLeft/Layout/Toolbar"]
+[node name="ModuleSelector" type="OptionButton" parent="Root/TopLeft/Layout/Toolbar" unique_id=997552148]
 custom_minimum_size = Vector2(220, 36)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Panel" type="PanelContainer" parent="Root/TopLeft/Layout"]
+[node name="Panel" type="PanelContainer" parent="Root/TopLeft/Layout" unique_id=370378028]
 custom_minimum_size = Vector2(620, 620)
 layout_mode = 2
 
-[node name="PanelMargin" type="MarginContainer" parent="Root/TopLeft/Layout/Panel"]
+[node name="PanelMargin" type="MarginContainer" parent="Root/TopLeft/Layout/Panel" unique_id=1459483749]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="PanelLayout" type="VBoxContainer" parent="Root/TopLeft/Layout/Panel/PanelMargin"]
+[node name="PanelLayout" type="VBoxContainer" parent="Root/TopLeft/Layout/Panel/PanelMargin" unique_id=1296994253]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout"]
+[node name="TitleLabel" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout" unique_id=169570003]
 layout_mode = 2
 text = "运行时测试系统"
 
-[node name="SelectionHintLabel" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout"]
+[node name="SelectionHintLabel" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout" unique_id=1733311246]
 layout_mode = 2
 text = "开启“选择实体”后，点击场景中的实体即可切换测试目标"
 
-[node name="InfoRow" type="HBoxContainer" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout"]
+[node name="InfoRow" type="HBoxContainer" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout" unique_id=1620441087]
 layout_mode = 2
 
-[node name="SelectionToggle" type="CheckButton" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow"]
+[node name="SelectionToggle" type="CheckButton" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow" unique_id=1679991634]
 layout_mode = 2
-text = "选择实体"
 button_pressed = true
+text = "选择实体"
 
-[node name="RefreshButton" type="Button" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow"]
+[node name="RefreshButton" type="Button" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow" unique_id=137797944]
 layout_mode = 2
 text = "刷新"
 
-[node name="ClearSelectionButton" type="Button" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow"]
+[node name="ClearSelectionButton" type="Button" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow" unique_id=1913955010]
 layout_mode = 2
 text = "清空选择"
 
-[node name="EntityLabelTitle" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow"]
+[node name="EntityLabelTitle" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow" unique_id=1586450185]
 layout_mode = 2
 text = "当前实体:"
 
-[node name="SelectedEntityLabel" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow"]
+[node name="SelectedEntityLabel" type="Label" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow" unique_id=339512135]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "未选择"
 autowrap_mode = 3
 
-[node name="Separator" type="HSeparator" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout"]
+[node name="Separator" type="HSeparator" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout" unique_id=1483538192]
 layout_mode = 2
 
-[node name="ModuleHost" type="VBoxContainer" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout"]
+[node name="ModuleHost" type="VBoxContainer" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout" unique_id=1752326821]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="AttributeTestModule" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost" instance=ExtResource("2_attribute")]
+[node name="AttributeTestModule" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost" unique_id=903439925 instance=ExtResource("2_attribute")]
 layout_mode = 2
 
-[node name="AbilityTestModule" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost" instance=ExtResource("3_ability")]
+[node name="AbilityTestModule" parent="Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost" unique_id=196048511 instance=ExtResource("3_ability")]
 layout_mode = 2

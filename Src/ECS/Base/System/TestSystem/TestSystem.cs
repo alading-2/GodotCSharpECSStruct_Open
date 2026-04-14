@@ -29,7 +29,7 @@ public partial class TestSystem : CanvasLayer
     /// <summary>模块 Id 到模块实例的快速映射。</summary>
     private readonly Dictionary<string, ITestModule> _modulesById = new(StringComparer.Ordinal);
 
-    /// <summary>下拉索引到模块 Id 的稳定映射。</summary>
+    /// <summary>所有测试模块 Id 的列表，用于下拉选择器的索引映射。</summary>
     private readonly List<string> _moduleIdsByIndex = new();
 
     /// <summary>当前真正处于前台的测试模块。</summary>
@@ -122,14 +122,22 @@ public partial class TestSystem : CanvasLayer
     /// </summary>
     public override void _Ready()
     {
+        // 缓存 UI 节点
         CacheUiNodes();
+        // 绑定 UI 事件
         BindUiEvents();
+        // 初始化上下文
         InitializeContexts();
+        // 从场景中注册模块
         RegisterModulesFromScene();
+        // 设置默认模块
         if (_modules.Count > 0)
         {
             TrySwitchModule(_moduleIdsByIndex[0]);
         }
+        BindMouseSelectionEvents();
+        SyncMouseSelectionRequest(); // 根据当前开关状态同步一次鼠标选择请求
+        // 更新选中实体显示
         UpdateSelectedEntityDisplay();
         _log.Info("TestSystem 初始化完成");
     }
@@ -144,40 +152,12 @@ public partial class TestSystem : CanvasLayer
         {
             _selectionContext.SelectionChanged -= OnSelectionChanged;
         }
+        UnbindMouseSelectionEvents();
+        CancelMouseSelectionRequest();
 
         if (Instance == this)
         {
             Instance = null;
-        }
-    }
-
-    /// <summary>
-    /// 统一处理场景中的鼠标点击。
-    /// <para>
-    /// 只有在测试面板可见且“选择实体”开关打开时，才会尝试把鼠标位置下的实体设为当前目标。
-    /// </para>
-    /// </summary>
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (!_panelVisible || !_selectionToggle.ButtonPressed)
-        {
-            return;
-        }
-
-        if (@event is not InputEventMouseButton mouseEvent)
-        {
-            return;
-        }
-
-        if (!mouseEvent.Pressed || mouseEvent.ButtonIndex != MouseButton.Left)
-        {
-            return;
-        }
-
-        var entity = FindEntityAtScreenPosition(mouseEvent.Position);
-        if (entity != null)
-        {
-            SetSelectedEntity(entity);
         }
     }
 
@@ -194,6 +174,7 @@ public partial class TestSystem : CanvasLayer
             return;
         }
 
+        // 设置选中的实体
         if (!_selectionContext.SetSelectedEntity(entity))
         {
             RefreshCurrentModule();
@@ -247,8 +228,12 @@ public partial class TestSystem : CanvasLayer
         _moduleContext = new TestModuleContext(this, _selectionContext, _refreshScheduler);
     }
 
+    /// <summary>
+    /// 缓存所有 UI 节点引用。
+    /// </summary>
     private void CacheUiNodes()
     {
+        // 缓存 UI 节点
         _root = GetNode<Control>("Root");
         _toggleButton = GetNode<Button>("Root/TopLeft/Layout/Toolbar/ToggleButton");
         _moduleSelector = GetNode<OptionButton>("Root/TopLeft/Layout/Toolbar/ModuleSelector");
@@ -260,6 +245,7 @@ public partial class TestSystem : CanvasLayer
         _selectedEntityLabel = GetNode<Label>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/InfoRow/SelectedEntityLabel");
         _moduleHost = GetNode<VBoxContainer>("Root/TopLeft/Layout/Panel/PanelMargin/PanelLayout/ModuleHost");
 
+        // 设置鼠标过滤
         _root.MouseFilter = Control.MouseFilterEnum.Ignore;
         GetNode<Control>("Root/TopLeft").MouseFilter = Control.MouseFilterEnum.Ignore;
         GetNode<Control>("Root/TopLeft/Layout").MouseFilter = Control.MouseFilterEnum.Ignore;
@@ -271,12 +257,16 @@ public partial class TestSystem : CanvasLayer
         _moduleHost.MouseFilter = Control.MouseFilterEnum.Ignore;
     }
 
+    /// <summary>
+    /// 绑定所有 UI 事件。
+    /// </summary>
     private void BindUiEvents()
     {
         _toggleButton.Pressed += OnTogglePressed;
         _moduleSelector.ItemSelected += OnModuleSelected;
         _refreshButton.Pressed += RefreshCurrentModule;
         _clearSelectionButton.Pressed += () => SetSelectedEntity(null);
+        _selectionToggle.Toggled += OnSelectionToggleToggled;
     }
 
     /// <summary>
@@ -284,11 +274,17 @@ public partial class TestSystem : CanvasLayer
     /// </summary>
     private void RegisterModule(ITestModule module)
     {
+        // 1. 初始化模块
         module.Initialize(_moduleContext);
+        // 2. 添加到模块列表
         _modules.Add(module);
+        // 3. 添加到模块字典
         _modulesById[module.Definition.Id] = module;
+        // 4. 添加到模块索引列表
         _moduleIdsByIndex.Add(module.Definition.Id);
+        // 5. 添加到模块选择器
         _moduleSelector.AddItem(module.Definition.DisplayName);
+        // 6. 通知模块当前选中实体（如果有的话）
         module.OnSelectedEntityChanged(SelectedEntity);
     }
 
@@ -358,6 +354,7 @@ public partial class TestSystem : CanvasLayer
         _panelVisible = !_panelVisible;
         _panel.Visible = _panelVisible;
         _toggleButton.Text = _panelVisible ? "测试" : "测试(隐藏)";
+        SyncMouseSelectionRequest();
 
         if (_currentModule == null)
         {
@@ -384,6 +381,14 @@ public partial class TestSystem : CanvasLayer
         }
 
         TrySwitchModule(_moduleIdsByIndex[(int)index]);
+    }
+
+    /// <summary>
+    /// 选择实体开关变化时，同步通用鼠标选择请求。
+    /// </summary>
+    private void OnSelectionToggleToggled(bool _)
+    {
+        SyncMouseSelectionRequest();
     }
 
     /// <summary>
@@ -482,149 +487,4 @@ public partial class TestSystem : CanvasLayer
         _selectedEntityLabel.Text = $"{name} | {node.GetType().Name} | {id}";
     }
 
-    /// <summary>
-    /// 在屏幕坐标下查找实体。
-    /// <para>
-    /// 优先使用物理查询拾取碰撞体；如果没有碰撞结果，则再用距离兜底，避免调试面板无法点选纯视觉实体。
-    /// </para>
-    /// </summary>
-    private IEntity? FindEntityAtScreenPosition(Vector2 screenPosition)
-    {
-        var worldPosition = GetWorldMousePosition(screenPosition);
-        var entity = FindEntityByPhysics(worldPosition);
-        if (entity != null)
-        {
-            return entity;
-        }
-
-        return FindEntityByDistance(worldPosition, 56f);
-    }
-
-    /// <summary>
-    /// 把屏幕坐标转换成世界坐标。
-    /// <para>
-    /// 有摄像机时使用摄像机的全局鼠标位置；否则直接回退到原始坐标。
-    /// </para>
-    /// </summary>
-    private Vector2 GetWorldMousePosition(Vector2 screenPosition)
-    {
-        var camera = GetViewport().GetCamera2D();
-        if (camera != null)
-        {
-            return camera.GetGlobalMousePosition();
-        }
-
-        return screenPosition;
-    }
-
-    /// <summary>
-    /// 使用物理空间查询在鼠标位置下的实体。
-    /// <para>
-    /// 这里会同时检测 Area2D 和 Body，适合测试场景中各种实体类型的统一拾取。
-    /// </para>
-    /// </summary>
-    private IEntity? FindEntityByPhysics(Vector2 worldPosition)
-    {
-        var world2D = GetViewport().World2D;
-        if (world2D == null)
-        {
-            return null;
-        }
-
-        var query = new PhysicsPointQueryParameters2D
-        {
-            Position = worldPosition,
-            CollideWithAreas = true,
-            CollideWithBodies = true,
-            CollisionMask = uint.MaxValue
-        };
-
-        var results = world2D.DirectSpaceState.IntersectPoint(query, 32);
-        var visited = new HashSet<ulong>();
-
-        foreach (Godot.Collections.Dictionary result in results)
-        {
-            if (!result.ContainsKey("collider"))
-            {
-                continue;
-            }
-
-            var collider = result["collider"].AsGodotObject() as Node;
-            var entity = ResolveEntityFromNode(collider);
-            if (entity is not Node entityNode)
-            {
-                continue;
-            }
-
-            var instanceId = entityNode.GetInstanceId();
-            if (visited.Contains(instanceId))
-            {
-                continue;
-            }
-
-            visited.Add(instanceId);
-            return entity;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// 当物理拾取没有结果时，按距离兜底寻找最近实体。
-    /// <para>
-    /// 这样可以照顾一些没有碰撞体但仍然需要被测试面板选中的调试对象。
-    /// </para>
-    /// </summary>
-    private IEntity? FindEntityByDistance(Vector2 worldPosition, float maxDistance)
-    {
-        IEntity? bestEntity = null;
-        var bestDistanceSquared = maxDistance * maxDistance;
-
-        foreach (var entity in EntityManager.GetAllEntities())
-        {
-            if (entity is not Node2D node2D)
-            {
-                continue;
-            }
-
-            var distanceSquared = node2D.GlobalPosition.DistanceSquaredTo(worldPosition);
-            if (distanceSquared > bestDistanceSquared)
-            {
-                continue;
-            }
-
-            bestDistanceSquared = distanceSquared;
-            bestEntity = entity;
-        }
-
-        return bestEntity;
-    }
-
-    /// <summary>
-    /// 由任意场景节点向上回溯，尝试解析出所属实体。
-    /// <para>
-    /// 既支持节点本身就是 IEntity，也支持通过 EntityManager 从组件反查宿主实体。
-    /// </para>
-    /// </summary>
-    private IEntity? ResolveEntityFromNode(Node? node)
-    {
-        var current = node;
-        while (current != null)
-        {
-            if (current is IEntity entity)
-            {
-                return entity;
-            }
-
-            var host = EntityManager.GetEntityByComponent(current);
-            if (host is IEntity hostEntity)
-            {
-                return hostEntity;
-            }
-
-            current = current.GetParent();
-        }
-
-        return null;
-    }
 }

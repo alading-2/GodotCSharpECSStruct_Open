@@ -13,6 +13,7 @@
 
 当前代码入口：
 
+- `Src/ECS/Base/System/MouseSelection/MouseSelectionSystem.cs`
 - `Src/ECS/Base/System/TestSystem/TestSystem.cs`
 - `Src/ECS/Base/System/TestSystem/TestModuleBase.cs`
 - `Src/ECS/Base/System/TestSystem/Core/ITestModule.cs`
@@ -34,6 +35,7 @@
 ### 2.1 必须满足的目标
 
 - **宿主稳定**：实体选择、模块切换、激活态管理必须统一收口
+- **通用选择复用**：鼠标点选/框选实体能力要能被多个调试系统复用，而不是绑死在 `TestSystem`
 - **模块解耦**：新增或删除测试模块时，不应频繁修改宿主核心代码
 - **增量刷新**：数据变化后只更新受影响的 UI，不允许默认整页重建
 - **事件驱动**：订阅来源必须清晰，激活时订阅，失活时解除
@@ -139,12 +141,22 @@
 - 模块注册与切换
 - 统一调度刷新
 - 按 `TestModuleDefinition` 维护稳定模块 Id 和排序
+- 通过全局事件接入通用鼠标选择系统，并消费 `PrimaryEntity / Entities` 选择结果
 
 `TestSystem` 不应该负责：
 
 - 具体业务测试逻辑
 - 模块内部控件创建
 - 某个模块的数据过滤规则
+- 鼠标拾取、物理查询和输入消费细节
+
+通用鼠标选择系统的边界：
+
+- `MouseSelectionSystem` 是独立 AutoLoad 系统，对外只暴露全局事件协议
+- 输入入口使用 `_UnhandledInput`，确保 GUI 控件优先处理点击；不要用碰撞层解决 UI 点击拦截
+- 选择事件支持单击和框选；TestSystem 调试请求使用 `ClickOrDragBox`，结果统一通过实体集合表达，调用方再决定替换、追加或切换选择
+- 物理候选用 `CollisionMask` 粗过滤，语义候选用 `EntityType / Team` 细过滤
+- `TestSystem` 默认使用调试宽松配置，正式玩法请求方应传入 `SelectionPickable` 层和需要的语义过滤
 
 ### 4.2.2 模块只做本模块的事
 

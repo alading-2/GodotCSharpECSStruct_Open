@@ -104,6 +104,7 @@ public static class ResourcePaths
     public const string System_AttributeTextEditor = "AttributeTextEditor";
     public const string System_DamageService = "DamageService";
     public const string System_DamageStatisticsSystem = "DamageStatisticsSystem";
+    public const string System_MouseSelectionSystem = "MouseSelectionSystem";
     public const string System_RecoverySystem = "RecoverySystem";
     public const string System_SpawnSystem = "SpawnSystem";
     public const string System_TestSystem = "TestSystem";
@@ -259,6 +260,7 @@ public static class ResourcePaths
                 { System_AttributeTextEditor, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/Attribute/AttributeTextEditor.tscn") },
                 { System_DamageService, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/DamageSystem/DamageService.tscn") },
                 { System_DamageStatisticsSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/DamageSystem/DamageStatisticsSystem.tscn") },
+                { System_MouseSelectionSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/MouseSelection/MouseSelectionSystem.tscn") },
                 { System_RecoverySystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/RecoverySystem/RecoverySystem.tscn") },
                 { System_SpawnSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/Spawn/SpawnSystem.tscn") },
                 { System_TestSystem, new ResourceData(ResourceCategory.System, "res://Src/ECS/Base/System/TestSystem/TestSystem.tscn") },

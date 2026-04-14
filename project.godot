@@ -186,6 +186,9 @@ BtnSelect={
 2d_physics/layer_4="PlayerHurtbox"
 2d_physics/layer_5="PlayerPickup"
 2d_physics/layer_6="Projectile"
+2d_physics/layer_7="EnemyHurtbox"
+2d_physics/layer_8="WeaponHitbox"
+2d_physics/layer_9="SelectionPickable"
 
 [rendering]
 
