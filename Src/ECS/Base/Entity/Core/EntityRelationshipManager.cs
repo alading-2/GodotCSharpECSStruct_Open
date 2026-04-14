@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -52,14 +51,6 @@ public enum RelationshipConstraint
 public static class EntityRelationshipManager
 {
     private static readonly Log _log = new("EntityRelationshipManager", LogLevel.Warning);
-
-    // ==================== 事件 ====================
-
-    /// <summary>关系添加事件 (parentId, childId, relationType)</summary>
-    public static event Action<string, string, string>? OnRelationshipAdded;
-
-    /// <summary>关系移除事件 (parentId, childId, relationType)</summary>
-    public static event Action<string, string, string>? OnRelationshipRemoved;
 
     // ==================== 数据结构 ====================
 
@@ -153,8 +144,15 @@ public static class EntityRelationshipManager
         GetOrCreateSet(_childIndex, childId).Add(relationshipId);
         GetOrCreateSet(_typeIndex, relationType).Add(relationshipId);
 
-        // 触发事件
-        OnRelationshipAdded?.Invoke(parentId, childId, relationType);
+        // 广播关系添加事件
+        GlobalEventBus.Global.Emit(
+            GameEventType.Global.RelationshipAdded,
+            new GameEventType.Global.RelationshipAddedEventData(
+                parentId, // 父实体Id
+                childId, // 子实体Id
+                relationType // 关系类型
+            )
+        );
 
         _log.Debug($"已添加关系: {parentId} -> {childId} ({relationType})");
         return true;
@@ -183,8 +181,15 @@ public static class EntityRelationshipManager
         CleanupEmptySet(_childIndex, childId);
         CleanupEmptySet(_typeIndex, relationType);
 
-        // 触发事件
-        OnRelationshipRemoved?.Invoke(parentId, childId, relationType);
+        // 广播关系移除事件
+        GlobalEventBus.Global.Emit(
+            GameEventType.Global.RelationshipRemoved,
+            new GameEventType.Global.RelationshipRemovedEventData(
+                parentId, // 父实体Id
+                childId, // 子实体Id
+                relationType // 关系类型
+            )
+        );
 
         _log.Debug($"已移除关系: {parentId} -> {childId} ({relationType})");
         return true;

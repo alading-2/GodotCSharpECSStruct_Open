@@ -14,5 +14,23 @@ public static partial class GameEventType
         public const string EntityDestroyed = "global:entity:destroyed";
         /// <summary>Entity 销毁事件数据</summary>
         public readonly record struct EntityDestroyedEventData(IEntity Entity);
+
+        /// <summary>Entity 关系添加</summary>
+        public const string RelationshipAdded = "global:entity:relationship_added";
+        /// <summary>Entity 关系添加事件数据</summary>
+        public readonly record struct RelationshipAddedEventData(
+            string ParentEntityId, // 父实体Id
+            string ChildEntityId, // 子实体Id
+            string RelationType // 关系类型
+        );
+
+        /// <summary>Entity 关系移除</summary>
+        public const string RelationshipRemoved = "global:entity:relationship_removed";
+        /// <summary>Entity 关系移除事件数据</summary>
+        public readonly record struct RelationshipRemovedEventData(
+            string ParentEntityId, // 父实体Id
+            string ChildEntityId, // 子实体Id
+            string RelationType // 关系类型
+        );
     }
 }

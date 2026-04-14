@@ -149,7 +149,7 @@ public partial class TestSystem : CanvasLayer
         _currentModule?.DeactivateModule();
         if (_selectionContext != null)
         {
-            _selectionContext.SelectionChanged -= OnSelectionChanged;
+            UnbindSelectionContextEvents();
         }
         UnbindMouseSelectionEvents();
 
@@ -221,7 +221,7 @@ public partial class TestSystem : CanvasLayer
     private void InitializeContexts()
     {
         _selectionContext = new TestSelectionContext();
-        _selectionContext.SelectionChanged += OnSelectionChanged;
+        BindSelectionContextEvents();
         _refreshScheduler = new TestRefreshScheduler(QueueScheduledModuleFlush);
         _moduleContext = new TestModuleContext(this, _selectionContext, _refreshScheduler);
     }
@@ -406,14 +406,36 @@ public partial class TestSystem : CanvasLayer
     }
 
     /// <summary>
+    /// 绑定选中上下文事件。
+    /// </summary>
+    private void BindSelectionContextEvents()
+    {
+        _selectionContext.Events.On<GameEventType.Global.TestSystemSelectionChangedEventData>(
+            GameEventType.Global.TestSystemSelectionChanged,
+            OnSelectionChanged
+        );
+    }
+
+    /// <summary>
+    /// 解绑选中上下文事件。
+    /// </summary>
+    private void UnbindSelectionContextEvents()
+    {
+        _selectionContext.Events.Off<GameEventType.Global.TestSystemSelectionChangedEventData>(
+            GameEventType.Global.TestSystemSelectionChanged,
+            OnSelectionChanged
+        );
+    }
+
+    /// <summary>
     /// 选中实体变化后的统一广播入口。
     /// </summary>
-    private void OnSelectionChanged(IEntity? entity)
+    private void OnSelectionChanged(GameEventType.Global.TestSystemSelectionChangedEventData evt)
     {
         UpdateSelectedEntityDisplay();
         foreach (var module in _modules)
         {
-            module.OnSelectedEntityChanged(entity);
+            module.OnSelectedEntityChanged(evt.Entity);
         }
     }
 

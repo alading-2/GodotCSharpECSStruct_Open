@@ -29,10 +29,11 @@
 | `Core/ITestModule.cs` | 模块协议，定义宿主依赖的最小模块接口 |
 | `Core/ITestModuleContext.cs` | 模块上下文协议，统一注入宿主、选择上下文和刷新调度 |
 | `Core/TestModuleDefinition.cs` | 模块定义，统一描述模块稳定 Id、显示名和排序 |
-| `Core/TestSelectionContext.cs` | 统一选中上下文，收口当前选中实体与变更广播 |
+| `Core/TestSelectionContext.cs` | 统一选中上下文，收口当前选中实体，并通过 `EventBus` 广播选中变化 |
 | `Core/TestRefreshScheduler.cs` | 统一刷新调度器，负责合并模块刷新请求并在帧末冲刷 |
 | `Core/TestModuleContext.cs` | 模块共享上下文，向模块注入宿主、选中实体上下文与刷新调度器 |
 | `Core/TestModuleRunState.cs` | 模块运行态枚举，统一 Active / Inactive / Suspended 语义 |
+| `../../../Data/EventType/Global/GameEventType_Global_TestSystem.cs` | TestSystem 事件协议定义，当前承载 `TestSystemSelectionChanged` |
 | `TestSystem.tscn` | 测试系统主面板骨架，承载顶部工具栏、信息栏与模块宿主区，并直接挂载模块场景 |
 | `TestModuleBase.cs` | 所有测试模块的统一基类 |
 | `FeatureDebugService.cs` | 调试适配层，负责把调试操作转发到正式 Feature / Ability 生命周期 |
@@ -58,7 +59,7 @@
 - `ModuleInitializer + AutoLoad.Register(...)`：系统为什么会自动出现
 - `_Ready()`：当前会扫描哪些模块，默认打开哪个模块
 - `TestSystem.tscn + CacheUiNodes()`：主面板骨架在哪里、代码如何拿到关键节点
-- `SetSelectedEntity(...)`：选中实体后，状态如何广播给各模块
+- `SetSelectedEntity(...)`：选中实体后，状态如何通过 `TestSelectionContext.Events` 广播给各模块
 - `SwitchModule(...)`：模块切换时，生命周期是怎么流转的
 - `OnMouseSelectionCompleted(...)`：宿主如何监听全局鼠标选择结果并切换测试实体
 
@@ -192,7 +193,7 @@
 - 打开“选择实体”开关
 - 鼠标点击场景中的目标实体，或拖拽框选多个实体
 - 通用选择系统会完成拾取，并通过全局事件广播结果集合
-- `TestSystem` 只在面板可见且“选择实体”开关开启时消费结果；正式玩法系统应监听同一事件后自行按 `EntityType / Team` 收窄候选
+- `TestSystem` 只在面板可见且“选择实体”开关开启时消费结果；选中变化会继续通过 `TestSelectionContext.Events.Emit(GameEventType.Global.TestSystemSelectionChanged, ...)` 广播给宿主与模块；正式玩法系统应监听同一选择结果后自行按 `EntityType / Team` 收窄候选
 
 #### 方式 B：代码主动指定
 
@@ -337,6 +338,7 @@ public partial class MyTestModule : TestModuleBase
 维护此目录时请遵守以下边界：
 
 - `TestSystem` 只做宿主与模块切换
+- `TestSelectionContext` 的共享状态广播统一走 `EventBus`，不要再新增 C# `event`
 - `TestModuleBase` 只做统一生命周期协议
 - UI 模块只做展示和输入转发
 - Feature / Ability 生命周期优先复用正式链路

@@ -26,6 +26,7 @@
 - `Src/ECS/Base/System/TestSystem/Core/TestSelectionContext.cs`
 - `Src/ECS/Base/System/TestSystem/Core/TestRefreshScheduler.cs`
 - `Src/ECS/Base/System/TestSystem/Core/TestModuleContext.cs`
+- `Data/EventType/Global/GameEventType_Global_TestSystem.cs`
 - `Src/ECS/Base/System/TestSystem/Attribute/AttributeTestModule.cs`
 - `Src/ECS/Base/System/TestSystem/Ability/AbilityTestModule.cs`
 - `Src/ECS/Base/System/TestSystem/FeatureDebugService.cs`
@@ -144,6 +145,7 @@
 - 面板显隐
 - 模块注册与切换
 - 统一调度刷新
+- 通过 `TestSelectionContext.Events` 广播选中实体变化，不再直接暴露 C# `event`
 - 按 `TestModuleDefinition` 维护稳定模块 Id 和排序
 - 监听通用鼠标选择系统的全局结果事件，并在“选择实体”开关开启时消费 `PrimaryEntity / Entities`
 
@@ -161,7 +163,7 @@
 - 选择事件支持单击和框选；`MouseSelectionSystem` 主动广播 `PreviewUpdated / Completed / Missed`，调用方不再通过请求占用普通选择入口
 - 结果统一通过实体集合表达，调用方再决定替换、追加或切换选择
 - 通用层只做宽松物理拾取与生命周期过滤，正式玩法监听方应自行按 `EntityType / Team / 当前输入状态` 做语义过滤
-- `TestSystem` 只在调试面板可见且“选择实体”开关开启时消费结果，不拥有 MouseSelection 模式
+- `TestSystem` 只在调试面板可见且“选择实体”开关开启时消费结果，不拥有 MouseSelection 模式；消费后再通过 `GameEventType.Global.TestSystemSelectionChanged` 把当前选中实体广播给宿主与模块
 
 ### 4.2.2 模块只做本模块的事
 
