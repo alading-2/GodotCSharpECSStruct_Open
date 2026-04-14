@@ -23,9 +23,9 @@
 
 | 文件 | 职责 |
 |------|------|
-| `../MouseSelection/MouseSelectionSystem.cs` | 通用鼠标选择系统，负责接收全局开始/取消事件、在 `_UnhandledInput` 中监听点击/拖拽、拾取实体集合并回发完成或未命中事件 |
+| `../MouseSelection/README.md` | 通用鼠标选择系统说明，负责汇总当前 `MouseSelectionSystem` 主文件 + `Interaction / Picking / SelectionBoxUi` 3 个 partial 的阅读入口、职责边界与事件协议 |
 | `TestSystem.cs` | 调试系统宿主，负责 AutoLoad、场景骨架绑定、扫描 `ModuleHost` 子节点注册模块与切换 |
-| `TestSystem.MouseSelection.cs` | 鼠标选择适配，负责发起 / 取消通用鼠标选择请求，并消费选择完成或未命中事件 |
+| `TestSystem.MouseSelection.cs` | 鼠标选择适配，负责在“选择实体”开关开启时消费全局选择完成事件 |
 | `Core/ITestModule.cs` | 模块协议，定义宿主依赖的最小模块接口 |
 | `Core/ITestModuleContext.cs` | 模块上下文协议，统一注入宿主、选择上下文和刷新调度 |
 | `Core/TestModuleDefinition.cs` | 模块定义，统一描述模块稳定 Id、显示名和排序 |
@@ -60,7 +60,7 @@
 - `TestSystem.tscn + CacheUiNodes()`：主面板骨架在哪里、代码如何拿到关键节点
 - `SetSelectedEntity(...)`：选中实体后，状态如何广播给各模块
 - `SwitchModule(...)`：模块切换时，生命周期是怎么流转的
-- `SyncMouseSelectionRequest()` / `OnMouseSelectionCompleted(...)`：宿主如何通过全局事件接入通用鼠标选择系统
+- `OnMouseSelectionCompleted(...)`：宿主如何监听全局鼠标选择结果并切换测试实体
 
 如果你只想先建立全局认知，**先把这个文件看明白，其他文件就不会散**。
 
@@ -190,10 +190,9 @@
 #### 方式 A：鼠标点选 / 框选
 
 - 打开“选择实体”开关
-- `TestSystem` 会向 `MouseSelectionSystem` 发起全局鼠标选择请求，模式为 `ClickOrDragBox`
 - 鼠标点击场景中的目标实体，或拖拽框选多个实体
-- 通用选择系统会完成拾取，并通过全局事件把结果集合回传给 `TestSystem`
-- `TestSystem` 作为调试请求方默认允许距离兜底和任意实体类型，正式玩法请求方可通过 `CollisionMask / EntityType / Team` 收窄候选
+- 通用选择系统会完成拾取，并通过全局事件广播结果集合
+- `TestSystem` 只在面板可见且“选择实体”开关开启时消费结果；正式玩法系统应监听同一事件后自行按 `EntityType / Team` 收窄候选
 
 #### 方式 B：代码主动指定
 

@@ -23,7 +23,7 @@ public partial class MouseSelectionSystem
 
     /// <summary>
     /// 使用物理查询拾取鼠标位置下的实体。
-    /// <para>优先使用物理空间命中结果，因为它能更准确地反映点击到的碰撞体。</para>
+    /// <para>筛选有碰撞体的Entity</para>
     /// </summary>
     private IEntity? FindEntityByPhysics(Vector2 worldPosition, out GameEventType.Global.MouseSelectionHitKind hitKind)
     {
@@ -39,7 +39,7 @@ public partial class MouseSelectionSystem
             Position = worldPosition,
             CollideWithAreas = true,
             CollideWithBodies = true,
-            CollisionMask = _collisionMask
+            CollisionMask = DefaultCollisionMask
         };
 
         // 最多取少量结果即可，后面会做实体回溯和去重，不需要一次拿太多。
@@ -64,7 +64,7 @@ public partial class MouseSelectionSystem
 
             // 同一个实体可能通过多个碰撞体被命中，因此用 InstanceId 去重。
             var instanceId = entityNode.GetInstanceId();
-            if (visited.Contains(instanceId))
+            if (visited.Contains(instanceId))   // 已经处理过的实体，跳过
             {
                 continue;
             }
@@ -81,6 +81,9 @@ public partial class MouseSelectionSystem
     /// 当物理拾取失败时，按距离兜底寻找最近实体。
     /// <para>这个逻辑不会依赖碰撞层，而是直接遍历实体列表，适合调试或碰撞形状较小的对象。</para>
     /// </summary>
+    /// <param name="worldPosition">世界坐标</param>
+    /// <param name="maxDistance">最大距离</param>
+    /// <returns>最近的实体，如果没有任何实体在距离内则返回 null</returns>
     private IEntity? FindEntityByDistance(Vector2 worldPosition, float maxDistance)
     {
         IEntity? bestEntity = null;
@@ -169,21 +172,11 @@ public partial class MouseSelectionSystem
     }
 
     /// <summary>
-    /// 执行选择请求上的实体语义过滤。
-    /// <para>这里统一串联类型过滤、阵营过滤和生命周期过滤，避免各个拾取分支各写一套判断。</para>
+    /// 执行通用实体过滤。
+    /// <para>MouseSelection 只剔除生命周期上不可选的实体；类型、阵营和集合合并策略交给监听系统自行决定。</para>
     /// </summary>
-    private bool PassEntityFilters(IEntity entity)
+    private static bool PassEntityFilters(IEntity entity)
     {
-        if (!PassTypeFilter(entity))
-        {
-            return false;
-        }
-
-        if (!PassTeamFilter(entity))
-        {
-            return false;
-        }
-
         if (entity.Data.Has(DataKey.LifecycleState))
         {
             var state = entity.Data.Get<LifecycleState>(DataKey.LifecycleState);
@@ -194,80 +187,5 @@ public partial class MouseSelectionSystem
         }
 
         return true;
-    }
-
-    private bool PassTypeFilter(IEntity entity)
-    {
-        // 未指定类型过滤时，默认放行所有类型。
-        if (_typeFilter == EntityType.None)
-        {
-            return true;
-        }
-
-        // 没有 EntityType 数据时，无法判断类型，直接拒绝。
-        if (!entity.Data.Has(DataKey.EntityType))
-        {
-            return false;
-        }
-
-        var entityType = entity.Data.Get<EntityType>(DataKey.EntityType);
-        // 约定 EntityType.None 代表未定义，不能参与按位过滤。
-        if (entityType == EntityType.None)
-        {
-            return false;
-        }
-
-        // 这里使用 HasFlag 允许一个实体同时属于多个类型。
-        return _typeFilter.HasFlag(entityType);
-    }
-
-    private bool PassTeamFilter(IEntity entity)
-    {
-        // All 和 None 都表示不做阵营限制，直接放行。
-        if (_teamFilter == AbilityTargetTeamFilter.None || _teamFilter == AbilityTargetTeamFilter.All)
-        {
-            return true;
-        }
-
-        // 如果目标就是中心实体本身，则只看是否允许 Self。
-        if (IsSameEntity(entity, _centerEntity))
-        {
-            return _teamFilter.HasFlag(AbilityTargetTeamFilter.Self);
-        }
-
-        // 中立目标不依赖中心实体阵营，单独判定。
-        var targetTeam = entity.Data.Get<Team>(DataKey.Team);
-        if (targetTeam == Team.Neutral)
-        {
-            return _teamFilter.HasFlag(AbilityTargetTeamFilter.Neutral);
-        }
-
-        // 没有中心实体时，无法判断友军或敌军关系，因此拒绝非中立目标。
-        if (_centerEntity == null)
-        {
-            return false;
-        }
-
-        // 根据中心实体与目标实体是否同阵营，分别匹配 Friendly / Enemy 标记。
-        var centerTeam = _centerEntity.Data.Get<Team>(DataKey.Team);
-        return centerTeam == targetTeam
-            ? _teamFilter.HasFlag(AbilityTargetTeamFilter.Friendly)
-            : _teamFilter.HasFlag(AbilityTargetTeamFilter.Enemy);
-    }
-
-    /// <summary>
-    /// 判断两个实体是否表示同一个对象。
-    /// <para>先比较引用，再兼容 Node 场景，避免接口引用不一致导致误判。</para>
-    /// </summary>
-    private static bool IsSameEntity(IEntity? left, IEntity? right)
-    {
-        // 先比较引用是否相同，避免不必要的节点比较。
-        if (left == right)
-        {
-            return true;
-        }
-
-        // 对 Node 类型再做一次对象比较，确保不同接口引用但同一节点时也能被识别为同一个实体。
-        return left is Node leftNode && right is Node rightNode && leftNode == rightNode;
     }
 }

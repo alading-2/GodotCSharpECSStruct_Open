@@ -13,7 +13,7 @@ using System.Collections.Generic;
 public partial class MouseSelectionSystem
 {
     /// <summary>
-    /// 左键是否已经按下并处于本次选择会话中。
+    /// 左键是否已经按下并处于本次选择交互中。
     /// <para>用于区分“正在按住鼠标”与“已经松开鼠标”的两个阶段。</para>
     /// </summary>
     private bool _isPointerDown;
@@ -33,17 +33,18 @@ public partial class MouseSelectionSystem
     /// <summary>
     /// 处理未被 GUI 吃掉的输入事件
     /// _UnhandledInput 会在 GUI 控件优先处理后才收到事件
-    /// <para>这里只处理当前选择会话中的鼠标输入，其他输入直接放行给别的系统。</para>
+    /// <para>这里只处理世界单击 / 框选相关鼠标输入，其他输入直接放行给别的系统。</para>
     /// </summary>
     public override void _UnhandledInput(InputEvent @event)
     {
-        // 检查鼠标选择事件的请求方 Id 是否存在
-        if (!HasActiveRequesterId)
+        // 技能瞄准等高优先级交互进行中时，普通鼠标选择不插入，避免调试选择打断正式输入状态。
+        if (IsWorldSelectionBlocked())
         {
+            ResetPointerState();
             return;
         }
 
-        // 鼠标移动只在选择会话中用于判断是否进入拖拽框选态。
+        // 鼠标移动只在选择交互中用于判断是否进入拖拽框选态。
         if (@event is InputEventMouseMotion motionEvent)
         {
             HandleMouseMotion(motionEvent);
@@ -67,7 +68,7 @@ public partial class MouseSelectionSystem
     }
 
     /// <summary>
-    /// 记录一次鼠标按下开始的选择会话。
+    /// 记录一次鼠标按下开始的选择交互。
     /// <para>会重置拖拽状态，并保存起始屏幕坐标，供后续移动与松开事件使用。</para>
     /// </summary>
     private void BeginPointerSelection(Vector2 screenPosition)
@@ -81,19 +82,19 @@ public partial class MouseSelectionSystem
 
     /// <summary>
     /// 处理鼠标移动并判断是否进入拖拽框选态。
-    /// <para>只有鼠标按住且当前模式允许拖拽时，才会更新框选预览并广播预览事件。</para>
+    /// <para>只有鼠标按住并超过拖拽阈值后，才会更新框选预览并广播预览事件。</para>
     /// </summary>
     private void HandleMouseMotion(InputEventMouseMotion motionEvent)
     {
-        // 没有按下鼠标，或者当前模式根本不允许拖拽，则直接忽略移动事件。
-        if (!_isPointerDown || !CanUseDragSelection())
+        // 没有按下鼠标时，移动事件不属于本次选择交互。
+        if (!_isPointerDown)
         {
             return;
         }
 
         // 只有当鼠标移动距离超过阈值后，才把这次交互升级为框选。
         var distanceSquared = _startScreenPosition.DistanceSquaredTo(motionEvent.Position);
-        if (!_isDragging && distanceSquared < _dragThresholdPx * _dragThresholdPx)
+        if (!_isDragging && distanceSquared < DefaultDragThresholdPx * DefaultDragThresholdPx)
         {
             return;
         }
@@ -105,7 +106,6 @@ public partial class MouseSelectionSystem
         GlobalEventBus.Global.Emit(
             GameEventType.Global.MouseSelectionPreviewUpdated,
             new GameEventType.Global.MouseSelectionPreviewUpdatedEventData(
-                _activeRequesterId, // 请求方
                 _startScreenPosition, // 拖拽起点屏幕坐标
                 motionEvent.Position, // 当前屏幕坐标
                 screenRect // 当前屏幕框选矩形
@@ -137,53 +137,48 @@ public partial class MouseSelectionSystem
             return;
         }
 
-        // 如果当前模式只允许拖拽，则即便只是轻微移动，也按“未命中”处理。
-        if (_mode == GameEventType.Global.MouseSelectionMode.DragBox)
-        {
-            CompleteWithMiss(screenPosition, worldPosition, screenRect);
-            return;
-        }
-
-        // 其余情况都按点选逻辑处理。
+        // 未进入拖拽态的左键松开按点选逻辑处理。
         CompleteClickSelection(screenPosition, worldPosition, screenRect);
     }
 
     /// <summary>
-    /// 判断当前模式是否允许拖拽框选。
-    /// <para>只有 <see cref="GameEventType.Global.MouseSelectionMode.ClickOrDragBox" /> 和 <see cref="GameEventType.Global.MouseSelectionMode.DragBox" /> 模式才会在移动时生成选框预览。</para>
-    /// </summary>
-    private bool CanUseDragSelection()
-    {
-        // 只有允许拖拽框选的模式下，鼠标移动才会触发预览与选框生成。
-        return _mode == GameEventType.Global.MouseSelectionMode.DragBox
-            || _mode == GameEventType.Global.MouseSelectionMode.ClickOrDragBox;
-    }
-
-    /// <summary>
     /// 处理单击选择收口。
-    /// <para>优先走物理拾取，失败后在允许时再走距离兜底。</para>
+    /// <para>优先走物理拾取，失败后再走距离兜底。</para>
     /// </summary>
     private void CompleteClickSelection(Vector2 screenPosition, Vector2 worldPosition, Rect2 screenRect)
     {
         // 先通过物理查询命中鼠标下的实体，这是最准确的拾取方式。
         var entity = FindEntityByPhysics(worldPosition, out var hitKind);
-        if (entity == null && _allowDistanceFallback)
+        if (entity == null)
         {
-            // 如果物理拾取失败且允许兜底，再按距离在全局实体列表中找最近目标。
-            entity = FindEntityByDistance(worldPosition, _maxDistance);
+            // 如果物理拾取失败，再按距离在全局实体列表中找最近目标，保证调试选择对纯视觉实体也可用。
+            entity = FindEntityByDistance(worldPosition, DefaultMaxDistance);
             hitKind = entity == null ? GameEventType.Global.MouseSelectionHitKind.None : GameEventType.Global.MouseSelectionHitKind.DistanceFallback;
         }
 
         // 仍然没有任何目标，则广播未命中事件，让业务方决定是否取消高亮或保持原状态。
         if (entity == null)
         {
-            CompleteWithMiss(screenPosition, worldPosition, screenRect);
+            CompleteWithMiss(
+                screenPosition, // 屏幕位置
+                worldPosition, // 世界位置
+                screenRect, // 选择矩形
+                GameEventType.Global.MouseSelectionInteractionKind.Click // 单击交互
+            );
             return;
         }
 
         // 点选只会命中一个主目标，因此把它包装成单元素集合后统一走完成流程。
         var entities = new List<IEntity> { entity };
-        CompleteWithEntities(entities, entity, screenPosition, worldPosition, screenRect, hitKind);
+        CompleteWithEntities(
+            entities, // 命中的实体集合
+            entity, // 默认主目标
+            screenPosition, // 屏幕位置
+            worldPosition, // 世界位置
+            screenRect, // 选择矩形
+            hitKind, // 命中来源
+            GameEventType.Global.MouseSelectionInteractionKind.Click // 单击交互
+        );
     }
 
     /// <summary>
@@ -198,7 +193,12 @@ public partial class MouseSelectionSystem
         if (entities.Count == 0)
         {
             // 框选范围内一个目标都没有，则视作未命中。
-            CompleteWithMiss(screenPosition, worldPosition, screenRect);
+            CompleteWithMiss(
+                screenPosition, // 屏幕位置
+                worldPosition, // 世界位置
+                screenRect, // 选择矩形
+                GameEventType.Global.MouseSelectionInteractionKind.Box // 框选交互
+            );
             return;
         }
 
@@ -218,18 +218,19 @@ public partial class MouseSelectionSystem
         });
 
         CompleteWithEntities(
-            entities,
-            entities[0],
-            screenPosition,
-            worldPosition,
-            screenRect,
-            GameEventType.Global.MouseSelectionHitKind.BoxRect
+            entities, // 命中的实体集合
+            entities[0], // 默认主目标
+            screenPosition, // 屏幕位置
+            worldPosition, // 世界位置
+            screenRect, // 选择矩形
+            GameEventType.Global.MouseSelectionHitKind.BoxRect, // 命中来源
+            GameEventType.Global.MouseSelectionInteractionKind.Box // 框选交互
         );
     }
 
     /// <summary>
     /// 广播一次成功的鼠标选择结果。
-    /// <para>在事件发出前会先保存会话上下文并清空当前状态，避免回调过程中复用脏数据。</para>
+    /// <para>在事件发出前会先清空当前交互状态，避免回调过程中复用脏数据。</para>
     /// </summary>
     private void CompleteWithEntities(
         IReadOnlyList<IEntity> entities,
@@ -237,58 +238,73 @@ public partial class MouseSelectionSystem
         Vector2 screenPosition,
         Vector2 worldPosition,
         Rect2 screenRect,
-        GameEventType.Global.MouseSelectionHitKind hitKind)
+        GameEventType.Global.MouseSelectionHitKind hitKind,
+        GameEventType.Global.MouseSelectionInteractionKind interactionKind)
     {
-        // 在广播结果前先把会话状态缓存出来，然后立即清空当前会话，避免事件回调里再次进入脏状态。
-        var requesterId = _activeRequesterId;
-        var applyMode = _applyMode;
-        var consumeOnSuccess = _consumeOnSuccess;
-        ResetSelectionState();
+        // 在广播结果前先清空鼠标交互状态，避免事件回调里再次进入脏状态。
+        ResetPointerState();
 
         // 统一广播成功事件：业务层只关心命中的实体集合、主目标和命中来源即可。
         GlobalEventBus.Global.Emit(
             GameEventType.Global.MouseSelectionCompleted,
             new GameEventType.Global.MouseSelectionCompletedEventData(
-                requesterId, // 请求方
                 entities, // 命中的实体集合
                 primaryEntity, // 默认主目标
                 screenPosition, // 完成时的屏幕坐标
                 worldPosition, // 完成时的世界坐标
                 screenRect, // 本次点击或框选的屏幕矩形
                 hitKind, // 命中来源
-                applyMode // 选择结果应用模式
+                interactionKind // 交互类型
             )
         );
 
-        // 如果业务方要求“选中即消费”，则阻止该次点击继续向下传递给其他系统。
-        if (consumeOnSuccess)
-        {
-            GetViewport().SetInputAsHandled();
-        }
+        // 选中成功后消费输入，避免同一次点击继续进入 Godot 物理对象拾取等更低层处理。
+        GetViewport().SetInputAsHandled();
     }
 
     /// <summary>
     /// 广播一次未命中的鼠标选择结果。
     /// <para>未命中不等于出错，而是让调用方决定是否维持当前选择状态。</para>
     /// </summary>
-    private void CompleteWithMiss(Vector2 screenPosition, Vector2 worldPosition, Rect2 screenRect)
+    private void CompleteWithMiss(
+        Vector2 screenPosition,
+        Vector2 worldPosition,
+        Rect2 screenRect,
+        GameEventType.Global.MouseSelectionInteractionKind interactionKind)
     {
-        // 未命中也会携带请求方和应用模式，方便业务方按上下文做不同处理。
-        var requesterId = _activeRequesterId;
-        var applyMode = _applyMode;
-        ResetSelectionState();
+        // 未命中也要清空鼠标交互状态，由监听方决定是否保持现有选择。
+        ResetPointerState();
 
         // 广播未命中事件，由上层决定是关闭选择模式、保持当前选择，还是播放提示反馈。
         GlobalEventBus.Global.Emit(
             GameEventType.Global.MouseSelectionMissed,
             new GameEventType.Global.MouseSelectionMissedEventData(
-                requesterId, // 请求方
                 screenPosition, // 未命中时的屏幕坐标
                 worldPosition, // 未命中时的世界坐标
                 screenRect, // 本次点击或框选的屏幕矩形
-                applyMode // 选择结果应用模式
+                interactionKind // 交互类型
             )
         );
+    }
+
+    /// <summary>
+    /// 判断当前是否应暂停普通世界选择。
+    /// </summary>
+    private static bool IsWorldSelectionBlocked()
+    {
+        // 技能异步瞄准是项目里已有的高优先级输入状态；此时普通鼠标选择不参与本次输入。
+        return TargetingManager.IsTargeting;
+    }
+
+    /// <summary>
+    /// 重置鼠标按下与拖拽状态。
+    /// </summary>
+    private void ResetPointerState()
+    {
+        _isPointerDown = false;
+        _isDragging = false;
+        _startScreenPosition = Vector2.Zero;
+        HideSelectionBoxUi();
     }
 
     private Rect2 CreateWorldRect(Rect2 screenRect)
@@ -313,6 +329,7 @@ public partial class MouseSelectionSystem
         return entity is Node2D node2D ? node2D.GlobalPosition : Vector2.Zero;
     }
 
+    // 获取实体的稳定 ID，用于排序和去重
     private static string GetEntityStableId(IEntity entity)
     {
         // 优先使用 Data 中的业务 Id，保证排序在跨运行期或重复实例下也更稳定。

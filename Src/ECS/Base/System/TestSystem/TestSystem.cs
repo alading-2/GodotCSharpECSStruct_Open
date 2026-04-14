@@ -136,7 +136,6 @@ public partial class TestSystem : CanvasLayer
             TrySwitchModule(_moduleIdsByIndex[0]);
         }
         BindMouseSelectionEvents();
-        SyncMouseSelectionRequest(); // 根据当前开关状态同步一次鼠标选择请求
         // 更新选中实体显示
         UpdateSelectedEntityDisplay();
         _log.Info("TestSystem 初始化完成");
@@ -153,7 +152,6 @@ public partial class TestSystem : CanvasLayer
             _selectionContext.SelectionChanged -= OnSelectionChanged;
         }
         UnbindMouseSelectionEvents();
-        CancelMouseSelectionRequest();
 
         if (Instance == this)
         {
@@ -266,7 +264,6 @@ public partial class TestSystem : CanvasLayer
         _moduleSelector.ItemSelected += OnModuleSelected;
         _refreshButton.Pressed += RefreshCurrentModule;
         _clearSelectionButton.Pressed += () => SetSelectedEntity(null);
-        _selectionToggle.Toggled += OnSelectionToggleToggled;
     }
 
     /// <summary>
@@ -354,7 +351,6 @@ public partial class TestSystem : CanvasLayer
         _panelVisible = !_panelVisible;
         _panel.Visible = _panelVisible;
         _toggleButton.Text = _panelVisible ? "测试" : "测试(隐藏)";
-        SyncMouseSelectionRequest();
 
         if (_currentModule == null)
         {
@@ -381,14 +377,6 @@ public partial class TestSystem : CanvasLayer
         }
 
         TrySwitchModule(_moduleIdsByIndex[(int)index]);
-    }
-
-    /// <summary>
-    /// 选择实体开关变化时，同步通用鼠标选择请求。
-    /// </summary>
-    private void OnSelectionToggleToggled(bool _)
-    {
-        SyncMouseSelectionRequest();
     }
 
     /// <summary>

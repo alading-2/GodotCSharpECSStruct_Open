@@ -13,7 +13,11 @@
 
 当前代码入口：
 
+- `Src/ECS/Base/System/MouseSelection/README.md`
 - `Src/ECS/Base/System/MouseSelection/MouseSelectionSystem.cs`
+- `Src/ECS/Base/System/MouseSelection/MouseSelectionSystem.Interaction.cs`
+- `Src/ECS/Base/System/MouseSelection/MouseSelectionSystem.Picking.cs`
+- `Src/ECS/Base/System/MouseSelection/MouseSelectionSystem.SelectionBoxUi.cs`
 - `Src/ECS/Base/System/TestSystem/TestSystem.cs`
 - `Src/ECS/Base/System/TestSystem/TestModuleBase.cs`
 - `Src/ECS/Base/System/TestSystem/Core/ITestModule.cs`
@@ -141,7 +145,7 @@
 - 模块注册与切换
 - 统一调度刷新
 - 按 `TestModuleDefinition` 维护稳定模块 Id 和排序
-- 通过全局事件接入通用鼠标选择系统，并消费 `PrimaryEntity / Entities` 选择结果
+- 监听通用鼠标选择系统的全局结果事件，并在“选择实体”开关开启时消费 `PrimaryEntity / Entities`
 
 `TestSystem` 不应该负责：
 
@@ -154,9 +158,10 @@
 
 - `MouseSelectionSystem` 是独立 AutoLoad 系统，对外只暴露全局事件协议
 - 输入入口使用 `_UnhandledInput`，确保 GUI 控件优先处理点击；不要用碰撞层解决 UI 点击拦截
-- 选择事件支持单击和框选；TestSystem 调试请求使用 `ClickOrDragBox`，结果统一通过实体集合表达，调用方再决定替换、追加或切换选择
-- 物理候选用 `CollisionMask` 粗过滤，语义候选用 `EntityType / Team` 细过滤
-- `TestSystem` 默认使用调试宽松配置，正式玩法请求方应传入 `SelectionPickable` 层和需要的语义过滤
+- 选择事件支持单击和框选；`MouseSelectionSystem` 主动广播 `PreviewUpdated / Completed / Missed`，调用方不再通过请求占用普通选择入口
+- 结果统一通过实体集合表达，调用方再决定替换、追加或切换选择
+- 通用层只做宽松物理拾取与生命周期过滤，正式玩法监听方应自行按 `EntityType / Team / 当前输入状态` 做语义过滤
+- `TestSystem` 只在调试面板可见且“选择实体”开关开启时消费结果，不拥有 MouseSelection 模式
 
 ### 4.2.2 模块只做本模块的事
 

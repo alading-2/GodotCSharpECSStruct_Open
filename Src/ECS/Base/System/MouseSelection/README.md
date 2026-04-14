@@ -6,9 +6,9 @@
 
 | 文件 | 职责 |
 |------|------|
-| `MouseSelectionSystem.cs` | 系统入口、AutoLoad 注册、全局事件订阅生命周期、当前选择会话状态、开始 / 取消请求、状态重置 |
+| `MouseSelectionSystem.cs` | 系统入口、AutoLoad 注册、默认拾取参数、交互状态清理 |
 | `MouseSelectionSystem.Interaction.cs` | `_UnhandledInput`、左键按下 / 移动 / 松开状态机、单击 / 框选结果收口、完成 / 未命中事件广播、屏幕 / 世界矩形辅助 |
-| `MouseSelectionSystem.Picking.cs` | 物理点选、距离兜底、世界矩形候选收集、实体回溯、`EntityType / Team / LifecycleState` 语义过滤 |
+| `MouseSelectionSystem.Picking.cs` | 物理点选、距离兜底、世界矩形候选收集、实体回溯、`LifecycleState` 过滤 |
 | `MouseSelectionSystem.SelectionBoxUi.cs` | 内置框选预览 UI 创建、更新与隐藏 |
 
 事件协议定义在 `Data/EventType/Global/GameEventType_Global_MouseSelection.cs`。选择层常量定义在 `Data/DataKey/Base/CollisionLayers.cs`。
@@ -19,23 +19,23 @@
 
 它负责：
 
-- 监听全局鼠标选择请求
-- 在 `_UnhandledInput` 中处理左键点击与拖拽
+- 在 `_UnhandledInput` 中常驻处理世界左键单击与拖拽
 - 避开已经被 Godot GUI 控件处理过的输入
-- 按物理层与实体语义筛选候选目标
+- 按宽松物理层与生命周期过滤候选目标
 - 显示一个内置轻量框选预览 UI
 - 通过全局事件回发选择完成、预览或未命中结果
 
 它不负责：
 
 - 维护当前选中集合
-- 执行 `Replace / Add / Toggle` 的集合合并
+- 执行 `Replace / Add / Toggle` 等集合合并策略
+- 按具体玩法做 `EntityType / Team` 业务过滤
 - 绘制复杂框选 UI、单位描边或高亮表现
 - 执行单位命令
 - 修改实体属性
 - 接入 `FeatureSystem` 生命周期
 
-这里不用 `FeatureSystem`。鼠标选择是输入基础设施，不是被授予、激活、结束、移除的能力；如果某个功能需要“等待玩家点选目标”，应由该功能发起鼠标选择请求并消费结果，而不是让鼠标选择系统本身变成 Feature。
+这里不用 `FeatureSystem`。鼠标选择是输入基础设施，不是被授予、激活、结束、移除的能力；普通系统应监听选择结果并自行决定是否处理。如果某个功能需要“等待玩家点选目标”的独占流程，应走更高优先级的输入占用 / 瞄准状态，而不是把 `MouseSelectionSystem` 重新收窄成某个请求方的私有服务。
 
 ## 输入仲裁
 
@@ -48,7 +48,7 @@
 - `CollisionMask` 只负责世界物理候选过滤，不能用来解决 UI 点击冲突
 - `CollisionObject2D._input_event` 会把选择逻辑下沉到具体物体上，不适合做通用系统
 
-当前系统只保证“GUI 没处理过的点击才进入选择系统”。如果未来需要“所有世界点击系统都没处理才轮到选择”，应额外设计全局点击路由 / 占用协议，不要把这层职责塞进 `MouseSelectionSystem`。
+当前系统只保证“GUI 没处理过的点击才进入选择系统”。项目中已有的高优先级输入状态（如 `TargetingManager.IsTargeting`）会让普通鼠标选择暂停；如果未来需要更复杂的“所有世界点击系统都没处理才轮到选择”，应额外设计全局点击路由 / 占用协议，不要把这层职责塞进 `MouseSelectionSystem`。
 
 ## 事件协议
 
@@ -56,43 +56,34 @@
 
 | 事件 | 方向 | 说明 |
 |------|------|------|
-| `MouseSelectionStartRequested` | 调用方 -> 系统 | 请求开始一次鼠标选择会话 |
-| `MouseSelectionCancelRequested` | 调用方 -> 系统 | 取消当前选择会话 |
 | `MouseSelectionPreviewUpdated` | 系统 -> 调用方 | 拖拽框选过程中的实时预览 |
 | `MouseSelectionCompleted` | 系统 -> 调用方 | 选择成功，返回实体集合与主目标 |
 | `MouseSelectionMissed` | 系统 -> 调用方 | 点击或框选没有命中任何目标 |
 
 关键数据：
 
-- `RequesterId`：请求方标识；系统同一时间只允许一个请求方占用选择会话
-- `Mode`：`ClickSingle / DragBox / ClickOrDragBox`
-- `ApplyMode`：`Replace / Add / Toggle`，只表达业务意图，集合如何合并由调用方决定
-- `CollisionMask`：物理粗过滤层，正式玩法推荐使用 `CollisionLayers.SelectionPickable`
-- `TypeFilter`：实体类型过滤，如 `EntityType.Unit`
-- `TeamFilter`：阵营过滤，如 `AbilityTargetTeamFilter.Friendly`
-- `CenterEntity`：阵营过滤的参照实体
-- `AllowDistanceFallback`：物理拾取失败后是否允许按距离兜底
+- `InteractionKind`：`Click / Box`，表示本次是单击还是框选
+- `HitKind`：`PhysicsPoint / DistanceFallback / BoxRect / None`，表示命中来源
 - `Entities`：本次命中的实体集合
 - `PrimaryEntity`：集合中的默认主目标，单击时就是命中目标，框选时为排序后的第一个目标
+- `ScreenPosition / WorldPosition / ScreenRect`：本次交互的屏幕坐标、世界坐标和选择矩形
 
 ## 单击与框选流程
 
 ### 单击
 
 ```text
-StartRequested
-  -> 左键按下
+左键按下
   -> 左键松开且未超过 DragThresholdPx
   -> PhysicsPoint 查询
-  -> 可选 DistanceFallback
+  -> DistanceFallback 兜底
   -> Completed / Missed
 ```
 
 ### 框选
 
 ```text
-StartRequested
-  -> 左键按下
+左键按下
   -> 鼠标移动超过 DragThresholdPx
   -> 更新内置框选 UI
   -> PreviewUpdated
@@ -101,42 +92,33 @@ StartRequested
   -> Completed / Missed
 ```
 
-系统内置的框选 UI 只创建一次，拖拽过程中只更新位置、尺寸和显隐状态。系统不会维护“当前选中集合”，也不会自己执行 `Replace / Add / Toggle`。调用方收到 `Completed.Entities` 后自行处理。
+系统内置的框选 UI 只创建一次，拖拽过程中只更新位置、尺寸和显隐状态。系统不会维护“当前选中集合”，也不会自己执行 `Replace / Add / Toggle`。调用方收到 `Completed.Entities` 后自行过滤实体类型、阵营并处理集合合并。
 
 ## 过滤策略
 
 推荐使用两级过滤：
 
-1. **物理粗过滤**：`CollisionMask`
-2. **语义细过滤**：`EntityType / Team / LifecycleState`
+1. **MouseSelection 通用过滤**：宽松物理拾取 + `LifecycleState` 排除死亡 / 复活中实体
+2. **监听方业务过滤**：`EntityType / Team / 当前模式 / UI 状态`
 
 示例：
 
 ```csharp
-GlobalEventBus.Global.Emit(
-    GameEventType.Global.MouseSelectionStartRequested,
-    new GameEventType.Global.MouseSelectionStartRequestedEventData(
-        RequesterId: "UnitSelection", // 请求方
-        Mode: GameEventType.Global.MouseSelectionMode.ClickOrDragBox, // 单击或框选
-        ApplyMode: GameEventType.Global.MouseSelectionApplyMode.Replace, // 替换当前选择
-        CollisionMask: CollisionLayers.SelectionPickable, // 只查可鼠标选择层
-        TypeFilter: EntityType.Unit, // 只选单位
-        TeamFilter: AbilityTargetTeamFilter.Friendly, // 只选友方
-        CenterEntity: playerEntity, // 阵营参照实体
-        AllowDistanceFallback: false, // 正式玩法不做距离兜底
-        MaxDistance: 56f, // 兜底半径，关闭兜底时不会使用
-        DragThresholdPx: 8f, // 拖拽阈值
-        ConsumeOnSuccess: true // 成功后消费输入
-    )
+GlobalEventBus.Global.On<GameEventType.Global.MouseSelectionCompletedEventData>(
+    GameEventType.Global.MouseSelectionCompleted,
+    OnMouseSelectionCompleted
 );
+
+private void OnMouseSelectionCompleted(GameEventType.Global.MouseSelectionCompletedEventData evt)
+{
+    if (evt.InteractionKind == GameEventType.Global.MouseSelectionInteractionKind.Box)
+    {
+        // 正式玩法可在这里筛选 EntityType.Unit、友方阵营，并决定 Replace / Add / Toggle。
+    }
+}
 ```
 
-调试或编辑器工具可以把过滤条件放宽，例如：
-
-- `CollisionMask = CollisionLayers.All`
-- `TypeFilter = EntityType.None`
-- `TeamFilter = AbilityTargetTeamFilter.All`
-- `AllowDistanceFallback = true`
+调试工具如 `TestSystem` 只在自身 UI 状态允许时消费结果；正式玩法系统监听同一事件后再按阵营、类型和当前输入状态处理。
 
 ## Collision Layer 设置
 
@@ -162,9 +144,8 @@ Enemy:  Enemy  + SelectionPickable = 4 + 256 = 260
 
 ## 维护规则
 
-- 新调用方必须使用稳定 `RequesterId`
 - 全局事件订阅必须在离树或释放时注销
-- 同时只允许一个请求方占用选择系统；不同请求方抢占会被拒绝
+- 调用方只监听 `PreviewUpdated / Completed / Missed`，不要重新引入请求方独占模式
 - 内置框选 UI 只承担通用拖拽范围预览；复杂框选、描边、高亮或音效可以监听 `MouseSelectionPreviewUpdated / Completed / Missed` 扩展
 - 扩展多选规则时优先在调用方维护集合，不要把具体玩法的编队规则写进通用输入系统
 - 如果新增可选目标类型，优先补 `EntityType` 和对应实体初始 Data，再决定是否挂 `SelectionPickable`

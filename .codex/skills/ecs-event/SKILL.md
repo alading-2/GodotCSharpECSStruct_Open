@@ -77,8 +77,9 @@ private void OnCheckCanUse(GameEventType.Ability.CheckCanUseEventData evt)
 
 - 像“通用鼠标选择系统”这种被多个调试系统复用的能力，应做成独立 AutoLoad 系统
 - 对外只暴露全局事件，不要让调用方直接依赖具体系统实例
-- 推荐事件流：`StartRequested -> PreviewUpdated / Missed / Completed / CancelRequested`
+- 推荐事件流：`_UnhandledInput -> PreviewUpdated / Missed / Completed`
 - 单击和框选结果统一走集合协议，`PrimaryEntity` 只表示默认主目标，不要把通用事件重新收窄成单实体事件
+- 不要为普通选择重新引入请求方独占模式；需要特殊优先级时，单独设计输入占用 / 交互模式门禁
 - UI 点击仲裁优先依赖 Godot `_UnhandledInput` 和 `Control.MouseFilter`；`CollisionMask` 只负责世界物理候选粗过滤
 
 ## 定义新事件类型
