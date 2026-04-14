@@ -51,14 +51,13 @@ public partial class AbilityGroupSection : VBoxContainer
             return node;
         }
 
-        _log.Warn($"[技能测试UI] unique-name 技能分组节点未命中，回退普通路径: section={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-
         node = GetNodeOrNull<T>(fallbackPath);
         if (node != null)
         {
             return node;
         }
 
+        _log.Error($"[技能测试UI] 技能分组节点缺失: section={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
         throw new InvalidOperationException($"AbilityGroupSection 节点缺失: section={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 }

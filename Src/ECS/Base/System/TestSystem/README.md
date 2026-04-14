@@ -17,13 +17,20 @@
 
 如果你要按规范扩展此目录，请看：
 
-- `.windsurf/skills/test-system/SKILL.md`
+- `.codex/skills/test-system/SKILL.md`
 
 ## 2. 当前文件职责
 
 | 文件 | 职责 |
 |------|------|
 | `TestSystem.cs` | 调试系统宿主，负责 AutoLoad、场景骨架绑定、实体选择、扫描 `ModuleHost` 子节点注册模块与切换 |
+| `Core/ITestModule.cs` | 模块协议，定义宿主依赖的最小模块接口 |
+| `Core/ITestModuleContext.cs` | 模块上下文协议，统一注入宿主、选择上下文和刷新调度 |
+| `Core/TestModuleDefinition.cs` | 模块定义，统一描述模块稳定 Id、显示名和排序 |
+| `Core/TestSelectionContext.cs` | 统一选中上下文，收口当前选中实体与变更广播 |
+| `Core/TestRefreshScheduler.cs` | 统一刷新调度器，负责合并模块刷新请求并在帧末冲刷 |
+| `Core/TestModuleContext.cs` | 模块共享上下文，向模块注入宿主、选中实体上下文与刷新调度器 |
+| `Core/TestModuleRunState.cs` | 模块运行态枚举，统一 Active / Inactive / Suspended 语义 |
 | `TestSystem.tscn` | 测试系统主面板骨架，承载顶部工具栏、信息栏与模块宿主区，并直接挂载模块场景 |
 | `TestModuleBase.cs` | 所有测试模块的统一基类 |
 | `FeatureDebugService.cs` | 调试适配层，负责把调试操作转发到正式 Feature / Ability 生命周期 |
@@ -61,10 +68,13 @@
 
 你要重点理解这几个生命周期：
 
-- `Initialize(TestSystem system)`
+- `TestModuleDefinition`
+- `Initialize(ITestModuleContext context)`
 - `OnSelectedEntityChanged(IEntity? entity)`
 - `OnActivated()`
 - `OnDeactivated()`
+- `OnSuspended()`
+- `OnResumed()`
 - `Refresh()`
 
 看懂它之后，你就知道所有模块都应该把逻辑挂在哪个阶段，不会在读具体模块时迷路。
@@ -271,11 +281,15 @@ TestSystem.Instance?.SetSelectedEntity(entity);
 ```csharp
 public partial class MyTestModule : TestModuleBase
 {
-    internal override string DisplayName => "我的测试";
+    internal override TestModuleDefinition Definition => new(
+        "my-module",
+        "我的测试",
+        300
+    );
 
-    internal override void Initialize(TestSystem system)
+    internal override void Initialize(ITestModuleContext context)
     {
-        base.Initialize(system);
+        base.Initialize(context);
     }
 
     internal override void Refresh()
@@ -286,11 +300,13 @@ public partial class MyTestModule : TestModuleBase
 
 ### 第二步：注册模块
 
-在 `TestSystem._Ready()` 中调用：
+在 `TestSystem.tscn` 的 `ModuleHost` 下直接挂载 `MyTestModule.tscn`，宿主会在 `_Ready()` 自动扫描注册，并按 `TestModuleDefinition.SortOrder` 排序。
 
-```csharp
-RegisterModule(new MyTestModule());
-```
+模块必须保证：
+
+- `Definition.Id` 稳定且不重复
+- `Definition.DisplayName` 只负责显示
+- `Definition.SortOrder` 负责排序，不依赖场景挂载顺序
 
 ### 第三步：处理订阅生命周期
 
@@ -299,6 +315,9 @@ RegisterModule(new MyTestModule());
 - 在 `OnSelectedEntityChanged(...)` 切换旧订阅
 - 在 `OnActivated()` 恢复订阅
 - 在 `OnDeactivated()` 解除订阅
+- 只有激活模块允许保留高频订阅
+- 面板隐藏后模块必须停止高频刷新
+- 不要仅依赖 `Visible` 判断后台模块是否还能继续工作
 
 ### 第四步：不要把系统调用直接塞进 UI
 
@@ -330,7 +349,7 @@ RegisterModule(new MyTestModule());
 ability.Data.Get<string>(DataKey.Name.Key);
 
 // ❌ 错误：依赖隐式转换（某些工程上下文下编译兼容性差）
-ability.Data.Get<string>(DataKey.Name);
+ability.Data.Get<string>(DataKey.Name.Key);
 ```
 
 原因：规避不同工程上下文下 `DataMeta` 到 `string` 的编译兼容差异。
@@ -358,7 +377,7 @@ TestSystem UI 控件统一使用以下日志级别：
 - 新模块源码文件
 - `TestSystem.tscn` 的 `ModuleHost` 下挂载新模块场景
 - `Docs/框架/ECS/System/TestSystem.md`
-- `.windsurf/skills/test-system/SKILL.md`
+- `.codex/skills/test-system/SKILL.md`
 - `Docs/框架/项目索引.md`
 
 ### 扩展属性测试
@@ -369,6 +388,12 @@ TestSystem UI 控件统一使用以下日志级别：
 - 必要时 `FeatureDebugService.cs`
 - 相关 `DataMeta / DataKey / DataCategory`
 - 正式说明文档与 skill
+
+属性模块当前推荐策略：
+
+- 分类切换/实体切换时重建
+- 普通属性变化只 patch 单行
+- 同一帧累计多个脏 key 后再统一刷新
 
 ### 扩展技能管理
 

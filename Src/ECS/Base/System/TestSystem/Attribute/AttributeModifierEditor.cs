@@ -93,14 +93,13 @@ public partial class AttributeModifierEditor : HBoxContainer
             return node;
         }
 
-        _log.Warn($"[属性测试UI] 临时Modifier unique-name 节点未命中，回退普通路径: node={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-
         node = GetNodeOrNull<T>(fallbackPath);
         if (node != null)
         {
             return node;
         }
 
+        _log.Error($"[属性测试UI] 临时Modifier节点缺失: node={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
         throw new InvalidOperationException($"AttributeModifierEditor 节点缺失: node={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 }

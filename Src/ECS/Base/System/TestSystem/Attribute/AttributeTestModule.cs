@@ -16,14 +16,24 @@ public partial class AttributeTestModule : TestModuleBase
 {
     private static readonly Log _log = new(nameof(AttributeTestModule));
 
-    /// <summary>单个分类页的缓存结构，保存分类标题和该分类下的可编辑 DataMeta 列表。</summary>
-    private sealed record CategoryEntry(string Title, List<DataMeta> Metas);
+    /// <summary>单个分类页的缓存结构，保存分类标题、显示顺序和快速查找字典。</summary>
+    private sealed record CategoryEntry(
+        string Title,
+        List<DataMeta> Metas,
+        Dictionary<string, DataMeta> MetaByKey
+    );
 
     /// <summary>Feature 调试服务，用于临时 Modifier 的挂载、读取与清理。</summary>
     private readonly FeatureDebugService _featureDebugService = new();
 
     /// <summary>所有可编辑分类的缓存列表，初始化后用于驱动左侧分类面板。</summary>
     private readonly List<CategoryEntry> _categories = new();
+
+    /// <summary>当前分类已渲染的属性行缓存，键为 DataKey。</summary>
+    private readonly Dictionary<string, AttributeEditorRow> _rowsByKey = new(StringComparer.Ordinal);
+
+    /// <summary>当前帧内累计脏掉的属性键，延迟到帧末统一 patch。</summary>
+    private readonly HashSet<string> _dirtyMetaKeys = new(StringComparer.Ordinal);
 
     /// <summary>属性词条场景。</summary>
     [Export] private PackedScene? _editorRowScene;
@@ -55,8 +65,18 @@ public partial class AttributeTestModule : TestModuleBase
     /// <summary>当前订阅了 Data 变化事件的实体，避免重复订阅。</summary>
     private IEntity? _subscribedEntity;
 
-    /// <summary>模块在 TestSystem 下拉框中的显示名称。</summary>
-    internal override string DisplayName => "属性测试";
+    /// <summary>当前是否需要对整个分类区域执行重建。</summary>
+    private bool _rebuildRequested = true;
+
+    /// <summary>当前已渲染的分类索引；分类变化时必须整页重建一次。</summary>
+    private int _renderedCategoryIndex = -1;
+
+    /// <summary>模块定义信息。</summary>
+    internal override TestModuleDefinition Definition => new(
+        "attribute", // 模块稳定 Id
+        "属性测试", // 模块显示名
+        100 // 模块排序
+    );
 
     /// <summary>
     /// 模块初始化。
@@ -64,9 +84,9 @@ public partial class AttributeTestModule : TestModuleBase
     /// 先整理分类数据，再构建 UI；如果存在分类，默认选中第一个分类，保证界面打开后立即可用。
     /// </para>
     /// </summary>
-    internal override void Initialize(TestSystem system)
+    internal override void Initialize(ITestModuleContext context)
     {
-        base.Initialize(system);
+        base.Initialize(context);
         BuildCategoryData();
         CacheUiNodes();
         PopulateCategoryList();
@@ -74,27 +94,36 @@ public partial class AttributeTestModule : TestModuleBase
         {
             _categoryList.Select(0);
         }
-        Refresh();
+
+        RequestFullRefresh();
     }
 
     /// <summary>
-    /// 选中实体变化时，先解除旧订阅，再绑定新实体并刷新界面。
+    /// 选中实体变化时，先解除旧订阅，再绑定新实体并标记整页重建。
     /// </summary>
     internal override void OnSelectedEntityChanged(IEntity? entity)
     {
         UnsubscribeEntityEvents();
         base.OnSelectedEntityChanged(entity);
-        SubscribeEntityEvents();
-        Refresh();
+        _dirtyMetaKeys.Clear();
+        _renderedCategoryIndex = -1;
+        _rebuildRequested = true;
+
+        if (IsModuleActive)
+        {
+            SubscribeEntityEvents();
+            QueueRefresh();
+        }
     }
 
     /// <summary>
-    /// 模块被切换到前台时，恢复订阅并强制刷新。
+    /// 模块被切换到前台时，恢复订阅并在帧末刷新一次。
     /// </summary>
     internal override void OnActivated()
     {
+        base.OnActivated();
         SubscribeEntityEvents();
-        Refresh();
+        RequestFullRefresh();
     }
 
     /// <summary>
@@ -102,55 +131,17 @@ public partial class AttributeTestModule : TestModuleBase
     /// </summary>
     internal override void OnDeactivated()
     {
+        base.OnDeactivated();
         UnsubscribeEntityEvents();
+        _dirtyMetaKeys.Clear();
     }
 
     /// <summary>
-    /// 刷新当前显示内容。
-    /// <para>
-    /// 会先清空旧编辑器行，再根据当前分类重新生成对应的编辑控件。
-    /// </para>
+    /// 外部强制刷新时，统一走重建请求，避免立刻在当前回调栈内重建 UI。
     /// </summary>
     internal override void Refresh()
     {
-        ClearEditorRows();
-
-        if (selectedEntity is not Node entityNode)
-        {
-            _entityHintLabel.Text = "请先选择一个实体";
-            return;
-        }
-
-        _entityHintLabel.Text = $"当前实体：{selectedEntity.Data.Get<string>(DataKey.Name)} ({entityNode.GetType().Name})";
-
-        if (_categories.Count == 0)
-        {
-            ShowPlaceholder("未找到可编辑属性分类");
-            return;
-        }
-
-        var index = Mathf.Clamp(_categoryList.GetSelectedItems().FirstOrDefault(), 0, _categories.Count - 1);
-        var category = _categories[index];
-        var renderedRowCount = 0;
-
-        foreach (var meta in category.Metas)
-        {
-            try
-            {
-                var row = CreateEditorRow(meta);
-                _editorContainer.AddChild(row);
-                renderedRowCount++;
-            }
-            catch (Exception ex)
-            {
-                _log.Error($"[属性测试UI] 渲染属性词条失败: category={category.Title} key={GetMetaKey(meta)} error={ex}");
-            }
-        }
-
-        if (renderedRowCount == 0)
-        {
-            ShowPlaceholder($"分类“{category.Title}”未生成任何可编辑控件，请检查日志");
-        }
+        RequestFullRefresh();
     }
 
     /// <summary>
@@ -192,7 +183,13 @@ public partial class AttributeTestModule : TestModuleBase
             return;
         }
 
-        _categories.Add(new CategoryEntry(title, metas));
+        var metaByKey = new Dictionary<string, DataMeta>(StringComparer.Ordinal);
+        foreach (var meta in metas)
+        {
+            metaByKey[GetMetaKey(meta)] = meta;
+        }
+
+        _categories.Add(new CategoryEntry(title, metas, metaByKey));
     }
 
     /// <summary>
@@ -235,7 +232,7 @@ public partial class AttributeTestModule : TestModuleBase
     /// <param name="index">当前选中的分类索引。</param>
     private void OnCategorySelected(long index)
     {
-        Refresh();
+        RequestFullRefresh();
     }
 
     /// <summary>
@@ -244,10 +241,9 @@ public partial class AttributeTestModule : TestModuleBase
     /// 上层负责标题、键名与分割线；下层由 CreateEditor 按数据类型生成真正的编辑控件。
     /// </para>
     /// </summary>
-    private Control CreateEditorRow(DataMeta meta)
+    private AttributeEditorRow CreateEditorRow(DataMeta meta)
     {
         var metaKey = GetMetaKey(meta);
-
         var row = InstantiateScene<AttributeEditorRow>(_editorRowScene, nameof(AttributeEditorRow));
 
         row.ConfigureHeader(GetMetaDisplayName(meta), metaKey); // 绑定词条标题
@@ -307,7 +303,7 @@ public partial class AttributeTestModule : TestModuleBase
                 meta.IsPercentage,
                 (float)editor.Value);
             _entityHintLabel.Text = result.Message;
-            Refresh();
+            RequestPatch(GetMetaKey(meta));
         });
         editor.BindClear(() =>
         {
@@ -321,7 +317,7 @@ public partial class AttributeTestModule : TestModuleBase
                 GetMetaKey(meta),
                 GetMetaDisplayName(meta));
             _entityHintLabel.Text = result.Message;
-            Refresh();
+            RequestPatch(GetMetaKey(meta));
         });
 
         return editor;
@@ -367,6 +363,7 @@ public partial class AttributeTestModule : TestModuleBase
                 {
                     selectedIndex = index;
                 }
+
                 index++;
             }
 
@@ -497,15 +494,14 @@ public partial class AttributeTestModule : TestModuleBase
         }
 
         var metaKey = GetMetaKey(meta);
-
         if (metaKey == GetMetaKey(DataKey.CurrentHp))
         {
-            var maxHp = selectedEntity.Data.Get<float>(DataKey.FinalHp);
+            var maxHp = selectedEntity.Data.Get<float>(DataKey.FinalHp.Key);
             value = Mathf.Clamp(Convert.ToSingle(value), 0f, maxHp);
         }
         else if (metaKey == GetMetaKey(DataKey.CurrentMana))
         {
-            var maxMana = selectedEntity.Data.Get<float>(DataKey.FinalMana);
+            var maxMana = selectedEntity.Data.Get<float>(DataKey.FinalMana.Key);
             value = Mathf.Clamp(Convert.ToSingle(value), 0f, maxMana);
         }
 
@@ -530,40 +526,49 @@ public partial class AttributeTestModule : TestModuleBase
             selectedEntity.Data.Set(metaKey, value);
         }
 
-        ClampCurrentResourceIfNeeded(metaKey);
-        Refresh();
+        var clampedResourceKey = ClampCurrentResourceIfNeeded(metaKey);
+        RequestPatch(metaKey);
+        if (!string.IsNullOrWhiteSpace(clampedResourceKey))
+        {
+            RequestPatch(clampedResourceKey);
+        }
     }
 
     /// <summary>
     /// 当最大生命 / 最大魔法相关字段变化时，保证当前值不超过新的上限。
     /// </summary>
     /// <param name="key">本次被修改的 DataKey。</param>
-    private void ClampCurrentResourceIfNeeded(string key)
+    /// <returns>如果额外调整了当前资源，则返回被调整的资源键。</returns>
+    private string? ClampCurrentResourceIfNeeded(string key)
     {
         if (selectedEntity == null)
         {
-            return;
+            return null;
         }
 
         if (key == GetMetaKey(DataKey.BaseHp) || key == GetMetaKey(DataKey.HpBonus))
         {
-            var currentHp = selectedEntity.Data.Get<float>(DataKey.CurrentHp);
-            var maxHp = selectedEntity.Data.Get<float>(DataKey.FinalHp);
+            var currentHp = selectedEntity.Data.Get<float>(DataKey.CurrentHp.Key);
+            var maxHp = selectedEntity.Data.Get<float>(DataKey.FinalHp.Key);
             if (currentHp > maxHp)
             {
                 selectedEntity.Data.Set(DataKey.CurrentHp, maxHp);
+                return DataKey.CurrentHp.Key;
             }
         }
 
         if (key == GetMetaKey(DataKey.BaseMana) || key == GetMetaKey(DataKey.ManaBonus))
         {
-            var currentMana = selectedEntity.Data.Get<float>(DataKey.CurrentMana);
-            var maxMana = selectedEntity.Data.Get<float>(DataKey.FinalMana);
+            var currentMana = selectedEntity.Data.Get<float>(DataKey.CurrentMana.Key);
+            var maxMana = selectedEntity.Data.Get<float>(DataKey.FinalMana.Key);
             if (currentMana > maxMana)
             {
                 selectedEntity.Data.Set(DataKey.CurrentMana, maxMana);
+                return DataKey.CurrentMana.Key;
             }
         }
+
+        return null;
     }
 
     /// <summary>
@@ -609,12 +614,222 @@ public partial class AttributeTestModule : TestModuleBase
     /// <param name="evt">属性变更事件数据。</param>
     private void OnEntityDataChanged(GameEventType.Data.PropertyChangedEventData evt)
     {
-        if (!Visible)
+        if (!CanRefresh)
         {
             return;
         }
 
-        Refresh();
+        if (evt.Key == DataKey.Name.Key)
+        {
+            RequestFullRefresh();
+            return;
+        }
+
+        if (!TryGetSelectedCategory(out var category, out _))
+        {
+            RequestFullRefresh();
+            return;
+        }
+
+        if (!category.MetaByKey.ContainsKey(evt.Key))
+        {
+            return;
+        }
+
+        RequestPatch(evt.Key);
+    }
+
+    /// <summary>
+    /// 请求当前分类整页重建。
+    /// </summary>
+    private void RequestFullRefresh()
+    {
+        _rebuildRequested = true;
+        QueueRefresh();
+    }
+
+    /// <summary>
+    /// 请求只 patch 某个属性对应的单行。
+    /// </summary>
+    private void RequestPatch(string metaKey)
+    {
+        if (string.IsNullOrWhiteSpace(metaKey))
+        {
+            return;
+        }
+
+        _dirtyMetaKeys.Add(metaKey);
+        QueueRefresh();
+    }
+
+    /// <summary>
+    /// 统一把刷新合并到当前 UI 事件处理完成后执行，避免同一帧反复重建。
+    /// </summary>
+    private void QueueRefresh()
+    {
+        RequestScheduledRefresh();
+    }
+
+    /// <summary>
+    /// 在帧末统一执行属性模块刷新：优先重建，否则只 patch 脏行。
+    /// </summary>
+    protected override void FlushScheduledRefresh()
+    {
+        if (!CanRefresh)
+        {
+            return;
+        }
+
+        if (_rebuildRequested)
+        {
+            RebuildCurrentCategory();
+            _rebuildRequested = false;
+            _dirtyMetaKeys.Clear();
+            return;
+        }
+
+        if (!TryGetSelectedCategory(out var category, out var categoryIndex) || _renderedCategoryIndex != categoryIndex)
+        {
+            _rebuildRequested = true;
+            RebuildCurrentCategory();
+            _rebuildRequested = false;
+            _dirtyMetaKeys.Clear();
+            return;
+        }
+
+        PatchDirtyRows(category);
+        _dirtyMetaKeys.Clear();
+    }
+
+    /// <summary>
+    /// 重建当前分类的全部属性行；仅在分类变化、实体变化等结构变化时调用。
+    /// </summary>
+    private void RebuildCurrentCategory()
+    {
+        ClearEditorRows();
+
+        if (selectedEntity is not Node entityNode)
+        {
+            _entityHintLabel.Text = "请先选择一个实体";
+            ShowPlaceholder("请先选择一个实体");
+            _renderedCategoryIndex = -1;
+            return;
+        }
+
+        UpdateEntityHint(entityNode);
+        if (!TryGetSelectedCategory(out var category, out var categoryIndex))
+        {
+            ShowPlaceholder("未找到可编辑属性分类");
+            _renderedCategoryIndex = -1;
+            return;
+        }
+
+        var renderedRowCount = 0;
+        foreach (var meta in category.Metas)
+        {
+            try
+            {
+                var row = CreateEditorRow(meta);
+                _rowsByKey[GetMetaKey(meta)] = row;
+                _editorContainer.AddChild(row);
+                renderedRowCount++;
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"[属性测试UI] 渲染属性词条失败: category={category.Title} key={GetMetaKey(meta)} error={ex}");
+            }
+        }
+
+        if (renderedRowCount == 0)
+        {
+            ShowPlaceholder($"分类“{category.Title}”未生成任何可编辑控件，请检查日志");
+        }
+
+        _renderedCategoryIndex = categoryIndex;
+    }
+
+    /// <summary>
+    /// 仅对当前分类内脏掉的属性行做局部替换，避免整页重建。
+    /// </summary>
+    private void PatchDirtyRows(CategoryEntry category)
+    {
+        if (_dirtyMetaKeys.Count == 0)
+        {
+            return;
+        }
+
+        if (selectedEntity is Node entityNode)
+        {
+            UpdateEntityHint(entityNode);
+        }
+
+        foreach (var dirtyKey in _dirtyMetaKeys)
+        {
+            if (!category.MetaByKey.TryGetValue(dirtyKey, out var meta))
+            {
+                continue;
+            }
+
+            if (!_rowsByKey.TryGetValue(dirtyKey, out var oldRow))
+            {
+                _rebuildRequested = true;
+                continue;
+            }
+
+            try
+            {
+                var newRow = CreateEditorRow(meta);
+                var childIndex = oldRow.GetIndex();
+                _editorContainer.AddChild(newRow);
+                _editorContainer.MoveChild(newRow, childIndex);
+                oldRow.QueueFree();
+                _rowsByKey[dirtyKey] = newRow;
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"[属性测试UI] 局部刷新属性词条失败: key={dirtyKey} error={ex}");
+                _rebuildRequested = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取当前选中的分类。
+    /// </summary>
+    private bool TryGetSelectedCategory(out CategoryEntry category, out int index)
+    {
+        category = null!;
+        index = -1;
+        if (_categories.Count == 0)
+        {
+            return false;
+        }
+
+        var selectedItems = _categoryList.GetSelectedItems();
+        index = selectedItems.Length > 0 ? selectedItems[0] : 0;
+        index = Mathf.Clamp(index, 0, _categories.Count - 1);
+        category = _categories[index];
+        return true;
+    }
+
+    /// <summary>
+    /// 更新顶部实体提示，避免名称变化后顶部说明仍显示旧值。
+    /// </summary>
+    private void UpdateEntityHint(Node entityNode)
+    {
+        if (selectedEntity == null)
+        {
+            _entityHintLabel.Text = "请先选择一个实体";
+            return;
+        }
+
+        var entityName = selectedEntity.Data.Get<string>(DataKey.Name.Key);
+        if (string.IsNullOrWhiteSpace(entityName))
+        {
+            entityName = entityNode.Name.ToString();
+        }
+
+        _entityHintLabel.Text = $"当前实体：{entityName} ({entityNode.GetType().Name})";
     }
 
     /// <summary>
@@ -622,7 +837,8 @@ public partial class AttributeTestModule : TestModuleBase
     /// </summary>
     private void ClearEditorRows()
     {
-        foreach (var child in _editorContainer.GetChildren())
+        _rowsByKey.Clear();
+        foreach (Node child in _editorContainer.GetChildren())
         {
             child.QueueFree();
         }

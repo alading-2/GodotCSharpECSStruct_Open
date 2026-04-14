@@ -21,13 +21,22 @@ public partial class TestSystem : CanvasLayer
     public static TestSystem? Instance { get; private set; }
 
     /// <summary>当前被测试面板选中的实体；属性面板、技能面板等都会围绕它刷新。</summary>
-    public IEntity? SelectedEntity { get; private set; }
+    public IEntity? SelectedEntity => _selectionContext?.SelectedEntity;
 
     /// <summary>当前已注册的测试模块列表，顺序就是下拉菜单显示顺序。</summary>
-    private readonly List<TestModuleBase> _modules = new();
+    private readonly List<ITestModule> _modules = new();
 
-    /// <summary>模块索引到模块实例的快速映射，避免每次切换都遍历列表。</summary>
-    private readonly Dictionary<int, TestModuleBase> _modulesByIndex = new();
+    /// <summary>模块 Id 到模块实例的快速映射。</summary>
+    private readonly Dictionary<string, ITestModule> _modulesById = new(StringComparer.Ordinal);
+
+    /// <summary>下拉索引到模块 Id 的稳定映射。</summary>
+    private readonly List<string> _moduleIdsByIndex = new();
+
+    /// <summary>当前真正处于前台的测试模块。</summary>
+    private ITestModule? _currentModule;
+
+    /// <summary>模块待刷新缓冲区，供统一刷新调度器在帧末冲刷。</summary>
+    private readonly List<TestModuleBase> _pendingRefreshModules = new();
 
     /// <summary>测试面板根节点，作为所有 UI 的父容器。</summary>
     private Control _root = null!;
@@ -61,6 +70,18 @@ public partial class TestSystem : CanvasLayer
 
     /// <summary>面板当前可见性缓存，用于避免重复处理隐藏/显示逻辑。</summary>
     private bool _panelVisible = true;
+
+    /// <summary>统一选中实体上下文。</summary>
+    private TestSelectionContext _selectionContext = null!;
+
+    /// <summary>统一刷新调度器。</summary>
+    private TestRefreshScheduler _refreshScheduler = null!;
+
+    /// <summary>模块共享上下文。</summary>
+    private TestModuleContext _moduleContext = null!;
+
+    /// <summary>当前帧是否已经安排过一次模块刷新冲刷。</summary>
+    private bool _refreshFlushQueued;
 
     /// <summary>
     /// 模块初始化入口。
@@ -103,10 +124,11 @@ public partial class TestSystem : CanvasLayer
     {
         CacheUiNodes();
         BindUiEvents();
+        InitializeContexts();
         RegisterModulesFromScene();
         if (_modules.Count > 0)
         {
-            SwitchModule(0);
+            TrySwitchModule(_moduleIdsByIndex[0]);
         }
         UpdateSelectedEntityDisplay();
         _log.Info("TestSystem 初始化完成");
@@ -117,6 +139,12 @@ public partial class TestSystem : CanvasLayer
     /// </summary>
     public override void _ExitTree()
     {
+        _currentModule?.DeactivateModule();
+        if (_selectionContext != null)
+        {
+            _selectionContext.SelectionChanged -= OnSelectionChanged;
+        }
+
         if (Instance == this)
         {
             Instance = null;
@@ -161,21 +189,15 @@ public partial class TestSystem : CanvasLayer
     /// </summary>
     public void SetSelectedEntity(IEntity? entity)
     {
-        if (SelectedEntity == entity)
+        if (_selectionContext == null)
         {
-            RefreshCurrentModule();
             return;
         }
 
-        SelectedEntity = entity;
-        UpdateSelectedEntityDisplay();
-
-        foreach (var module in _modules)
+        if (!_selectionContext.SetSelectedEntity(entity))
         {
-            module.OnSelectedEntityChanged(entity);
+            RefreshCurrentModule();
         }
-
-        RefreshCurrentModule();
     }
 
     /// <summary>
@@ -186,10 +208,43 @@ public partial class TestSystem : CanvasLayer
     /// </summary>
     public void RefreshCurrentModule()
     {
-        if (_modulesByIndex.TryGetValue(_moduleSelector.Selected, out var module))
+        if (!_panelVisible)
         {
-            module.Refresh();
+            return;
         }
+
+        _currentModule?.Refresh();
+    }
+
+    /// <summary>当前激活模块 Id。</summary>
+    public string CurrentModuleId => _currentModule?.Definition.Id ?? string.Empty;
+
+    /// <summary>
+    /// 按稳定模块 Id 切换当前模块。
+    /// </summary>
+    public bool TrySwitchModule(string moduleId)
+    {
+        if (string.IsNullOrWhiteSpace(moduleId) || !_modulesById.ContainsKey(moduleId))
+        {
+            return false;
+        }
+
+        SwitchModule(moduleId);
+        var index = _moduleIdsByIndex.IndexOf(moduleId);
+        if (index >= 0)
+        {
+            _moduleSelector.Select(index); // 同步下拉框选中态
+        }
+
+        return true;
+    }
+
+    private void InitializeContexts()
+    {
+        _selectionContext = new TestSelectionContext();
+        _selectionContext.SelectionChanged += OnSelectionChanged;
+        _refreshScheduler = new TestRefreshScheduler(QueueScheduledModuleFlush);
+        _moduleContext = new TestModuleContext(this, _selectionContext, _refreshScheduler);
     }
 
     private void CacheUiNodes()
@@ -227,12 +282,13 @@ public partial class TestSystem : CanvasLayer
     /// <summary>
     /// 注册一个测试模块，并把它挂到统一的 UI 宿主中。
     /// </summary>
-    private void RegisterModule(TestModuleBase module)
+    private void RegisterModule(ITestModule module)
     {
-        module.Initialize(this);
+        module.Initialize(_moduleContext);
         _modules.Add(module);
-        _modulesByIndex[_modules.Count - 1] = module;
-        _moduleSelector.AddItem(module.DisplayName);
+        _modulesById[module.Definition.Id] = module;
+        _moduleIdsByIndex.Add(module.Definition.Id);
+        _moduleSelector.AddItem(module.Definition.DisplayName);
         module.OnSelectedEntityChanged(SelectedEntity);
     }
 
@@ -245,13 +301,43 @@ public partial class TestSystem : CanvasLayer
     private void RegisterModulesFromScene()
     {
         _modules.Clear();
-        _modulesByIndex.Clear();
+        _modulesById.Clear();
+        _moduleIdsByIndex.Clear();
         _moduleSelector.Clear();
 
+        var sceneModules = new List<TestModuleBase>();
         foreach (Node child in _moduleHost.GetChildren())
         {
             if (child is not TestModuleBase module)
             {
+                continue;
+            }
+
+            sceneModules.Add(module);
+        }
+
+        sceneModules.Sort(static (left, right) =>
+        {
+            var orderCompare = left.Definition.SortOrder.CompareTo(right.Definition.SortOrder);
+            if (orderCompare != 0)
+            {
+                return orderCompare;
+            }
+
+            return string.Compare(left.Definition.DisplayName, right.Definition.DisplayName, StringComparison.Ordinal);
+        });
+
+        foreach (var module in sceneModules)
+        {
+            if (string.IsNullOrWhiteSpace(module.Definition.Id))
+            {
+                _log.Error($"TestSystem 模块缺少稳定 Id: module={module.Name}");
+                continue;
+            }
+
+            if (_modulesById.ContainsKey(module.Definition.Id))
+            {
+                _log.Error($"TestSystem 模块 Id 重复: id={module.Definition.Id} module={module.Name}");
                 continue;
             }
 
@@ -272,6 +358,19 @@ public partial class TestSystem : CanvasLayer
         _panelVisible = !_panelVisible;
         _panel.Visible = _panelVisible;
         _toggleButton.Text = _panelVisible ? "测试" : "测试(隐藏)";
+
+        if (_currentModule == null)
+        {
+            return;
+        }
+
+        if (_panelVisible)
+        {
+            _currentModule.ActivateModule();
+            return;
+        }
+
+        _currentModule.SuspendModule();
     }
 
     /// <summary>
@@ -279,7 +378,12 @@ public partial class TestSystem : CanvasLayer
     /// </summary>
     private void OnModuleSelected(long index)
     {
-        SwitchModule((int)index);
+        if (index < 0 || index >= _moduleIdsByIndex.Count)
+        {
+            return;
+        }
+
+        TrySwitchModule(_moduleIdsByIndex[(int)index]);
     }
 
     /// <summary>
@@ -288,23 +392,70 @@ public partial class TestSystem : CanvasLayer
     /// 切换时会先通知旧模块失活，再显示新模块并刷新一次界面，避免模块残留旧数据。
     /// </para>
     /// </summary>
-    private void SwitchModule(int index)
+    private void SwitchModule(string moduleId)
     {
-        foreach (var module in _modules)
+        if (_currentModule != null)
         {
-            if (module.Visible)
-            {
-                module.OnDeactivated();
-            }
-            module.Visible = false;
+            _currentModule.DeactivateModule();
+            _currentModule.ModuleRoot.Visible = false;
         }
 
-        if (_modulesByIndex.TryGetValue(index, out var currentModule))
+        _currentModule = null;
+        if (_modulesById.TryGetValue(moduleId, out var currentModule))
         {
-            currentModule.Visible = true;
-            currentModule.OnActivated();
-            currentModule.Refresh();
+            _currentModule = currentModule;
+            currentModule.ModuleRoot.Visible = true;
+            if (_panelVisible)
+            {
+                currentModule.ActivateModule();
+            }
         }
+    }
+
+    /// <summary>
+    /// 选中实体变化后的统一广播入口。
+    /// </summary>
+    private void OnSelectionChanged(IEntity? entity)
+    {
+        UpdateSelectedEntityDisplay();
+        foreach (var module in _modules)
+        {
+            module.OnSelectedEntityChanged(entity);
+        }
+    }
+
+    /// <summary>
+    /// 请求宿主在帧末统一冲刷模块刷新。
+    /// </summary>
+    private void QueueScheduledModuleFlush()
+    {
+        if (_refreshFlushQueued)
+        {
+            return;
+        }
+
+        _refreshFlushQueued = true;
+        CallDeferred(nameof(FlushScheduledModuleRefreshes));
+    }
+
+    /// <summary>
+    /// 执行当前帧累计的模块刷新请求。
+    /// </summary>
+    private void FlushScheduledModuleRefreshes()
+    {
+        _refreshFlushQueued = false;
+        if (!IsInsideTree())
+        {
+            return;
+        }
+
+        _refreshScheduler.DrainPending(_pendingRefreshModules);
+        foreach (var module in _pendingRefreshModules)
+        {
+            module.FlushScheduledRefreshInternal();
+        }
+
+        _pendingRefreshModules.Clear();
     }
 
     /// <summary>

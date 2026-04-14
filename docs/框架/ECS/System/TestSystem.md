@@ -15,6 +15,12 @@
 
 - `Src/ECS/Base/System/TestSystem/TestSystem.cs`
 - `Src/ECS/Base/System/TestSystem/TestModuleBase.cs`
+- `Src/ECS/Base/System/TestSystem/Core/ITestModule.cs`
+- `Src/ECS/Base/System/TestSystem/Core/ITestModuleContext.cs`
+- `Src/ECS/Base/System/TestSystem/Core/TestModuleDefinition.cs`
+- `Src/ECS/Base/System/TestSystem/Core/TestSelectionContext.cs`
+- `Src/ECS/Base/System/TestSystem/Core/TestRefreshScheduler.cs`
+- `Src/ECS/Base/System/TestSystem/Core/TestModuleContext.cs`
 - `Src/ECS/Base/System/TestSystem/Attribute/AttributeTestModule.cs`
 - `Src/ECS/Base/System/TestSystem/Ability/AbilityTestModule.cs`
 - `Src/ECS/Base/System/TestSystem/FeatureDebugService.cs`
@@ -116,7 +122,7 @@
 
 | 层级 | 责任 | 典型内容 |
 |------|------|----------|
-| **Core** | 统一宿主、模块生命周期、选择上下文、刷新调度 | `TestSystem`、`TestModuleBase`、`TestSelectionContext`、`TestRefreshScheduler` |
+| **Core** | 统一宿主、模块协议、模块定义、模块生命周期、选择上下文、刷新调度 | `TestSystem`、`ITestModule`、`ITestModuleContext`、`TestModuleDefinition`、`TestModuleBase`、`TestModuleContext`、`TestSelectionContext`、`TestRefreshScheduler` |
 | **Modules** | 每个测试模块自己的状态、订阅、渲染与操作 | `Attribute`、`Ability`、未来的 `Buff` / `AI` / `Damage` 等 |
 | **Shared UI** | 跨模块可复用的复合控件，不承载具体业务 | `SectionPanel`、`EmptyStateView`、`LabeledValueRow` |
 | **Services** | 复用正式系统的调试适配层，不直接渲染 UI | `FeatureDebugService`、后续的 `TestSelectionService` 等 |
@@ -132,6 +138,7 @@
 - 面板显隐
 - 模块注册与切换
 - 统一调度刷新
+- 按 `TestModuleDefinition` 维护稳定模块 Id 和排序
 
 `TestSystem` 不应该负责：
 
@@ -152,6 +159,12 @@
 - 越过宿主管理别的模块
 - 自己决定全局实体选择逻辑
 - 直接承担正式系统的业务生命周期实现
+
+模块接入时必须给出稳定的 `TestModuleDefinition`：
+
+- `Id` 是宿主切换、日志定位、后续模块状态持久化的稳定键
+- `DisplayName` 只负责显示
+- `SortOrder` 决定模块顺序，宿主不再依赖场景挂载顺序
 
 ### 4.2.3 刷新必须分层
 
@@ -177,13 +190,29 @@
 
 | 阶段 | 责任 |
 |------|------|
-| `Initialize` | 缓存节点、构建静态骨架、准备本地状态 |
+| `Initialize` | 缓存节点、接收 `TestModuleContext`、构建静态骨架、准备本地状态 |
 | `OnSelectedEntityChanged` | 切换监听目标，标记需要同步 |
 | `OnActivated` | 开始订阅、恢复刷新 |
 | `OnDeactivated` | 解除订阅、停止刷新 |
+| `OnSuspended` | 宿主面板隐藏时停止后台空转 |
+| `OnResumed` | 宿主面板恢复显示时重新进入前台 |
 | `BuildView` | 首次构建结构化 UI |
 | `PatchView` | 局部更新已有 UI |
 | `DisposeView` | 清理动态节点和临时状态 |
+
+### 5.3 模块协议
+
+当前宿主层已经收口为：
+
+- `ITestModule`
+- `ITestModuleContext`
+- `TestModuleDefinition`
+
+作用分别是：
+
+- `ITestModule`：宿主只依赖模块协议，不依赖具体模块实现
+- `ITestModuleContext`：模块初始化时只拿统一上下文，不直接耦合宿主内部字段
+- `TestModuleDefinition`：模块提供稳定 `Id / DisplayName / SortOrder`
 
 ### 5.1 激活态规则
 

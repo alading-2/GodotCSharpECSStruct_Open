@@ -180,6 +180,29 @@ Src/ECS/Base/System/TestSystem/
 - 避免同一帧重复刷新多次
 - 给后续更多模块提供统一规则
 
+当前已落地：
+
+- `ITestModule` / `ITestModuleContext` 作为宿主与模块之间的统一协议
+- `TestModuleDefinition` 统一描述模块 `Id / DisplayName / SortOrder`
+- `TestRefreshScheduler` 统一收口模块刷新请求
+- `TestSelectionContext` 统一维护选中实体与变更广播
+- `TestModuleContext` 统一注入宿主 / 选择上下文 / 调度器
+- `TestModuleBase` 增加 `Active / Inactive / Suspended` 运行态收口
+
+## 5.1.1 描述驱动的模块注册
+
+当前进一步建议宿主按模块定义驱动注册，而不是依赖场景子节点的物理顺序：
+
+- `TestModuleDefinition.Id`
+- `TestModuleDefinition.DisplayName`
+- `TestModuleDefinition.SortOrder`
+
+价值：
+
+- 模块增删不再破坏顺序
+- 宿主可以按稳定 Id 切换模块
+- 后续做“默认模块”“记住上次打开模块”“模块过滤”时有稳定主键
+
 ## 5.2 属性模块改为行缓存模型
 
 建议把属性模块改为：

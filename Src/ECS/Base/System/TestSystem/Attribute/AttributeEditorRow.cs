@@ -78,14 +78,13 @@ public partial class AttributeEditorRow : VBoxContainer
             return node;
         }
 
-        _log.Warn($"[属性行] unique-name 节点未命中，回退普通路径: row={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-
         node = GetNodeOrNull<T>(fallbackPath);
         if (node != null)
         {
             return node;
         }
 
+        _log.Error($"[属性行] 节点缺失: row={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
         throw new InvalidOperationException($"AttributeEditorRow 节点缺失: row={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 

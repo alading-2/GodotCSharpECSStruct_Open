@@ -15,6 +15,9 @@ internal sealed class AbilityTestService
     /// <summary>技能分组兜底路径：当配置与运行时数据都无法提供分组时使用。</summary>
     private const string DefaultGroupPath = "技能.未分类";
 
+    /// <summary>技能分类显示兜底名称。</summary>
+    private const string DefaultGroupDisplayName = "未分类";
+
     /// <summary>Feature 调试服务，用于复用正式链路执行授予、移除与启停。</summary>
     private readonly FeatureDebugService _featureDebugService = new();
 
@@ -224,7 +227,7 @@ internal sealed class AbilityTestService
             }
 
             var displayName = string.IsNullOrWhiteSpace(config.Name) ? resourceKey : config.Name!;
-            var groupPath = ResolveGroupPath(config);
+            var groupPath = ResolveGroupPath(config, resourceKey);
             var description = string.IsNullOrWhiteSpace(config.Description)
                 ? "暂无描述"
                 : config.Description!;
@@ -309,24 +312,30 @@ internal sealed class AbilityTestService
     /// 统一使用 FeatureGroupId；若旧资源尚未补齐，则按技能类型 / 触发模式兜底。
     /// </para>
     /// </summary>
-    private static string ResolveGroupPath(AbilityConfig config)
+    private static string ResolveGroupPath(AbilityConfig config, string resourceKey)
     {
         if (!string.IsNullOrWhiteSpace(config.FeatureGroupId))
         {
-            return config.FeatureGroupId.Trim();
+            return NormalizeGroupDisplayName(config.FeatureGroupId);
+        }
+
+        var resourceCategory = ResolveResourceCategory(resourceKey);
+        if (!string.IsNullOrWhiteSpace(resourceCategory))
+        {
+            return resourceCategory;
         }
 
         if ((config.AbilityTriggerMode & AbilityTriggerMode.Manual) != 0)
         {
-            return FeatureId.Ability.Groups.Active;
+            return NormalizeGroupDisplayName(FeatureId.Ability.Groups.Active);
         }
 
         return config.AbilityType switch
         {
-            AbilityType.Active => FeatureId.Ability.Groups.Active,
-            AbilityType.Passive => FeatureId.Ability.Groups.Passive,
-            AbilityType.Weapon => "技能.武器",
-            _ => DefaultGroupPath
+            AbilityType.Active => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Active),
+            AbilityType.Passive => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Passive),
+            AbilityType.Weapon => NormalizeGroupDisplayName("技能.武器"),
+            _ => DefaultGroupDisplayName
         };
     }
 
@@ -338,17 +347,65 @@ internal sealed class AbilityTestService
         var featureGroup = ability.Data.Get<string>(DataKey.AbilityFeatureGroup.Key);
         if (!string.IsNullOrWhiteSpace(featureGroup))
         {
-            return featureGroup.Trim();
+            return NormalizeGroupDisplayName(featureGroup);
         }
 
-        var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType);
+        var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType.Key);
         return abilityType switch
         {
-            AbilityType.Active => FeatureId.Ability.Groups.Active,
-            AbilityType.Passive => FeatureId.Ability.Groups.Passive,
-            AbilityType.Weapon => "技能.武器",
-            _ => DefaultGroupPath
+            AbilityType.Active => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Active),
+            AbilityType.Passive => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Passive),
+            AbilityType.Weapon => NormalizeGroupDisplayName("技能.武器"),
+            _ => DefaultGroupDisplayName
         };
+    }
+
+    /// <summary>
+    /// 把原始分组路径转成更适合测试面板展示的分类名。
+    /// </summary>
+    private static string NormalizeGroupDisplayName(string? groupPath)
+    {
+        if (string.IsNullOrWhiteSpace(groupPath))
+        {
+            return DefaultGroupDisplayName;
+        }
+
+        var normalized = groupPath.Trim().Replace('/', '.');
+        var parts = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return DefaultGroupDisplayName;
+        }
+
+        return parts[^1].Trim();
+    }
+
+    /// <summary>
+    /// 从技能资源路径解析目录分类，作为缺失显式分类时的兜底显示。
+    /// </summary>
+    private static string? ResolveResourceCategory(string resourceKey)
+    {
+        if (string.IsNullOrWhiteSpace(resourceKey))
+        {
+            return null;
+        }
+
+        var normalized = resourceKey.Replace('\\', '/');
+        var segments = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length <= 1)
+        {
+            return null;
+        }
+
+        var parentFolder = segments[^2].Trim();
+        if (string.IsNullOrWhiteSpace(parentFolder)
+            || string.Equals(parentFolder, "Resource", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(parentFolder, "Ability", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return parentFolder;
     }
 
     /// <summary>

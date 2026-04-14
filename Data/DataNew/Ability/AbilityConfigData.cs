@@ -170,11 +170,6 @@ public class AbilityConfigData
     public string? FeatureGroupId { get; set; }
 
     /// <summary>
-    ///     技能逻辑处理器 ID（可选覆盖）
-    /// </summary>
-    public string? FeatureHandlerId { get; set; }
-
-    /// <summary>
     ///     技能描述
     /// </summary>
     public string? Description { get; set; }

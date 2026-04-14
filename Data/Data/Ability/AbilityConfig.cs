@@ -20,13 +20,6 @@ namespace Slime.Config.Abilities
         [DataKey(nameof(DataKey.AbilityFeatureGroup))]
         [Export] public string? FeatureGroupId { get; set; }
         /// <summary>
-        /// 技能逻辑处理器 ID（可选覆盖）。
-        /// 为空时由 FeatureGroupId + Name 自动派生；仅在需要特殊映射时才手动填写。
-        /// </summary>
-        [DataKey(nameof(DataKey.FeatureHandlerId))]
-        [Export] public string? FeatureHandlerId { get; set; }
-
-        /// <summary>
         /// 解析最终 FeatureHandlerId。
         /// 优先使用显式 FeatureHandlerId；为空则由 featureGroupId + "." + name 派生。
         /// </summary>

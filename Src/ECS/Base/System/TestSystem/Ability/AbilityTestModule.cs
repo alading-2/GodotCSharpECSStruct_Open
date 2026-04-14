@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// 技能测试模块。
@@ -42,8 +43,17 @@ public partial class AbilityTestModule : TestModuleBase
     /// <summary>当前已经为其订阅技能事件的实体，避免重复订阅同一个目标。</summary>
     private IEntity? _subscribedEntity;
 
-    /// <summary>是否已经排队等待一次延迟刷新，避免同一帧重复重建列表。</summary>
-    private bool _refreshQueued;
+    /// <summary>左侧技能库是否需要重建。</summary>
+    private bool _rebuildAvailableRequested = true;
+
+    /// <summary>右侧当前技能列表是否需要重建。</summary>
+    private bool _rebuildCurrentRequested = true;
+
+    /// <summary>右侧当前技能条目缓存，支持启停状态变化时做单条 patch。</summary>
+    private readonly Dictionary<string, AbilityOwnedItemControl> _ownedItemsByAbilityId = new(StringComparer.Ordinal);
+
+    /// <summary>右侧当前技能条目的脏实例 Id 集合，统一在帧末 patch。</summary>
+    private readonly HashSet<string> _dirtyOwnedAbilityIds = new(StringComparer.Ordinal);
 
     /// <summary>右侧技能项的上下文菜单。</summary>
     private PopupMenu _ownedContextMenu = null!;
@@ -57,8 +67,12 @@ public partial class AbilityTestModule : TestModuleBase
     private const int ContextToggleId = 1;
     private const int ContextRemoveId = 2;
 
-    /// <summary>模块在 TestSystem 下拉框中的显示名称。</summary>
-    internal override string DisplayName => "技能测试";
+    /// <summary>模块定义信息。</summary>
+    internal override TestModuleDefinition Definition => new(
+        "ability", // 模块稳定 Id
+        "技能测试", // 模块显示名
+        200 // 模块排序
+    );
 
     /// <summary>
     /// 模块初始化。
@@ -66,11 +80,11 @@ public partial class AbilityTestModule : TestModuleBase
     /// 服务在字段初始化时已完成技能库缓存，这里只负责构建 UI。
     /// </para>
     /// </summary>
-    internal override void Initialize(TestSystem system)
+    internal override void Initialize(ITestModuleContext context)
     {
-        base.Initialize(system);
+        base.Initialize(context);
         CacheUiNodes();
-        RequestRefresh();
+        RequestFullRefresh();
     }
 
     /// <summary>
@@ -80,8 +94,11 @@ public partial class AbilityTestModule : TestModuleBase
     {
         UnsubscribeEntityEvents();
         base.OnSelectedEntityChanged(entity);
-        SubscribeEntityEvents();
-        RequestRefresh();
+        if (IsModuleActive)
+        {
+            SubscribeEntityEvents();
+            RequestFullRefresh();
+        }
     }
 
     /// <summary>
@@ -89,8 +106,9 @@ public partial class AbilityTestModule : TestModuleBase
     /// </summary>
     internal override void OnActivated()
     {
+        base.OnActivated();
         SubscribeEntityEvents();
-        RequestRefresh();
+        RequestFullRefresh();
     }
 
     /// <summary>
@@ -98,7 +116,9 @@ public partial class AbilityTestModule : TestModuleBase
     /// </summary>
     internal override void OnDeactivated()
     {
+        base.OnDeactivated();
         UnsubscribeEntityEvents();
+        _dirtyOwnedAbilityIds.Clear();
     }
 
     /// <summary>
@@ -106,8 +126,7 @@ public partial class AbilityTestModule : TestModuleBase
     /// </summary>
     internal override void Refresh()
     {
-        RebuildAvailableList();
-        RebuildCurrentList();
+        RequestFullRefresh();
     }
 
     private void CacheUiNodes()
@@ -138,7 +157,7 @@ public partial class AbilityTestModule : TestModuleBase
             try
             {
                 var section = InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
-                section.SetTitle($"{group.GroupPath} ({group.Items.Count})"); // 绑定分组标题
+                section.SetTitle($"分类：{group.GroupPath} ({group.Items.Count})"); // 绑定技能库分类标题
 
                 foreach (var item in group.Items)
                 {
@@ -162,6 +181,7 @@ public partial class AbilityTestModule : TestModuleBase
     /// </summary>
     private void RebuildCurrentList()
     {
+        _ownedItemsByAbilityId.Clear();
         ClearChildren(_currentGroupContainer);
 
         if (selectedEntity == null)
@@ -170,7 +190,7 @@ public partial class AbilityTestModule : TestModuleBase
             return;
         }
 
-        var entityName = selectedEntity.Data.Get<string>(DataKey.Name);
+        var entityName = selectedEntity.Data.Get<string>(DataKey.Name.Key);
         var groups = _service.GetOwnedGroups(selectedEntity);
         var totalCount = 0;
 
@@ -181,7 +201,7 @@ public partial class AbilityTestModule : TestModuleBase
             try
             {
                 var section = InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
-                section.SetTitle($"{group.GroupPath} ({group.Items.Count})"); // 绑定当前技能分组标题
+                section.SetTitle($"分类：{group.GroupPath} ({group.Items.Count})"); // 绑定当前技能分类标题
 
                 foreach (var item in group.Items)
                 {
@@ -190,6 +210,7 @@ public partial class AbilityTestModule : TestModuleBase
                     itemControl.ToggleEnabledRequested += OnOwnedToggleRequested;
                     itemControl.RemoveRequested += OnOwnedRemoveRequested;
                     itemControl.ContextRequested += OnOwnedContextRequested;
+                    _ownedItemsByAbilityId[item.AbilityId] = itemControl;
                     section.AddItem(itemControl);
                 }
 
@@ -221,7 +242,6 @@ public partial class AbilityTestModule : TestModuleBase
         _log.Info($"[技能测试UI] 点击添加技能: resourceKey={resourceKey}");
         var result = _service.AddAbility(selectedEntity, resourceKey);
         ShowStatus(result.Message);
-        RequestRefresh();
     }
 
     /// <summary>
@@ -238,7 +258,6 @@ public partial class AbilityTestModule : TestModuleBase
         _log.Info($"[技能测试UI] 点击切换技能启用状态: abilityId={abilityId} targetEnabled={targetEnabled}");
         var result = _service.SetAbilityEnabled(selectedEntity, abilityId, targetEnabled);
         ShowStatus(result.Message);
-        RequestRefresh();
     }
 
     /// <summary>
@@ -255,7 +274,6 @@ public partial class AbilityTestModule : TestModuleBase
         _log.Info($"[技能测试UI] 点击移除技能: abilityId={abilityId}");
         var result = _service.RemoveAbility(selectedEntity, abilityId);
         ShowStatus(result.Message);
-        RequestRefresh();
     }
 
     /// <summary>
@@ -387,9 +405,9 @@ public partial class AbilityTestModule : TestModuleBase
     /// </summary>
     private void OnAbilityChanged(GameEventType.Ability.AddedEventData _)
     {
-        if (Visible)
+        if (CanRefresh)
         {
-            RequestRefresh();
+            RequestStructureRefresh(rebuildAvailable: true, rebuildCurrent: true);
         }
     }
 
@@ -398,65 +416,141 @@ public partial class AbilityTestModule : TestModuleBase
     /// </summary>
     private void OnAbilityRemovedEvt(GameEventType.Ability.RemovedEventData _)
     {
-        if (Visible)
+        if (CanRefresh)
         {
-            RequestRefresh();
+            RequestStructureRefresh(rebuildAvailable: true, rebuildCurrent: true);
         }
     }
 
     /// <summary>
     /// 技能启停状态变化后的刷新回调。
     /// </summary>
-    private void OnFeatureEnabled(GameEventType.Feature.EnabledEventData _)
+    private void OnFeatureEnabled(GameEventType.Feature.EnabledEventData evt)
     {
-        RefreshVisibleModule();
+        RequestOwnedItemPatch(evt.Feature);
     }
 
     /// <summary>
     /// 技能禁用后的刷新回调。
     /// </summary>
-    private void OnFeatureDisabled(GameEventType.Feature.DisabledEventData _)
+    private void OnFeatureDisabled(GameEventType.Feature.DisabledEventData evt)
     {
-        RefreshVisibleModule();
+        RequestOwnedItemPatch(evt.Feature);
     }
 
     /// <summary>
-    /// 仅在模块可见时刷新，避免后台模块做无意义重绘。
+    /// 请求只 patch 某个已拥有技能条目；如果结构已变化，则退化为重建右侧列表。
     /// </summary>
-    private void RefreshVisibleModule()
+    private void RequestOwnedItemPatch(IEntity feature)
     {
-        if (Visible)
+        if (selectedEntity == null)
         {
-            RequestRefresh();
+            return;
         }
+
+        var abilityId = feature.Data.Get<string>(DataKey.Id.Key);
+        if (string.IsNullOrWhiteSpace(abilityId))
+        {
+            RequestStructureRefresh(rebuildAvailable: false, rebuildCurrent: true);
+            return;
+        }
+
+        _dirtyOwnedAbilityIds.Add(abilityId);
+        RequestScheduledRefresh();
+    }
+
+    /// <summary>
+    /// 请求整页刷新技能模块。
+    /// </summary>
+    private void RequestFullRefresh()
+    {
+        RequestStructureRefresh(rebuildAvailable: true, rebuildCurrent: true);
     }
 
     /// <summary>
     /// 请求在当前 UI 事件处理完成后统一刷新一次，避免列表正在处理交互时立刻重建。
     /// </summary>
-    private void RequestRefresh()
+    private void RequestStructureRefresh(bool rebuildAvailable, bool rebuildCurrent)
     {
-        if (_refreshQueued)
-        {
-            return;
-        }
-
-        _refreshQueued = true;
-        CallDeferred(nameof(FlushRefresh));
+        _rebuildAvailableRequested |= rebuildAvailable;
+        _rebuildCurrentRequested |= rebuildCurrent;
+        RequestScheduledRefresh();
     }
 
     /// <summary>
     /// 执行延迟刷新。
     /// </summary>
-    private void FlushRefresh()
+    protected override void FlushScheduledRefresh()
     {
-        _refreshQueued = false;
-
         if (!IsInsideTree())
         {
             return;
         }
 
-        Refresh();
+        if (!CanRefresh)
+        {
+            return;
+        }
+
+        ApplyPendingRefresh();
+    }
+
+    /// <summary>
+    /// 执行本帧累计的结构刷新请求。
+    /// </summary>
+    private void ApplyPendingRefresh()
+    {
+        if (_rebuildAvailableRequested)
+        {
+            RebuildAvailableList();
+            _rebuildAvailableRequested = false;
+        }
+
+        if (_rebuildCurrentRequested)
+        {
+            RebuildCurrentList();
+            _rebuildCurrentRequested = false;
+            _dirtyOwnedAbilityIds.Clear();
+            return;
+        }
+
+        if (_dirtyOwnedAbilityIds.Count > 0)
+        {
+            PatchDirtyOwnedItems();
+        }
+    }
+
+    /// <summary>
+    /// 仅 patch 右侧已拥有技能中发生状态变化的条目。
+    /// </summary>
+    private void PatchDirtyOwnedItems()
+    {
+        foreach (var abilityId in _dirtyOwnedAbilityIds)
+        {
+            if (!_ownedItemsByAbilityId.TryGetValue(abilityId, out var itemControl))
+            {
+                _rebuildCurrentRequested = true;
+                continue;
+            }
+
+            if (selectedEntity == null || !_service.TryGetOwnedItem(selectedEntity, abilityId, out var itemView))
+            {
+                _rebuildCurrentRequested = true;
+                continue;
+            }
+
+            itemControl.Configure(itemView);
+            if (string.Equals(_contextAbilityId, abilityId, StringComparison.Ordinal))
+            {
+                _contextIsEnabled = itemView.IsEnabled;
+            }
+        }
+
+        _dirtyOwnedAbilityIds.Clear();
+        if (_rebuildCurrentRequested)
+        {
+            RebuildCurrentList();
+            _rebuildCurrentRequested = false;
+        }
     }
 }

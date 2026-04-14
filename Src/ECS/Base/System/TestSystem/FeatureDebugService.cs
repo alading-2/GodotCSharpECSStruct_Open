@@ -165,10 +165,10 @@ internal sealed class FeatureDebugService
             return Fail($"添加失败: {config.Name}");
         }
 
-        var ownerName = owner.Data.Get<string>(nameof(DataKey.Name));
-        var abilityName = ability.Data.Get<string>(nameof(DataKey.Name));
-        var abilityId = ability.Data.Get<string>(nameof(DataKey.Id));
-        var handlerId = ability.Data.Get<string>(nameof(DataKey.FeatureHandlerId));
+        var ownerName = owner.Data.Get<string>(DataKey.Name.Key);
+        var abilityName = ability.Data.Get<string>(DataKey.Name.Key);
+        var abilityId = ability.Data.Get<string>(DataKey.Id.Key);
+        var handlerId = ability.Data.Get<string>(DataKey.FeatureHandlerId.Key);
         _log.Info($"[Feature调试] 授予技能Feature: owner={ownerName} feature={abilityName} featureId={abilityId} handler={handlerId} resourceKey={resourceKey}");
         return SuccessResult($"已添加: {abilityName}");
     }
@@ -198,10 +198,10 @@ internal sealed class FeatureDebugService
             return Fail($"添加Feature失败: {definition.Name}");
         }
 
-        var ownerName = owner.Data.Get<string>(nameof(DataKey.Name));
-        var featureName = feature.Data.Get<string>(nameof(DataKey.Name));
-        var featureId = feature.Data.Get<string>(nameof(DataKey.Id));
-        var handlerId = feature.Data.Get<string>(nameof(DataKey.FeatureHandlerId));
+        var ownerName = owner.Data.Get<string>(DataKey.Name.Key);
+        var featureName = feature.Data.Get<string>(DataKey.Name.Key);
+        var featureId = feature.Data.Get<string>(DataKey.Id.Key);
+        var handlerId = feature.Data.Get<string>(DataKey.FeatureHandlerId.Key);
         _log.Info($"[Feature调试] 授予通用Feature: owner={ownerName} feature={featureName} featureId={featureId} handler={handlerId} source={featureSource}");
         return SuccessResult($"已添加: {featureName}");
     }
@@ -224,16 +224,16 @@ internal sealed class FeatureDebugService
             return Fail("未找到要移除的技能实例");
         }
 
-        var abilityName = ability.Data.Get<string>(nameof(DataKey.Name));
-        var abilityId = ability.Data.Get<string>(nameof(DataKey.Id));
+        var abilityName = ability.Data.Get<string>(DataKey.Name.Key);
+        var abilityId = ability.Data.Get<string>(DataKey.Id.Key);
         var removed = EntityManager.RemoveAbility(owner, ability);
         if (!removed)
         {
-            _log.Warn($"[Feature调试] 移除技能Feature失败: owner={owner.Data.Get<string>(nameof(DataKey.Name))} feature={abilityName} featureId={abilityId}");
+            _log.Warn($"[Feature调试] 移除技能Feature失败: owner={owner.Data.Get<string>(DataKey.Name.Key)} feature={abilityName} featureId={abilityId}");
             return Fail($"移除失败: {abilityName}");
         }
 
-        _log.Info($"[Feature调试] 移除技能Feature: owner={owner.Data.Get<string>(nameof(DataKey.Name))} feature={abilityName} featureId={abilityId}");
+        _log.Info($"[Feature调试] 移除技能Feature: owner={owner.Data.Get<string>(DataKey.Name.Key)} feature={abilityName} featureId={abilityId}");
         return SuccessResult($"已移除: {abilityName}");
     }
 
@@ -256,18 +256,18 @@ internal sealed class FeatureDebugService
             return Fail("未找到要切换的技能实例");
         }
 
-        var featureName = feature.Data.Get<string>(nameof(DataKey.Name));
-        var featureId = feature.Data.Get<string>(nameof(DataKey.Id));
-        var handlerId = feature.Data.Get<string>(nameof(DataKey.FeatureHandlerId));
+        var featureName = feature.Data.Get<string>(DataKey.Name.Key);
+        var featureId = feature.Data.Get<string>(DataKey.Id.Key);
+        var handlerId = feature.Data.Get<string>(DataKey.FeatureHandlerId.Key);
         if (isEnabled)
         {
             FeatureSystem.EnableFeature(feature, owner);
-            _log.Info($"[Feature调试] 启用Feature: owner={owner.Data.Get<string>(nameof(DataKey.Name))} feature={featureName} featureId={featureId} handler={handlerId}");
+            _log.Info($"[Feature调试] 启用Feature: owner={owner.Data.Get<string>(DataKey.Name.Key)} feature={featureName} featureId={featureId} handler={handlerId}");
             return SuccessResult($"已启用: {featureName}");
         }
 
         FeatureSystem.DisableFeature(feature, owner);
-        _log.Info($"[Feature调试] 禁用Feature: owner={owner.Data.Get<string>(nameof(DataKey.Name))} feature={featureName} featureId={featureId} handler={handlerId}");
+        _log.Info($"[Feature调试] 禁用Feature: owner={owner.Data.Get<string>(DataKey.Name.Key)} feature={featureName} featureId={featureId} handler={handlerId}");
         return SuccessResult($"已禁用: {featureName}");
     }
 
@@ -381,7 +381,7 @@ internal sealed class FeatureDebugService
     /// <returns>由 ownerId 与 dataKey 组成的稳定缓存键。</returns>
     private static string BuildModifierCacheKey(IEntity owner, string dataKey)
     {
-        var ownerId = owner.Data.Get<string>(nameof(DataKey.Id));
+        var ownerId = owner.Data.Get<string>(DataKey.Id.Key);
         return $"{ownerId}:{dataKey}";
     }
 }

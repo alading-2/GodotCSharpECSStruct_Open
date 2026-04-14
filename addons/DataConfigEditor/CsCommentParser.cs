@@ -226,13 +226,24 @@ namespace Slime.Addons.DataConfigEditor
             {
                 string trimmed = lines[j].Trim();
 
-                if (trimmed.Contains("</summary>"))
+                // 单行 summary：/// <summary>内容</summary>
+                int sumStart = trimmed.IndexOf("<summary>", StringComparison.Ordinal);
+                int sumEnd = trimmed.IndexOf("</summary>", StringComparison.Ordinal);
+                if (sumStart >= 0 && sumEnd > sumStart)
+                {
+                    string content = trimmed[(sumStart + "<summary>".Length)..sumEnd].Trim();
+                    if (!string.IsNullOrWhiteSpace(content))
+                        summaryLines.Insert(0, content);
+                    break;
+                }
+
+                if (sumEnd >= 0)
                 {
                     inSummary = true;
                     continue;
                 }
 
-                if (trimmed.Contains("<summary>"))
+                if (sumStart >= 0)
                     break;
 
                 if (inSummary)

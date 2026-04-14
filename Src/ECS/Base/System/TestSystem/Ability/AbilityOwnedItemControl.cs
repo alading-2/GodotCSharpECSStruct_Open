@@ -166,14 +166,13 @@ public partial class AbilityOwnedItemControl : PanelContainer
             return node;
         }
 
-        _log.Warn($"[技能测试UI] unique-name 当前技能条目节点未命中，回退普通路径: node={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-
         node = GetNodeOrNull<T>(fallbackPath);
         if (node != null)
         {
             return node;
         }
 
+        _log.Error($"[技能测试UI] 当前技能条目节点缺失: node={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
         throw new InvalidOperationException($"AbilityOwnedItemControl 节点缺失: node={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 }
