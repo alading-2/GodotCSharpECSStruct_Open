@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// 属性测试模块。
@@ -244,7 +245,7 @@ public partial class AttributeTestModule : TestModuleBase
     private AttributeEditorRow CreateEditorRow(DataMeta meta)
     {
         var metaKey = GetMetaKey(meta);
-        var row = InstantiateScene<AttributeEditorRow>(_editorRowScene, nameof(AttributeEditorRow));
+        var row = TestSceneHelper.InstantiateScene<AttributeEditorRow>(_editorRowScene, nameof(AttributeEditorRow));
 
         row.ConfigureHeader(GetMetaDisplayName(meta), metaKey); // 绑定词条标题
 
@@ -281,7 +282,7 @@ public partial class AttributeTestModule : TestModuleBase
             return null;
         }
 
-        var editor = InstantiateScene<AttributeModifierEditor>(_modifierEditorScene, nameof(AttributeModifierEditor));
+        var editor = TestSceneHelper.InstantiateScene<AttributeModifierEditor>(_modifierEditorScene, nameof(AttributeModifierEditor));
         var modifierValue = _featureDebugService.GetTemporaryModifierValue(selectedEntity, GetMetaKey(meta));
         editor.SetTitle("临时加成"); // 绑定固定标题
         editor.ConfigureRange(
@@ -338,7 +339,7 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsBoolean)
         {
-            var toggle = InstantiateScene<CheckButton>(_checkEditorScene, nameof(CheckButton));
+            var toggle = TestSceneHelper.InstantiateScene<CheckButton>(_checkEditorScene, nameof(CheckButton));
             toggle.ButtonPressed = selectedEntity.Data.Get<bool>(GetMetaKey(meta));
             toggle.Text = toggle.ButtonPressed ? "已开启" : "已关闭";
             toggle.Toggled += pressed =>
@@ -351,7 +352,7 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsEnum)
         {
-            var option = InstantiateScene<OptionButton>(_optionEditorScene, nameof(OptionButton));
+            var option = TestSceneHelper.InstantiateScene<OptionButton>(_optionEditorScene, nameof(OptionButton));
             var values = Enum.GetValues(meta.Type);
             var currentValue = selectedEntity.Data.Get<int>(GetMetaKey(meta));
             int selectedIndex = 0;
@@ -381,7 +382,7 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.HasOptions)
         {
-            var option = InstantiateScene<OptionButton>(_optionEditorScene, nameof(OptionButton));
+            var option = TestSceneHelper.InstantiateScene<OptionButton>(_optionEditorScene, nameof(OptionButton));
             for (int i = 0; i < meta.Options!.Count; i++)
             {
                 option.AddItem(meta.Options[i]);
@@ -394,7 +395,7 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsNumeric)
         {
-            var spin = InstantiateScene<SpinBox>(_numericEditorScene, nameof(SpinBox));
+            var spin = TestSceneHelper.InstantiateScene<SpinBox>(_numericEditorScene, nameof(SpinBox));
             spin.MinValue = meta.MinValue ?? -999999;
             spin.MaxValue = meta.MaxValue ?? 999999;
             spin.Step = meta.IsInteger ? 1 : 0.1;
@@ -417,7 +418,7 @@ public partial class AttributeTestModule : TestModuleBase
 
         if (meta.IsString)
         {
-            var lineEdit = InstantiateScene<LineEdit>(_textEditorScene, nameof(LineEdit));
+            var lineEdit = TestSceneHelper.InstantiateScene<LineEdit>(_textEditorScene, nameof(LineEdit));
             lineEdit.Text = selectedEntity.Data.Get<string>(GetMetaKey(meta));
             lineEdit.TextSubmitted += text => ApplyMetaValue(meta, text);
             lineEdit.FocusExited += () => ApplyMetaValue(meta, lineEdit.Text);
@@ -425,25 +426,6 @@ public partial class AttributeTestModule : TestModuleBase
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// 实例化一个 UI 场景。
-    /// </summary>
-    private static T InstantiateScene<T>(PackedScene? scene, string sceneName) where T : Node
-    {
-        if (scene == null)
-        {
-            throw new InvalidOperationException($"属性测试场景未配置: {sceneName}");
-        }
-
-        var instance = scene.Instantiate<T>();
-        if (instance == null)
-        {
-            throw new InvalidOperationException($"属性测试场景实例化失败: {sceneName}");
-        }
-
-        return instance;
     }
 
     /// <summary>

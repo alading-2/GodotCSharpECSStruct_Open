@@ -30,7 +30,6 @@ public static partial class FeatureId
         {
             public const string Slam = "技能.主动.猛击";
             public const string ChainLightning = "技能.主动.连锁闪电";
-            public const string CircleDamage = "技能.主动.圆环伤害";
         }
 
         // ============ 移动技能 ============
@@ -46,6 +45,8 @@ public static partial class FeatureId
         {
             public const string AuraShield = "技能.被动.光环护盾";
             public const string OrbitSkill = "技能.被动.环绕技能";
+            public const string CircleDamage = "技能.被动.圆环伤害";
+
         }
 
         // ============ 投射物技能 ============

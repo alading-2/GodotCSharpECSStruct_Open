@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_script")
 Name = "圆环伤害"
-FeatureGroupId = "技能.主动"
+FeatureGroupId = "技能.被动"
 Description = "周身燃起烈焰光环，每秒对周围敌人造成魔法伤害"
 AbilityIcon = ExtResource("1_elfag")
 AbilityType = 1

@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// 属性测试的单行词条容器。
@@ -45,47 +46,26 @@ public partial class AttributeEditorRow : VBoxContainer
 
     private Label GetTitleLabel()
     {
-        _titleLabel ??= ResolveRequiredNode<Label>("%TitleLabel", "Header/TitleLabel", nameof(_titleLabel));
+        _titleLabel ??= this.ResolveRequiredNode<Label>("%TitleLabel", "Header/TitleLabel", nameof(AttributeEditorRow));
         return _titleLabel;
     }
 
     private Label GetKeyLabel()
     {
-        _keyLabel ??= ResolveRequiredNode<Label>("%KeyLabel", "Header/KeyLabel", nameof(_keyLabel));
+        _keyLabel ??= this.ResolveRequiredNode<Label>("%KeyLabel", "Header/KeyLabel", nameof(AttributeEditorRow));
         return _keyLabel;
     }
 
     private VBoxContainer GetEditorHost()
     {
-        _editorHost ??= ResolveRequiredNode<VBoxContainer>("%EditorHost", "EditorHost", nameof(_editorHost));
+        _editorHost ??= this.ResolveRequiredNode<VBoxContainer>("%EditorHost", "EditorHost", nameof(AttributeEditorRow));
         return _editorHost;
     }
 
     private VBoxContainer GetModifierHost()
     {
-        _modifierHost ??= ResolveRequiredNode<VBoxContainer>("%ModifierHost", "ModifierHost", nameof(_modifierHost));
+        _modifierHost ??= this.ResolveRequiredNode<VBoxContainer>("%ModifierHost", "ModifierHost", nameof(AttributeEditorRow));
         return _modifierHost;
-    }
-
-    /// <summary>
-    /// 优先按 unique-name 查找节点，失败时回退到普通路径查找。
-    /// </summary>
-    private T ResolveRequiredNode<T>(string uniquePath, string fallbackPath, string cacheName) where T : Node
-    {
-        var node = GetNodeOrNull<T>(uniquePath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        node = GetNodeOrNull<T>(fallbackPath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        _log.Error($"[属性行] 节点缺失: row={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-        throw new InvalidOperationException($"AttributeEditorRow 节点缺失: row={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 
     /// <summary>

@@ -7,7 +7,7 @@ using Godot;
 /// - 接收 TryTrigger 请求（统一施法入口）
 /// - 激活技能（就绪检查 → 消耗 → 冷却 → 执行）
 /// - 目标选择（5 层目标系统）
-/// - 通过 FeatureSystem / IFeatureHandler 执行具体技能逻辑并回传 AbilityExecutedResult
+/// - 通过 FeatureSystem / IFeatureHandler.OnExecute 执行具体技能逻辑并回传 AbilityExecutedResult
 /// 
 /// 注意：技能的增删查由 EntityManager.AddAbility/RemoveAbility/GetAbilities 负责
 /// </summary>
@@ -255,7 +255,7 @@ public static class AbilitySystem
     // ==================== 效果执行 ====================
 
     /// <summary>
-    /// 发送技能执行完成事件 - 结果由 IFeatureHandler.OnActivated 写入 FeatureContext.ExtraData
+    /// 发送技能执行完成事件 - 结果由 IFeatureHandler.OnExecute 写入 FeatureContext.ExecuteResult
     /// </summary>
     private static void EmitAbilityExecutedEvent(CastContext context, FeatureContext featureCtx)
     {
@@ -266,8 +266,7 @@ public static class AbilitySystem
         var handlerId = ability.Data.Get<string>(DataKey.FeatureHandlerId);
         AbilityExecutedResult result;
 
-        if (featureCtx.ExtraData.TryGetValue(nameof(AbilityExecutedResult), out var rawResult)
-            && rawResult is AbilityExecutedResult executedResult)
+        if (featureCtx.ExecuteResult is AbilityExecutedResult executedResult)
         {
             result = executedResult;
         }

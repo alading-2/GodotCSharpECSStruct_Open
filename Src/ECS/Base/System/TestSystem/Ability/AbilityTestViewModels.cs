@@ -52,13 +52,3 @@ internal readonly record struct AbilityGroupPathGroup<TItem>(
     string GroupPath,
     IReadOnlyList<TItem> Items
 );
-
-/// <summary>
-/// 技能测试模块操作结果。
-/// </summary>
-/// <param name="Success">操作是否成功。</param>
-/// <param name="Message">返回给 UI 的提示文本。</param>
-internal readonly record struct AbilityActionResult(
-    bool Success,
-    string Message
-);

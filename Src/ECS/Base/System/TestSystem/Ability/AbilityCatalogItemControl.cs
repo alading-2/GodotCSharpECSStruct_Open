@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// 技能库条目控件。
@@ -96,43 +97,25 @@ public partial class AbilityCatalogItemControl : PanelContainer
 
     private Label GetTitleLabel()
     {
-        _titleLabel ??= ResolveRequiredNode<Label>("%TitleLabel", "Margin/Layout/TopRow/TitleLabel", nameof(_titleLabel));
+        _titleLabel ??= this.ResolveRequiredNode<Label>("%TitleLabel", "Margin/Layout/TopRow/TitleLabel", nameof(AbilityCatalogItemControl));
         return _titleLabel;
     }
 
     private Label GetMetaLabel()
     {
-        _metaLabel ??= ResolveRequiredNode<Label>("%MetaLabel", "Margin/Layout/MetaLabel", nameof(_metaLabel));
+        _metaLabel ??= this.ResolveRequiredNode<Label>("%MetaLabel", "Margin/Layout/MetaLabel", nameof(AbilityCatalogItemControl));
         return _metaLabel;
     }
 
     private Label GetDescriptionLabel()
     {
-        _descriptionLabel ??= ResolveRequiredNode<Label>("%DescriptionLabel", "Margin/Layout/DescriptionLabel", nameof(_descriptionLabel));
+        _descriptionLabel ??= this.ResolveRequiredNode<Label>("%DescriptionLabel", "Margin/Layout/DescriptionLabel", nameof(AbilityCatalogItemControl));
         return _descriptionLabel;
     }
 
     private Button GetActionButton()
     {
-        _actionButton ??= ResolveRequiredNode<Button>("%ActionButton", "Margin/Layout/TopRow/ActionButton", nameof(_actionButton));
+        _actionButton ??= this.ResolveRequiredNode<Button>("%ActionButton", "Margin/Layout/TopRow/ActionButton", nameof(AbilityCatalogItemControl));
         return _actionButton;
-    }
-
-    private T ResolveRequiredNode<T>(string uniquePath, string fallbackPath, string cacheName) where T : Node
-    {
-        var node = GetNodeOrNull<T>(uniquePath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        node = GetNodeOrNull<T>(fallbackPath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        _log.Error($"[技能测试UI] 技能库条目节点缺失: node={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-        throw new InvalidOperationException($"AbilityCatalogItemControl 节点缺失: node={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 }

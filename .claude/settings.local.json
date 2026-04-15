@@ -39,7 +39,10 @@
       "Bash(cmd.exe:*)",
       "Bash(dotnet /home/slime/.nuget/packages/unvell.reogrid.dll/3.0.0/lib/netcoreapp3.0/unvell.ReoGrid.dll)",
       "Read(//home/**)",
-      "Bash(grep func try_edit_value:*)"
+      "Bash(grep func try_edit_value:*)",
+      "mcp__github__search_code",
+      "mcp__github__search_repositories",
+      "mcp__github__get_file_contents"
     ]
   }
 }

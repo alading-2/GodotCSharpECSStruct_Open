@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// 技能测试分组区块。
@@ -33,31 +34,13 @@ public partial class AbilityGroupSection : VBoxContainer
 
     private Label GetTitleLabel()
     {
-        _titleLabel ??= ResolveRequiredNode<Label>("%TitleLabel", "TitleLabel", nameof(_titleLabel));
+        _titleLabel ??= this.ResolveRequiredNode<Label>("%TitleLabel", "TitleLabel", nameof(AbilityGroupSection));
         return _titleLabel;
     }
 
     private VBoxContainer GetItemsContainer()
     {
-        _itemsContainer ??= ResolveRequiredNode<VBoxContainer>("%ItemsContainer", "ItemsContainer", nameof(_itemsContainer));
+        _itemsContainer ??= this.ResolveRequiredNode<VBoxContainer>("%ItemsContainer", "ItemsContainer", nameof(AbilityGroupSection));
         return _itemsContainer;
-    }
-
-    private T ResolveRequiredNode<T>(string uniquePath, string fallbackPath, string cacheName) where T : Node
-    {
-        var node = GetNodeOrNull<T>(uniquePath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        node = GetNodeOrNull<T>(fallbackPath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        _log.Error($"[技能测试UI] 技能分组节点缺失: section={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-        throw new InvalidOperationException($"AbilityGroupSection 节点缺失: section={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 }

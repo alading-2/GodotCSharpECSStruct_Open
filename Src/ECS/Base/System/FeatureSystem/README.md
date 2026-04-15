@@ -26,9 +26,20 @@
   - 调用 `IFeatureHandler.OnGranted`
   - 发出 `Feature.Granted`
 
+- `EnableFeature(feature, owner)`
+  - 切换 `FeatureEnabled = true`
+  - 调用 `IFeatureHandler.OnEnabled`
+  - 发出 `Feature.Enabled`
+
+- `DisableFeature(feature, owner)`
+  - 切换 `FeatureEnabled = false`
+  - 调用 `IFeatureHandler.OnDisabled`
+  - 发出 `Feature.Disabled`
+
 - `OnFeatureActivated(featureCtx)`
   - 标记 `FeatureIsActive=true`
-  - 调用 `IFeatureHandler.OnActivated`
+  - 调用 `IFeatureHandler.OnActivated`（通知阶段）
+  - 调用 `IFeatureHandler.OnExecute` 并将返回值写入 `featureCtx.ExecuteResult`（执行阶段）
   - 递增 `FeatureActivationCount`
   - 发出 `Feature.Activated`
 
@@ -41,10 +52,6 @@
   - 调用 `IFeatureHandler.OnRemoved`
   - 按 `source=feature` 回滚全部 Modifier
   - 发出 `Feature.Removed`
-
-- `EnableFeature / DisableFeature`
-  - 切换 `FeatureEnabled`
-  - 发出对应生命周期事件
 
 ---
 
@@ -99,12 +106,14 @@
 - `Feature`
 - `Instance`
 - `ActivationData`
+- `ExecuteResult`
 - `SourceEventData`
 - `ExtraData`
 
 其中：
 
-- `ActivationData` 用来承载子系统专有上下文
+- `ActivationData` 用来承载子系统专有上下文（object? 输入）
+- `ExecuteResult` 用来承载 OnExecute 的返回结果（object? 输出，由 FeatureSystem 自动写入）
 - `ExtraData` 用来承载执行阶段产物或跨步骤临时数据
 
 ### 4. IFeatureHandler
@@ -117,7 +126,10 @@
 
 - `OnGranted`
 - `OnRemoved`
-- `OnActivated`
+- `OnEnabled`（可选，默认空实现）
+- `OnDisabled`（可选，默认空实现）
+- `OnActivated`（通知阶段）
+- `OnExecute`（执行阶段，返回 `object?`，默认 null）
 - `OnEnded`
 
 ### 5. FeatureHandlerRegistry
@@ -171,7 +183,7 @@
 1. 创建 `FeatureDefinition`
 2. 配置 `FeatureHandlerId`
 3. 实现对应 `IFeatureHandler`
-4. 在 `OnGranted/OnActivated/OnRemoved/OnEnded` 中写逻辑
+4. 在 `OnGranted/OnEnabled/OnDisabled/OnActivated/OnExecute/OnRemoved/OnEnded` 中写逻辑
 
 ---
 
@@ -187,9 +199,9 @@ TryTrigger
 → AbilitySystem 构建 FeatureContext
 → FeatureContext.ActivationData = CastContext
 → FeatureSystem.OnFeatureActivated(featureCtx)
-→ FeatureHandlerRegistry.Get(完整 FeatureHandlerId)?.OnActivated(featureCtx)
-→ handler 把 AbilityExecutedResult 写入 featureCtx.ExtraData
-→ AbilitySystem 读取结果并发出 Ability.Executed
+→ handler.OnActivated(featureCtx)                      // 通知阶段
+→ ctx.ExecuteResult = handler.OnExecute(featureCtx)    // 执行阶段，返回结果
+→ AbilitySystem 读取 featureCtx.ExecuteResult as AbilityExecutedResult
 → FeatureSystem.OnFeatureEnded(featureCtx)
 ```
 
@@ -248,8 +260,8 @@ TryTrigger
 它的职责是：
 
 - 把 `FeatureContext.ActivationData` 安全转换成 `CastContext`
-- 调用 `ExecuteAbility(CastContext)`
-- 把 `AbilityExecutedResult` 写回 `FeatureContext.ExtraData`
+- 在 `OnExecute` 中调用 `ExecuteAbility(CastContext)`
+- 把 `AbilityExecutedResult` 作为 OnExecute 返回值，由 FeatureSystem 写入 `FeatureContext.ExecuteResult`
 - 兜底处理异常，避免单个技能逻辑直接打断主流水线
 
 所以 Ability 子域里推荐：

@@ -4,18 +4,20 @@ using System.Collections.Generic;
 /// <summary>
 /// Feature 系统 - 管理 Feature 完整生命周期
 ///
-/// 生命周期：Granted → Enabled → Activated/Ended（可重复）→ Disabled → Removed
+/// 生命周期：Granted → [Enabled ⇄ Disabled] → [Activated → Execute → Ended]* → Removed
 ///
 /// 主要职责：
 /// - Granted：应用数据驱动 Modifier + 调用 IFeatureHandler.OnGranted
 /// - Removed：调用 IFeatureHandler.OnRemoved + 按来源批量回滚 Modifier
-/// - Activated：调用 IFeatureHandler.OnActivated + 发出 Feature.Activated 事件
+/// - Enabled：调用 IFeatureHandler.OnEnabled + 发出 Feature.Enabled 事件
+/// - Disabled：调用 IFeatureHandler.OnDisabled + 发出 Feature.Disabled 事件
+/// - Activated：调用 IFeatureHandler.OnActivated（通知）+ OnExecute（执行）+ 发出事件
 /// - Ended：调用 IFeatureHandler.OnEnded + 发出 Feature.Ended 事件
-/// - Enable/Disable：切换启用状态 + 发出对应事件
 /// - ExecuteActions：批量执行 IFeatureAction 列表
 ///
 /// 设计原则：只依赖 IEntity，不引入任何子系统专有类型（无 AbilityEntity / CastContext）。
-/// 调用方（如 AbilitySystem）在调用前自行构建 FeatureContext，将专有数据放入 ActivationData。
+/// 调用方（如 AbilitySystem）在调用前自行构建 FeatureContext，将专有数据放入 ActivationData，
+/// 从 ExecuteResult 读取执行结果。
 ///
 /// 挂载点（调用方）：
 /// - EntityManager.AddAbility → OnFeatureGranted
@@ -89,6 +91,7 @@ public static class FeatureSystem
     /// <summary>
     /// Feature 一次激活开始时调用。
     /// 调用方负责构建 FeatureContext（Owner / Feature / ActivationData）。
+    /// 调用顺序：OnActivated（通知）→ OnExecute（执行+结果）→ 累计次数 → 发出事件
     /// </summary>
     public static void OnFeatureActivated(FeatureContext ctx)
     {
@@ -101,13 +104,22 @@ public static class FeatureSystem
 
         // 调用代码处理器
         var featureId = GetFeatureId(ctx.Feature);
-        FeatureHandlerRegistry.Get(featureId)?.OnActivated(ctx);
+        var handler = FeatureHandlerRegistry.Get(featureId);
 
-        // 累计激活次数
+        // 1. 通知阶段
+        handler?.OnActivated(ctx);
+
+        // 2. 执行阶段（结果写入 ctx.ExecuteResult）
+        if (handler != null)
+        {
+            ctx.ExecuteResult = handler.OnExecute(ctx);
+        }
+
+        // 3. 累计激活次数
         int current = ctx.Feature.Data.Get<int>(DataKey.FeatureActivationCount);
         ctx.Feature.Data.Set(DataKey.FeatureActivationCount, current + 1);
 
-        // 发出 Activated 事件（Feature 局部总线）
+        // 4. 发出 Activated 事件（Feature 局部总线）
         ctx.Feature.Events.Emit(
             GameEventType.Feature.Activated,
             new GameEventType.Feature.ActivatedEventData(ctx)
@@ -146,6 +158,11 @@ public static class FeatureSystem
 
         feature.Data.Set(DataKey.FeatureEnabled, true);
 
+        // 调用代码处理器
+        var featureId = GetFeatureId(feature);
+        var ctx = new FeatureContext { Owner = owner, Feature = feature };
+        FeatureHandlerRegistry.Get(featureId)?.OnEnabled(ctx);
+
         owner.Events.Emit(
             GameEventType.Feature.Enabled,
             new GameEventType.Feature.EnabledEventData(feature, owner)
@@ -160,6 +177,11 @@ public static class FeatureSystem
         if (feature == null || owner == null) return;
 
         feature.Data.Set(DataKey.FeatureEnabled, false);
+
+        // 调用代码处理器
+        var featureId = GetFeatureId(feature);
+        var ctx = new FeatureContext { Owner = owner, Feature = feature };
+        FeatureHandlerRegistry.Get(featureId)?.OnDisabled(ctx);
 
         owner.Events.Emit(
             GameEventType.Feature.Disabled,

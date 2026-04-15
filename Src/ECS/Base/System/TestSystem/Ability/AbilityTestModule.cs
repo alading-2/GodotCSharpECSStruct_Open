@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// 技能测试模块。
@@ -156,12 +157,12 @@ public partial class AbilityTestModule : TestModuleBase
         {
             try
             {
-                var section = InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
+                var section = TestSceneHelper.InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
                 section.SetTitle($"分类：{group.GroupPath} ({group.Items.Count})"); // 绑定技能库分类标题
 
                 foreach (var item in group.Items)
                 {
-                    var itemControl = InstantiateScene<AbilityCatalogItemControl>(_catalogItemScene, nameof(AbilityCatalogItemControl));
+                    var itemControl = TestSceneHelper.InstantiateScene<AbilityCatalogItemControl>(_catalogItemScene, nameof(AbilityCatalogItemControl));
                     itemControl.Configure(item); // 绑定技能库条目
                     itemControl.AddRequested += OnCatalogAddRequested;
                     section.AddItem(itemControl);
@@ -200,12 +201,12 @@ public partial class AbilityTestModule : TestModuleBase
 
             try
             {
-                var section = InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
+                var section = TestSceneHelper.InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
                 section.SetTitle($"分类：{group.GroupPath} ({group.Items.Count})"); // 绑定当前技能分类标题
 
                 foreach (var item in group.Items)
                 {
-                    var itemControl = InstantiateScene<AbilityOwnedItemControl>(_ownedItemScene, nameof(AbilityOwnedItemControl));
+                    var itemControl = TestSceneHelper.InstantiateScene<AbilityOwnedItemControl>(_ownedItemScene, nameof(AbilityOwnedItemControl));
                     itemControl.Configure(item); // 绑定已拥有技能条目
                     itemControl.ToggleEnabledRequested += OnOwnedToggleRequested;
                     itemControl.RemoveRequested += OnOwnedRemoveRequested;
@@ -332,25 +333,6 @@ public partial class AbilityTestModule : TestModuleBase
         {
             child.QueueFree();
         }
-    }
-
-    /// <summary>
-    /// 实例化一个技能测试 UI 场景。
-    /// </summary>
-    private static T InstantiateScene<T>(PackedScene? scene, string sceneName) where T : Node
-    {
-        if (scene == null)
-        {
-            throw new InvalidOperationException($"技能测试场景未配置: {sceneName}");
-        }
-
-        var instance = scene.Instantiate<T>();
-        if (instance == null)
-        {
-            throw new InvalidOperationException($"技能测试场景实例化失败: {sceneName}");
-        }
-
-        return instance;
     }
 
     // ───────────────── 事件订阅 ─────────────────

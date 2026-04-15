@@ -1,7 +1,7 @@
 using Godot;
 using Slime.Config.Features;
 using Slime.Config.Abilities;
-using System.Collections.Generic;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// Feature 调试服务。
@@ -19,25 +19,12 @@ internal sealed class FeatureDebugService
     /// <summary>测试系统临时 Modifier Feature 的命名前缀，用于构造唯一 Feature 名称。</summary>
     private const string TestModifierFeaturePrefix = "TestSystem.Modifier";
 
-    /// <summary>临时 Modifier 数值缓存（ownerId:dataKey -> value），减少重复查询运行时 Feature 数据的开销。</summary>
-    private readonly Dictionary<string, float> _temporaryModifierValues = new();
-
     /// <summary>
-    /// Feature 调试操作结果。
+    /// 获取某个属性当前挂载的临时 Modifier 数值（直接从 Feature 实体读取）。
     /// </summary>
-    /// <param name="Success">是否执行成功。</param>
-    /// <param name="Message">返回给 UI 的提示文本。</param>
-    internal readonly record struct ActionResult(
-        bool Success,
-        string Message
-    );
-
-    /// <summary>
-    /// 获取某个属性当前挂载的临时 Modifier 数值。
-    /// </summary>
-    /// <param name="owner">要查询的实体。</param>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <returns>当前临时加成值，不存在时返回 0。</returns>
+    /// <param name="owner">当前实体所有者；为空时直接返回 0。</param>
+    /// <param name="dataKey">属性键；用于定位对应的临时 Modifier。</param>
+    /// <returns>当前属性对应的临时 Modifier 数值；未找到时返回 0。</returns>
     public float GetTemporaryModifierValue(IEntity? owner, string dataKey)
     {
         if (owner == null || string.IsNullOrWhiteSpace(dataKey))
@@ -45,33 +32,20 @@ internal sealed class FeatureDebugService
             return 0f;
         }
 
-        var cacheKey = BuildModifierCacheKey(owner, dataKey);
-        if (_temporaryModifierValues.TryGetValue(cacheKey, out var cachedValue))
-        {
-            return cachedValue;
-        }
-
         var feature = FindTemporaryModifierFeature(owner, dataKey);
-        if (feature == null)
-        {
-            return 0f;
-        }
-
-        var value = TryReadModifierValue(feature, dataKey);
-        _temporaryModifierValues[cacheKey] = value;
-        return value;
+        return feature == null ? 0f : TryReadModifierValue(feature, dataKey);
     }
 
     /// <summary>
     /// 通过运行时 FeatureDefinition 为指定属性施加一个临时 Modifier。
     /// </summary>
-    /// <param name="owner">要应用加成的实体。</param>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <param name="displayName">属性展示名称，用于 UI 提示文案。</param>
-    /// <param name="isPercentage">是否按百分比语义展示（仅影响提示文案）。</param>
-    /// <param name="value">要施加的加成值。</param>
-    /// <returns>应用结果，包含成功标记与提示文本。</returns>
-    public ActionResult ApplyTemporaryModifier(
+    /// <param name="owner">当前实体所有者；为空时返回失败结果。</param>
+    /// <param name="dataKey">属性键；用于构造临时 Feature 名称并写入 Modifier。</param>
+    /// <param name="displayName">属性显示名；用于日志和提示文本。</param>
+    /// <param name="isPercentage">是否为百分比显示；仅影响返回提示文本。</param>
+    /// <param name="value">临时加成数值；为 0 时视为清除。</param>
+    /// <returns>执行结果，包含成功状态与提示信息。</returns>
+    public TestActionResult ApplyTemporaryModifier(
         IEntity? owner,
         string dataKey,
         string displayName,
@@ -107,18 +81,17 @@ internal sealed class FeatureDebugService
             return result;
         }
 
-        _temporaryModifierValues[BuildModifierCacheKey(owner, dataKey)] = value;
         return SuccessResult($"已应用临时加成: {displayName} {(isPercentage ? value + "%" : value.ToString())}");
     }
 
     /// <summary>
     /// 清除某个属性当前挂载的临时 Modifier。
     /// </summary>
-    /// <param name="owner">要清除加成的实体。</param>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <param name="displayName">属性展示名称，用于 UI 提示文案。</param>
-    /// <returns>清除结果，包含成功标记与提示文本。</returns>
-    public ActionResult ClearTemporaryModifier(IEntity? owner, string dataKey, string displayName)
+    /// <param name="owner">当前实体所有者；为空时返回失败结果。</param>
+    /// <param name="dataKey">属性键；用于定位要清除的临时 Modifier。</param>
+    /// <param name="displayName">属性显示名；用于日志和提示文本。</param>
+    /// <returns>执行结果，包含成功状态与提示信息。</returns>
+    public TestActionResult ClearTemporaryModifier(IEntity? owner, string dataKey, string displayName)
     {
         if (owner == null)
         {
@@ -136,18 +109,17 @@ internal sealed class FeatureDebugService
             EntityManager.RemoveAbility(owner, existingFeature);
         }
 
-        _temporaryModifierValues.Remove(BuildModifierCacheKey(owner, dataKey));
         return SuccessResult($"已清除临时加成: {displayName}");
     }
 
     /// <summary>
     /// 通过正式 Ability 授予链路，为当前实体添加一个技能 Feature。
     /// </summary>
-    /// <param name="owner">技能拥有者实体。</param>
-    /// <param name="config">技能配置资源。</param>
-    /// <param name="resourceKey">技能资源键，用于日志定位来源。</param>
-    /// <returns>授予结果，包含成功标记与提示文本。</returns>
-    public ActionResult GrantAbility(IEntity? owner, AbilityConfig? config, string resourceKey)
+    /// <param name="owner">当前实体所有者；为空时返回失败结果。</param>
+    /// <param name="config">技能配置资源；为空时返回失败结果。</param>
+    /// <param name="resourceKey">资源键；用于输出错误提示和日志定位。</param>
+    /// <returns>执行结果，包含成功状态与提示信息。</returns>
+    public TestActionResult GrantAbility(IEntity? owner, AbilityConfig? config, string resourceKey)
     {
         if (owner == null)
         {
@@ -176,11 +148,11 @@ internal sealed class FeatureDebugService
     /// <summary>
     /// 通过正式 Feature 授予链路，为当前实体添加一个通用 Feature。
     /// </summary>
-    /// <param name="owner">Feature 拥有者实体。</param>
-    /// <param name="definition">要授予的 Feature 定义。</param>
-    /// <param name="featureSource">Feature 来源标识（用于日志和错误提示）。</param>
-    /// <returns>授予结果，包含成功标记与提示文本。</returns>
-    public ActionResult GrantFeature(IEntity? owner, FeatureDefinition? definition, string featureSource)
+    /// <param name="owner">当前实体所有者；为空时返回失败结果。</param>
+    /// <param name="definition">Feature 定义资源；为空时返回失败结果。</param>
+    /// <param name="featureSource">Feature 来源标识；用于输出错误提示和日志定位。</param>
+    /// <returns>执行结果，包含成功状态与提示信息。</returns>
+    public TestActionResult GrantFeature(IEntity? owner, FeatureDefinition? definition, string featureSource)
     {
         if (owner == null)
         {
@@ -209,10 +181,10 @@ internal sealed class FeatureDebugService
     /// <summary>
     /// 通过正式 Ability 移除链路，从当前实体移除一个技能 Feature。
     /// </summary>
-    /// <param name="owner">技能拥有者实体。</param>
-    /// <param name="ability">要移除的技能实例。</param>
-    /// <returns>移除结果，包含成功标记与提示文本。</returns>
-    public ActionResult RemoveAbility(IEntity? owner, AbilityEntity? ability)
+    /// <param name="owner">当前实体所有者；为空时返回失败结果。</param>
+    /// <param name="ability">要移除的技能实例；为空时返回失败结果。</param>
+    /// <returns>执行结果，包含成功状态与提示信息。</returns>
+    public TestActionResult RemoveAbility(IEntity? owner, AbilityEntity? ability)
     {
         if (owner == null)
         {
@@ -240,11 +212,11 @@ internal sealed class FeatureDebugService
     /// <summary>
     /// 切换某个 Feature 的启用状态。
     /// </summary>
-    /// <param name="owner">Feature 的宿主实体。</param>
-    /// <param name="feature">要切换状态的 Feature 实例。</param>
-    /// <param name="isEnabled">目标启用状态。</param>
-    /// <returns>切换结果，包含成功标记与提示文本。</returns>
-    public ActionResult SetFeatureEnabled(IEntity? owner, IEntity? feature, bool isEnabled)
+    /// <param name="owner">当前实体所有者；为空时返回失败结果。</param>
+    /// <param name="feature">要切换状态的 Feature 实例；为空时返回失败结果。</param>
+    /// <param name="isEnabled">是否启用；<c>true</c> 表示启用，<c>false</c> 表示禁用。</param>
+    /// <returns>执行结果，包含成功状态与提示信息。</returns>
+    public TestActionResult SetFeatureEnabled(IEntity? owner, IEntity? feature, bool isEnabled)
     {
         if (owner == null)
         {
@@ -272,33 +244,27 @@ internal sealed class FeatureDebugService
     }
 
     /// <summary>
-    /// 创建成功结果。
+    /// 构造成功结果。
     /// </summary>
-    /// <param name="message">返回给 UI 的提示文本。</param>
-    /// <returns>成功状态结果。</returns>
-    private static ActionResult SuccessResult(string message)
-    {
-        return new ActionResult(true, message);
-    }
+    /// <param name="message">结果提示文本。</param>
+    /// <returns>成功的测试结果。</returns>
+    private static TestActionResult SuccessResult(string message) => new(true, message);
 
     /// <summary>
-    /// 创建失败结果。
+    /// 构造失败结果。
     /// </summary>
-    /// <param name="message">返回给 UI 的提示文本。</param>
-    /// <returns>失败状态结果。</returns>
-    private static ActionResult Fail(string message)
-    {
-        return new ActionResult(false, message);
-    }
+    /// <param name="message">结果提示文本。</param>
+    /// <returns>失败的测试结果。</returns>
+    private static TestActionResult Fail(string message) => new(false, message);
 
     /// <summary>
     /// 构建临时 Modifier 对应的运行时 FeatureDefinition。
     /// </summary>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <param name="displayName">属性展示名。</param>
-    /// <param name="value">加成值。</param>
-    /// <param name="featureName">运行时 Feature 名称。</param>
-    /// <returns>可直接授予的 FeatureDefinition 实例。</returns>
+    /// <param name="dataKey">属性键；用于写入 Modifier 的目标字段。</param>
+    /// <param name="displayName">属性显示名；用于描述文本。</param>
+    /// <param name="value">Modifier 数值；写入到定义中。</param>
+    /// <param name="featureName">运行时 Feature 名称；用于唯一标识。</param>
+    /// <returns>构建好的运行时 FeatureDefinition。</returns>
     private static FeatureDefinition BuildTemporaryModifierDefinition(
         string dataKey,
         string displayName,
@@ -327,21 +293,19 @@ internal sealed class FeatureDebugService
     }
 
     /// <summary>
-    /// 生成临时 Modifier Feature 的唯一名称。
+    /// 构建临时 Modifier Feature 的唯一名称。
     /// </summary>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <returns>按 TestSystem 规范构造的 Feature 名称。</returns>
+    /// <param name="dataKey">属性键；用于拼接唯一名称。</param>
+    /// <returns>临时 Modifier Feature 名称。</returns>
     private static string BuildModifierFeatureName(string dataKey)
-    {
-        return $"{TestModifierFeaturePrefix}.{dataKey}";
-    }
+        => $"{TestModifierFeaturePrefix}.{dataKey}";
 
     /// <summary>
-    /// 查找某个属性当前挂载的临时 Modifier Feature。
+    /// 查找当前实体上已挂载的临时 Modifier Feature。
     /// </summary>
-    /// <param name="owner">Feature 所属实体。</param>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <returns>找到则返回对应 Feature，否则返回 null。</returns>
+    /// <param name="owner">当前实体所有者。</param>
+    /// <param name="dataKey">属性键；用于定位对应的临时 Feature。</param>
+    /// <returns>匹配到的 AbilityEntity；未找到时返回 <c>null</c>。</returns>
     private static AbilityEntity? FindTemporaryModifierFeature(IEntity owner, string dataKey)
     {
         var featureName = BuildModifierFeatureName(dataKey);
@@ -349,11 +313,11 @@ internal sealed class FeatureDebugService
     }
 
     /// <summary>
-    /// 从临时 Modifier Feature 中读取当前修改值。
+    /// 从 Feature 实体中读取指定属性的 Modifier 数值。
     /// </summary>
-    /// <param name="feature">临时 Modifier 对应的 Feature 实例。</param>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <returns>匹配到的 Modifier 值，未命中则返回 0。</returns>
+    /// <param name="feature">Feature 实体；用于读取其 Modifier 容器。</param>
+    /// <param name="dataKey">属性键；用于匹配对应的 Modifier。</param>
+    /// <returns>匹配到的 Modifier 数值；未找到时返回 0。</returns>
     private static float TryReadModifierValue(IEntity feature, string dataKey)
     {
         var raw = feature.Data.Get<object>(DataKey.FeatureModifiers);
@@ -371,17 +335,5 @@ internal sealed class FeatureDebugService
         }
 
         return 0f;
-    }
-
-    /// <summary>
-    /// 构建临时 Modifier 缓存键。
-    /// </summary>
-    /// <param name="owner">Feature 所属实体。</param>
-    /// <param name="dataKey">目标属性键。</param>
-    /// <returns>由 ownerId 与 dataKey 组成的稳定缓存键。</returns>
-    private static string BuildModifierCacheKey(IEntity owner, string dataKey)
-    {
-        var ownerId = owner.Data.Get<string>(DataKey.Id.Key);
-        return $"{ownerId}:{dataKey}";
     }
 }

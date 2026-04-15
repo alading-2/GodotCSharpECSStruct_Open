@@ -19,7 +19,7 @@ internal class CircleDamageExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new CircleDamageExecutor());
     }
 
-    public override string FeatureId => global::FeatureId.Ability.Active.CircleDamage;
+    public override string FeatureId => global::FeatureId.Ability.Passive.CircleDamage;
     public override string FeatureGroup => global::FeatureId.Ability.Groups.Passive;
 
     protected override AbilityExecutedResult ExecuteAbility(CastContext context)

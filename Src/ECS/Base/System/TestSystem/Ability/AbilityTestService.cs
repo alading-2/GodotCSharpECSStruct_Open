@@ -2,6 +2,7 @@ using Godot;
 using Slime.Config.Abilities;
 using System;
 using System.Collections.Generic;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// 技能测试模块的数据与操作服务。
@@ -60,7 +61,7 @@ internal sealed class AbilityTestService
     /// <param name="owner">技能拥有者实体，为空时返回失败结果。</param>
     /// <param name="resourceKey">技能资源键（ResourceKey）。</param>
     /// <returns>添加操作结果，包含成功标记与提示文本。</returns>
-    public AbilityActionResult AddAbility(IEntity? owner, string resourceKey)
+    public TestActionResult AddAbility(IEntity? owner, string resourceKey)
     {
         if (string.IsNullOrWhiteSpace(resourceKey))
         {
@@ -72,8 +73,7 @@ internal sealed class AbilityTestService
             return Fail($"未找到技能配置: {resourceKey}");
         }
 
-        var result = _featureDebugService.GrantAbility(owner, config, resourceKey);
-        return new AbilityActionResult(result.Success, result.Message);
+        return _featureDebugService.GrantAbility(owner, config, resourceKey);
     }
 
     /// <summary>
@@ -82,7 +82,7 @@ internal sealed class AbilityTestService
     /// <param name="owner">技能拥有者实体，为空时返回失败结果。</param>
     /// <param name="abilityId">运行时技能实例 Id。</param>
     /// <returns>移除操作结果，包含成功标记与提示文本。</returns>
-    public AbilityActionResult RemoveAbility(IEntity? owner, string abilityId)
+    public TestActionResult RemoveAbility(IEntity? owner, string abilityId)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
         {
@@ -90,8 +90,7 @@ internal sealed class AbilityTestService
         }
 
         var ability = FindOwnedAbility(owner, abilityId);
-        var result = _featureDebugService.RemoveAbility(owner, ability);
-        return new AbilityActionResult(result.Success, result.Message);
+        return _featureDebugService.RemoveAbility(owner, ability);
     }
 
     /// <summary>
@@ -101,7 +100,7 @@ internal sealed class AbilityTestService
     /// <param name="abilityId">运行时技能实例 Id。</param>
     /// <param name="isEnabled">目标启用状态，true 为启用，false 为禁用。</param>
     /// <returns>启停操作结果，包含成功标记与提示文本。</returns>
-    public AbilityActionResult SetAbilityEnabled(IEntity? owner, string abilityId, bool isEnabled)
+    public TestActionResult SetAbilityEnabled(IEntity? owner, string abilityId, bool isEnabled)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
         {
@@ -109,8 +108,7 @@ internal sealed class AbilityTestService
         }
 
         var ability = FindOwnedAbility(owner, abilityId);
-        var result = _featureDebugService.SetFeatureEnabled(owner, ability, isEnabled);
-        return new AbilityActionResult(result.Success, result.Message);
+        return _featureDebugService.SetFeatureEnabled(owner, ability, isEnabled);
     }
 
     /// <summary>
@@ -487,12 +485,12 @@ internal sealed class AbilityTestService
     /// </summary>
     /// <param name="message">返回给 UI 的提示文本。</param>
     /// <returns>成功状态的操作结果。</returns>
-    private static AbilityActionResult Success(string message) => new(true, message);
+    private static TestActionResult Success(string message) => new(true, message);
 
     /// <summary>
     /// 创建失败结果。
     /// </summary>
     /// <param name="message">返回给 UI 的提示文本。</param>
     /// <returns>失败状态的操作结果。</returns>
-    private static AbilityActionResult Fail(string message) => new(false, message);
+    private static TestActionResult Fail(string message) => new(false, message);
 }

@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using ECS.Base.System.TestSystem.Core;
 
 /// <summary>
 /// 属性测试的临时 Modifier 编辑器。
@@ -63,43 +64,25 @@ public partial class AttributeModifierEditor : HBoxContainer
 
     private Label GetTitleLabel()
     {
-        _titleLabel ??= ResolveRequiredNode<Label>("%TitleLabel", "TitleLabel", nameof(_titleLabel));
+        _titleLabel ??= this.ResolveRequiredNode<Label>("%TitleLabel", "TitleLabel", nameof(AttributeModifierEditor));
         return _titleLabel;
     }
 
     private SpinBox GetValueSpinBox()
     {
-        _valueSpinBox ??= ResolveRequiredNode<SpinBox>("%ValueSpinBox", "ValueSpinBox", nameof(_valueSpinBox));
+        _valueSpinBox ??= this.ResolveRequiredNode<SpinBox>("%ValueSpinBox", "ValueSpinBox", nameof(AttributeModifierEditor));
         return _valueSpinBox;
     }
 
     private Button GetApplyButton()
     {
-        _applyButton ??= ResolveRequiredNode<Button>("%ApplyButton", "ApplyButton", nameof(_applyButton));
+        _applyButton ??= this.ResolveRequiredNode<Button>("%ApplyButton", "ApplyButton", nameof(AttributeModifierEditor));
         return _applyButton;
     }
 
     private Button GetClearButton()
     {
-        _clearButton ??= ResolveRequiredNode<Button>("%ClearButton", "ClearButton", nameof(_clearButton));
+        _clearButton ??= this.ResolveRequiredNode<Button>("%ClearButton", "ClearButton", nameof(AttributeModifierEditor));
         return _clearButton;
-    }
-
-    private T ResolveRequiredNode<T>(string uniquePath, string fallbackPath, string cacheName) where T : Node
-    {
-        var node = GetNodeOrNull<T>(uniquePath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        node = GetNodeOrNull<T>(fallbackPath);
-        if (node != null)
-        {
-            return node;
-        }
-
-        _log.Error($"[属性测试UI] 临时Modifier节点缺失: node={Name} cache={cacheName} unique={uniquePath} fallback={fallbackPath}");
-        throw new InvalidOperationException($"AttributeModifierEditor 节点缺失: node={Name}, cache={cacheName}, unique={uniquePath}, fallback={fallbackPath}");
     }
 }
