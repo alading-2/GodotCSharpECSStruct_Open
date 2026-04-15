@@ -15,8 +15,11 @@
       }
     },
     "res://Data/Data/Ability/": {
+      "FeatureGroupId": {
+        "visibility": 1.0
+      },
       "FeatureHandlerId": {
-        "visibility": 0.0
+        "visibility": 1.0
       },
       "resource_local_to_scene": {
         "visibility": 0.0
@@ -29,6 +32,12 @@
       }
     },
     "res://Data/Data/Ability/Ability/": {
+      "FeatureGroupId": {
+        "visibility": 1.0
+      },
+      "FeatureHandlerId": {
+        "visibility": 1.0
+      },
       "metadata/_custom_type_script": {
         "visibility": 0.0
       },
@@ -107,6 +116,12 @@
         "visibility": 1.0
       },
       "EntityType": {
+        "visibility": 1.0
+      },
+      "FeatureGroupId": {
+        "visibility": 1.0
+      },
+      "FeatureHandlerId": {
         "visibility": 1.0
       },
       "IsAbilityUsesCharges": {

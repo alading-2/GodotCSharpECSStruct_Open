@@ -12,6 +12,7 @@ public class AbilityConfigData
     {
         Name = "猛击",
         FeatureGroupId = "技能.主动",
+        FeatureHandlerId = "技能.主动.猛击",
         Description = "在角色周围随机位置猛击地面，对范围内敌人造成物理伤害",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -48,6 +49,7 @@ public class AbilityConfigData
     {
         Name = "环绕技能",
         FeatureGroupId = "技能.被动",
+        FeatureHandlerId = "技能.被动.环绕技能",
         Description = "生成多个投射物环绕玩家旋转，碰触敌人造成伤害（验证 Orbit 模式）",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -60,6 +62,7 @@ public class AbilityConfigData
     {
         Name = "正弦波射击",
         FeatureGroupId = "技能.投射物",
+        FeatureHandlerId = "技能.投射物.正弦波射击",
         Description = "发射正弦波形弹道向敌人射击（验证 SineWave 模式）",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -72,6 +75,7 @@ public class AbilityConfigData
     {
         Name = "抛物线射击",
         FeatureGroupId = "技能.投射物",
+        FeatureHandlerId = "技能.投射物.抛物线射击",
         Description = "发射沿抛物线飞行的弓形弹道（验证 Parabola 模式）",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -84,6 +88,7 @@ public class AbilityConfigData
     {
         Name = "回旋镖投掷",
         FeatureGroupId = "技能.投射物",
+        FeatureHandlerId = "技能.投射物.回旋镖投掷",
         Description = "投掷回旋镖，飞出后自动返回，来回命中敌人（验证 Boomerang 模式）",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -96,6 +101,7 @@ public class AbilityConfigData
     {
         Name = "圆弧射击",
         FeatureGroupId = "技能.投射物",
+        FeatureHandlerId = "技能.投射物.圆弧射击",
         Description = "发射沿圆弧轨迹飞行的投射物（验证 CircularArc 模式）",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -108,6 +114,7 @@ public class AbilityConfigData
     {
         Name = "贝塞尔射击",
         FeatureGroupId = "技能.投射物",
+        FeatureHandlerId = "技能.投射物.贝塞尔射击",
         Description = "发射沿二次贝塞尔曲线飞行的弓形弹（验证 BezierCurve 模式）",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -120,6 +127,7 @@ public class AbilityConfigData
     {
         Name = "冲刺",
         FeatureGroupId = "技能.位移",
+        FeatureHandlerId = "技能.位移.冲刺",
         Description = "高速冲向目标方向，瞬间位移躲避危险",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -133,7 +141,8 @@ public class AbilityConfigData
     public static readonly AbilityConfigData CircleDamage = new()
     {
         Name = "圆环伤害",
-        FeatureGroupId = "技能.主动",
+        FeatureGroupId = "技能.被动",
+        FeatureHandlerId = "技能.被动.圆环伤害",
         Description = "周身燃起烈焰光环，每秒对周围敌人造成魔法伤害",
         AbilityIconPath = "res://icon.svg",
         AbilityType = AbilityType.Passive,
@@ -151,6 +160,7 @@ public class AbilityConfigData
     {
         Name = "光环护盾",
         FeatureGroupId = "技能.被动",
+        FeatureHandlerId = "技能.被动.光环护盾",
         Description = "在玩家旁生成跟随护盾，接触敌人造成伤害（验证 AttachToHost 模式）",
         AbilityIconPath = "res://icon.svg",
         AbilityTriggerMode = AbilityTriggerMode.Manual,
@@ -165,9 +175,14 @@ public class AbilityConfigData
     public string? Name { get; set; }
 
     /// <summary>
-    ///     技能分组 ID（FeatureGroup 前缀）
+    ///     技能分组 ID（用于 UI / 测试面板展示）
     /// </summary>
     public string? FeatureGroupId { get; set; }
+
+    /// <summary>
+    ///     Feature 处理器 ID；多个技能模板可复用同一个处理器。
+    /// </summary>
+    public string? FeatureHandlerId { get; set; }
 
     /// <summary>
     ///     技能描述

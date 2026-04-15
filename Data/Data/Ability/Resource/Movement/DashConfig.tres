@@ -8,6 +8,7 @@
 script = ExtResource("1_script")
 Name = "冲刺"
 FeatureGroupId = "技能.位移"
+FeatureHandlerId = "技能.位移.冲刺"
 Description = "高速冲向目标方向，瞬间位移躲避危险"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

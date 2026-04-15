@@ -157,19 +157,49 @@ public static class AbilitySystem
             ActivationData = abilityContext,
             SourceEventData = abilityContext.SourceEventData
         };
+        if (!ValidateAbilityFeatureContext(featureCtx))
+        {
+            return TriggerResult.Failed;
+        }
+
         FeatureSystem.OnFeatureActivated(featureCtx);
 
         EmitAbilityExecutedEvent(abilityContext, featureCtx);
 
-        // Feature 生命周期钩子：Ended（复用同一 FeatureContext 实例）
-        FeatureSystem.OnFeatureEnded(featureCtx);
-
-        // 标记执行完成
-        ability.Data.Set(DataKey.FeatureIsActive, false);
+        // Feature 生命周期钩子：Ended（同步技能同帧完成；异步/引导型能力后续可延迟调用）
+        FeatureSystem.OnFeatureEnded(featureCtx, FeatureEndReason.Completed);
 
         var name = ability.Data.Get<string>(DataKey.Name);
         _log.Debug($"激活技能: {name}");
         return TriggerResult.Success;
+    }
+
+    /// <summary>
+    /// 校验 Ability 接入 FeatureSystem 时必须携带 CastContext。
+    /// </summary>
+    /// <param name="featureCtx">准备传入 FeatureSystem 的上下文。</param>
+    /// <returns>上下文完整时返回 true，否则返回 false。</returns>
+    private static bool ValidateAbilityFeatureContext(FeatureContext featureCtx)
+    {
+        if (featureCtx.Owner == null || featureCtx.Feature == null)
+        {
+            _log.Error("Ability FeatureContext 缺少 Owner 或 Feature");
+            return false;
+        }
+
+        if (featureCtx.ActivationData is not CastContext castContext)
+        {
+            _log.Error("Ability FeatureContext.ActivationData 必须是 CastContext");
+            return false;
+        }
+
+        if (castContext.Ability == null || castContext.Caster == null)
+        {
+            _log.Error("CastContext 缺少 Ability 或 Caster");
+            return false;
+        }
+
+        return true;
     }
 
     // ==================== 异步瞄准支持 ====================

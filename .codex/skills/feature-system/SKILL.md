@@ -170,13 +170,18 @@ internal class MyFeatureHandler : IFeatureHandler
     {
     }
 
-    public void OnEnded(FeatureContext context)
+    public object? OnExecute(FeatureContext context)
+    {
+        return null;
+    }
+
+    public void OnEnded(FeatureContext context, FeatureEndReason reason)
     {
     }
 }
 ```
 
-补充约定：`FeatureGroup` 仅用于 `FeatureHandlerRegistry.GetByGroup()` 分组查询，不参与运行时反向拼接。
+约定：运行时只根据完整 `FeatureHandlerId` 查找处理器。技能展示分组属于 `AbilityConfig.FeatureGroupId`，不要放在 `IFeatureHandler` 上。
 
 ---
 
@@ -192,32 +197,33 @@ Ability.TryTrigger
 → AbilitySystem 构建 FeatureContext
 → FeatureContext.ActivationData = CastContext
 → FeatureSystem.OnFeatureActivated(featureCtx)
-→ FeatureHandlerRegistry.Get(完整 FeatureHandlerId)?.OnActivated(featureCtx)
-→ handler 把 AbilityExecutedResult 写入 featureCtx.ExtraData
+→ handler.OnActivated(featureCtx)                      // 本次运行开始
+→ featureCtx.ExecuteResult = handler.OnExecute(featureCtx)
 → AbilitySystem 发出 Ability.Executed
-→ FeatureSystem.OnFeatureEnded(featureCtx)
+→ FeatureSystem.OnFeatureEnded(featureCtx, FeatureEndReason.Completed)
 ```
 
 ### Ability 子域推荐写法
 
-不要再实现 `IAbilityExecutor`。
+不要再实现 `IAbilityExecutor`，也不要新增 Ability 专属 FeatureHandler 基类。
 
 请改为：
 
-1. 继承 `Src/ECS/Base/System/AbilitySystem/AbilityFeatureHandlerBase.cs`
+1. 直接实现 `IFeatureHandler`
 2. 实现 `FeatureId`
-3. 实现 `ExecuteAbility(CastContext context)`
-4. 在 `[ModuleInitializer]` 中注册到 `FeatureHandlerRegistry`
-5. 在 `.tres` 中填写 `FeatureGroupId`（如 `"Ability.Movement"`），`FeatureHandlerId` 由 `EntityManager.AddAbility` 自动派生（`FeatureGroupId + "." + Name`）
+3. 实现 `OnExecute(FeatureContext context)`
+4. 通过 `context.GetActivationData<CastContext>()` 读取施法上下文；AbilitySystem 已在进入 FeatureSystem 前校验上下文类型
+5. 在 `[ModuleInitializer]` 中注册到 `FeatureHandlerRegistry`
+6. 在 `.tres` 中显式填写 `FeatureHandlerId`；`FeatureGroupId` 只用于技能展示分组
 
 示例结构：
 
 ```csharp
 using System.Runtime.CompilerServices;
 
-internal class DashExecutor : AbilityFeatureHandlerBase
+internal class DashExecutor : IFeatureHandler
 {
-    public override string FeatureId => "Ability.Movement.Dash";
+    public string FeatureId => "技能.位移.冲刺";
 
     [ModuleInitializer]
     public static void Initialize()
@@ -225,8 +231,10 @@ internal class DashExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new DashExecutor());
     }
 
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext context)
     {
+        var castContext = context.GetActivationData<CastContext>();
+
         return new AbilityExecutedResult();
     }
 }
@@ -275,8 +283,8 @@ internal class DashExecutor : AbilityFeatureHandlerBase
 
 如果 Feature 被 Ability 子域调用，允许：
 
-- 在 `IFeatureHandler.OnActivated` 中读取 `context.ActivationData as CastContext`
-- 把 `AbilityExecutedResult` 写入 `context.ExtraData`
+- 在 `IFeatureHandler.OnExecute` 中通过 `context.GetActivationData<CastContext>()` 读取施法上下文
+- 从 `OnExecute` 返回 `AbilityExecutedResult`，由 FeatureSystem 写入 `context.ExecuteResult`
 
 不允许：
 
@@ -327,11 +335,11 @@ internal class DashExecutor : AbilityFeatureHandlerBase
 
 - `Src/ECS/Base/System/FeatureSystem/FeatureSystem.cs`
 - `Src/ECS/Base/System/FeatureSystem/FeatureContext.cs`
+- `Src/ECS/Base/System/FeatureSystem/FeatureContextExtensions.cs`
 - `Src/ECS/Base/System/FeatureSystem/IFeatureHandler.cs`
 - `Src/ECS/Base/System/FeatureSystem/FeatureHandlerRegistry.cs`
 - `Data/Data/Feature/FeatureDefinition.cs`
 - `Data/Data/Feature/FeatureModifierEntry.cs`
-- `Src/ECS/Base/System/AbilitySystem/AbilityFeatureHandlerBase.cs`
 - `Src/ECS/Base/System/AbilitySystem/AbilitySystem.cs`
 - `Docs/框架/ECS/System/FeatureSystem/FeatureSystem.md`
 - `Src/ECS/Base/System/FeatureSystem/README.md`

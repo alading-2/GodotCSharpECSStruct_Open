@@ -13,23 +13,19 @@ namespace Slime.Config.Abilities
         [DataKey(nameof(DataKey.Name))]
         [Export] public string? Name { get; set; }
         /// <summary>
-        /// 技能分组 ID（FeatureGroup 前缀）。
-        /// 与 Name 组合自动派生完整 FeatureHandlerId：{FeatureGroupId}.{Name}
-        /// 例：FeatureGroupId="技能.位移"，Name="冲刺" → "技能.位移.冲刺"
+        /// 技能分组 ID。
+        /// 只描述技能分类，供 UI / 测试面板展示；运行时执行器选择使用 FeatureHandlerId。
         /// </summary>
         [DataKey(nameof(DataKey.AbilityFeatureGroup))]
         [Export] public string? FeatureGroupId { get; set; }
+
         /// <summary>
-        /// 解析最终 FeatureHandlerId。
-        /// 优先使用显式 FeatureHandlerId；为空则由 featureGroupId + "." + name 派生。
+        /// Feature 处理器 ID。
+        /// 多个技能模板可以填写同一个处理器 ID，通过各自 DataKey 参数区分行为。
         /// </summary>
-        public static string? ResolveFeatureHandlerId(string? featureHandlerId, string? featureGroupId, string? name)
-        {
-            if (!string.IsNullOrEmpty(featureHandlerId)) return featureHandlerId;
-            if (!string.IsNullOrEmpty(featureGroupId) && !string.IsNullOrEmpty(name))
-                return $"{featureGroupId}.{name}";
-            return null;
-        }
+        [DataKey(nameof(DataKey.FeatureHandlerId))]
+        [Export] public string? FeatureHandlerId { get; set; }
+
         /// <summary>
         /// 技能描述
         /// </summary>

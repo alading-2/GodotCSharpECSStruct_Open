@@ -6,7 +6,7 @@ using ECS.Base.System.TestSystem.Core;
 /// <summary>
 /// 技能测试模块。
 /// <para>
-/// 提供一个运行时调试界面，用于按分组路径查看技能库，并给当前实体执行添加 / 移除 / 启停。
+/// 提供一个运行时调试界面，用于按 FeatureGroupId 查看技能库，并给当前实体执行添加 / 移除 / 启停。
 /// </para>
 /// <para>
 /// 模块本身只负责 UI 展示与输入转发，具体数据组织与操作由 <see cref="AbilityTestService"/> 负责。
@@ -158,7 +158,7 @@ public partial class AbilityTestModule : TestModuleBase
             try
             {
                 var section = TestSceneHelper.InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
-                section.SetTitle($"分类：{group.GroupPath} ({group.Items.Count})"); // 绑定技能库分类标题
+                section.SetTitle($"分类：{group.FeatureGroupId} ({group.Items.Count})"); // 绑定技能库 FeatureGroupId 分类标题
 
                 foreach (var item in group.Items)
                 {
@@ -172,7 +172,7 @@ public partial class AbilityTestModule : TestModuleBase
             }
             catch (Exception ex)
             {
-                _log.Error($"[技能测试UI] 构建技能库分组失败: group={group.GroupPath} error={ex}");
+                _log.Error($"[技能测试UI] 构建技能库分组失败: featureGroupId={group.FeatureGroupId} error={ex}");
             }
         }
     }
@@ -202,7 +202,7 @@ public partial class AbilityTestModule : TestModuleBase
             try
             {
                 var section = TestSceneHelper.InstantiateScene<AbilityGroupSection>(_groupSectionScene, nameof(AbilityGroupSection));
-                section.SetTitle($"分类：{group.GroupPath} ({group.Items.Count})"); // 绑定当前技能分类标题
+                section.SetTitle($"分类：{group.FeatureGroupId} ({group.Items.Count})"); // 绑定当前技能 FeatureGroupId 分类标题
 
                 foreach (var item in group.Items)
                 {
@@ -219,7 +219,7 @@ public partial class AbilityTestModule : TestModuleBase
             }
             catch (Exception ex)
             {
-                _log.Error($"[技能测试UI] 构建当前技能分组失败: group={group.GroupPath} error={ex}");
+                _log.Error($"[技能测试UI] 构建当前技能分组失败: featureGroupId={group.FeatureGroupId} error={ex}");
             }
         }
 

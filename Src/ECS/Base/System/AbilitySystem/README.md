@@ -78,10 +78,12 @@ ability.Events.Emit(
 - 发送 `Ability.Activated`（UI 等监听）
 - 构建 `FeatureContext`，把 `CastContext` 放入 `ActivationData`
 - 调用 `FeatureSystem.OnFeatureActivated(...)`
-- 由对应 `IFeatureHandler.OnActivated(...)` 执行具体技能逻辑
+- 由对应 `IFeatureHandler.OnActivated(...)` 标记本次运行开始
+- 由对应 `IFeatureHandler.OnExecute(...)` 执行具体技能逻辑，并写入 `FeatureContext.ExecuteResult`
 - 发送 `Ability.Executed`
+- 同步技能立即调用 `FeatureSystem.OnFeatureEnded(..., FeatureEndReason.Completed)`
 
-其中 `AbilityConfig.FeatureHandlerId` 必须直接填写完整唯一 `FeatureId`，例如 `Ability.Movement.Dash`；`FeatureGroup` 仅用于分组查询，不参与运行时拼接。
+其中 `AbilityConfig.FeatureHandlerId` 必须直接填写完整唯一 `FeatureId`，例如 `技能.位移.冲刺`；`FeatureGroupId` 只作为技能展示分组，不参与运行时处理器查找。
 
 ---
 

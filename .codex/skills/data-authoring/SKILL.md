@@ -49,7 +49,7 @@ description: 编写或修改 Data 目录下的数据配置、Config、DataKey、
 
 补充约定：
 
-- 像 `FeatureGroupId` 这种“既参与运行时处理器映射，又供 UI / 调试直接展示”的技能分组字段，应放在 `Data/Data/Ability/AbilityConfig.cs`
+- `FeatureGroupId` 只表示技能展示分组，应放在 `Data/Data/Ability/AbilityConfig.cs`；测试面板按完整 `FeatureGroupId` 分组和显示；运行时执行器选择必须使用 `FeatureHandlerId`
 - 不要再为技能额外维护 `AbilityCategory` 这类重复展示字段；只要运行时实体和系统要读，就属于 `Data/Data/`
 
 推荐写法：

@@ -48,7 +48,7 @@ public partial class AbilityOwnedItemControl : PanelContainer
         GetTitleLabel().Text = item.DisplayName;
         GetMetaLabel().Text = $"{item.AbilityType} / {item.TriggerMode} / {(item.IsEnabled ? "启用" : "禁用")}";
         GetDescriptionLabel().Text = item.Description;
-        TooltipText = $"分组: {item.GroupPath}\n类型: {item.AbilityType}\n触发: {item.TriggerMode}\n启用: {(item.IsEnabled ? "是" : "否")}\n\n{item.Description}";
+        TooltipText = $"分组: {item.FeatureGroupId}\n类型: {item.AbilityType}\n触发: {item.TriggerMode}\n启用: {(item.IsEnabled ? "是" : "否")}\n\n{item.Description}";
         GetToggleButton().Text = item.IsEnabled ? "禁用" : "启用";
         Modulate = item.IsEnabled ? Colors.White : new Color(0.78f, 0.78f, 0.78f, 1f);
     }

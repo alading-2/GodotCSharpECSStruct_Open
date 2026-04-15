@@ -39,6 +39,7 @@ namespace Slime.ConfigNew.Abilities
         {
             Name = "连锁闪电",
             FeatureGroupId = "技能.主动",
+            FeatureHandlerId = "技能.主动.连锁闪电",
             Description = "释放链式闪电，在多个敌人间弹跳造成魔法伤害，每次弹跳伤害衰减",
             AbilityIconPath = "res://icon.svg",
             AbilityTriggerMode = AbilityTriggerMode.Manual,

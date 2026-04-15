@@ -12,7 +12,7 @@ using Godot;
 /// 特效：Effect_020（在随机选点位置播放）
 /// 伤害：物理伤害，带 Area + Melee 标签
 /// </summary>
-internal class SlamExecutor : AbilityFeatureHandlerBase
+internal class SlamExecutor : IFeatureHandler
 {
     private static readonly Log _log = new(nameof(SlamExecutor));
 
@@ -22,11 +22,11 @@ internal class SlamExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new SlamExecutor());
     }
 
-    public override string FeatureId => global::FeatureId.Ability.Active.Slam;
-    public override string FeatureGroup => global::FeatureId.Ability.Groups.Active;
+    public string FeatureId => global::FeatureId.Ability.Active.Slam;
 
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext featureContext)
     {
+        var context = featureContext.GetActivationData<CastContext>();
         var caster = context.Caster;
         var ability = context.Ability;
 

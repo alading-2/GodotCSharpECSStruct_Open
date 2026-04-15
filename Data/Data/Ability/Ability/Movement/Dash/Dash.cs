@@ -9,7 +9,7 @@ using Godot;
 /// 运动模式：Charge（向当前移动方向或面朝方向高速冲刺，完成后自动回退默认模式）
 /// 特效：可在技能数据中配置落地特效
 /// </summary>
-internal class DashExecutor : AbilityFeatureHandlerBase
+internal class DashExecutor : IFeatureHandler
 {
     private static readonly Log _log = new(nameof(DashExecutor));
 
@@ -28,20 +28,16 @@ internal class DashExecutor : AbilityFeatureHandlerBase
     /// <summary>
     /// 技能功能 ID：对应配置中的 技能.位移.冲刺
     /// </summary>
-    public override string FeatureId => global::FeatureId.Ability.Movement.Dash;
-
-    /// <summary>
-    /// 功能组：归类为位移类技能
-    /// </summary>
-    public override string FeatureGroup => global::FeatureId.Ability.Groups.Movement;
+    public string FeatureId => global::FeatureId.Ability.Movement.Dash;
 
     /// <summary>
     /// 执行冲刺逻辑的主入口
     /// </summary>
     /// <param name="context">施法上下文</param>
     /// <returns>执行结果</returns>
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext featureContext)
     {
+        var context = featureContext.GetActivationData<CastContext>();
         // 施法上下文包含施法者 <IEntity> 和技能实体 <AbilityEntity> 信息
         var caster = context.Caster;
         var ability = context.Ability;

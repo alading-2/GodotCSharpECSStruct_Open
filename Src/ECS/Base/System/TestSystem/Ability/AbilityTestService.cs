@@ -13,11 +13,8 @@ using ECS.Base.System.TestSystem.Core;
 /// </summary>
 internal sealed class AbilityTestService
 {
-    /// <summary>技能分组兜底路径：当配置与运行时数据都无法提供分组时使用。</summary>
-    private const string DefaultGroupPath = "技能.未分类";
-
-    /// <summary>技能分类显示兜底名称。</summary>
-    private const string DefaultGroupDisplayName = "未分类";
+    /// <summary>技能分组兜底 ID：当配置与运行时数据都无法提供分组时使用。</summary>
+    private const string DefaultFeatureGroupId = "技能.未分类";
 
     /// <summary>Feature 调试服务，用于复用正式链路执行授予、移除与启停。</summary>
     private readonly FeatureDebugService _featureDebugService = new();
@@ -28,8 +25,8 @@ internal sealed class AbilityTestService
     /// <summary>缓存技能库顺序，供左侧分类树稳定展示。</summary>
     private readonly List<AbilityConfigEntry> _catalogEntries = new();
 
-    /// <summary>记录分组路径的首次出现顺序，避免界面每次刷新都乱序。</summary>
-    private readonly Dictionary<string, int> _groupPathOrder = new(StringComparer.Ordinal);
+    /// <summary>记录 FeatureGroupId 的首次出现顺序，避免界面每次刷新都乱序。</summary>
+    private readonly Dictionary<string, int> _featureGroupOrder = new(StringComparer.Ordinal);
 
     /// <summary>
     /// 技能配置缓存项。
@@ -41,7 +38,7 @@ internal sealed class AbilityTestService
         string ResourceKey,
         string AbilityName,
         string DisplayName,
-        string GroupPath,
+        string FeatureGroupId,
         string Description,
         AbilityType AbilityType,
         AbilityTriggerMode TriggerMode
@@ -140,8 +137,8 @@ internal sealed class AbilityTestService
     /// 获取技能库视图，并根据当前实体标记“已拥有”状态。
     /// </summary>
     /// <param name="owner">当前选中的实体，可为空。</param>
-    /// <returns>按分组路径组织后的技能库视图集合。</returns>
-    public IReadOnlyList<AbilityGroupPathGroup<AbilityCatalogItemView>> GetCatalogGroups(IEntity? owner)
+    /// <returns>按 FeatureGroupId 组织后的技能库视图集合。</returns>
+    public IReadOnlyList<AbilityFeatureGroup<AbilityCatalogItemView>> GetCatalogGroups(IEntity? owner)
     {
         var ownedNames = new HashSet<string>(StringComparer.Ordinal);
         if (owner != null)
@@ -162,7 +159,7 @@ internal sealed class AbilityTestService
             views.Add(new AbilityCatalogItemView(
                 entry.ResourceKey,
                 entry.DisplayName,
-                entry.GroupPath,
+                entry.FeatureGroupId,
                 entry.Description,
                 entry.AbilityType,
                 entry.TriggerMode,
@@ -170,9 +167,9 @@ internal sealed class AbilityTestService
             ));
         }
 
-        return BuildGroupPathGroups(
+        return BuildFeatureGroupGroups(
             views,
-            static item => item.GroupPath,
+            static item => item.FeatureGroupId,
             static item => item.DisplayName
         );
     }
@@ -181,13 +178,13 @@ internal sealed class AbilityTestService
     /// 获取当前实体已拥有技能的分类视图。
     /// </summary>
     /// <param name="owner">当前选中的实体，可为空。</param>
-    /// <returns>按分组路径组织后的已拥有技能视图集合。</returns>
-    public IReadOnlyList<AbilityGroupPathGroup<AbilityOwnedItemView>> GetOwnedGroups(IEntity? owner)
+    /// <returns>按 FeatureGroupId 组织后的已拥有技能视图集合。</returns>
+    public IReadOnlyList<AbilityFeatureGroup<AbilityOwnedItemView>> GetOwnedGroups(IEntity? owner)
     {
         var views = new List<AbilityOwnedItemView>();
         if (owner == null)
         {
-            return Array.Empty<AbilityGroupPathGroup<AbilityOwnedItemView>>();
+            return Array.Empty<AbilityFeatureGroup<AbilityOwnedItemView>>();
         }
 
         foreach (var ability in EntityManager.GetAbilities(owner))
@@ -195,9 +192,9 @@ internal sealed class AbilityTestService
             views.Add(CreateOwnedItemView(ability));
         }
 
-        return BuildGroupPathGroups(
+        return BuildFeatureGroupGroups(
             views,
-            static item => item.GroupPath,
+            static item => item.FeatureGroupId,
             static item => item.DisplayName
         );
     }
@@ -209,7 +206,7 @@ internal sealed class AbilityTestService
     {
         _configByKey.Clear();
         _catalogEntries.Clear();
-        _groupPathOrder.Clear();
+        _featureGroupOrder.Clear();
 
         if (!ResourcePaths.Resources.TryGetValue(ResourceCategory.DataAbility, out var entries))
         {
@@ -225,7 +222,7 @@ internal sealed class AbilityTestService
             }
 
             var displayName = string.IsNullOrWhiteSpace(config.Name) ? resourceKey : config.Name!;
-            var groupPath = ResolveGroupPath(config, resourceKey);
+            var featureGroupId = ResolveFeatureGroupId(config, resourceKey);
             var description = string.IsNullOrWhiteSpace(config.Description)
                 ? "暂无描述"
                 : config.Description!;
@@ -235,21 +232,21 @@ internal sealed class AbilityTestService
                 resourceKey,
                 displayName,
                 displayName,
-                groupPath,
+                featureGroupId,
                 description,
                 config.AbilityType,
                 config.AbilityTriggerMode
             ));
 
-            RegisterGroupPathOrder(groupPath);
+            RegisterFeatureGroupOrder(featureGroupId);
         }
 
         _catalogEntries.Sort((left, right) =>
         {
-            var groupPathCompare = CompareGroupPath(left.GroupPath, right.GroupPath);
-            if (groupPathCompare != 0)
+            var featureGroupCompare = CompareFeatureGroupId(left.FeatureGroupId, right.FeatureGroupId);
+            if (featureGroupCompare != 0)
             {
-                return groupPathCompare;
+                return featureGroupCompare;
             }
 
             return string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal);
@@ -262,19 +259,19 @@ internal sealed class AbilityTestService
     private AbilityOwnedItemView CreateOwnedItemView(AbilityEntity ability)
     {
         var abilityName = ability.Data.Get<string>(DataKey.Name.Key);
-        var groupPath = ResolveGroupPath(ability);
+        var featureGroupId = ResolveFeatureGroupId(ability);
         var description = ability.Data.Get<string>(DataKey.Description.Key);
         var abilityId = ability.Data.Get<string>(DataKey.Id.Key);
         var isEnabled = ability.Data.Get<bool>(DataKey.FeatureEnabled.Key);
         var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType.Key);
         var triggerMode = (AbilityTriggerMode)ability.Data.Get<int>(DataKey.AbilityTriggerMode.Key);
 
-        RegisterGroupPathOrder(groupPath);
+        RegisterFeatureGroupOrder(featureGroupId);
 
         return new AbilityOwnedItemView(
             abilityId,
             abilityName,
-            groupPath,
+            featureGroupId,
             string.IsNullOrWhiteSpace(description) ? "暂无描述" : description,
             abilityType,
             triggerMode,
@@ -305,77 +302,77 @@ internal sealed class AbilityTestService
     }
 
     /// <summary>
-    /// 解析技能展示分组路径。
+    /// 解析技能展示分组 ID。
     /// <para>
-    /// 统一使用 FeatureGroupId；若旧资源尚未补齐，则按技能类型 / 触发模式兜底。
+    /// 统一使用 FeatureGroupId；若旧资源尚未补齐，则按资源路径、技能类型 / 触发模式兜底。
     /// </para>
     /// </summary>
-    private static string ResolveGroupPath(AbilityConfig config, string resourceKey)
+    private static string ResolveFeatureGroupId(AbilityConfig config, string resourceKey)
     {
         if (!string.IsNullOrWhiteSpace(config.FeatureGroupId))
         {
-            return NormalizeGroupDisplayName(config.FeatureGroupId);
+            return NormalizeFeatureGroupId(config.FeatureGroupId);
         }
 
         var resourceCategory = ResolveResourceCategory(resourceKey);
         if (!string.IsNullOrWhiteSpace(resourceCategory))
         {
-            return resourceCategory;
+            return NormalizeFeatureGroupId(resourceCategory);
         }
 
         if ((config.AbilityTriggerMode & AbilityTriggerMode.Manual) != 0)
         {
-            return NormalizeGroupDisplayName(FeatureId.Ability.Groups.Active);
+            return NormalizeFeatureGroupId(FeatureId.Ability.Groups.Active);
         }
 
         return config.AbilityType switch
         {
-            AbilityType.Active => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Active),
-            AbilityType.Passive => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Passive),
-            AbilityType.Weapon => NormalizeGroupDisplayName("技能.武器"),
-            _ => DefaultGroupDisplayName
+            AbilityType.Active => NormalizeFeatureGroupId(FeatureId.Ability.Groups.Active),
+            AbilityType.Passive => NormalizeFeatureGroupId(FeatureId.Ability.Groups.Passive),
+            AbilityType.Weapon => NormalizeFeatureGroupId("技能.武器"),
+            _ => DefaultFeatureGroupId
         };
     }
 
     /// <summary>
-    /// 从运行时技能 Data 中解析展示分组路径。
+    /// 从运行时技能 Data 中解析展示分组 ID。
     /// </summary>
-    private static string ResolveGroupPath(AbilityEntity ability)
+    private static string ResolveFeatureGroupId(AbilityEntity ability)
     {
         var featureGroup = ability.Data.Get<string>(DataKey.AbilityFeatureGroup.Key);
         if (!string.IsNullOrWhiteSpace(featureGroup))
         {
-            return NormalizeGroupDisplayName(featureGroup);
+            return NormalizeFeatureGroupId(featureGroup);
         }
 
         var abilityType = (AbilityType)ability.Data.Get<int>(DataKey.AbilityType.Key);
         return abilityType switch
         {
-            AbilityType.Active => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Active),
-            AbilityType.Passive => NormalizeGroupDisplayName(FeatureId.Ability.Groups.Passive),
-            AbilityType.Weapon => NormalizeGroupDisplayName("技能.武器"),
-            _ => DefaultGroupDisplayName
+            AbilityType.Active => NormalizeFeatureGroupId(FeatureId.Ability.Groups.Active),
+            AbilityType.Passive => NormalizeFeatureGroupId(FeatureId.Ability.Groups.Passive),
+            AbilityType.Weapon => NormalizeFeatureGroupId("技能.武器"),
+            _ => DefaultFeatureGroupId
         };
     }
 
     /// <summary>
-    /// 把原始分组路径转成更适合测试面板展示的分类名。
+    /// 标准化技能分组 ID，保留完整 FeatureGroupId 作为测试面板分类显示。
     /// </summary>
-    private static string NormalizeGroupDisplayName(string? groupPath)
+    private static string NormalizeFeatureGroupId(string? featureGroupId)
     {
-        if (string.IsNullOrWhiteSpace(groupPath))
+        if (string.IsNullOrWhiteSpace(featureGroupId))
         {
-            return DefaultGroupDisplayName;
+            return DefaultFeatureGroupId;
         }
 
-        var normalized = groupPath.Trim().Replace('/', '.');
+        var normalized = featureGroupId.Trim().Replace('/', '.');
         var parts = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0)
         {
-            return DefaultGroupDisplayName;
+            return DefaultFeatureGroupId;
         }
 
-        return parts[^1].Trim();
+        return string.Join('.', parts);
     }
 
     /// <summary>
@@ -407,38 +404,38 @@ internal sealed class AbilityTestService
     }
 
     /// <summary>
-    /// 根据分组路径与名称构建稳定的分组结果。
+    /// 根据 FeatureGroupId 与名称构建稳定的分组结果。
     /// </summary>
-    private IReadOnlyList<AbilityGroupPathGroup<TItem>> BuildGroupPathGroups<TItem>(
+    private IReadOnlyList<AbilityFeatureGroup<TItem>> BuildFeatureGroupGroups<TItem>(
         List<TItem> items,
-        Func<TItem, string> groupPathSelector,
+        Func<TItem, string> featureGroupSelector,
         Func<TItem, string> nameSelector)
     {
         items.Sort((left, right) =>
         {
-            var leftGroupPath = groupPathSelector(left);
-            var rightGroupPath = groupPathSelector(right);
-            var groupPathCompare = CompareGroupPath(leftGroupPath, rightGroupPath);
-            if (groupPathCompare != 0)
+            var leftFeatureGroupId = featureGroupSelector(left);
+            var rightFeatureGroupId = featureGroupSelector(right);
+            var featureGroupCompare = CompareFeatureGroupId(leftFeatureGroupId, rightFeatureGroupId);
+            if (featureGroupCompare != 0)
             {
-                return groupPathCompare;
+                return featureGroupCompare;
             }
 
             return string.Compare(nameSelector(left), nameSelector(right), StringComparison.Ordinal);
         });
 
-        var groups = new List<AbilityGroupPathGroup<TItem>>();
-        string? currentGroupPath = null;
+        var groups = new List<AbilityFeatureGroup<TItem>>();
+        string? currentFeatureGroupId = null;
         List<TItem>? currentItems = null;
 
         foreach (var item in items)
         {
-            var groupPath = groupPathSelector(item);
-            if (!string.Equals(currentGroupPath, groupPath, StringComparison.Ordinal))
+            var featureGroupId = featureGroupSelector(item);
+            if (!string.Equals(currentFeatureGroupId, featureGroupId, StringComparison.Ordinal))
             {
                 currentItems = new List<TItem>();
-                groups.Add(new AbilityGroupPathGroup<TItem>(groupPath, currentItems));
-                currentGroupPath = groupPath;
+                groups.Add(new AbilityFeatureGroup<TItem>(featureGroupId, currentItems));
+                currentFeatureGroupId = featureGroupId;
             }
 
             currentItems!.Add(item);
@@ -448,27 +445,27 @@ internal sealed class AbilityTestService
     }
 
     /// <summary>
-    /// 记录分组路径首次出现顺序。
+    /// 记录 FeatureGroupId 首次出现顺序。
     /// </summary>
-    private void RegisterGroupPathOrder(string groupPath)
+    private void RegisterFeatureGroupOrder(string featureGroupId)
     {
-        if (_groupPathOrder.ContainsKey(groupPath))
+        if (_featureGroupOrder.ContainsKey(featureGroupId))
         {
             return;
         }
 
-        _groupPathOrder[groupPath] = _groupPathOrder.Count;
+        _featureGroupOrder[featureGroupId] = _featureGroupOrder.Count;
     }
 
     /// <summary>
-    /// 比较两个分组路径的稳定顺序。
+    /// 比较两个 FeatureGroupId 的稳定顺序。
     /// </summary>
-    private int CompareGroupPath(string left, string right)
+    private int CompareFeatureGroupId(string left, string right)
     {
-        var leftOrder = _groupPathOrder.TryGetValue(left, out var existingLeftOrder)
+        var leftOrder = _featureGroupOrder.TryGetValue(left, out var existingLeftOrder)
             ? existingLeftOrder
             : int.MaxValue;
-        var rightOrder = _groupPathOrder.TryGetValue(right, out var existingRightOrder)
+        var rightOrder = _featureGroupOrder.TryGetValue(right, out var existingRightOrder)
             ? existingRightOrder
             : int.MaxValue;
 

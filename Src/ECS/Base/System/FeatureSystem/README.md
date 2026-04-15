@@ -38,14 +38,15 @@
 
 - `OnFeatureActivated(featureCtx)`
   - 标记 `FeatureIsActive=true`
-  - 调用 `IFeatureHandler.OnActivated`（通知阶段）
+  - 调用 `IFeatureHandler.OnActivated`（本次运行开始）
+  - 发出 `Feature.Activated`
   - 调用 `IFeatureHandler.OnExecute` 并将返回值写入 `featureCtx.ExecuteResult`（执行阶段）
   - 递增 `FeatureActivationCount`
-  - 发出 `Feature.Activated`
+  - 发出 `Feature.Executed`
 
-- `OnFeatureEnded(featureCtx)`
+- `OnFeatureEnded(featureCtx, reason)`
   - 标记 `FeatureIsActive=false`
-  - 调用 `IFeatureHandler.OnEnded`
+  - 调用 `IFeatureHandler.OnEnded(context, reason)`
   - 发出 `Feature.Ended`
 
 - `OnFeatureRemoved(feature, owner)`
@@ -128,9 +129,9 @@
 - `OnRemoved`
 - `OnEnabled`（可选，默认空实现）
 - `OnDisabled`（可选，默认空实现）
-- `OnActivated`（通知阶段）
+- `OnActivated`（本次运行开始，适合前摇、激活态、锁重入、临时上下文）
 - `OnExecute`（执行阶段，返回 `object?`，默认 null）
-- `OnEnded`
+- `OnEnded(context, reason)`（本次运行结束，适合清理与按结束原因收尾）
 
 ### 5. FeatureHandlerRegistry
 
@@ -199,10 +200,12 @@ TryTrigger
 → AbilitySystem 构建 FeatureContext
 → FeatureContext.ActivationData = CastContext
 → FeatureSystem.OnFeatureActivated(featureCtx)
-→ handler.OnActivated(featureCtx)                      // 通知阶段
+→ handler.OnActivated(featureCtx)                      // 本次运行开始
+→ Feature.Activated
 → ctx.ExecuteResult = handler.OnExecute(featureCtx)    // 执行阶段，返回结果
+→ Feature.Executed
 → AbilitySystem 读取 featureCtx.ExecuteResult as AbilityExecutedResult
-→ FeatureSystem.OnFeatureEnded(featureCtx)
+→ FeatureSystem.OnFeatureEnded(featureCtx, Completed)
 ```
 
 这条链说明：
@@ -210,8 +213,8 @@ TryTrigger
 - `AbilitySystem` 负责施法编排
 - `FeatureSystem` 负责统一生命周期
 - `IFeatureHandler` 负责真正的技能效果逻辑
-- `AbilityConfig.FeatureHandlerId` 必须直接填写完整唯一 `FeatureId`，如 `Ability.Movement.Dash`
-- `FeatureGroup` 只用于 `GetByGroup` 分组查询，不参与运行时反向拼接
+- `AbilityConfig.FeatureHandlerId` 必须直接填写完整唯一 `FeatureId`，如 `技能.位移.冲刺`
+- `AbilityConfig.FeatureGroupId` 只描述技能展示分组，不参与运行时处理器查找
 
 ---
 
@@ -230,7 +233,7 @@ TryTrigger
 
 - `AbilityTriggerMode = Periodic`
 - `AbilityCooldown = 间隔秒数`
-- 逻辑写在 `ExecuteAbility(CastContext)`
+- 逻辑写在 `IFeatureHandler.OnExecute(FeatureContext)`，并通过 `context.GetActivationData<CastContext>()` 读取施法上下文
 
 这类模型下，重复执行来自 `TriggerComponent` 的周期计时器，而不是技能内部 DoT。
 
@@ -253,24 +256,15 @@ TryTrigger
 
 ## Ability 子域推荐写法
 
-当前项目新增了：
+Ability 子域不再有专属 FeatureHandler 基类。所有 Ability / Buff / Item / 通用模板能力都直接实现 `IFeatureHandler`：
 
-- `Src/ECS/Base/System/AbilitySystem/AbilityFeatureHandlerBase.cs`
-
-它的职责是：
-
-- 把 `FeatureContext.ActivationData` 安全转换成 `CastContext`
-- 在 `OnExecute` 中调用 `ExecuteAbility(CastContext)`
-- 把 `AbilityExecutedResult` 作为 OnExecute 返回值，由 FeatureSystem 写入 `FeatureContext.ExecuteResult`
-- 兜底处理异常，避免单个技能逻辑直接打断主流水线
-
-所以 Ability 子域里推荐：
-
-1. 继承 `AbilityFeatureHandlerBase`
-2. 实现 `FeatureId`
-3. 实现 `ExecuteAbility(CastContext context)`
-4. 在 `[ModuleInitializer]` 中注册到 `FeatureHandlerRegistry`
+1. 实现 `FeatureId`
+2. 在 `[ModuleInitializer]` 中注册到 `FeatureHandlerRegistry`
+3. 在 `OnExecute(FeatureContext context)` 中通过 `context.GetActivationData<CastContext>()` 读取施法上下文
+4. 返回 `AbilityExecutedResult`，由 FeatureSystem 写入 `FeatureContext.ExecuteResult`
 5. 在 `AbilityConfig.FeatureHandlerId` 中填写同名完整唯一 `FeatureId`
+
+Buff / Item 也使用同一模式，只是 `ActivationData` 中放入各自子域上下文类型。
 
 ---
 
@@ -288,7 +282,7 @@ TryTrigger
 1. 创建 `AbilityConfig`
 2. 填写 `FeatureHandlerId`
 3. 在 `Data/Data/Ability/Ability/` 下实现处理器
-4. 继承 `AbilityFeatureHandlerBase`
+4. 直接实现 `IFeatureHandler`
 5. `[ModuleInitializer]` 中注册到 `FeatureHandlerRegistry`
 6. 通过 `TryTrigger` 统一触发
 
@@ -308,10 +302,11 @@ TryTrigger
 
 - `Src/ECS/Base/System/FeatureSystem/FeatureSystem.cs`
 - `Src/ECS/Base/System/FeatureSystem/FeatureContext.cs`
+- `Src/ECS/Base/System/FeatureSystem/FeatureContextExtensions.cs`
 - `Src/ECS/Base/System/FeatureSystem/FeatureHandlerRegistry.cs`
 - `Src/ECS/Base/System/FeatureSystem/IFeatureHandler.cs`
+- `Src/ECS/Base/System/FeatureSystem/FeatureEndReason.cs`
 - `Src/ECS/Base/System/AbilitySystem/AbilitySystem.cs`
-- `Src/ECS/Base/System/AbilitySystem/AbilityFeatureHandlerBase.cs`
 - `Data/Data/Feature/FeatureDefinition.cs`
 - `Data/Data/Feature/FeatureModifierEntry.cs`
 - `Docs/框架/ECS/System/FeatureSystem/FeatureSystem.md`

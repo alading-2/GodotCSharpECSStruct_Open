@@ -8,8 +8,7 @@ public static partial class DataKey
 {
     // ============ 基础信息 ============
 
-    // 技能分组 ID（FeatureGroup 前缀，用于自动派生 FeatureHandlerId）
-    // 例：FeatureGroupId="技能.位移"，Name="冲刺" → 自动派生 "技能.位移.冲刺"
+    // 技能分组 ID（用于 UI / 测试面板展示；不再作为运行时处理器主索引）
     public static readonly DataMeta AbilityFeatureGroup = DataRegistry.Register(
         new DataMeta { Key = nameof(AbilityFeatureGroup), DisplayName = "技能分组", Category = DataCategory_Ability.Basic, Type = typeof(string), DefaultValue = "" });
 

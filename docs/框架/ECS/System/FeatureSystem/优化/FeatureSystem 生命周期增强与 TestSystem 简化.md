@@ -4,7 +4,7 @@
 
 两个核心问题：
 
-1. **FeatureSystem 不够通用**：`IFeatureHandler.OnActivated` 是 `void` 通知型，无法回传执行结果。`AbilitySystem` 被迫在 `AbilityFeatureHandlerBase` 中额外实现 `ExecuteAbility`，并通过 `ExtraData` 字典做无类型跨层通信。这导致 FeatureSystem 的“激活→执行→结束”生命周期不完整。
+1. **FeatureSystem 不够通用**：`IFeatureHandler.OnActivated` 是 `void` 通知型，无法回传执行结果。需要补充 `OnExecute` 和 `ExecuteResult`，让 Ability/Buff/Item 等子域都能通过同一接口执行效果并返回结果。
 2. **TestSystem 太杂**：存在大量重复代码（`ResolveRequiredNode` 5 处、`InstantiateScene` 2 处、`ActionResult` 2 个定义、实体事件订阅模式 2 处），没有充分利用框架的事件/数据驱动能力。
 
 ---
@@ -41,11 +41,12 @@ public object? ExecuteResult { get; set; }
 
 调用时序：`OnActivated`（通知）→ `OnExecute`（执行+结果）→ 累计次数 → 发射事件。
 
-#### 4. `AbilityFeatureHandlerBase.cs` — 简化桥接
+#### 4. Ability Handler — 直接实现 `IFeatureHandler`
 
-- `OnActivated` 恢复为空 `virtual`，不再做 `CastContext` 提取。
-- `OnExecute` 覆写：提取 `CastContext` → 调用 `ExecuteAbility` → 返回结果。
-- `ExecuteAbility` 保持不变，具体处理器只需实现这个方法。
+- 不再保留 Ability 专属 FeatureHandler 基类。
+- 具体处理器直接实现 `OnExecute(FeatureContext)`。
+- 通过 `context.GetActivationData<CastContext>()` 提取施法上下文；AbilitySystem 负责在进入 FeatureSystem 前校验上下文类型。
+- 返回 `AbilityExecutedResult`，由 FeatureSystem 写入 `FeatureContext.ExecuteResult`。
 
 #### 5. `AbilitySystem.cs` — 直接读取 `ExecuteResult`
 
@@ -54,7 +55,7 @@ public object? ExecuteResult { get; set; }
 ### 向后兼容
 
 - **非 Ability Handler**：`OnExecute` 默认返回 `null`，无影响。
-- **具体 Ability Handler（Slam/Dash/ArcShot 等）**：只覆写 `ExecuteAbility`，不感知 `OnExecute`，无影响。
+- **具体 Ability Handler（Slam/Dash/ArcShot 等）**：直接实现 `IFeatureHandler.OnExecute`，从 `ActivationData` 读取 `CastContext`。
 - **FeatureSystem API**：签名不变。
 
 ---

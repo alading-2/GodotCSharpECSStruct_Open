@@ -21,6 +21,7 @@ namespace Slime.Addons.DataConfigEditor
         private static readonly Dictionary<string, string> _dataKeyAliasMap = new(StringComparer.Ordinal)
         {
             ["FeatureGroupId"] = nameof(DataKey.AbilityFeatureGroup),
+            ["FeatureHandlerId"] = nameof(DataKey.FeatureHandlerId),
             ["Category"] = nameof(DataKey.FeatureCategory),
             ["Enabled"] = nameof(DataKey.FeatureEnabled),
             ["Modifiers"] = DataKey.FeatureModifiers,

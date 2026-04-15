@@ -5,7 +5,7 @@ using Godot;
 /// 环绕护盾技能执行器 - 验证 Orbit 运动模式
 /// 生成多个投射物围绕玩家旋转，碰撞敌人时造成伤害
 /// </summary>
-internal class OrbitSkillExecutor : AbilityFeatureHandlerBase
+internal class OrbitSkillExecutor : IFeatureHandler
 {
     private static readonly Log _log = new(nameof(OrbitSkillExecutor));
 
@@ -15,11 +15,11 @@ internal class OrbitSkillExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new OrbitSkillExecutor());
     }
 
-    public override string FeatureId => global::FeatureId.Ability.Passive.OrbitSkill;
-    public override string FeatureGroup => global::FeatureId.Ability.Groups.Passive;
+    public string FeatureId => global::FeatureId.Ability.Passive.OrbitSkill;
 
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext featureContext)
     {
+        var context = featureContext.GetActivationData<CastContext>();
         var caster = context.Caster;
         var ability = context.Ability;
         if (caster == null || ability == null || caster is not Node2D casterNode)

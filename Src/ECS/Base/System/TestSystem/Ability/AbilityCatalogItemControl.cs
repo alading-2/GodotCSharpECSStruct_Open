@@ -32,7 +32,7 @@ public partial class AbilityCatalogItemControl : PanelContainer
         GetTitleLabel().Text = item.DisplayName;
         GetMetaLabel().Text = $"{item.AbilityType} / {item.TriggerMode}";
         GetDescriptionLabel().Text = item.Description;
-        TooltipText = $"分组: {item.GroupPath}\n类型: {item.AbilityType}\n触发: {item.TriggerMode}\n\n{item.Description}";
+        TooltipText = $"分组: {item.FeatureGroupId}\n类型: {item.AbilityType}\n触发: {item.TriggerMode}\n\n{item.Description}";
 
         var actionButton = GetActionButton();
         if (item.IsOwned)

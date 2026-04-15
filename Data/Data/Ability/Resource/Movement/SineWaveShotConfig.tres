@@ -33,6 +33,7 @@ _bundled = {
 script = ExtResource("1_script")
 Name = "正弦波射击"
 FeatureGroupId = "技能.投射物"
+FeatureHandlerId = "技能.投射物.正弦波射击"
 Description = "发射正弦波形弹道向敌人射击（验证 SineWave 模式）"
 AbilityIcon = ExtResource("2_icon")
 AbilityTriggerMode = 1

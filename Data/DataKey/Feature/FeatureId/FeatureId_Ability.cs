@@ -3,17 +3,17 @@
 ///
 /// 层次结构同时用于 C# 代码导航和完整唯一 ID 命名。
 /// 常量字符串值统一使用完整 FeatureId，如 "技能.位移.冲刺"。
-/// 分组路径单独定义在 Groups 子类中，供 FeatureHandlerRegistry.GetByGroup() 查询使用。
+/// 分组路径单独定义在 Groups 子类中，供 AbilityConfig.FeatureGroupId 展示分组使用。
 ///
 /// .tres 中填写：FeatureHandlerId = "技能.位移.冲刺"
 /// C# 代码引用：FeatureId.Ability.Movement.Dash
-/// 查询某分组所有处理器：FeatureHandlerRegistry.GetByGroup(FeatureId.Ability.Groups.Movement)
+/// 技能展示分组：AbilityConfig.FeatureGroupId = FeatureId.Ability.Groups.Movement
 /// </summary>
 public static partial class FeatureId
 {
     public static class Ability
     {
-        // ============ 分组路径常量（仅用于 GetByGroup 查询，不作为 FeatureHandlerId）============
+        // ============ 分组路径常量（仅用于技能展示分组，不作为 FeatureHandlerId）============
 
         public static class Groups
         {

@@ -20,22 +20,15 @@ public interface IFeatureHandler
     /// </summary>
     string FeatureId { get; }
 
-    /// <summary>
-    /// 分组路径，供 FeatureHandlerRegistry.GetByGroup() 查询使用。
-    /// 格式："Ability.Movement"，注册时会自动向父级逐级索引（"Ability"、"Ability.Movement" 均可查到）。
-    /// 留空则不参与分组索引。
-    /// </summary>
-    string FeatureGroup => string.Empty;
-
     // ===== 一次性：授予/移除 =====
 
     /// <summary>Feature 被授予时调用（Granted 阶段）</summary>
     /// <param name="context">包含 Owner 和 Feature 的上下文</param>
-    void OnGranted(FeatureContext context);
+    void OnGranted(FeatureContext context) { }
 
     /// <summary>Feature 被移除时调用（Removed 阶段，早于修改器回滚）</summary>
     /// <param name="context">包含 Owner 和 Feature 的上下文</param>
-    void OnRemoved(FeatureContext context);
+    void OnRemoved(FeatureContext context) { }
 
     // ===== 启用/禁用 =====
 
@@ -54,8 +47,8 @@ public interface IFeatureHandler
     // ===== 激活/执行/结束 =====
 
     /// <summary>
-    /// Feature 一次激活开始时调用（Activated 阶段，可选）
-    /// 通知阶段：Feature 已被激活，用于启动动画、播放音效等前置操作。
+    /// Feature 一次运行开始时调用（Activated 阶段，可选）
+    /// 通知阶段：Feature 已进入激活态，用于启动前摇、锁定状态、运行上下文等前置操作。
     /// 适用于 Manual / OnEvent / Periodic 触发模式的 Feature。
     /// </summary>
     void OnActivated(FeatureContext context) { }
@@ -69,8 +62,8 @@ public interface IFeatureHandler
     object? OnExecute(FeatureContext context) => null;
 
     /// <summary>
-    /// Feature 一次激活结束时调用（Ended 阶段，可选）
-    /// 对应 AbilitySystem 执行完效果后
+    /// Feature 一次运行结束时调用（Ended 阶段，可选）
+    /// 用于按结束原因清理本次运行创建的临时状态、计时器、特效或订阅。
     /// </summary>
-    void OnEnded(FeatureContext context) { }
+    void OnEnded(FeatureContext context, FeatureEndReason reason) { }
 }

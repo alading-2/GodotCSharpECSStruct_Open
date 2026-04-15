@@ -5,7 +5,7 @@ using Godot;
 /// 正弦波弹技能执行器 - 验证 SineWave 运动模式
 /// 向最近敌人方向发射正弦波前进的投射物
 /// </summary>
-internal class SineWaveShotExecutor : AbilityFeatureHandlerBase
+internal class SineWaveShotExecutor : IFeatureHandler
 {
     private static readonly Log _log = new(nameof(SineWaveShotExecutor));
 
@@ -15,11 +15,11 @@ internal class SineWaveShotExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new SineWaveShotExecutor());
     }
 
-    public override string FeatureId => global::FeatureId.Ability.Projectile.SineWaveShot;
-    public override string FeatureGroup => global::FeatureId.Ability.Groups.Projectile;
+    public string FeatureId => global::FeatureId.Ability.Projectile.SineWaveShot;
 
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext featureContext)
     {
+        var context = featureContext.GetActivationData<CastContext>();
         var caster = context.Caster;
         var ability = context.Ability;
         if (caster == null || ability == null || caster is not Node2D casterNode)

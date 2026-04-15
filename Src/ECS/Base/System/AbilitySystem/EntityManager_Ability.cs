@@ -55,6 +55,11 @@ public static partial class EntityManager
             return existingAbility;
         }
 
+        if (config is AbilityConfig abilityConfig && !ValidateAbilityHandlerConfig(abilityConfig, abilityName))
+        {
+            return null;
+        }
+
         // 创建技能实体
         AbilityEntity? ability;
         ability = Spawn<AbilityEntity>(new EntitySpawnConfig
@@ -67,6 +72,21 @@ public static partial class EntityManager
         if (ability == null)
         {
             _abilityLog.Error($"创建技能实体失败: {abilityName}");
+            return null;
+        }
+
+        var handlerId = ability.Data.Get<string>(DataKey.FeatureHandlerId);
+        if (config is AbilityConfig && string.IsNullOrWhiteSpace(handlerId))
+        {
+            _abilityLog.Error($"无法添加技能 '{abilityName}'：AbilityConfig.FeatureHandlerId 为空");
+            Destroy(ability);
+            return null;
+        }
+
+        if (config is AbilityConfig && !FeatureHandlerRegistry.HasHandler(handlerId))
+        {
+            _abilityLog.Error($"无法添加技能 '{abilityName}'：未注册 FeatureHandlerId='{handlerId}'");
+            Destroy(ability);
             return null;
         }
 
@@ -93,26 +113,35 @@ public static partial class EntityManager
             new GameEventType.Ability.AddedEventData(ability, owner)
         );
 
-        // 解析最终 FeatureHandlerId：优先显式值，否则由 FeatureGroupId + Name 自动派生
-        var rawHandlerId = ability.Data.Get<string>(DataKey.FeatureHandlerId);
-        var featureGroupId = ability.Data.Get<string>(DataKey.AbilityFeatureGroup);
-        var resolvedHandlerId = AbilityConfig.ResolveFeatureHandlerId(rawHandlerId, featureGroupId, abilityName);
-        if (!string.IsNullOrEmpty(resolvedHandlerId))
-        {
-            ability.Data.Set(DataKey.FeatureHandlerId, resolvedHandlerId);
-            if (!FeatureHandlerRegistry.HasHandler(resolvedHandlerId))
-                _abilityLog.Info($"技能 '{abilityName}' → FeatureHandlerId='{resolvedHandlerId}'（无对应处理器，视为纯数据技能）");
-        }
-        else
-        {
-            _abilityLog.Warn($"技能 '{abilityName}' 无法解析 FeatureHandlerId（FeatureGroupId 与 FeatureHandlerId 均为空）");
-        }
-
         // Feature 生命周期钩子：Granted
         FeatureSystem.OnFeatureGranted(ability, owner);
 
         _abilityLog.Info($"添加技能: {abilityName} -> {ownerId}");
         return ability;
+    }
+
+    /// <summary>
+    /// 校验 AbilityConfig 是否显式绑定了可用的 FeatureHandler。
+    /// </summary>
+    /// <param name="config">技能配置资源。</param>
+    /// <param name="abilityName">技能名称，用于日志定位。</param>
+    /// <returns>配置有效返回 true，否则返回 false。</returns>
+    private static bool ValidateAbilityHandlerConfig(AbilityConfig config, string abilityName)
+    {
+        var handlerId = config.FeatureHandlerId;
+        if (string.IsNullOrWhiteSpace(handlerId))
+        {
+            _abilityLog.Error($"无法添加技能 '{abilityName}'：AbilityConfig.FeatureHandlerId 为空");
+            return false;
+        }
+
+        if (!FeatureHandlerRegistry.HasHandler(handlerId))
+        {
+            _abilityLog.Error($"无法添加技能 '{abilityName}'：未注册 FeatureHandlerId='{handlerId}'");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>

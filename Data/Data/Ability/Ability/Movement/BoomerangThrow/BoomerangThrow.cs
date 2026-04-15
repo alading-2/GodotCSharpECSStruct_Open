@@ -5,7 +5,7 @@ using Godot;
 /// 回旋镖技能执行器 - 验证 Boomerang 运动模式
 /// 向最近敌人投掷回旋镖，飞出后自动返回，过程中碰撞造成伤害
 /// </summary>
-internal class BoomerangThrowExecutor : AbilityFeatureHandlerBase
+internal class BoomerangThrowExecutor : IFeatureHandler
 {
     private static readonly Log _log = new(nameof(BoomerangThrowExecutor));
 
@@ -15,11 +15,11 @@ internal class BoomerangThrowExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new BoomerangThrowExecutor());
     }
 
-    public override string FeatureId => global::FeatureId.Ability.Projectile.BoomerangThrow;
-    public override string FeatureGroup => global::FeatureId.Ability.Groups.Projectile;
+    public string FeatureId => global::FeatureId.Ability.Projectile.BoomerangThrow;
 
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext featureContext)
     {
+        var context = featureContext.GetActivationData<CastContext>();
         var caster = context.Caster;
         var ability = context.Ability;
         if (caster == null || ability == null || caster is not Node2D casterNode)

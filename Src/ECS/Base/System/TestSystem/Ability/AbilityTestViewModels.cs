@@ -8,7 +8,7 @@ using System.Collections.Generic;
 /// </summary>
 /// <param name="ResourceKey">技能配置资源键（用于添加技能）。</param>
 /// <param name="DisplayName">技能显示名称。</param>
-/// <param name="GroupPath">技能分组路径（用于树结构分组）。</param>
+/// <param name="FeatureGroupId">技能分组 ID，直接来自 AbilityConfig.FeatureGroupId。</param>
 /// <param name="Description">技能描述文本（用于提示信息）。</param>
 /// <param name="AbilityType">技能类型（主动/被动/武器等）。</param>
 /// <param name="TriggerMode">触发模式（主动/自动等）。</param>
@@ -16,7 +16,7 @@ using System.Collections.Generic;
 internal readonly record struct AbilityCatalogItemView(
     string ResourceKey,
     string DisplayName,
-    string GroupPath,
+    string FeatureGroupId,
     string Description,
     AbilityType AbilityType,
     AbilityTriggerMode TriggerMode,
@@ -28,7 +28,7 @@ internal readonly record struct AbilityCatalogItemView(
 /// </summary>
 /// <param name="AbilityId">运行时技能实例 Id（用于移除/启停）。</param>
 /// <param name="DisplayName">技能显示名称。</param>
-/// <param name="GroupPath">技能分组路径（用于树结构分组）。</param>
+/// <param name="FeatureGroupId">技能分组 ID，直接来自运行时 DataKey.AbilityFeatureGroup。</param>
 /// <param name="Description">技能描述文本（用于提示信息）。</param>
 /// <param name="AbilityType">技能类型（主动/被动/武器等）。</param>
 /// <param name="TriggerMode">触发模式（主动/自动等）。</param>
@@ -36,7 +36,7 @@ internal readonly record struct AbilityCatalogItemView(
 internal readonly record struct AbilityOwnedItemView(
     string AbilityId,
     string DisplayName,
-    string GroupPath,
+    string FeatureGroupId,
     string Description,
     AbilityType AbilityType,
     AbilityTriggerMode TriggerMode,
@@ -44,11 +44,11 @@ internal readonly record struct AbilityOwnedItemView(
 );
 
 /// <summary>
-/// 同一分组路径下的一组技能条目。
+/// 同一 FeatureGroupId 下的一组技能条目。
 /// </summary>
-/// <param name="GroupPath">分组路径文本。</param>
+/// <param name="FeatureGroupId">技能分组 ID。</param>
 /// <param name="Items">属于该分组的条目列表。</param>
-internal readonly record struct AbilityGroupPathGroup<TItem>(
-    string GroupPath,
+internal readonly record struct AbilityFeatureGroup<TItem>(
+    string FeatureGroupId,
     IReadOnlyList<TItem> Items
 );

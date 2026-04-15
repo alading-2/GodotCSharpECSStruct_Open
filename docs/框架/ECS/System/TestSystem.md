@@ -29,6 +29,8 @@
 - `Data/EventType/Global/GameEventType_Global_TestSystem.cs`
 - `Src/ECS/Base/System/TestSystem/Attribute/AttributeTestModule.cs`
 - `Src/ECS/Base/System/TestSystem/Ability/AbilityTestModule.cs`
+- `Src/ECS/Base/System/TestSystem/Ability/AbilityTestService.cs`
+- `Src/ECS/Base/System/TestSystem/Ability/AbilityTestViewModels.cs`
 - `Src/ECS/Base/System/TestSystem/FeatureDebugService.cs`
 
 ---
@@ -66,7 +68,7 @@
 - `TestSystem` 作为统一宿主，由 `AutoLoad` 接入，方向是对的
 - `TestModuleBase` 已经抽出了基础生命周期，方向是对的
 - `FeatureDebugService` 把调试动作转发到正式运行时链路，方向是对的
-- `AbilityTestService` 把 UI 与技能目录/业务操作做了初步隔离，方向也是对的
+- `AbilityTestService` 把 UI 与技能目录/业务操作做了初步隔离，并按完整 `FeatureGroupId` 构建技能库 / 当前技能分组，方向也是对的
 
 也就是说，当前问题不是“完全推翻重来”，而是**架构概念有雏形，但实现细节不成熟**。
 

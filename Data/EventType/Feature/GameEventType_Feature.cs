@@ -2,7 +2,7 @@
 /// Feature 生命周期事件定义
 ///
 /// 覆盖 Feature 从授予到移除的完整语义：
-/// Granted → Enabled → Activated/Ended（可重复） → Disabled → Removed
+/// Granted → Enabled → Activated/Executed/Ended（可重复） → Disabled → Removed
 /// </summary>
 public static partial class GameEventType
 {
@@ -38,11 +38,18 @@ public static partial class GameEventType
         public readonly record struct ActivatedEventData(FeatureContext Context);
 
         /// <summary>
+        /// Feature 一次核心效果执行完成。
+        /// 发送者：FeatureSystem.OnFeatureActivated 内部的 Execute 阶段之后
+        /// </summary>
+        public const string Executed = "feature:executed";
+        public readonly record struct ExecutedEventData(FeatureContext Context);
+
+        /// <summary>
         /// Feature 一次激活结束（对应技能执行效果后）。
         /// 发送者：FeatureSystem.OnFeatureEnded
         /// </summary>
         public const string Ended = "feature:ended";
-        public readonly record struct EndedEventData(FeatureContext Context);
+        public readonly record struct EndedEventData(FeatureContext Context, FeatureEndReason Reason);
 
         /// <summary>
         /// Feature 被彻底移除（修改器已回滚）。

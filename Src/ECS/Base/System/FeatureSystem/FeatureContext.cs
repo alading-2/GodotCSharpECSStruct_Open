@@ -22,7 +22,7 @@ public class FeatureContext
     public FeatureInstance? Instance { get; set; }
 
     /// <summary>
-    /// 激活阶段的来源上下文（Activated/Ended 时才有，Granted/Removed 时为 null）
+    /// 单次运行阶段的来源上下文（Activated/Execute/Ended 时才有，Granted/Removed 时为 null）
     /// 类型由调用方决定，如 AbilitySystem 传入 CastContext，
     /// IFeatureHandler 通过 ctx.ActivationData as CastContext 取用。
     /// </summary>

@@ -40,8 +40,8 @@
 | `Attribute/AttributeTestModule.cs` | 属性测试模块，负责 Data 编辑与临时加成 UI 绑定 |
 | `Attribute/AttributeTestModule.tscn` | 属性测试固定布局骨架，提供分类列表与右侧滚动编辑区 |
 | `Attribute/AttributeEditorRow.tscn` 等 | 属性词条复用场景，负责词条骨架与具体编辑器结构 |
-| `Ability/AbilityTestService.cs` | 技能测试服务，负责目录缓存、分组、视图模型与业务操作；内部通过 `DataKey.XXX.Key` 显式访问 Data 键名 |
-| `Ability/AbilityTestViewModels.cs` | 技能测试共享视图模型 |
+| `Ability/AbilityTestService.cs` | 技能测试服务，负责目录缓存、按完整 `FeatureGroupId` 分组、视图模型与业务操作；内部通过 `DataKey.XXX.Key` 显式访问 Data 键名 |
+| `Ability/AbilityTestViewModels.cs` | 技能测试共享视图模型，分组字段显式命名为 `FeatureGroupId` |
 | `Ability/AbilityTestModule.cs` | 技能测试 UI，负责左右双列列表、卡片交互与事件刷新 |
 | `Ability/AbilityTestModule.tscn` | 技能测试固定布局骨架，提供左右滚动区与卡片宿主节点 |
 | `Ability/AbilityGroupSection.tscn / AbilityCatalogItem.tscn / AbilityOwnedItem.tscn` | 技能条目复用场景，负责分组区块与卡片结构 |
@@ -261,7 +261,13 @@ TestSystem.Instance?.SetSelectedEntity(entity);
 
 分组优先看：
 
-- `FeatureGroupId`
+- `AbilityConfig.FeatureGroupId`
+
+显示规则：
+
+- 面板分类标题和 Tooltip 显示完整 `FeatureGroupId`
+- 不再把 `技能.被动` 裁剪成 `被动`
+- 旧资源缺少 `FeatureGroupId` 时才使用资源路径和 `AbilityType` 兜底
 
 ### 交互方式
 

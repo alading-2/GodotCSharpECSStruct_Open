@@ -11,7 +11,7 @@ using System.Collections.Generic;
 /// - Removed：调用 IFeatureHandler.OnRemoved + 按来源批量回滚 Modifier
 /// - Enabled：调用 IFeatureHandler.OnEnabled + 发出 Feature.Enabled 事件
 /// - Disabled：调用 IFeatureHandler.OnDisabled + 发出 Feature.Disabled 事件
-/// - Activated：调用 IFeatureHandler.OnActivated（通知）+ OnExecute（执行）+ 发出事件
+/// - Activated：调用 IFeatureHandler.OnActivated（运行开始）+ 发出 Feature.Activated + OnExecute（效果执行）+ 发出 Feature.Executed
 /// - Ended：调用 IFeatureHandler.OnEnded + 发出 Feature.Ended 事件
 /// - ExecuteActions：批量执行 IFeatureAction 列表
 ///
@@ -35,9 +35,6 @@ public static class FeatureSystem
     {
         if (feature == null || owner == null) return;
 
-        if (string.IsNullOrEmpty(feature.Data.Get<string>(DataKey.FeatureHandlerId)))
-            _log.Error($"FeatureHandlerId is null or empty, feature: {feature.Data.Get<string>(DataKey.Name)}, owner: {owner.Data.Get<string>(DataKey.Name)}");
-
         feature.Data.Set(DataKey.FeatureIsActive, false);
 
         var instance = new FeatureInstance(owner, feature, Godot.Time.GetTicksUsec() / 1_000_000.0);
@@ -47,8 +44,8 @@ public static class FeatureSystem
         ApplyModifiers(feature, owner);
 
         // 2. 调用代码处理器钩子
-        var featureId = GetFeatureId(feature);
-        FeatureHandlerRegistry.Get(featureId)?.OnGranted(context);
+        var handlerId = GetFeatureHandlerId(feature);
+        FeatureHandlerRegistry.Get(handlerId)?.OnGranted(context);
 
         // 3. 发出 Granted 事件（Owner 局部总线）
         owner.Events.Emit(
@@ -71,8 +68,8 @@ public static class FeatureSystem
         var name = feature.Data.Get<string>("Name") ?? "";
 
         // 1. 先调用处理器（处理器可能依赖修改器数据）
-        var featureId = GetFeatureId(feature);
-        FeatureHandlerRegistry.Get(featureId)?.OnRemoved(context);
+        var handlerId = GetFeatureHandlerId(feature);
+        FeatureHandlerRegistry.Get(handlerId)?.OnRemoved(context);
 
         // 2. 按来源批量回滚修改器
         RemoveModifiers(feature, owner);
@@ -91,7 +88,7 @@ public static class FeatureSystem
     /// <summary>
     /// Feature 一次激活开始时调用。
     /// 调用方负责构建 FeatureContext（Owner / Feature / ActivationData）。
-    /// 调用顺序：OnActivated（通知）→ OnExecute（执行+结果）→ 累计次数 → 发出事件
+    /// 调用顺序：OnActivated（运行开始）→ 发出 Activated 事件 → OnExecute（执行+结果）→ 累计次数 → 发出 Executed 事件
     /// </summary>
     public static void OnFeatureActivated(FeatureContext ctx)
     {
@@ -103,26 +100,46 @@ public static class FeatureSystem
         ctx.Feature.Data.Set(DataKey.FeatureIsActive, true);
 
         // 调用代码处理器
-        var featureId = GetFeatureId(ctx.Feature);
-        var handler = FeatureHandlerRegistry.Get(featureId);
+        var handlerId = GetFeatureHandlerId(ctx.Feature);
+        var handler = FeatureHandlerRegistry.Get(handlerId);
 
-        // 1. 通知阶段
-        handler?.OnActivated(ctx);
-
-        // 2. 执行阶段（结果写入 ctx.ExecuteResult）
-        if (handler != null)
+        // 1. 运行开始阶段
+        try
         {
-            ctx.ExecuteResult = handler.OnExecute(ctx);
+            handler?.OnActivated(ctx);
+        }
+        catch (System.Exception ex)
+        {
+            _log.Error($"FeatureHandler {handlerId} OnActivated 异常: {ex.Message}");
         }
 
-        // 3. 累计激活次数
-        int current = ctx.Feature.Data.Get<int>(DataKey.FeatureActivationCount);
-        ctx.Feature.Data.Set(DataKey.FeatureActivationCount, current + 1);
-
-        // 4. 发出 Activated 事件（Feature 局部总线）
+        // 2. 发出 Activated 事件（Feature 局部总线），表示本次运行已开始
         ctx.Feature.Events.Emit(
             GameEventType.Feature.Activated,
             new GameEventType.Feature.ActivatedEventData(ctx)
+        );
+
+        // 3. 执行阶段（结果写入 ctx.ExecuteResult）
+        if (handler != null)
+        {
+            try
+            {
+                ctx.ExecuteResult = handler.OnExecute(ctx);
+            }
+            catch (System.Exception ex)
+            {
+                _log.Error($"FeatureHandler {handlerId} OnExecute 异常: {ex.Message}");
+            }
+        }
+
+        // 4. 累计执行次数
+        int current = ctx.Feature.Data.Get<int>(DataKey.FeatureActivationCount);
+        ctx.Feature.Data.Set(DataKey.FeatureActivationCount, current + 1);
+
+        // 5. 发出 Executed 事件（Feature 局部总线），表示核心效果已执行
+        ctx.Feature.Events.Emit(
+            GameEventType.Feature.Executed,
+            new GameEventType.Feature.ExecutedEventData(ctx)
         );
     }
 
@@ -132,20 +149,27 @@ public static class FeatureSystem
     /// Feature 一次激活结束时调用。
     /// 传入与 OnFeatureActivated 同一个 FeatureContext 实例。
     /// </summary>
-    public static void OnFeatureEnded(FeatureContext ctx)
+    public static void OnFeatureEnded(FeatureContext ctx, FeatureEndReason reason = FeatureEndReason.Completed)
     {
         if (ctx?.Owner == null || ctx.Feature == null) return;
 
         ctx.Feature.Data.Set(DataKey.FeatureIsActive, false);
 
         // 调用代码处理器
-        var featureId = GetFeatureId(ctx.Feature);
-        FeatureHandlerRegistry.Get(featureId)?.OnEnded(ctx);
+        var handlerId = GetFeatureHandlerId(ctx.Feature);
+        try
+        {
+            FeatureHandlerRegistry.Get(handlerId)?.OnEnded(ctx, reason);
+        }
+        catch (System.Exception ex)
+        {
+            _log.Error($"FeatureHandler {handlerId} OnEnded 异常: {ex.Message}");
+        }
 
         // 发出 Ended 事件（Feature 局部总线）
         ctx.Feature.Events.Emit(
             GameEventType.Feature.Ended,
-            new GameEventType.Feature.EndedEventData(ctx)
+            new GameEventType.Feature.EndedEventData(ctx, reason)
         );
     }
 
@@ -159,9 +183,9 @@ public static class FeatureSystem
         feature.Data.Set(DataKey.FeatureEnabled, true);
 
         // 调用代码处理器
-        var featureId = GetFeatureId(feature);
+        var handlerId = GetFeatureHandlerId(feature);
         var ctx = new FeatureContext { Owner = owner, Feature = feature };
-        FeatureHandlerRegistry.Get(featureId)?.OnEnabled(ctx);
+        FeatureHandlerRegistry.Get(handlerId)?.OnEnabled(ctx);
 
         owner.Events.Emit(
             GameEventType.Feature.Enabled,
@@ -179,9 +203,9 @@ public static class FeatureSystem
         feature.Data.Set(DataKey.FeatureEnabled, false);
 
         // 调用代码处理器
-        var featureId = GetFeatureId(feature);
+        var handlerId = GetFeatureHandlerId(feature);
         var ctx = new FeatureContext { Owner = owner, Feature = feature };
-        FeatureHandlerRegistry.Get(featureId)?.OnDisabled(ctx);
+        FeatureHandlerRegistry.Get(handlerId)?.OnDisabled(ctx);
 
         owner.Events.Emit(
             GameEventType.Feature.Disabled,
@@ -210,13 +234,11 @@ public static class FeatureSystem
 
     // ==================== 内部工具 ====================
 
-    /// <summary>获取 Feature 的处理器 ID（优先 FeatureHandlerId，退化到 Name）</summary>
-    private static string GetFeatureId(IEntity feature)
+    /// <summary>获取 FeatureHandlerId（允许为空，纯数据 Feature 可以没有处理器）</summary>
+    private static string GetFeatureHandlerId(IEntity feature)
     {
         var handlerId = feature.Data.Get<string>(DataKey.FeatureHandlerId);
         if (!string.IsNullOrEmpty(handlerId)) return handlerId;
-        var featureName = feature.Data.Get<string>(DataKey.Name) ?? "(unknown)";
-        _log.Error($"Feature '{featureName}' 未配置 FeatureHandlerId，无法查找对应的 IFeatureHandler");
         return string.Empty;
     }
 

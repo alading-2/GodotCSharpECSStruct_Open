@@ -5,7 +5,7 @@ using Godot;
 /// 贝塞尔曲线弹技能执行器 - 验证 BezierCurve 运动模式
 /// 向最近敌人发射沿二次贝塞尔曲线飞行的投射物（弓形抛射）
 /// </summary>
-internal class BezierShotExecutor : AbilityFeatureHandlerBase
+internal class BezierShotExecutor : IFeatureHandler
 {
     private static readonly Log _log = new(nameof(BezierShotExecutor));
 
@@ -15,11 +15,11 @@ internal class BezierShotExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new BezierShotExecutor());
     }
 
-    public override string FeatureId => global::FeatureId.Ability.Projectile.BezierShot;
-    public override string FeatureGroup => global::FeatureId.Ability.Groups.Projectile;
+    public string FeatureId => global::FeatureId.Ability.Projectile.BezierShot;
 
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext featureContext)
     {
+        var context = featureContext.GetActivationData<CastContext>();
         var caster = context.Caster;
         var ability = context.Ability;
         if (caster == null || ability == null || caster is not Node2D casterNode)

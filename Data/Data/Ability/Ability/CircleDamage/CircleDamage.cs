@@ -9,7 +9,7 @@ using Godot;
 /// 特效：Effect_003（每次触发在施法者位置播放一次独立特效）
 /// 伤害：魔法伤害，带 Area 标签；当前未配置 TickInterval/TotalDuration，因此重复触发仅来自 TriggerComponent 的 Periodic 轴
 /// </summary>
-internal class CircleDamageExecutor : AbilityFeatureHandlerBase
+internal class CircleDamageExecutor : IFeatureHandler
 {
     private static readonly Log _log = new(nameof(CircleDamageExecutor));
 
@@ -19,11 +19,11 @@ internal class CircleDamageExecutor : AbilityFeatureHandlerBase
         FeatureHandlerRegistry.Register(new CircleDamageExecutor());
     }
 
-    public override string FeatureId => global::FeatureId.Ability.Passive.CircleDamage;
-    public override string FeatureGroup => global::FeatureId.Ability.Groups.Passive;
+    public string FeatureId => global::FeatureId.Ability.Passive.CircleDamage;
 
-    protected override AbilityExecutedResult ExecuteAbility(CastContext context)
+    public object? OnExecute(FeatureContext featureContext)
     {
+        var context = featureContext.GetActivationData<CastContext>();
         var caster = context.Caster;
         var ability = context.Ability;
 

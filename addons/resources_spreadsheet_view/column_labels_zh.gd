@@ -28,7 +28,7 @@ const LABELS: Dictionary = {
 
 	# ===== UnitConfig =====
 	# 基础信息
-	"name": "单位名称",
+	"name": "名称",
 	"team": "所属队伍",
 	"deathtype": "死亡类型",
 	# 视觉
@@ -79,7 +79,9 @@ const LABELS: Dictionary = {
 	"isinvulnerable": "是否无敌",
 
 	# ===== AbilityConfig =====
-	"featuregroupid": "技能分组ID",
+	"featuregroupid": "技能分组ID(展示)",
+	"abilitygroupid": "技能分组ID(展示)",
+	"featurehandlerid": "Feature处理器ID",
 	"description": "技能描述",
 	"abilityicon": "技能图标",
 	"abilitylevel": "当前级别",
@@ -114,6 +116,8 @@ const LABELS: Dictionary = {
 	"lineeffectscene": "连线特效",
 
 	# ===== FeatureDefinition =====
+	"featureendreason": "Feature结束原因",
+	"featureexecutionmode": "Feature执行模式",
 	"category": "Feature分类",
 	"enabled": "是否启用",
 	"modifiers": "属性修改器列表",
